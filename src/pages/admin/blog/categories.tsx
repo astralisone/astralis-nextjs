@@ -86,7 +86,7 @@ export default function BlogCategoriesPage() {
     error, 
     isLoading,
     refetch
-  } = useApi<{ status: string; data: Category[] }>('/blog/categories');
+  } = useApi<{ status: string; data: Category[] }>('/api/blog/categories');
 
   // Add console logs for debugging
   console.log('categoriesData:', categoriesData);

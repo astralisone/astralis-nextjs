@@ -40,7 +40,7 @@ export default function AdminDashboardPage() {
   }, []);
 
   // Fetch dashboard stats
-  const { data, error, isLoading } = useApi<{ data: DashboardStats }>('/admin/dashboard');
+  const { data, error, isLoading } = useApi<{ data: DashboardStats }>('/api/admin/dashboard');
   
   // Fetch engagement stats separately
   const { data: engagementData, isLoading: engagementLoading } = useApi<{ 
@@ -52,7 +52,7 @@ export default function AdminDashboardPage() {
         totalRevenue: number; 
       } 
     } 
-  }>('/admin/engagements/stats');
+  }>('/api/admin/engagements/stats');
 
   // Fallback data for development
   const stats = data?.data || {

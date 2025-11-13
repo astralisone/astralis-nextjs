@@ -20,7 +20,7 @@ export function FeaturedMarketplaceSection() {
     data: marketplaceData,
     error: marketplaceError,
     isLoading: marketplaceLoading,
-  } = useApi<FeaturedMarketplaceResponse>('/marketplace?featured=true&limit=3')
+  } = useApi<FeaturedMarketplaceResponse>('/api/marketplace?featured=true&limit=3')
 
   return (
     <section className="container mx-auto px-4 py-20 bg-neutral-900 relative overflow-hidden">

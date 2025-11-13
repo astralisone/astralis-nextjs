@@ -76,7 +76,7 @@ export default function BlogTagsPage() {
     error: tagsError, 
     isLoading: tagsLoading,
     refetch
-  } = useApi<{ status: string; data: Tag[] }>('/blog/tags');
+  } = useApi<{ status: string; data: Tag[] }>('/api/blog/tags');
 
   // Add console logs for debugging
   console.log('tagsData:', tagsData);

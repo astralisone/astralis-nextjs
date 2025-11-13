@@ -10,7 +10,12 @@ interface ProvidersProps {
 
 export function Providers({ children }: ProvidersProps) {
   return (
-    <SessionProvider>
+    // SessionProvider configured but not actively used
+    // Using custom AuthProvider instead - disable auto-fetching to prevent console errors
+    <SessionProvider
+      refetchInterval={0}
+      refetchOnWindowFocus={false}
+    >
       <ThemeProvider defaultTheme="dark" storageKey="astralis-theme">
         <PayPalProvider>
           {children}

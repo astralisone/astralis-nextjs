@@ -68,14 +68,14 @@ export default function BlogAdminPage() {
     error, 
     isLoading,
     refetch
-  } = useApi<{ posts: BlogPost[], pagination: any }>(`/blog?${queryString}`);
+  } = useApi<{ posts: BlogPost[], pagination: any }>(`/api/blog?${queryString}`);
 
   // Fetch categories for filter
   const { 
     data: categoriesData,
     isLoading: categoriesLoading,
     error: categoriesError
-  } = useApi<Array<{ id: string, name: string, slug: string, description: string, _count: { posts: number } }>>('/blog/categories');
+  } = useApi<Array<{ id: string, name: string, slug: string, description: string, _count: { posts: number } }>>('/api/blog/categories');
 
   // Safely access posts and pagination with fallbacks
   const posts = blogData?.posts || [];

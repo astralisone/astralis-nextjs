@@ -21,7 +21,7 @@ export function LatestBlogSection() {
     data: blogData,
     error: blogError,
     isLoading: blogLoading,
-  } = useApi<LatestBlogPostsResponse>('/blog?limit=3&sortBy=publishedAt&order=desc')
+  } = useApi<LatestBlogPostsResponse>('/api/blog?limit=3&sortBy=publishedAt&order=desc')
 
   return (
     <section className="container mx-auto px-4 py-16">

@@ -43,23 +43,23 @@ export default function EditBlogPostPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Fetch the blog post
-  const { 
-    data: postData, 
-    error: postError, 
-    isLoading: postLoading 
-  } = useApi<{ data: BlogPost }>(`/blog/${id}`);
+  const {
+    data: postData,
+    error: postError,
+    isLoading: postLoading
+  } = useApi<{ data: BlogPost }>(`/api/blog/${id}`);
 
   // Fetch categories
-  const { 
-    data: categoriesData, 
-    isLoading: categoriesLoading 
-  } = useApi<{ data: Category[] }>('/blog/categories');
+  const {
+    data: categoriesData,
+    isLoading: categoriesLoading
+  } = useApi<{ data: Category[] }>('/api/blog/categories');
 
   // Fetch tags
-  const { 
-    data: tagsData, 
-    isLoading: tagsLoading 
-  } = useApi<{ data: Tag[] }>('/blog/tags');
+  const {
+    data: tagsData,
+    isLoading: tagsLoading
+  } = useApi<{ data: Tag[] }>('/api/blog/tags');
 
   // Setup form with react-hook-form
   const form = useForm<BlogPostFormValues>({

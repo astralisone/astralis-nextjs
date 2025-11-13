@@ -64,14 +64,14 @@ export default function NewMarketplaceItemPage() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   // Fetch categories
-  const { 
-    data: categoriesData 
-  } = useApi<Array<{ id: string, name: string, slug: string }>>('/marketplace/categories');
+  const {
+    data: categoriesData
+  } = useApi<Array<{ id: string, name: string, slug: string }>>('/api/marketplace/categories');
 
   // Fetch tags
-  const { 
-    data: tagsData 
-  } = useApi<Array<{ id: string, name: string, slug: string }>>('/marketplace/tags');
+  const {
+    data: tagsData
+  } = useApi<Array<{ id: string, name: string, slug: string }>>('/api/marketplace/tags');
 
   // Form setup
   const form = useForm<MarketplaceItemFormValues>({

@@ -50,23 +50,23 @@ export default function EditMarketplaceItemPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Fetch the marketplace item
-  const { 
-    data: itemData, 
-    error: itemError, 
-    isLoading: itemLoading 
-  } = useApi<{ data: MarketplaceItem }>(`/marketplace/${id}`);
+  const {
+    data: itemData,
+    error: itemError,
+    isLoading: itemLoading
+  } = useApi<{ data: MarketplaceItem }>(`/api/marketplace/${id}`);
 
   // Fetch categories
-  const { 
-    data: categoriesData, 
-    isLoading: categoriesLoading 
-  } = useApi<{ data: Category[] }>('/marketplace/categories');
+  const {
+    data: categoriesData,
+    isLoading: categoriesLoading
+  } = useApi<{ data: Category[] }>('/api/marketplace/categories');
 
   // Fetch tags
-  const { 
-    data: tagsData, 
-    isLoading: tagsLoading 
-  } = useApi<{ data: Tag[] }>('/marketplace/tags');
+  const {
+    data: tagsData,
+    isLoading: tagsLoading
+  } = useApi<{ data: Tag[] }>('/api/marketplace/tags');
 
   // Setup form with react-hook-form
   const form = useForm<MarketplaceItemFormValues>({

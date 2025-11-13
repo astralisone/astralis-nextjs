@@ -41,16 +41,16 @@ export default function NewBlogPostPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Fetch categories
-  const { 
-    data: categoriesData, 
-    isLoading: categoriesLoading 
-  } = useApi<{ data: Category[] }>('/blog/categories');
+  const {
+    data: categoriesData,
+    isLoading: categoriesLoading
+  } = useApi<{ data: Category[] }>('/api/blog/categories');
 
   // Fetch tags
-  const { 
-    data: tagsData, 
-    isLoading: tagsLoading 
-  } = useApi<{ data: Tag[] }>('/blog/tags');
+  const {
+    data: tagsData,
+    isLoading: tagsLoading
+  } = useApi<{ data: Tag[] }>('/api/blog/tags');
 
   // Setup form with react-hook-form
   const form = useForm<BlogPostFormValues>({

@@ -76,14 +76,14 @@ export default function MarketplaceAdminPage() {
     error, 
     isLoading,
     refetch
-  } = useApi<{ items: MarketplaceItem[], pagination: any }>(`/marketplace?${queryString}`);
+  } = useApi<{ items: MarketplaceItem[], pagination: any }>(`/api/marketplace?${queryString}`);
 
   // Fetch categories for filter
   const { 
     data: categoriesData,
     isLoading: categoriesLoading,
     error: categoriesError
-  } = useApi<Array<{ name: string, slug: string }>>('/marketplace/categories');
+  } = useApi<Array<{ name: string, slug: string }>>('/api/marketplace/categories');
 
   // Safely access items and pagination with fallbacks
   const items = marketplaceData?.items || [];
