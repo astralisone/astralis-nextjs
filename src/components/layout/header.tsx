@@ -81,7 +81,6 @@ export function Header({
       ]
     },
     { name: 'Process', href: '/process' },
-    { name: 'Workflow Demo', href: '/workflow-demo' },
     { name: 'Blog', href: '/blog' },
     { name: 'Marketplace', href: '/marketplace' },
     {
