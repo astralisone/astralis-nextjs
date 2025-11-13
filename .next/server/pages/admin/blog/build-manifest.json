@@ -1,0 +1,22 @@
+{
+  "devFiles": [],
+  "ampDevFiles": [],
+  "polyfillFiles": [],
+  "lowPriorityFiles": [],
+  "rootMainFiles": [],
+  "pages": {
+    "/admin/blog": [
+      "static/chunks/3791bc220023916e.js",
+      "static/chunks/fe2948282f1a5d1d.js",
+      "static/chunks/8173c68536de6bcf.js",
+      "static/chunks/a1762c51a721c74b.js",
+      "static/chunks/eb80d9374396ec54.js",
+      "static/chunks/c5a973a5874630ee.js",
+      "static/chunks/c033c8b70096924d.js",
+      "static/chunks/fbbc6e4482c65a6d.js",
+      "static/chunks/76e6d76f5a120180.js",
+      "static/chunks/turbopack-4859cc21b7b3bb9f.js"
+    ]
+  },
+  "ampFirstPages": []
+}

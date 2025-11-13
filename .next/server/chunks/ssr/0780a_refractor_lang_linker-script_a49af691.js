@@ -1,0 +1,3 @@
+module.exports=[464835,a=>{"use strict";function b(a){a.languages["linker-script"]={comment:{pattern:/(^|\s)\/\*[\s\S]*?(?:$|\*\/)/,lookbehind:!0,greedy:!0},identifier:{pattern:/"[^"\r\n]*"/,greedy:!0},"location-counter":{pattern:/\B\.\B/,alias:"important"},section:{pattern:/(^|[^\w*])\.\w+\b/,lookbehind:!0,alias:"keyword"},function:/\b[A-Z][A-Z_]*(?=\s*\()/,number:/\b(?:0[xX][a-fA-F0-9]+|\d+)[KM]?\b/,operator:/>>=?|<<=?|->|\+\+|--|&&|\|\||::|[?:~]|[-+*/%&|^!=<>]=?/,punctuation:/[(){},;]/},a.languages.ld=a.languages["linker-script"]}b.displayName="linker-script",b.aliases=["ld"],a.s(["default",()=>b])}];
+
+//# sourceMappingURL=0780a_refractor_lang_linker-script_a49af691.js.map

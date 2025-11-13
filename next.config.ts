@@ -3,7 +3,6 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
 
-  // Enable both App Router and Pages Router (hybrid approach)
   experimental: {
     // Future Next.js features can be enabled here
   },
