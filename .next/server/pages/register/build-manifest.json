@@ -7,7 +7,7 @@
   "pages": {
     "/register": [
       "static/chunks/273c59f0e6ded465.js",
-      "static/chunks/b48e409b89b48cef.js",
+      "static/chunks/37b559e986c55a74.js",
       "static/chunks/e67212e80ee6c5d5.js",
       "static/chunks/a1762c51a721c74b.js",
       "static/chunks/eb80d9374396ec54.js",
@@ -15,7 +15,7 @@
       "static/chunks/c033c8b70096924d.js",
       "static/chunks/c5a973a5874630ee.js",
       "static/chunks/8173c68536de6bcf.js",
-      "static/chunks/turbopack-2db16791920b787a.js"
+      "static/chunks/turbopack-601633a9a136c1f2.js"
     ]
   },
   "ampFirstPages": []
