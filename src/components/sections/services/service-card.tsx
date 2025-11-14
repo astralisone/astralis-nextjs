@@ -14,78 +14,158 @@ interface ServiceCardProps {
   stats?: string
 }
 
+// Accent colors for visual variety
+const accentColors = [
+  { gradient: "from-purple-400 to-purple-600", glow: "purple-500", bg: "purple-500/10", border: "purple-500/30", icon: "text-purple-400" },
+  { gradient: "from-cyan to-cyan-dark", glow: "cyan", bg: "cyan/10", border: "cyan/30", icon: "text-cyan" },
+  { gradient: "from-emerald to-emerald-dark", glow: "emerald", bg: "emerald/10", border: "emerald/30", icon: "text-emerald" },
+  { gradient: "from-amber to-amber-dark", glow: "amber", bg: "amber/10", border: "amber/30", icon: "text-amber" },
+]
+
 export function ServiceCard({ title, description, icon: Icon, index, route, stats }: ServiceCardProps) {
   const router = useRouter()
+
+  // Cycle through accent colors
+  const accent = accentColors[index % accentColors.length]
 
   const handleClick = () => {
     if (route) {
       router.push(route)
     }
   }
-  
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
+      initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.6, delay: index * 0.1 }}
+      viewport={{ once: true, margin: "-50px" }}
+      transition={{ duration: 0.7, delay: index * 0.15, ease: [0.23, 1, 0.32, 1] }}
     >
-      <div 
+      <div
         onClick={handleClick}
         className={cn(
-          "relative group overflow-hidden rounded-3xl p-8 transition-all duration-500 cursor-pointer",
-          "glass-elevated border border-white/20 hover:border-purple-500/50",
-          "hover:scale-105 hover:shadow-elevation-4"
+          "relative group overflow-hidden rounded-3xl transition-all duration-500 cursor-pointer",
+          "card-gradient-border hover-lift h-full"
         )}
       >
-        {/* Background Gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-        
-        {/* Floating Elements */}
-        <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:scale-110">
-          <Sparkles className="w-6 h-6 text-purple-400" />
-        </div>
-        
-        <div className="relative z-10">
-          {/* Icon */}
-          <div className="mb-6">
-            <div className={cn(
-              "w-16 h-16 rounded-2xl border flex items-center justify-center transition-all duration-300",
-              "bg-gradient-to-br from-purple-500/20 to-blue-500/20 border-purple-500/30",
-              "group-hover:scale-110 group-hover:rotate-3"
-            )}>
-              <Icon className="w-8 h-8 text-purple-400 group-hover:text-purple-300" />
+        {/* Inner card content */}
+        <div className="relative bg-neutral-950 rounded-3xl p-8 h-full">
+
+          {/* Animated background pattern */}
+          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+            <div className={cn("absolute inset-0 bg-gradient-to-br", accent.bg)} />
+            <div className="absolute inset-0 section-grid opacity-20" />
+          </div>
+
+          {/* Floating orb accent */}
+          <motion.div
+            className={cn(
+              "absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl opacity-0 group-hover:opacity-30 transition-opacity duration-700",
+              `bg-${accent.glow}`
+            )}
+            style={{ background: `radial-gradient(circle, var(--color-${accent.glow}) 0%, transparent 70%)` }}
+          />
+
+          <div className="relative z-10 flex flex-col h-full">
+            {/* Icon with unique style */}
+            <div className="mb-6 flex items-start justify-between">
+              <motion.div
+                className={cn(
+                  "relative w-20 h-20 rounded-2xl flex items-center justify-center",
+                  "border-2 transition-all duration-500",
+                  `bg-gradient-to-br ${accent.bg} border-${accent.border}`,
+                  "group-hover:scale-110 group-hover:rotate-6"
+                )}
+                whileHover={{ rotate: [0, -5, 5, -5, 0], transition: { duration: 0.5 } }}
+              >
+                {/* Glow effect behind icon */}
+                <div className={cn(
+                  "absolute inset-0 rounded-2xl blur-lg opacity-0 group-hover:opacity-50 transition-opacity duration-500",
+                  `bg-gradient-to-br ${accent.gradient}`
+                )} />
+
+                <Icon className={cn("w-10 h-10 relative z-10 transition-all duration-300", accent.icon)} />
+              </motion.div>
+
+              {/* Sparkle indicator */}
+              <motion.div
+                className="opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                animate={{
+                  rotate: [0, 360],
+                  scale: [1, 1.1, 1]
+                }}
+                transition={{
+                  rotate: { duration: 3, repeat: Infinity, ease: "linear" },
+                  scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
+                }}
+              >
+                <Sparkles className={cn("w-5 h-5", accent.icon)} />
+              </motion.div>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 flex flex-col">
+              <h3 className={cn(
+                "text-2xl lg:text-3xl font-black mb-4 transition-all duration-300",
+                "text-white group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:text-transparent",
+                `group-hover:${accent.gradient}`
+              )}>
+                {title}
+              </h3>
+
+              <p className="text-neutral-400 leading-relaxed text-lg mb-6 group-hover:text-neutral-300 transition-colors flex-1">
+                {description}
+              </p>
+
+              {/* Stats Badge with accent color */}
+              {stats && (
+                <motion.div
+                  className={cn(
+                    "inline-flex items-center gap-2 px-4 py-2 rounded-xl mb-6 w-fit",
+                    "card-outlined border-2",
+                    `border-${accent.border}`
+                  )}
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.15 + 0.5 }}
+                >
+                  <motion.div
+                    className={cn("w-2 h-2 rounded-full", `bg-${accent.glow}`)}
+                    animate={{
+                      scale: [1, 1.3, 1],
+                      opacity: [1, 0.5, 1]
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                  />
+                  <span className={cn("text-sm font-bold", accent.icon)}>{stats}</span>
+                </motion.div>
+              )}
+
+              {/* CTA */}
+              <motion.div
+                className={cn(
+                  "flex items-center gap-3 font-bold text-lg transition-all duration-300",
+                  accent.icon,
+                  "group-hover:gap-4"
+                )}
+                whileHover={{ x: 5 }}
+              >
+                <span>Explore Solution</span>
+                <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-2" />
+              </motion.div>
             </div>
           </div>
-          
-          {/* Content */}
-          <div className="space-y-4 mb-6">
-            <h3 className="text-2xl font-bold text-white group-hover:text-purple-200 transition-colors">
-              {title}
-            </h3>
-            
-            <p className="text-gray-300 leading-relaxed group-hover:text-gray-200 transition-colors">
-              {description}
-            </p>
-            
-            {/* Stats Badge */}
-            {stats && (
-              <div className="inline-flex items-center gap-2 glass-card px-4 py-2 rounded-xl border border-green-500/30">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-                <span className="text-sm font-medium text-green-300">{stats}</span>
-              </div>
-            )}
-          </div>
-          
-          {/* CTA */}
-          <div className="flex items-center gap-3 text-purple-400 group-hover:text-purple-300 transition-colors">
-            <span className="font-medium">Explore Solution</span>
-            <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-          </div>
+
+          {/* Bottom accent line */}
+          <div className={cn(
+            "absolute bottom-0 left-0 right-0 h-1 opacity-0 group-hover:opacity-100 transition-opacity duration-500",
+            `bg-gradient-to-r ${accent.gradient}`
+          )} />
         </div>
-        
-        {/* Hover border glow */}
-        <div className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none border border-purple-400/50" />
       </div>
     </motion.div>
   )
