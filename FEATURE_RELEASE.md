@@ -57,9 +57,6 @@ For granular control or troubleshooting.
 #### Frontend Deployment
 
 ```bash
-# 1. SSH into droplet
-ssh root@137.184.31.207
-
 # 2. Navigate to frontend directory
 cd /root/projects/astralis-next
 
@@ -69,10 +66,13 @@ git pull origin main
 # 4. Install dependencies (use yarn as configured)
 yarn install
 
-# 5. Build Next.js (if server has enough RAM, otherwise build locally)
+# 5.  SKIPPED due to memeory leak: Build Next.js (if server has enough RAM, otherwise build locally)
 # Note: This may cause OOM on 2GB droplets - use Method 1 instead
-npm run build
 
+# npm run build
+
+#  cp artifacts to the deploy folder to be used by caddy/pm2
+cp /root/projects/astralis-next/dist /home/deploy/astralis-next
 # 6. Restart frontend
 pm2 restart astralis-frontend
 
@@ -98,7 +98,10 @@ npx prisma migrate deploy
 npx prisma generate
 
 # 5. Build TypeScript to JavaScript
-yarn build
+#  cp artifacts to the deploy folder to be used by caddy/pm2
+cp /root/projects/astralis-server/server /home/deploy/astralis-server
+
+# do not build.... the build process is down locally and commited
 
 # 6. Restart backend
 pm2 restart astralis-server

@@ -1,8 +1,0 @@
-__turbopack_load_page_chunks__("/booking-success", [
-  "static/chunks/e67212e80ee6c5d5.js",
-  "static/chunks/8173c68536de6bcf.js",
-  "static/chunks/c033c8b70096924d.js",
-  "static/chunks/c5a973a5874630ee.js",
-  "static/chunks/58df4c524cbe8809.js",
-  "static/chunks/turbopack-243fe1e14cae80cb.js"
-])
