@@ -31,8 +31,8 @@ globalThis.__BUILD_MANIFEST = {
       "static/chunks/e67212e80ee6c5d5.js",
       "static/chunks/eb80d9374396ec54.js",
       "static/chunks/563540d5d7e6d219.js",
-      "static/chunks/e79fd1a9c54ae7c8.css",
-      "static/chunks/turbopack-06676c7dc1e15099.js"
+      "static/chunks/495e6529b206f353.css",
+      "static/chunks/turbopack-3dee03fcab864441.js"
     ],
     "/_error": [
       "static/chunks/322d71d8afdee327.js",
