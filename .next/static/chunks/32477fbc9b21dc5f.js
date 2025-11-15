@@ -1,0 +1,12 @@
+__turbopack_load_page_chunks__("/checkout", [
+  "static/chunks/a1762c51a721c74b.js",
+  "static/chunks/ef101e870dea217e.js",
+  "static/chunks/7cfb115ddc8b2c87.js",
+  "static/chunks/8173c68536de6bcf.js",
+  "static/chunks/eb80d9374396ec54.js",
+  "static/chunks/6f330500b8ae44f2.js",
+  "static/chunks/ec9f9ba68cd43d4c.js",
+  "static/chunks/c033c8b70096924d.js",
+  "static/chunks/7cdda00282262b6e.js",
+  "static/chunks/turbopack-8321269e4b964807.js"
+])
