@@ -1,0 +1,3 @@
+module.exports=[798338,a=>{"use strict";function b(a){a.languages.bnf={string:{pattern:/"[^\r\n"]*"|'[^\r\n']*'/},definition:{pattern:/<[^<>\r\n\t]+>(?=\s*::=)/,alias:["rule","keyword"],inside:{punctuation:/^<|>$/}},rule:{pattern:/<[^<>\r\n\t]+>/,inside:{punctuation:/^<|>$/}},operator:/::=|[|()[\]{}*+?]|\.{3}/},a.languages.rbnf=a.languages.bnf}b.displayName="bnf",b.aliases=["rbnf"],a.s(["default",()=>b])}];
+
+//# sourceMappingURL=0780a_refractor_lang_bnf_5f3d2678.js.map

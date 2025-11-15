@@ -1,0 +1,3 @@
+module.exports=[760479,a=>{"use strict";function b(a){a.languages.properties={comment:/^[ \t]*[#!].*$/m,value:{pattern:/(^[ \t]*(?:\\(?:\r\n|[\s\S])|[^\\\s:=])+(?: *[=:] *(?! )| ))(?:\\(?:\r\n|[\s\S])|[^\\\r\n])+/m,lookbehind:!0,alias:"attr-value"},key:{pattern:/^[ \t]*(?:\\(?:\r\n|[\s\S])|[^\\\s:=])+(?= *[=:]| )/m,alias:"attr-name"},punctuation:/[=:]/}}b.displayName="properties",b.aliases=[],a.s(["default",()=>b])}];
+
+//# sourceMappingURL=0780a_refractor_lang_properties_5a7676b1.js.map

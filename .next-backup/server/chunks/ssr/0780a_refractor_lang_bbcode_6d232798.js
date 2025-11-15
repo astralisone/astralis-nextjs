@@ -1,0 +1,3 @@
+module.exports=[729389,a=>{"use strict";function b(a){a.languages.bbcode={tag:{pattern:/\[\/?[^\s=\]]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s'"\]=]+))?(?:\s+[^\s=\]]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s'"\]=]+))*\s*\]/,inside:{tag:{pattern:/^\[\/?[^\s=\]]+/,inside:{punctuation:/^\[\/?/}},"attr-value":{pattern:/=\s*(?:"[^"]*"|'[^']*'|[^\s'"\]=]+)/,inside:{punctuation:[/^=/,{pattern:/^(\s*)["']|["']$/,lookbehind:!0}]}},punctuation:/\]/,"attr-name":/[^\s=\]]+/}}},a.languages.shortcode=a.languages.bbcode}b.displayName="bbcode",b.aliases=["shortcode"],a.s(["default",()=>b])}];
+
+//# sourceMappingURL=0780a_refractor_lang_bbcode_6d232798.js.map

@@ -1,0 +1,3 @@
+module.exports=[981751,a=>{"use strict";function b(a){a.languages["nand2tetris-hdl"]={comment:/\/\/.*|\/\*[\s\S]*?(?:\*\/|$)/,keyword:/\b(?:BUILTIN|CHIP|CLOCKED|IN|OUT|PARTS)\b/,boolean:/\b(?:false|true)\b/,function:/\b[A-Za-z][A-Za-z0-9]*(?=\()/,number:/\b\d+\b/,operator:/=|\.\./,punctuation:/[{}[\];(),:]/}}b.displayName="nand2tetris-hdl",b.aliases=[],a.s(["default",()=>b])}];
+
+//# sourceMappingURL=0780a_refractor_lang_nand2tetris-hdl_0f5247ba.js.map
