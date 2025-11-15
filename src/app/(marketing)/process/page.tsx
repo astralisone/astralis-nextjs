@@ -2,7 +2,6 @@ import { Metadata } from 'next';
 import { ProcessHero } from '@/components/sections/process/ProcessHero';
 import { ProcessSteps } from '@/components/sections/process/ProcessSteps';
 import { ProcessMethodology } from '@/components/sections/process/ProcessMethodology';
-import { ProcessTimeline } from '@/components/services/ProcessTimeline';
 import { ProcessCTA } from '@/components/sections/process/ProcessCTA';
 
 export const metadata: Metadata = {
@@ -29,7 +28,6 @@ export default function ProcessPage() {
       <ProcessHero />
       <ProcessSteps />
       <ProcessMethodology />
-      <ProcessTimeline />
       <ProcessCTA />
     </main>
   );
