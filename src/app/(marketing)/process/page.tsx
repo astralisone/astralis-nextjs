@@ -24,12 +24,39 @@ export const metadata: Metadata = {
 };
 
 export default function ProcessPage() {
+  const timelineSteps = [
+    {
+      title: 'Discovery & Strategy',
+      description: 'We analyze your business needs and create a tailored AI automation strategy.',
+      duration: '1-2 weeks',
+      deliverables: ['Business analysis report', 'AI strategy roadmap', 'ROI projections']
+    },
+    {
+      title: 'Design & Planning',
+      description: 'Detailed planning of your AI solution architecture and implementation.',
+      duration: '2-3 weeks',
+      deliverables: ['Technical architecture', 'Integration plan', 'Project timeline']
+    },
+    {
+      title: 'Development & Integration',
+      description: 'Building and integrating your custom AI automation solution.',
+      duration: '4-8 weeks',
+      deliverables: ['Custom AI solution', 'System integrations', 'Testing reports']
+    },
+    {
+      title: 'Launch & Optimization',
+      description: 'Deploy your solution and continuously optimize for peak performance.',
+      duration: 'Ongoing',
+      deliverables: ['Production deployment', 'Performance metrics', '24/7 support']
+    }
+  ];
+
   return (
     <main className="min-h-screen bg-background">
       <ProcessHero />
       <ProcessSteps />
       <ProcessMethodology />
-      <ProcessTimeline />
+      <ProcessTimeline steps={timelineSteps} />
       <ProcessCTA />
     </main>
   );
