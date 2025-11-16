@@ -27,29 +27,23 @@ export default function BookingSuccessPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Read booking data from localStorage
-    if (typeof window !== 'undefined') {
-      const storedData = localStorage.getItem('bookingData');
-      if (storedData) {
-        try {
-          const parsedData = JSON.parse(storedData);
-          setState(parsedData);
-          // Clear the data after reading
-          localStorage.removeItem('bookingData');
-        } catch (error) {
-          console.error('Error parsing booking data:', error);
-        }
-      }
-      setIsLoading(false);
-    }
-  }, []);
+    // Read booking data from URL parameters
+    const { data } = router.query;
 
-  useEffect(() => {
-    // If no booking data after loading, redirect to home
-    if (!isLoading && !state) {
-      setTimeout(() => router.push('/'), 3000);
+    if (data && typeof data === 'string') {
+      try {
+        const decodedData = decodeURIComponent(data);
+        const parsedData = JSON.parse(decodedData);
+        setState(parsedData);
+      } catch (error) {
+        console.error('Error parsing booking data from URL:', error);
+      }
     }
-  }, [isLoading, state, router]);
+
+    setIsLoading(false);
+  }, [router.query]);
+
+  // Removed auto-redirect - users should stay on success page
 
   if (isLoading) {
     return (
@@ -64,8 +58,22 @@ export default function BookingSuccessPage() {
   if (!state || !state.booking) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-neutral-950 via-neutral-900 to-primary-950/20 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-white">Redirecting...</p>
+        <div className="text-center max-w-md mx-auto px-4">
+          <div className="w-20 h-20 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-yellow-500/30">
+            <span className="text-4xl">⚠️</span>
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-4">
+            No Booking Information Found
+          </h1>
+          <p className="text-gray-300 mb-8">
+            We couldn't find your booking details. This page should be accessed after completing a booking.
+          </p>
+          <Button
+            onClick={() => router.push('/')}
+            className="btn-primary"
+          >
+            Return Home
+          </Button>
         </div>
       </div>
     );
@@ -290,8 +298,8 @@ export default function BookingSuccessPage() {
                     <p className="text-white font-semibold">Need to make changes?</p>
                     <p className="text-gray-300 text-sm">
                       Reply to the confirmation email or contact us at{' '}
-                      <a href="mailto:hello@astralisagency.com" className="text-primary-400 hover:underline">
-                        hello@astralisagency.com
+                      <a href="mailto:ceo@astralisone.com" className="text-primary-400 hover:underline">
+                        ceo@astralisone.com
                       </a>
                     </p>
                   </div>

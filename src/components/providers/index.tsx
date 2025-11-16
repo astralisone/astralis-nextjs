@@ -3,6 +3,7 @@
 import { SessionProvider } from "next-auth/react"
 import { ThemeProvider } from "./theme-provider"
 import { PayPalProvider } from "./payment/paypal-provider"
+import { NewsletterModalProvider } from "./newsletter-modal-provider"
 
 interface ProvidersProps {
   children: React.ReactNode
@@ -18,7 +19,9 @@ export function Providers({ children }: ProvidersProps) {
     >
       <ThemeProvider defaultTheme="dark" storageKey="astralis-theme">
         <PayPalProvider>
-          {children}
+          <NewsletterModalProvider>
+            {children}
+          </NewsletterModalProvider>
         </PayPalProvider>
       </ThemeProvider>
     </SessionProvider>

@@ -263,10 +263,10 @@ export function NewsletterConfirmation() {
             <p className="text-gray-400 text-sm">
               Questions? Contact us at{' '}
               <a
-                href="mailto:hello@astralis.one"
+                href="mailto:ceo@astralisone.com"
                 className="text-purple-400 hover:text-purple-300 underline"
               >
-                hello@astralis.one
+                ceo@astralisone.com
               </a>
             </p>
             <p className="text-gray-500 text-xs mt-2">

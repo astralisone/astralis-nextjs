@@ -261,7 +261,7 @@ npm run dev
    ```bash
    curl -X POST http://localhost:3001/api/proxy/auth/login \
      -H "Content-Type: application/json" \
-     -d '{"email":"admin@astralis.one","password":"45tr4l15"}'
+     -d '{"email":"ceo@astralisone.com","password":"45tr4l15"}'
    ```
 
 4. **Use Demo Component**:

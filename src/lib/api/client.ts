@@ -1,11 +1,14 @@
 import axios from 'axios';
 
 // Create axios instance for API calls
+// Points directly to Express backend (not through Next.js proxy)
 export const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000',
   headers: {
     'Content-Type': 'application/json',
   },
+  // Enable credentials for CORS requests
+  withCredentials: true,
 });
 
 // Request interceptor to add auth token

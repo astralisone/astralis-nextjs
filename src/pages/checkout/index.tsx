@@ -11,28 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useMount } from "@/hooks"
 import { useToast } from "@/hooks"
 import axios from "@/lib/axios"
-
-
-
-
-function callGTAG(orderObj:any){
-  const serializedOrder = JSON.stringify(orderObj);
-  let gtag = window.gtag; // possibly undefined
-  if (typeof window !== 'undefined') {
-    if (typeof gtag === 'function') {
-      console.log('GTAG found')
-      gtag('event', 'ads_conversion_Purchase', orderObj);
-    } else {
-      // fallback: push to dataLayer if present (the usual gtag queue)
-      (window.dataLayer = window.dataLayer || []).push({
-        event: 'gtag_not_found',
-        value: orderObj
-      });
-       console.log('GTAG not found, falling back')
-    }
-  }
-
-}
+import { trackPurchase } from "@/lib/analytics/gtag"
 
 type CheckoutStep = 'review' | 'shipping' | 'payment' | 'confirmation'
 
@@ -150,8 +129,18 @@ export default function CheckoutPage() {
       setOrderId(order.id)
       clearCart()
 
-      // call google ads 
-      callGTAG(order)
+      // Track purchase conversion with Google Analytics
+      trackPurchase({
+        id: order.id,
+        total: orderTotals.total,
+        items: items.map(item => ({
+          item_id: item.id,
+          item_name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+        })),
+        currency: 'USD',
+      })
 
       setCurrentStep('confirmation')
       

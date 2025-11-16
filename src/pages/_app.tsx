@@ -7,6 +7,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { SessionProvider } from 'next-auth/react';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
+import { GoogleAnalyticsPagesRouter } from '@/components/analytics/GoogleAnalyticsPagesRouter';
 
 // Routes that should NOT have header/footer (full-screen layouts)
 const excludedRoutes = [
@@ -32,6 +33,7 @@ export default function App({ Component, pageProps: { session, ...pageProps } }:
       <AuthProvider>
         <ThemeProvider defaultTheme="dark" storageKey="astralis-theme">
           <HelmetProvider>
+            <GoogleAnalyticsPagesRouter />
             {showLayout && <Header />}
             <Component {...pageProps} />
             {showLayout && <Footer />}
