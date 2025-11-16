@@ -279,7 +279,7 @@ fetch('/api/proxy/auth/login', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
-    email: 'admin@astralis.one',
+    email: 'ceo@astralisone.com',
     password: '45tr4l15'
   })
 })

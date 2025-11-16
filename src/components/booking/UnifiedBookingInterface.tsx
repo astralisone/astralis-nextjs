@@ -190,7 +190,16 @@ export function UnifiedBookingInterface({
       }
 
       const booking = await response.json();
-      
+
+      // Track booking completion with Google Analytics
+      if (typeof window !== 'undefined' && (window as any).gtag) {
+        (window as any).gtag('event', 'booking_completed', {
+          event_category: 'engagement',
+          event_label: isRevenueAudit ? 'revenue-audit' : formData.type,
+          value: 1
+        });
+      }
+
       toast({
         title: 'Booking Confirmed!',
         description: `Your ${isRevenueAudit ? 'revenue audit' : 'consultation'} has been scheduled successfully.`,
@@ -226,6 +235,32 @@ export function UnifiedBookingInterface({
         return true;
       default:
         return false;
+    }
+  };
+
+  const getValidationMessage = (step: number): string => {
+    switch (step) {
+      case 1:
+        if (!formData.clientName) return 'Please enter your name';
+        if (!formData.clientEmail) return 'Please enter your email';
+        if (!formData.company) return 'Please enter your company name';
+        return '';
+      case 2:
+        if (!formData.selectedDate) return 'Please select a date';
+        if (!formData.selectedTime) return 'Please select a time';
+        return '';
+      case 3:
+        if (isRevenueAudit) {
+          if (!formData.specificAreas || formData.specificAreas.length === 0) {
+            return 'Please select at least one focus area';
+          }
+        } else {
+          if (!formData.consultationType) return 'Please select a consultation type';
+          if (!formData.objectives) return 'Please describe your objectives';
+        }
+        return '';
+      default:
+        return '';
     }
   };
 
@@ -839,23 +874,47 @@ export function UnifiedBookingInterface({
               Back
             </Button>
             
-            {currentStep < totalSteps ? (
-              <Button
-                onClick={() => setCurrentStep(prev => prev + 1)}
-                disabled={!canProceed(currentStep)}
-                className="btn-primary"
-              >
-                Continue
-              </Button>
-            ) : (
-              <Button
-                onClick={handleSubmit}
-                disabled={isSubmitting || !canProceed(currentStep)}
-                className="btn-primary"
-              >
-                {isSubmitting ? 'Booking...' : `Confirm ${isRevenueAudit ? 'Audit' : 'Consultation'}`}
-              </Button>
-            )}
+            <div className="flex flex-col items-end gap-2">
+              {currentStep < totalSteps ? (
+                <>
+                  <Button
+                    onClick={() => setCurrentStep(prev => prev + 1)}
+                    disabled={!canProceed(currentStep)}
+                    className="btn-primary"
+                  >
+                    Continue
+                  </Button>
+                  {!canProceed(currentStep) && (
+                    <p className="text-sm text-yellow-400 flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4" />
+                      {getValidationMessage(currentStep)}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={isSubmitting || !canProceed(currentStep)}
+                    className="btn-primary"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Booking...
+                      </>
+                    ) : (
+                      `Confirm ${isRevenueAudit ? 'Audit' : 'Consultation'}`
+                    )}
+                  </Button>
+                  {!canProceed(currentStep) && !isSubmitting && (
+                    <p className="text-sm text-yellow-400">
+                      Please review all information before confirming
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>

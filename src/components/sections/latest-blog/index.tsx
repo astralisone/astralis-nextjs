@@ -10,12 +10,15 @@ import { Skeleton } from '@/components/ui/skeleton'
 import Link from 'next/link'
 import { BlogCard } from '@/components/blog/blog-list/blog-card'
 import { ArrowRight, BookOpen, TrendingUp, User } from 'lucide-react'
+import { useNewsletterModal } from '@/components/providers/newsletter-modal-provider'
 
 interface LatestBlogPostsResponse {
   posts: BlogPost[]
 }
 
 export function LatestBlogSection() {
+  const { openNewsletterModal } = useNewsletterModal();
+
   // Fetch latest blog posts - preserving existing API integration
   const {
     data: blogData,
@@ -140,8 +143,12 @@ export function LatestBlogSection() {
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
-                <Button asChild variant="outline" size="lg">
-                  <Link href="/contact">Subscribe to Newsletter</Link>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={openNewsletterModal}
+                >
+                  Subscribe to Newsletter
                 </Button>
               </div>
             </div>

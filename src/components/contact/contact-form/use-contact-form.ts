@@ -31,7 +31,7 @@ export function useContactForm() {
     setErrorMessage("")
 
     try {
-      const response = await api.post('/contact/submit', values)
+      const response = await api.post('/api/contact/submit', values)
 
       if (response.status === 201) {
         // Show success toast
@@ -49,6 +49,9 @@ export function useContactForm() {
     } catch (error: any) {
       console.error('Contact form submission error:', error)
 
+      // Check if this is a "partial success" (form saved but email failed)
+      const isPartialSuccess = error.response?.data?.details?.formSaved === true
+
       // Determine error message
       let errorMsg = "Failed to send message. Please try again."
       if (error.response?.data?.error) {
@@ -61,15 +64,30 @@ export function useContactForm() {
 
       setErrorMessage(errorMsg)
 
-      // Show error toast
-      toast({
-        title: "Failed to send message",
-        description: errorMsg,
-        variant: "destructive",
-      })
+      // Handle partial success differently (warning instead of error)
+      if (isPartialSuccess) {
+        toast({
+          title: "Message received!",
+          description: errorMsg,
+          variant: "default", // Use default variant for warning (not destructive)
+        })
 
-      // Show error dialog
-      setShowErrorDialog(true)
+        // Still show success since the form was saved
+        setShowSuccessDialog(true)
+
+        // Reset form since it was saved
+        form.reset()
+      } else {
+        // Complete failure - show error
+        toast({
+          title: "Failed to send message",
+          description: errorMsg,
+          variant: "destructive",
+        })
+
+        // Show error dialog
+        setShowErrorDialog(true)
+      }
     } finally {
       setIsSubmitting(false)
     }
