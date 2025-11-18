@@ -1,0 +1,7 @@
+[00:00:00.341] Server  LOG      ✓ Ready in 229ms
+[00:00:06.975] Browser WARN    Image with src "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[00:00:40.104] Server  LOG     New booking received: {}
+[00:40:09.559] Server  LOG        Reload env: .env.local
+[00:40:09.624] Server  LOG      ✓ Compiled in 15ms
+[00:40:09.634] Server  WARN     ⚠ Fast Refresh had to perform a full reload when ./projects/astralis-nextjs/node_modules/next/dist/client/image-component.js changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+[00:40:09.686] Server  LOG      ✓ Compiled in 0ms

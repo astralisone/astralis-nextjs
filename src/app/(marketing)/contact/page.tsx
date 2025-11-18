@@ -12,6 +12,8 @@
  * - Astralis Blue accents
  */
 
+'use client';
+
 import Image from 'next/image';
 import { Hero } from '@/components/sections';
 import { Button } from '@/components/ui/button';
@@ -19,8 +21,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Mail, Calendar, MapPin, Phone } from 'lucide-react';
+import { BookingModal } from '@/components/booking/BookingModal';
+import { useState } from 'react';
 
 export default function ContactPage() {
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   return (
     <main className="min-h-screen bg-white">
       {/* Hero Section */}
@@ -160,10 +165,10 @@ export default function ContactPage() {
                     <div>
                       <p className="text-sm font-medium text-slate-700">Email</p>
                       <a
-                        href="mailto:hello@astralis.com"
+                        href="mailto:support@astralisone.com"
                         className="text-astralis-blue hover:underline"
                       >
-                        hello@astralis.com
+                        support@astralisone.com
                       </a>
                     </div>
                   </div>
@@ -174,10 +179,10 @@ export default function ContactPage() {
                     <div>
                       <p className="text-sm font-medium text-slate-700">Phone</p>
                       <a
-                        href="tel:+15551234567"
+                        href="tel:+13412234433"
                         className="text-astralis-blue hover:underline"
                       >
-                        +1 (555) 123-4567
+                        +1 (341) 223-4433
                       </a>
                     </div>
                   </div>
@@ -210,11 +215,9 @@ export default function ContactPage() {
                   variant="secondary"
                   size="default"
                   className="w-full bg-white text-astralis-blue hover:bg-slate-100 border-0"
-                  asChild
+                  onClick={() => setIsBookingModalOpen(true)}
                 >
-                  <a href="#" target="_blank" rel="noopener noreferrer">
-                    Book a Call
-                  </a>
+                  Book a Call
                 </Button>
               </div>
 
@@ -228,6 +231,12 @@ export default function ContactPage() {
           </div>
         </div>
       </section>
+
+      {/* Booking Modal */}
+      <BookingModal
+        isOpen={isBookingModalOpen}
+        onClose={() => setIsBookingModalOpen(false)}
+      />
     </main>
   );
 }
