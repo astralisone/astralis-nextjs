@@ -2,6 +2,7 @@ import "./globals.css";
 import { Inter } from "next/font/google";
 import type { ReactNode } from "react";
 import { Navigation } from "@/components/layout/navigation";
+import { GoogleAnalytics } from "@/components/analytics";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -17,6 +18,9 @@ export const metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={inter.variable}>
+      <head>
+        <GoogleAnalytics />
+      </head>
       <body className="min-h-screen bg-white text-slate-900 antialiased font-sans">
         <div className="flex min-h-screen flex-col">
           <Navigation />
