@@ -76,8 +76,8 @@ export function Navigation() {
 
   return (
     <header className="sticky top-0 z-50 w-full bg-astralis-navy border-b border-slate-700 shadow-lg">
-      <nav className="mx-auto max-w-[1400px] px-6 sm:px-8 md:px-12 lg:px-20" aria-label="Main navigation">
-        <div className="flex h-20 items-center justify-between gap-8">
+      <nav className="mx-auto max-w-[1400px] px-6 sm:px-8 md:px-12 lg:px-20 py-4" aria-label="Main navigation">
+        <div className="flex h-24 items-center justify-between gap-8">
           {/* Logo */}
           <div className="flex-shrink-0 py-2">
             <Link
@@ -90,15 +90,15 @@ export function Navigation() {
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden items-center gap-8 lg:flex flex-1 justify-end">
+          <div className="hidden items-center gap-10 lg:flex flex-1 justify-end">
             {/* Nav Links */}
-            <ul className="flex items-center gap-8" role="list">
+            <ul className="flex items-center gap-10" role="list">
               {navItems.map((item) => (
                 <li key={item.href}>
                   <Link
                     href={item.href}
                     className={cn(
-                      'relative inline-block px-3 py-2 text-base font-medium transition-all duration-200',
+                      'relative inline-block px-4 py-3 text-base font-medium transition-all duration-200',
                       isActive(item.href)
                         ? 'text-white'
                         : 'text-slate-300 hover:text-white'
@@ -121,7 +121,7 @@ export function Navigation() {
             <Button
               variant="outline"
               size="default"
-              className="border-2 border-white bg-transparent text-white hover:bg-white hover:text-astralis-navy font-semibold px-6 rounded-md transition-all duration-200 ml-4"
+              className="border-2 border-white bg-transparent text-white hover:bg-white hover:text-astralis-navy font-semibold px-8 py-3 rounded-md transition-all duration-200 ml-6"
               asChild
             >
               <Link href="/contact">Contact</Link>
