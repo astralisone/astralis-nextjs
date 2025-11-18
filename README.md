@@ -2,6 +2,8 @@
 
 This is the Next.js 15 migration of the Astralis Agency application, using a hybrid routing approach with both App Router and Pages Router.
 
+> **Note**: Additional documentation including migration guides, deployment instructions, and API integration details can be found in the [legacy-docs](./legacy-docs) folder.
+
 ## Project Setup
 
 ### Technology Stack
