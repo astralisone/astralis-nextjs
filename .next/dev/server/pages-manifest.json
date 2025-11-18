@@ -1,8 +1,0 @@
-{
-  "/_app": "pages/_app.js",
-  "/_document": "pages/_document.js",
-  "/_error": "pages/_error.js",
-  "/book-consultation": "pages/book-consultation.js",
-  "/book-revenue-audit": "pages/book-revenue-audit.js",
-  "/booking-success": "pages/booking-success.js"
-}

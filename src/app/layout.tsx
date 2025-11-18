@@ -1,30 +1,33 @@
-import type { Metadata } from "next";
 import "./globals.css";
-import { Providers } from "@/components/providers";
-import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
+import { Inter } from "next/font/google";
+import type { ReactNode } from "react";
+import { Navigation } from "@/components/layout/navigation";
 
-// Using system fonts for build compatibility
-// Note: In production, consider using a CDN or local font files
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
 
-export const metadata: Metadata = {
-  title: "Astralis Agency",
-  description: "Premium digital agency services with dark theme design system",
+export const metadata = {
+  title: "Astralis One | AI-Powered Operations Platform",
+  description: "Automate your operations. Scale without hiring. AstralisOps centralizes intake, scheduling, document processing, and workflows into one AI-driven console.",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className="dark">
-      <head>
-        <GoogleAnalytics />
-      </head>
-      <body className="font-sans antialiased">
-        <Providers>
-          {children}
-        </Providers>
+    <html lang="en" className={inter.variable}>
+      <body className="min-h-screen bg-white text-slate-900 antialiased font-sans">
+        <div className="flex min-h-screen flex-col">
+          <Navigation />
+          <main className="flex-1">{children}</main>
+          <footer className="border-t border-slate-200 bg-slate-50">
+            <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-6 text-xs text-slate-600">
+              <span>© {new Date().getFullYear()} Astralis. All rights reserved.</span>
+              <span>AstralisOps · Automation Services · Marketplace</span>
+            </div>
+          </footer>
+        </div>
       </body>
     </html>
   );

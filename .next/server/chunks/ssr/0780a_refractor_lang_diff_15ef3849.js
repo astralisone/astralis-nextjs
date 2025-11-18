@@ -1,3 +1,0 @@
-module.exports=[523978,a=>{"use strict";function b(a){var b;a.languages.diff={coord:[/^(?:\*{3}|-{3}|\+{3}).*$/m,/^@@.*@@$/m,/^\d.*$/m]},Object.keys(b={"deleted-sign":"-","deleted-arrow":"<","inserted-sign":"+","inserted-arrow":">",unchanged:" ",diff:"!"}).forEach(function(c){var d=b[c],e=[];/^\w+$/.test(c)||e.push(/\w+/.exec(c)[0]),"diff"===c&&e.push("bold"),a.languages.diff[c]={pattern:RegExp("^(?:["+d+"].*(?:\r\n?|\n|(?![\\s\\S])))+","m"),alias:e,inside:{line:{pattern:/(.)(?=[\s\S]).*(?:\r\n?|\n)?/,lookbehind:!0},prefix:{pattern:/[\s\S]/,alias:/\w+/.exec(c)[0]}}}}),Object.defineProperty(a.languages.diff,"PREFIXES",{value:b})}b.displayName="diff",b.aliases=[],a.s(["default",()=>b])}];
-
-//# sourceMappingURL=0780a_refractor_lang_diff_15ef3849.js.map

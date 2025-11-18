@@ -1,0 +1,197 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  OPERATOR
+  CLIENT
+}
+
+model Organization {
+  id        String    @id @default(cuid())
+  name      String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  users             User[]
+  pipelines         Pipeline[]
+  documents         Document[]
+  intakeRequests    IntakeRequest[]
+  automations       Automation[]
+  schedulingEvents  SchedulingEvent[]
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  name         String?
+  role         Role          @default(OPERATOR)
+  orgId        String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  organization Organization  @relation(fields: [orgId], references: [id])
+  pipelines    Pipeline[]    @relation("PipelineOperators")
+}
+
+model Pipeline {
+  id           String        @id @default(cuid())
+  name         String
+  orgId        String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  organization   Organization    @relation(fields: [orgId], references: [id])
+  stages         Stage[]
+  operators      User[]          @relation("PipelineOperators")
+  intakeRequests IntakeRequest[]
+}
+
+model Stage {
+  id         String       @id @default(cuid())
+  name       String
+  order      Int
+  pipelineId String
+
+  pipeline   Pipeline     @relation(fields: [pipelineId], references: [id])
+  items      PipelineItem[]
+}
+
+model PipelineItem {
+  id        String       @id @default(cuid())
+  title     String
+  data      Json
+  stageId   String
+  createdAt DateTime     @default(now())
+
+  stage     Stage        @relation(fields: [stageId], references: [id])
+}
+
+enum DocumentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum IntakeSource {
+  FORM
+  EMAIL
+  CHAT
+  API
+}
+
+enum IntakeStatus {
+  NEW
+  ROUTING
+  ASSIGNED
+  PROCESSING
+  COMPLETED
+  REJECTED
+}
+
+model Document {
+  id              String         @id @default(cuid())
+  fileName        String
+  filePath        String
+  fileSize        Int
+  mimeType        String
+  status          DocumentStatus @default(PENDING)
+  ocrText         String?        @db.Text
+  extractedData   Json?
+  metadata        Json?
+  uploadedBy      String
+  orgId           String
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  organization    Organization   @relation(fields: [orgId], references: [id])
+
+  @@index([orgId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model IntakeRequest {
+  id              String         @id @default(cuid())
+  source          IntakeSource
+  status          IntakeStatus   @default(NEW)
+  title           String
+  description     String?        @db.Text
+  requestData     Json
+  aiRoutingMeta   Json?
+  assignedPipeline String?
+  priority        Int            @default(0)
+  orgId           String
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  organization    Organization   @relation(fields: [orgId], references: [id])
+  pipeline        Pipeline?      @relation(fields: [assignedPipeline], references: [id])
+
+  @@index([orgId])
+  @@index([status])
+  @@index([source])
+  @@index([createdAt])
+  @@index([priority])
+}
+
+model Automation {
+  id              String         @id @default(cuid())
+  name            String
+  description     String?        @db.Text
+  workflowId      String?
+  webhookUrl      String?
+  isActive        Boolean        @default(true)
+  triggerConfig   Json
+  lastRunAt       DateTime?
+  runCount        Int            @default(0)
+  orgId           String
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  organization    Organization   @relation(fields: [orgId], references: [id])
+
+  @@index([orgId])
+  @@index([isActive])
+  @@index([workflowId])
+}
+
+enum EventStatus {
+  SCHEDULED
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  CONFLICT
+}
+
+model SchedulingEvent {
+  id              String         @id @default(cuid())
+  title           String
+  description     String?        @db.Text
+  startTime       DateTime
+  endTime         DateTime
+  participants    Json
+  calendarIntegration Json?
+  aiScheduled     Boolean        @default(false)
+  status          EventStatus    @default(SCHEDULED)
+  conflictData    Json?
+  orgId           String
+  createdBy       String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  organization    Organization   @relation(fields: [orgId], references: [id])
+
+  @@index([orgId])
+  @@index([status])
+  @@index([startTime])
+  @@index([endTime])
+  @@index([aiScheduled])
+}

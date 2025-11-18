@@ -1,17 +1,1 @@
-{
-  "/(marketing)/about/page": "/about",
-  "/(marketing)/blog/[slug]/page": "/blog/[slug]",
-  "/(marketing)/blog/page": "/blog",
-  "/(marketing)/contact/page": "/contact",
-  "/(marketing)/marketplace/[id]/page": "/marketplace/[id]",
-  "/(marketing)/marketplace/page": "/marketplace",
-  "/(marketing)/page": "/",
-  "/(marketing)/process/page": "/process",
-  "/_global-error/page": "/_global-error",
-  "/_not-found/page": "/_not-found",
-  "/api/auth/[...nextauth]/route": "/api/auth/[...nextauth]",
-  "/api/proxy/[...path]/route": "/api/proxy/[...path]",
-  "/favicon.ico/route": "/favicon.ico",
-  "/robots.txt/route": "/robots.txt",
-  "/sitemap.xml/route": "/sitemap.xml"
-}
+{"/_not-found/page":"/_not-found","/(marketing)/about/page":"/about","/(marketing)/contact/page":"/contact","/(marketing)/marketplace/page":"/marketplace","/(marketing)/services/page":"/services","/(marketing)/blog/page":"/blog","/api/automations/route":"/api/automations","/api/orgs/route":"/api/orgs","/api/pipelines/[id]/items/route":"/api/pipelines/[id]/items","/api/pipelines/route":"/api/pipelines","/api/users/route":"/api/users","/page":"/","/api/intake/route":"/api/intake","/astralisops/page":"/astralisops","/solutions/page":"/solutions"}
