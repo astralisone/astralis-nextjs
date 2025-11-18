@@ -1,0 +1,11 @@
+{
+  "id": "pipeline-templates",
+  "name": "Pipeline Templates",
+  "version": "0.1.0",
+  "tags": [
+    "astralisops",
+    "automation"
+  ],
+  "price": 0,
+  "status": "draft"
+}

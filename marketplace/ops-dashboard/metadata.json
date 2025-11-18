@@ -1,0 +1,11 @@
+{
+  "id": "ops-dashboard",
+  "name": "Ops Dashboard",
+  "version": "0.1.0",
+  "tags": [
+    "astralisops",
+    "automation"
+  ],
+  "price": 0,
+  "status": "draft"
+}

@@ -1,3 +1,0 @@
-module.exports=[367968,a=>{"use strict";function b(a){a.languages.ignore={comment:/^#.*/m,entry:{pattern:/\S(?:.*(?:(?:\\ )|\S))?/,alias:"string",inside:{operator:/^!|\*\*?|\?/,regex:{pattern:/(^|[^\\])\[[^\[\]]*\]/,lookbehind:!0},punctuation:/\//}}},a.languages.gitignore=a.languages.ignore,a.languages.hgignore=a.languages.ignore,a.languages.npmignore=a.languages.ignore}b.displayName="ignore",b.aliases=["gitignore","hgignore","npmignore"],a.s(["default",()=>b])}];
-
-//# sourceMappingURL=0780a_refractor_lang_ignore_f9055046.js.map
