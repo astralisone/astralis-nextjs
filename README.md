@@ -1,187 +1,136 @@
-# Astralis Agency - Next.js 15 Migration
+# Astralis One — Multi-Agent Engineering Platform
 
-This is the Next.js 15 migration of the Astralis Agency application, using a hybrid routing approach with both App Router and Pages Router.
+Enterprise-grade AI operations platform built with Next.js 14, TypeScript, and Prisma.
 
-> **Note**: Additional documentation including migration guides, deployment instructions, and API integration details can be found in the [legacy-docs](./legacy-docs) folder.
-
-## Project Setup
-
-### Technology Stack
-
-- **Framework**: Next.js 15.0.1 with React 19.2.0
-- **Language**: TypeScript 5
-- **Styling**: Tailwind CSS 4
-- **State Management**: Zustand 5.0.8
-- **Forms**: React Hook Form 7.66.0 + Zod 4.1.12
-- **Authentication**: NextAuth.js v5 (beta)
-- **Database**: Prisma with PostgreSQL
-- **Payments**: PayPal & Stripe
-- **UI Components**: Radix UI primitives
-- **HTTP Client**: Axios
-
-### Architecture
-
-This project uses a **hybrid routing approach**:
-
-- **App Router** (`/src/app`) - For SEO-critical pages (marketing, blog, marketplace)
-- **Pages Router** (`/src/pages`) - For interactive dashboards (admin, checkout, orders)
-
-### Directory Structure
-
-```
-src/
-├── app/                        # App Router (Next.js 13+ routing)
-│   ├── (marketing)/           # Route group for marketing pages
-│   │   ├── page.tsx          # Homepage
-│   │   ├── about/            # About page
-│   │   ├── contact/          # Contact page
-│   │   └── layout.tsx        # Marketing layout
-│   ├── marketplace/          # Product listing (SSR)
-│   ├── blog/                 # Blog posts (SSR/SSG)
-│   ├── api/                  # API Route Handlers
-│   │   ├── auth/            # Auth endpoints
-│   │   └── proxy/           # Proxy to Express backend
-│   └── layout.tsx           # Root layout
-├── pages/                    # Pages Router (legacy routing)
-│   ├── admin/               # Admin dashboard
-│   ├── checkout/            # Checkout flow
-│   ├── orders/              # Order management
-│   └── _app.tsx            # Pages Router app wrapper
-├── components/
-│   ├── ui/                  # Design system components (81 files)
-│   ├── sections/            # Page sections
-│   ├── providers/           # Context providers
-│   └── layouts/             # Layout components
-├── lib/
-│   ├── store/               # Zustand stores (auth, cart)
-│   ├── api/                 # API client (axios)
-│   ├── hooks/               # Custom React hooks
-│   └── utils/               # Utility functions
-└── styles/
-    └── globals.css          # Global styles
-```
-
-### Environment Variables
-
-Copy `.env.local.template` to `.env.local` and fill in the required values:
+## 🚀 Quick Start
 
 ```bash
-# Database
-DATABASE_URL="postgresql://user:password@localhost:5432/astralis"
+# 1. Install dependencies
+npm install --legacy-peer-deps
 
-# NextAuth.js
-NEXTAUTH_SECRET="your-nextauth-secret-key-here"
-NEXTAUTH_URL="http://localhost:3001"
-
-# API Configuration
-NEXT_PUBLIC_API_BASE_URL="http://localhost:3000"
-
-# Payment Providers
-NEXT_PUBLIC_PAYPAL_CLIENT_ID="your-paypal-client-id"
-PAYPAL_CLIENT_SECRET="your-paypal-client-secret"
-NEXT_PUBLIC_STRIPE_PUBLIC_KEY="your-stripe-public-key"
-STRIPE_SECRET_KEY="your-stripe-secret-key"
-```
-
-### Getting Started
-
-1. **Install Dependencies**
-
-```bash
-npm install
-```
-
-2. **Set Up Environment**
-
-```bash
+# 2. Configure environment
 cp .env.local.template .env.local
-# Edit .env.local with your configuration
-```
+# Edit .env.local with your DATABASE_URL
 
-3. **Run Development Server**
+# 3. Setup database
+npx prisma generate
+npx prisma migrate dev --name init
 
-```bash
+# 4. Start development server
 npm run dev
 ```
 
-Open [http://localhost:3001](http://localhost:3001) in your browser.
+Visit `http://localhost:3001`
 
-### API Proxy Configuration
+## 📖 Complete Setup Guide
 
-The Next.js app proxies API requests to the Express backend running on port 3000:
+**See [SETUP_GUIDE.md](./SETUP_GUIDE.md) for:**
+- Detailed setup instructions
+- Complete execution plan for branded refactor
+- Component library specifications
+- Page architecture guidelines
+- Database schema documentation
+- n8n workflow integration
+- Multi-agent orchestration strategy
 
-- Next.js Frontend: `http://localhost:3001`
-- Express Backend: `http://localhost:3000`
+## 🏗️ Project Structure
 
-API routes are automatically rewritten:
-- `/api/*` → `http://localhost:3000/api/*`
+```
+src/
+├── app/                 # Next.js 14 App Router
+│   ├── page.tsx        # Homepage
+│   ├── layout.tsx      # Root layout
+│   ├── globals.css     # Astralis brand theme
+│   ├── astralisops/    # Product pages
+│   └── api/            # API routes
+├── components/         # React components
+├── lib/               # Utilities
+└── types/             # TypeScript types
 
-### Available Scripts
+prisma/                # Database schema
+automation/n8n/        # n8n workflows
+marketplace/           # Digital products
+docs/                  # Documentation
+```
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
+## 🎨 Tech Stack
 
-### Migration Status
+- **Framework:** Next.js 14 (App Router)
+- **Language:** TypeScript 5
+- **Styling:** Tailwind CSS 3 (Astralis brand design system)
+- **Database:** PostgreSQL + Prisma ORM
+- **UI Components:** Radix UI primitives
+- **Automation:** n8n workflows
+- **Font:** Inter (Google Fonts)
 
-**Week 1, Days 1-2: Foundation Setup** ✅
+## 🎯 Features
 
-- [x] Next.js 15 project initialized
-- [x] Core dependencies installed
-- [x] Hybrid routing structure created
-- [x] API proxy configured
-- [x] Environment template created
-- [x] Basic middleware structure
-- [x] Zustand stores (auth, cart)
-- [x] API client configuration
+- ✅ Astralis brand design system (Navy #0A1B2B + Blue #2B6CB0)
+- ✅ Dark theme optimized UI
+- ✅ PostgreSQL database with Prisma ORM
+- ✅ Multi-tenant organization structure
+- ✅ Pipeline management system
+- ✅ n8n workflow integration
+- ✅ Marketplace digital products
+- 🚧 AI intake routing
+- 🚧 Document processing
+- 🚧 Team permissions (RBAC)
 
-**Next Steps:**
+## 🔧 Development
 
-1. **Component Migration** (Other agents)
-   - Migrate 81 UI components from `/client/src/components/ui`
-   - Update import paths to use `@/` alias
-   - Ensure dark theme styling is preserved
+```bash
+npm run dev          # Start dev server (port 3001)
+npm run build        # Production build
+npm run start        # Start production server
+npm run lint         # Run ESLint
+npx prisma studio    # Open database GUI
+```
 
-2. **Design System** (Other agents)
-   - Copy Tailwind configuration
-   - Migrate global CSS with dark theme
-   - Set up glassmorphism utilities
+## 📋 Master Specification
 
-3. **Authentication**
-   - Configure NextAuth.js
-   - Set up Prisma adapter
-   - Implement auth middleware
+This project implements the **Astralis One Master Specification** from `astralis-branded-refactor.md`:
 
-4. **Payment Integration**
-   - Configure PayPal provider
-   - Configure Stripe provider
-   - Migrate checkout flow
+- **Section 1-2:** Project overview and brand foundation
+- **Section 3:** UI system and component library
+- **Section 4:** Website page architecture
+- **Section 5:** AstralisOps SaaS product spec
+- **Section 6-10:** Marketplace, content, and multi-agent roles
 
-### Key Features
+## 🗂️ Key Files
 
-- **Hybrid Routing**: App Router for SEO, Pages Router for interactivity
-- **Dark Theme**: Comprehensive dark theme with glassmorphism effects
-- **State Management**: Zustand for client-side state (cart, auth)
-- **Type Safety**: Full TypeScript coverage
-- **API Integration**: Axios client with interceptors
-- **Form Validation**: React Hook Form + Zod schemas
-- **UI Components**: 21+ Radix UI primitives installed
+- `SETUP_GUIDE.md` - Complete setup and execution plan
+- `astralis-branded-refactor.md` - Master specification document
+- `CLAUDE.md` - AI assistant project instructions
+- `docs/ASTRALISOPS-PRD.md` - Product requirements
+- `prisma/schema.prisma` - Database schema
+- `automation/n8n/workflows/*.json` - n8n workflow definitions
 
-### Port Configuration
+## 🔐 Environment Variables
 
-- **Next.js Dev Server**: Port 3001 (configured separately from Express)
-- **Express Backend**: Port 3000 (existing server)
+Required in `.env.local`:
 
-### Notes
+```bash
+DATABASE_URL="postgresql://user:password@localhost:5432/astralis_one"
+NEXT_PUBLIC_API_BASE_URL="http://localhost:3000"
+```
 
-- The `/pages` directory enables the Pages Router for backward compatibility
-- The `/app` directory uses the new App Router for modern features
-- Both routers can coexist in the same project
-- Components can be shared between both routing systems
+## 📦 Backup
 
-### Learn More
+A backup of the previous codebase is available:
+- `astralis-nextjs-backup-20251118_024432.zip`
 
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Next.js 15 Release Notes](https://nextjs.org/blog/next-15)
-- [Hybrid Routing Guide](https://nextjs.org/docs/app/building-your-application/routing)
+## 🤝 Contributing
+
+Follow Git Flow guidelines from `CLAUDE.md`:
+- Branch from `main`
+- Use format: `feature/SIT-####-description`
+- Commit messages: `SIT-#### description`
+
+## 📄 License
+
+Private - Astralis One Platform
+
+---
+
+**For detailed instructions, see [SETUP_GUIDE.md](./SETUP_GUIDE.md)**
+
