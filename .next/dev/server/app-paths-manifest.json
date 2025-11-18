@@ -1,0 +1,13 @@
+{
+  "/(marketing)/blog/page": "app/(marketing)/blog/page.js",
+  "/(marketing)/contact/page": "app/(marketing)/contact/page.js",
+  "/(marketing)/marketplace/page": "app/(marketing)/marketplace/page.js",
+  "/(marketing)/page": "app/(marketing)/page.js",
+  "/(marketing)/process/page": "app/(marketing)/process/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/consultations/route": "app/api/consultations/route.js",
+  "/api/newsletter/confirm/route": "app/api/newsletter/confirm/route.js",
+  "/api/newsletter/subscribe/route": "app/api/newsletter/subscribe/route.js",
+  "/api/revenue-audits/route": "app/api/revenue-audits/route.js",
+  "/newsletter/confirm/page": "app/newsletter/confirm/page.js"
+}

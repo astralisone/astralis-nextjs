@@ -31,8 +31,13 @@ globalThis.__BUILD_MANIFEST = {
       "static/chunks/e67212e80ee6c5d5.js",
       "static/chunks/eb80d9374396ec54.js",
       "static/chunks/563540d5d7e6d219.js",
+<<<<<<< HEAD
       "static/chunks/64c68b31938a2f16.css",
       "static/chunks/turbopack-51e44463d93ba2bc.js"
+=======
+      "static/chunks/495e6529b206f353.css",
+      "static/chunks/turbopack-3dee03fcab864441.js"
+>>>>>>> claude/redesign-site-unified-01165pRmpRWZagzpJxF64t2x
     ],
     "/_error": [
       "static/chunks/322d71d8afdee327.js",

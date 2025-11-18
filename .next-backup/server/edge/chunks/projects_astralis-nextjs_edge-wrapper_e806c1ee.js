@@ -1,0 +1,3 @@
+(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["chunks/projects_astralis-nextjs_edge-wrapper_e806c1ee.js",272772,(e,t,r)=>{self._ENTRIES||={};let s=Promise.resolve().then(()=>e.i(174595));s.catch(()=>{}),self._ENTRIES.middleware_middleware=new Proxy(s,{get(e,t){if("then"===t)return(t,r)=>e.then(t,r);let r=(...r)=>e.then(e=>(0,e[t])(...r));return r.then=(r,s)=>e.then(e=>e[t]).then(r,s),r}})}]);
+
+//# sourceMappingURL=projects_astralis-nextjs_edge-wrapper_e806c1ee.js.map

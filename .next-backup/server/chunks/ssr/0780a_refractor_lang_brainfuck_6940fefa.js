@@ -1,0 +1,3 @@
+module.exports=[893372,a=>{"use strict";function b(a){a.languages.brainfuck={pointer:{pattern:/<|>/,alias:"keyword"},increment:{pattern:/\+/,alias:"inserted"},decrement:{pattern:/-/,alias:"deleted"},branching:{pattern:/\[|\]/,alias:"important"},operator:/[.,]/,comment:/\S+/}}b.displayName="brainfuck",b.aliases=[],a.s(["default",()=>b])}];
+
+//# sourceMappingURL=0780a_refractor_lang_brainfuck_6940fefa.js.map

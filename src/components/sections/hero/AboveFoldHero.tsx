@@ -1,53 +1,35 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { Sparkles, ArrowRight, Play, Star } from 'lucide-react';
+import { Sparkles, ArrowRight, Play, Star, Zap, Rocket } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function AboveFoldHero() {
   return (
     <section className="relative min-h-screen flex flex-col justify-center overflow-hidden">
-      {/* Enhanced Animated Background */}
+      {/* Constellation Background - Unique Space Theme */}
       <div className="absolute inset-0">
-        {/* Primary gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-neutral-900 via-purple-900/20 to-neutral-900" />
+        {/* Base dark background */}
+        <div className="absolute inset-0 bg-gradient-to-b from-neutral-950 via-neutral-900 to-neutral-950" />
 
-        {/* Animated mesh gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/30 via-blue-900/20 to-neutral-900/90 animate-pulse" />
+        {/* Aurora gradient overlay with new accent colors */}
+        <div className="absolute inset-0 aurora-gradient opacity-60" />
 
-        {/* Floating orbs with enhanced animation */}
-        <motion.div
-          className="absolute top-20 left-10 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.6, 0.3],
-          }}
-          transition={{
-            duration: 4,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
-        <motion.div
-          className="absolute bottom-20 right-10 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"
-          animate={{
-            scale: [1.2, 1, 1.2],
-            opacity: [0.4, 0.7, 0.4],
-          }}
-          transition={{
-            duration: 5,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 1
-          }}
-        />
+        {/* Constellation effect */}
+        <div className="absolute inset-0 constellation-bg" />
 
-        {/* Additional floating elements */}
+        {/* Space particles */}
+        <div className="absolute inset-0 space-particles" />
+
+        {/* Floating orbs with new accent colors */}
         <motion.div
-          className="absolute top-1/3 right-20 w-64 h-64 bg-gradient-to-r from-purple-600/5 to-blue-600/5 rounded-full blur-2xl"
+          className="absolute top-20 left-10 w-[500px] h-[500px] rounded-full blur-3xl"
+          style={{
+            background: 'radial-gradient(circle, oklch(0.65 0.25 258 / 0.15) 0%, transparent 70%)'
+          }}
           animate={{
-            x: [0, 30, 0],
-            y: [0, -20, 0],
+            scale: [1, 1.3, 1],
+            opacity: [0.3, 0.5, 0.3],
           }}
           transition={{
             duration: 8,
@@ -55,172 +37,213 @@ export function AboveFoldHero() {
             ease: "easeInOut"
           }}
         />
+        <motion.div
+          className="absolute top-1/3 right-20 w-[400px] h-[400px] rounded-full blur-3xl"
+          style={{
+            background: 'radial-gradient(circle, oklch(0.75 0.12 195 / 0.2) 0%, transparent 70%)'
+          }}
+          animate={{
+            scale: [1.2, 1, 1.2],
+            opacity: [0.4, 0.6, 0.4],
+          }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 2
+          }}
+        />
+        <motion.div
+          className="absolute bottom-20 left-1/3 w-[350px] h-[350px] rounded-full blur-3xl"
+          style={{
+            background: 'radial-gradient(circle, oklch(0.70 0.18 155 / 0.15) 0%, transparent 70%)'
+          }}
+          animate={{
+            scale: [1, 1.4, 1],
+            opacity: [0.3, 0.5, 0.3],
+          }}
+          transition={{
+            duration: 12,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 4
+          }}
+        />
 
-        {/* Grid pattern overlay */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[length:60px_60px]" />
-
-        {/* Radial gradient overlays */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,rgba(139,92,246,0.08),transparent_50%),radial-gradient(circle_at_75%_75%,rgba(59,130,246,0.08),transparent_50%)]" />
+        {/* Subtle grid overlay */}
+        <div className="absolute inset-0 section-grid opacity-30" />
       </div>
 
       <div className="relative z-10 container mx-auto px-6">
         <div className="max-w-7xl mx-auto">
 
-          {/* Enhanced Announcement Badge */}
+          {/* Floating Badge - New Style */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.8, y: -20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-center mb-8"
-          >
-            <div
-              className="inline-flex items-center gap-3 rounded-full px-8 py-4 border border-purple-500/40 hover:border-purple-400/60 transition-all group cursor-pointer shadow-lg shadow-purple-500/10"
-              style={{
-                backdropFilter: 'blur(32px) saturate(180%)',
-                WebkitBackdropFilter: 'blur(32px) saturate(180%)',
-                background: 'rgba(255, 255, 255, 0.05)',
-                boxShadow: '0 12px 40px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-              }}>
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-              >
-                <Sparkles className="w-5 h-5 text-purple-400" />
-              </motion.div>
-              <span className="text-white font-semibold text-sm">🎯 Find Your Perfect AI Solution in 60 Seconds</span>
-              <motion.span
-                className="text-purple-300 font-bold group-hover:translate-x-2 transition-transform text-sm"
-                whileHover={{ scale: 1.05 }}
-              >
-                Start Now →
-              </motion.span>
-            </div>
-          </motion.div>
-
-          {/* Main Headline - Service Wizard Focus */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: -30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
             className="text-center mb-12"
           >
-            <motion.h1
-              className="text-5xl lg:text-7xl font-black text-white mb-6 leading-tight"
-              animate={{
-                backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
-              }}
-              transition={{
-                duration: 5,
-                repeat: Infinity,
-                ease: "linear"
-              }}
-              style={{
-                background: "linear-gradient(45deg, #ffffff, #a855f7, #3b82f6, #ffffff)",
-                backgroundSize: "300% 300%",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text"
-              }}
+            <motion.div
+              className="inline-flex items-center gap-3 px-6 py-3 rounded-full card-gradient-border hover-shimmer cursor-pointer group"
+              whileHover={{ scale: 1.05 }}
             >
-              Discover Your
-              <br />
-              <span className="bg-gradient-to-r from-purple-400 via-blue-400 to-purple-600 bg-clip-text text-transparent">
-                Perfect AI Solution
-              </span>
-            </motion.h1>
+              <div className="flex items-center gap-3 px-4 py-2 bg-neutral-950 rounded-full">
+                <motion.div
+                  className="w-2 h-2 rounded-full bg-emerald"
+                  animate={{ scale: [1, 1.2, 1], opacity: [1, 0.6, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
+                <span className="text-sm font-semibold bg-gradient-to-r from-emerald-light via-cyan to-emerald bg-clip-text text-transparent">
+                  AI-Powered Solutions
+                </span>
+                <Sparkles className="w-4 h-4 text-cyan" />
+              </div>
+            </motion.div>
+          </motion.div>
+
+          {/* Main Headline - DRAMATICALLY LARGER */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1, delay: 0.2 }}
+            className="text-center mb-16"
+          >
+            <h1 className="text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black mb-8 leading-[0.95] tracking-tight">
+              <motion.span
+                className="block mb-4"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.3 }}
+              >
+                <span className="text-white">Build the</span>
+              </motion.span>
+              <motion.span
+                className="block relative"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.5 }}
+              >
+                <span
+                  className="bg-gradient-to-r from-purple-400 via-cyan-light to-emerald bg-clip-text text-transparent"
+                  style={{
+                    textShadow: '0 0 80px rgba(168, 85, 247, 0.3)',
+                  }}
+                >
+                  Future
+                </span>
+              </motion.span>
+              <motion.span
+                className="block text-white"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.7 }}
+              >
+                with AI
+              </motion.span>
+            </h1>
 
             <motion.p
-              className="text-xl lg:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed mb-8"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-            >
-              Answer a few questions and let our intelligent Service Wizard match you with
-              the perfect AI automation solution for your business needs.
-            </motion.p>
-
-            {/* Enhanced CTA Buttons */}
-            <motion.div
-              className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+              className="text-xl md:text-2xl lg:text-3xl text-neutral-300 max-w-4xl mx-auto leading-relaxed mb-12 font-light"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
+              transition={{ duration: 0.8, delay: 0.9 }}
             >
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
+              Transform your business with intelligent automation.{' '}
+              <span className="text-cyan font-medium">Discover your perfect solution</span> in 60 seconds.
+            </motion.p>
+
+            {/* Enhanced CTA Buttons with New Styles */}
+            <motion.div
+              className="flex flex-col sm:flex-row gap-5 justify-center items-center"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 1.1 }}
+            >
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
                 <Link
                   href="/services/wizard"
-                  className="group inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold text-lg rounded-xl shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-300"
+                  className="group relative inline-flex items-center gap-3 px-10 py-5 rounded-2xl overflow-hidden hover-lift"
                 >
-                  <motion.div
-                    animate={{ rotate: [0, 10, -10, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                  >
-                    <Sparkles className="w-6 h-6" />
-                  </motion.div>
-                  Start Service Wizard
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  {/* Animated gradient background */}
+                  <div
+                    className="absolute inset-0 bg-gradient-to-r from-purple-600 via-cyan-dark to-emerald-dark"
+                    style={{
+                      backgroundSize: '200% 200%',
+                      animation: 'gradient-shift 3s ease infinite'
+                    }}
+                  />
+                  {/* Glow effect */}
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-cyan blur-xl" />
+                  </div>
+                  <span className="relative flex items-center gap-3 text-white font-bold text-lg">
+                    <Rocket className="w-6 h-6" />
+                    Start Service Wizard
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
+                  </span>
                 </Link>
               </motion.div>
 
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
                 <Link
                   href="/workflow-demo"
-                  className="group inline-flex items-center gap-3 px-8 py-4 glass-card hover:glass-elevated text-white font-semibold text-lg rounded-xl border border-white/20 hover:border-white/30 transition-all duration-300"
+                  className="group inline-flex items-center gap-3 px-10 py-5 card-outlined hover-border-animate rounded-2xl text-white font-semibold text-lg transition-all duration-300"
                 >
-                  <Play className="w-5 h-5 text-purple-400" />
+                  <Play className="w-5 h-5 text-cyan" />
                   Watch Demo
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform opacity-60" />
                 </Link>
               </motion.div>
             </motion.div>
           </motion.div>
 
-          {/* Enhanced Trust Indicators */}
+          {/* Trust Indicators - New Layout with Accent Colors */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
-            className="text-center"
+            transition={{ duration: 0.8, delay: 1.3 }}
+            className="max-w-5xl mx-auto"
           >
-            {/* Success Metrics */}
-            <div className="flex items-center justify-center gap-8 mb-8">
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
               <motion.div
-                className="text-center"
-                whileHover={{ scale: 1.05 }}
+                className="card-solid hover-glow p-8 text-center group cursor-pointer"
+                whileHover={{ y: -4 }}
               >
-                <div className="text-3xl font-bold text-purple-400 mb-1">500+</div>
-                <div className="text-sm text-gray-400">Businesses Served</div>
+                <div className="text-5xl font-black bg-gradient-to-br from-purple-400 to-purple-600 bg-clip-text text-transparent mb-2">
+                  500+
+                </div>
+                <div className="text-neutral-400 font-medium">Businesses Transformed</div>
               </motion.div>
-              <div className="w-px h-12 bg-gradient-to-b from-transparent via-purple-500/30 to-transparent"></div>
+
               <motion.div
-                className="text-center"
-                whileHover={{ scale: 1.05 }}
+                className="card-solid hover-glow p-8 text-center group cursor-pointer"
+                whileHover={{ y: -4 }}
               >
-                <div className="text-3xl font-bold text-blue-400 mb-1">95%</div>
-                <div className="text-sm text-gray-400">Success Rate</div>
+                <div className="text-5xl font-black bg-gradient-to-br from-cyan to-cyan-dark bg-clip-text text-transparent mb-2">
+                  95%
+                </div>
+                <div className="text-neutral-400 font-medium">Client Success Rate</div>
               </motion.div>
-              <div className="w-px h-12 bg-gradient-to-b from-transparent via-blue-500/30 to-transparent"></div>
+
               <motion.div
-                className="text-center"
-                whileHover={{ scale: 1.05 }}
+                className="card-solid hover-glow p-8 text-center group cursor-pointer"
+                whileHover={{ y: -4 }}
               >
-                <div className="text-3xl font-bold text-purple-400 mb-1">24/7</div>
-                <div className="text-sm text-gray-400">AI Support</div>
+                <div className="text-5xl font-black bg-gradient-to-br from-emerald to-emerald-dark bg-clip-text text-transparent mb-2">
+                  24/7
+                </div>
+                <div className="text-neutral-400 font-medium">AI-Powered Support</div>
               </motion.div>
             </div>
 
             {/* Social Proof */}
             <motion.div
-              className="flex items-center justify-center gap-6 opacity-70"
+              className="flex flex-col sm:flex-row items-center justify-center gap-6 py-6 card-outlined rounded-2xl"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.8, delay: 1 }}
+              transition={{ duration: 0.8, delay: 1.5 }}
             >
               <div className="flex items-center gap-2">
                 {[...Array(5)].map((_, i) => (
@@ -228,33 +251,39 @@ export function AboveFoldHero() {
                     key={i}
                     initial={{ opacity: 0, scale: 0 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.5, delay: 1 + i * 0.1 }}
+                    transition={{ duration: 0.3, delay: 1.5 + i * 0.1 }}
                   >
-                    <Star className="w-5 h-5 text-yellow-400 fill-current" />
+                    <Star className="w-6 h-6 text-amber fill-current" />
                   </motion.div>
                 ))}
               </div>
-              <span className="text-gray-400 text-sm">Trusted by 500+ businesses</span>
+              <div className="h-8 w-px bg-neutral-700 hidden sm:block" />
+              <div className="text-center sm:text-left">
+                <div className="text-white font-semibold">Rated 4.9/5</div>
+                <div className="text-neutral-400 text-sm">From 500+ verified reviews</div>
+              </div>
             </motion.div>
           </motion.div>
 
-          {/* Enhanced Scroll Indicator */}
+          {/* Scroll Indicator */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 1.2 }}
-            className="absolute bottom-8 left-1/2 transform -translate-x-1/2 hidden lg:block"
+            transition={{ duration: 1, delay: 1.7 }}
+            className="absolute bottom-12 left-1/2 transform -translate-x-1/2 hidden lg:block"
           >
             <motion.div
-              className="flex flex-col items-center gap-3"
-              animate={{ y: [0, 10, 0] }}
+              className="flex flex-col items-center gap-3 cursor-pointer group"
+              animate={{ y: [0, 8, 0] }}
               transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             >
-              <div className="text-sm text-gray-400 font-medium">Explore Our Services</div>
-              <div className="w-8 h-12 border-2 border-purple-500/30 rounded-full p-1">
+              <div className="text-sm text-neutral-500 font-medium group-hover:text-cyan transition-colors">
+                Scroll to explore
+              </div>
+              <div className="w-8 h-14 border-2 border-neutral-700 group-hover:border-cyan rounded-full p-1.5 transition-colors">
                 <motion.div
-                  className="w-1 h-4 bg-gradient-to-b from-purple-400 to-blue-400 rounded-full mx-auto"
-                  animate={{ y: [0, 16, 0] }}
+                  className="w-1.5 h-3 bg-gradient-to-b from-cyan to-purple-400 rounded-full mx-auto"
+                  animate={{ y: [0, 20, 0] }}
                   transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                 />
               </div>

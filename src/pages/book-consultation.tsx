@@ -6,8 +6,12 @@ export default function BookConsultationPage() {
   const router = useRouter();
 
   const handleBookingComplete = (booking: any) => {
-    // Redirect to success page or show success state
-    router.push(`/booking-success?bookingId=${booking.id}&type=consultation`);
+    // Redirect to success page with booking data in URL
+    const bookingData = encodeURIComponent(JSON.stringify({
+      booking,
+      type: 'consultation'
+    }));
+    router.push(`/booking-success?data=${bookingData}`);
   };
 
   return (

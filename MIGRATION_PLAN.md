@@ -423,7 +423,7 @@ prisma/
 ```
 
 **Seed Content Includes**:
-- Admin user (email: admin@astralis.one, password: 45tr4l15)
+- Admin user (email: ceo@astralisone.com, password: 45tr4l15)
 - 15+ categories (Technology, AI, Automation, etc.)
 - 50+ modern technology tags
 - 6 curated testimonials with ratings
