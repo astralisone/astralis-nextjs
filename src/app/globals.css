@@ -131,7 +131,28 @@
   --color-surface-overlay: oklch(0.12 0.01 220);
   --color-surface-elevated: oklch(0.15 0.01 220);
 
-  /* === LEGACY ACCENT COLORS === */
+  /* === ENHANCED ACCENT COLOR SYSTEM === */
+  /* Emerald - For success, growth, innovation */
+  --color-emerald: oklch(0.70 0.18 155);
+  --color-emerald-light: oklch(0.80 0.15 155);
+  --color-emerald-dark: oklch(0.50 0.20 155);
+
+  /* Cyan - For technology, clarity, precision */
+  --color-cyan: oklch(0.75 0.12 195);
+  --color-cyan-light: oklch(0.85 0.10 195);
+  --color-cyan-dark: oklch(0.55 0.15 195);
+
+  /* Amber - For energy, creativity, warmth */
+  --color-amber: oklch(0.75 0.15 70);
+  --color-amber-light: oklch(0.85 0.12 70);
+  --color-amber-dark: oklch(0.60 0.18 70);
+
+  /* Rose - For passion, important actions */
+  --color-rose: oklch(0.65 0.22 15);
+  --color-rose-light: oklch(0.75 0.18 15);
+  --color-rose-dark: oklch(0.50 0.25 15);
+
+  /* Legacy (maintained for compatibility) */
   --color-accent-green: oklch(0.50 0.20 142);
   --color-accent-blue: oklch(0.65 0.25 217);
   --color-accent-purple: oklch(0.65 0.25 258);
@@ -229,6 +250,53 @@
   100% { transform: translateX(100%); }
 }
 
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+@keyframes float-delayed {
+  0%, 100% { transform: translateY(0px) translateX(0px); }
+  33% { transform: translateY(-15px) translateX(10px); }
+  66% { transform: translateY(-5px) translateX(-10px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+@keyframes orbit {
+  0% { transform: rotate(0deg) translateX(100px) rotate(0deg); }
+  100% { transform: rotate(360deg) translateX(100px) rotate(-360deg); }
+}
+
+@keyframes scale-in {
+  0% { transform: scale(0.9); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes slide-up {
+  0% { transform: translateY(30px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes magnetic-pull {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(var(--mouse-x, 0), var(--mouse-y, 0)); }
+}
+
 /* === GLASSMORPHISM UTILITIES === */
 .glass-card {
   background: rgb(255 255 255 / 0.02);
@@ -246,6 +314,122 @@
 .glass-backdrop {
   backdrop-filter: blur(20px) saturate(180%);
   background: rgb(0 0 0 / 0.2);
+}
+
+/* === ALTERNATIVE SECTION STYLES === */
+/* Use these to create visual variety instead of glass everywhere */
+
+.section-solid {
+  background: oklch(0.08 0.01 220);
+  border-top: 1px solid oklch(0.15 0.01 220);
+  border-bottom: 1px solid oklch(0.15 0.01 220);
+}
+
+.section-outlined {
+  background: transparent;
+  border: 1px solid oklch(0.15 0.01 220);
+  border-radius: var(--radius-xl);
+}
+
+.section-minimal {
+  background: transparent;
+  position: relative;
+}
+
+.section-minimal::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 0%, oklch(0.08 0.01 220 / 0.5) 50%, transparent 100%);
+  pointer-events: none;
+}
+
+.section-grid {
+  background-image:
+    linear-gradient(to right, oklch(0.15 0.01 220 / 0.1) 1px, transparent 1px),
+    linear-gradient(to bottom, oklch(0.15 0.01 220 / 0.1) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.section-glow {
+  position: relative;
+  overflow: hidden;
+}
+
+.section-glow::before {
+  content: "";
+  position: absolute;
+  inset: -50%;
+  background: radial-gradient(circle at center, oklch(0.65 0.25 258 / 0.1) 0%, transparent 70%);
+  animation: pulse-glow 4s ease-in-out infinite;
+}
+
+/* Card variants for visual variety */
+.card-solid {
+  background: oklch(0.10 0.01 220);
+  border: 1px solid oklch(0.15 0.01 220);
+  border-radius: var(--radius-lg);
+  transition: all 0.3s ease;
+}
+
+.card-solid:hover {
+  background: oklch(0.12 0.01 220);
+  border-color: oklch(0.20 0.01 220);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgb(0 0 0 / 0.3);
+}
+
+.card-outlined {
+  background: transparent;
+  border: 2px solid oklch(0.15 0.01 220);
+  border-radius: var(--radius-lg);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.card-outlined::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, oklch(0.65 0.25 258 / 0.05) 0%, oklch(0.65 0.25 217 / 0.05) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.card-outlined:hover::before {
+  opacity: 1;
+}
+
+.card-outlined:hover {
+  border-color: oklch(0.65 0.25 258 / 0.5);
+  transform: translateY(-2px);
+}
+
+.card-gradient-border {
+  position: relative;
+  background: oklch(0.08 0.01 220);
+  border-radius: var(--radius-lg);
+  padding: 2px;
+  transition: all 0.3s ease;
+}
+
+.card-gradient-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-lg);
+  padding: 2px;
+  background: linear-gradient(135deg, oklch(0.65 0.25 258) 0%, oklch(0.65 0.25 217) 50%, oklch(0.75 0.12 195) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.5;
+  transition: opacity 0.3s ease;
+}
+
+.card-gradient-border:hover::before {
+  opacity: 1;
 }
 
 /* === BACKGROUND PATTERNS AND GRADIENTS === */
@@ -284,6 +468,43 @@
 .section-gradient-bottom {
   background: linear-gradient(to top, rgb(139 92 246 / 0.03) 0%, transparent 100%);
   height: 100px;
+}
+
+/* Constellation/Space Theme Effects */
+.constellation-bg {
+  background-image:
+    radial-gradient(2px 2px at 20% 30%, white, transparent),
+    radial-gradient(2px 2px at 60% 70%, white, transparent),
+    radial-gradient(1px 1px at 50% 50%, white, transparent),
+    radial-gradient(1px 1px at 80% 10%, white, transparent),
+    radial-gradient(2px 2px at 90% 60%, white, transparent),
+    radial-gradient(1px 1px at 33% 80%, white, transparent),
+    radial-gradient(1px 1px at 15% 90%, white, transparent);
+  background-size: 200% 200%;
+  background-position: 50% 50%;
+  animation: twinkle 3s ease-in-out infinite;
+  opacity: 0.3;
+}
+
+.space-particles {
+  background-image:
+    radial-gradient(circle at 10% 20%, oklch(0.75 0.12 195 / 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 90% 80%, oklch(0.70 0.18 155 / 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, oklch(0.65 0.25 258 / 0.08) 0%, transparent 70%);
+  animation: float-delayed 20s ease-in-out infinite;
+}
+
+.aurora-gradient {
+  background: linear-gradient(
+    135deg,
+    oklch(0.65 0.25 258 / 0.1) 0%,
+    oklch(0.75 0.12 195 / 0.1) 25%,
+    oklch(0.70 0.18 155 / 0.1) 50%,
+    oklch(0.75 0.15 70 / 0.1) 75%,
+    oklch(0.65 0.25 258 / 0.1) 100%
+  );
+  background-size: 400% 400%;
+  animation: gradient-shift 20s ease infinite;
 }
 
 /* === TEXT AND INTERACTIVE UTILITIES === */
@@ -333,6 +554,119 @@
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
+}
+
+/* === UNIQUE INTERACTION PATTERNS === */
+
+/* Magnetic hover effect */
+.magnetic-hover {
+  transition: transform 0.2s cubic-bezier(0.23, 1, 0.32, 1);
+  cursor: pointer;
+}
+
+.magnetic-hover:hover {
+  transform: scale(1.02);
+}
+
+/* Lift effect - more dramatic than standard hover */
+.hover-lift {
+  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+  position: relative;
+}
+
+.hover-lift:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 24px 48px rgb(0 0 0 / 0.4);
+}
+
+/* Shimmer effect on hover */
+.hover-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.hover-shimmer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.hover-shimmer:hover::after {
+  left: 100%;
+}
+
+/* Glow expansion on hover */
+.hover-glow {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.hover-glow::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, oklch(0.65 0.25 258), oklch(0.65 0.25 217));
+  opacity: 0;
+  z-index: -1;
+  filter: blur(20px);
+  transition: opacity 0.3s ease;
+}
+
+.hover-glow:hover::before {
+  opacity: 0.6;
+}
+
+/* Border animation on hover */
+.hover-border-animate {
+  position: relative;
+  background: oklch(0.08 0.01 220);
+}
+
+.hover-border-animate::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(45deg, oklch(0.65 0.25 258), oklch(0.75 0.12 195), oklch(0.70 0.18 155), oklch(0.65 0.25 258));
+  background-size: 300% 300%;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: gradient-shift 3s ease infinite;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.hover-border-animate:hover::before {
+  opacity: 1;
+}
+
+/* Reveal animation */
+.reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.reveal-on-scroll.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Float animation */
+.float-animate {
+  animation: float 6s ease-in-out infinite;
+}
+
+.float-animate-delayed {
+  animation: float-delayed 8s ease-in-out infinite;
 }
 
 /* Blog Content Styling */

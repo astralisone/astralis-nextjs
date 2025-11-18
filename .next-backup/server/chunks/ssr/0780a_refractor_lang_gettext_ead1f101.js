@@ -1,0 +1,3 @@
+module.exports=[576043,a=>{"use strict";function b(a){a.languages.gettext={comment:[{pattern:/# .*/,greedy:!0,alias:"translator-comment"},{pattern:/#\..*/,greedy:!0,alias:"extracted-comment"},{pattern:/#:.*/,greedy:!0,alias:"reference-comment"},{pattern:/#,.*/,greedy:!0,alias:"flag-comment"},{pattern:/#\|.*/,greedy:!0,alias:"previously-untranslated-comment"},{pattern:/#.*/,greedy:!0}],string:{pattern:/(^|[^\\])"(?:[^"\\]|\\.)*"/,lookbehind:!0,greedy:!0},keyword:/^msg(?:ctxt|id|id_plural|str)\b/m,number:/\b\d+\b/,punctuation:/[\[\]]/},a.languages.po=a.languages.gettext}b.displayName="gettext",b.aliases=["po"],a.s(["default",()=>b])}];
+
+//# sourceMappingURL=0780a_refractor_lang_gettext_ead1f101.js.map

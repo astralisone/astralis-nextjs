@@ -1,0 +1,17 @@
+{
+  "/(marketing)/about/page": "app/(marketing)/about/page.js",
+  "/(marketing)/blog/[slug]/page": "app/(marketing)/blog/[slug]/page.js",
+  "/(marketing)/blog/page": "app/(marketing)/blog/page.js",
+  "/(marketing)/contact/page": "app/(marketing)/contact/page.js",
+  "/(marketing)/marketplace/[id]/page": "app/(marketing)/marketplace/[id]/page.js",
+  "/(marketing)/marketplace/page": "app/(marketing)/marketplace/page.js",
+  "/(marketing)/page": "app/(marketing)/page.js",
+  "/(marketing)/process/page": "app/(marketing)/process/page.js",
+  "/_global-error/page": "app/_global-error/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
+  "/api/proxy/[...path]/route": "app/api/proxy/[...path]/route.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/robots.txt/route": "app/robots.txt/route.js",
+  "/sitemap.xml/route": "app/sitemap.xml/route.js"
+}

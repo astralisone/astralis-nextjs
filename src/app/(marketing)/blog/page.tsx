@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { BlogCard } from '@/components/blog/blog-list/blog-card';
 import { BookOpen, Lightbulb, ArrowRight, TrendingUp, Brain, Rocket } from 'lucide-react';
 import { apiClient } from '@/lib/api';
+import { useNewsletterModal } from '@/components/providers/newsletter-modal-provider';
 import type { BlogPost, BlogPaginatedResponse, Category, Tag } from '@/types/api';
 
 interface BlogFilters {
@@ -22,6 +23,7 @@ interface BlogFilters {
 }
 
 export default function BlogPage() {
+  const { openNewsletterModal } = useNewsletterModal();
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<BlogFilters>({
     category: '',
@@ -133,15 +135,13 @@ export default function BlogPage() {
               </Button>
 
               <Button
-                asChild
                 variant="outline"
                 size="lg"
                 className="gap-3 glass-elevated border-white/30 text-white hover:bg-white/10 hover:border-primary-400/50 px-10 py-5 text-lg font-semibold rounded-xl transition-all duration-200"
+                onClick={openNewsletterModal}
               >
-                <Link href="/contact">
-                  Subscribe to Newsletter
-                  <ArrowRight className="h-5 w-5" />
-                </Link>
+                Subscribe to Newsletter
+                <ArrowRight className="h-5 w-5" />
               </Button>
             </motion.div>
 

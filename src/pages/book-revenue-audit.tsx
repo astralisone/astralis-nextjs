@@ -7,15 +7,12 @@ export default function BookRevenueAuditPage() {
   const router = useRouter();
 
   const handleBookingComplete = (booking: any) => {
-    // Store booking data in localStorage for success page
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('bookingData', JSON.stringify({
-        booking,
-        type: 'revenue-audit'
-      }));
-    }
-    // Redirect to success page
-    router.push('/booking-success');
+    // Redirect to success page with booking data in URL
+    const bookingData = encodeURIComponent(JSON.stringify({
+      booking,
+      type: 'revenue-audit'
+    }));
+    router.push(`/booking-success?data=${bookingData}`);
   };
 
   return (

@@ -1,0 +1,15 @@
+__turbopack_load_page_chunks__("/admin/marketplace/new", [
+  "static/chunks/2d49b6c5a2f5e683.js",
+  "static/chunks/f4c69e9f2abbfa8f.js",
+  "static/chunks/fbbc6e4482c65a6d.js",
+  "static/chunks/a1762c51a721c74b.js",
+  "static/chunks/07f42ff5925ae71e.js",
+  "static/chunks/8173c68536de6bcf.js",
+  "static/chunks/eb80d9374396ec54.js",
+  "static/chunks/6f330500b8ae44f2.js",
+  "static/chunks/ec9f9ba68cd43d4c.js",
+  "static/chunks/c033c8b70096924d.js",
+  "static/chunks/6bc611df7d740964.js",
+  "static/chunks/2593f30e51ea299e.js",
+  "static/chunks/turbopack-a7f634cc3682037d.js"
+])

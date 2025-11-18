@@ -1,13 +1,10 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
+import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-});
+// Using system fonts for build compatibility
+// Note: In production, consider using a CDN or local font files
 
 export const metadata: Metadata = {
   title: "Astralis Agency",
@@ -21,7 +18,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <head>
+        <GoogleAnalytics />
+      </head>
+      <body className="font-sans antialiased">
         <Providers>
           {children}
         </Providers>

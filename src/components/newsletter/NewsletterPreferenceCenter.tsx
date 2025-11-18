@@ -560,8 +560,8 @@ export function NewsletterPreferenceCenter() {
         <div className="text-center mt-8">
           <p className="text-gray-400 text-sm">
             Need help? Contact us at{' '}
-            <a href="mailto:support@astralisagency.com" className="text-purple-400 hover:text-purple-300">
-              support@astralisagency.com
+            <a href="mailto:ceo@astralisone.com" className="text-purple-400 hover:text-purple-300">
+              ceo@astralisone.com
             </a>
           </p>
         </div>

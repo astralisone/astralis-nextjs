@@ -32,21 +32,8 @@ interface FooterProps {
 }
 
 export function Footer({ className }: FooterProps) {
-  const [email, setEmail] = useState("")
-  const [isSubscribed, setIsSubscribed] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState("English")
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false)
-
-  const handleNewsletterSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (email.trim()) {
-      setIsSubscribed(true)
-      setTimeout(() => {
-        setIsSubscribed(false)
-        setEmail("")
-      }, 3000)
-    }
-  }
 
   const scrollToTop = () => {
     window.scrollTo({
@@ -150,8 +137,8 @@ export function Footer({ className }: FooterProps) {
                      </div>
                      <div className="flex items-center space-x-3 text-sm text-neutral-300">
                        <Mail className="h-4 w-4 text-primary-400 flex-shrink-0" />
-                       <a href="mailto:admin@astralisone.com" className="hover:text-primary-300 transition-colors">
-                         admin@astralisone.com
+                       <a href="mailto:ceo@astralisone.com" className="hover:text-primary-300 transition-colors">
+                         ceo@astralisone.com
                        </a>
                      </div>
 
@@ -268,48 +255,9 @@ export function Footer({ className }: FooterProps) {
               </ul>
             </div>
 
-            {/* Newsletter and Social */}
+            {/* Social Media */}
             <div className="lg:col-span-2">
               <div className="space-y-8">
-                {/* Newsletter signup */}
-                <div>
-                  <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-6">
-                    Stay Updated
-                  </h4>
-                  <p className="text-xs text-neutral-400 mb-4">
-                    Get the latest insights, tips, and updates delivered to your inbox.
-                  </p>
-                  <form onSubmit={handleNewsletterSubmit} className="space-y-3">
-                    <Input
-                      type="email"
-                      placeholder="Enter your email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="bg-white/5 border-white/10 text-sm"
-                      required
-                    />
-                    <Button
-                      type="submit"
-                      size="sm"
-                      className="w-full bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 text-white shadow-lg"
-                      disabled={isSubscribed}
-                    >
-                      {isSubscribed ? (
-                        <>
-                          <span className="mr-2">✓</span>
-                          Subscribed!
-                        </>
-                      ) : (
-                        <>
-                          <Send className="h-3 w-3 mr-2" />
-                          Subscribe
-                        </>
-                      )}
-                    </Button>
-                  </form>
-                </div>
-
-                {/* Social Media */}
                 <div>
                   <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-6">
                     Follow Us
