@@ -1,17 +1,18 @@
 {
-  "/_not-found/page": "app/_not-found/page.js",
   "/(marketing)/about/page": "app/(marketing)/about/page.js",
+  "/(marketing)/blog/page": "app/(marketing)/blog/page.js",
   "/(marketing)/contact/page": "app/(marketing)/contact/page.js",
   "/(marketing)/marketplace/page": "app/(marketing)/marketplace/page.js",
   "/(marketing)/services/page": "app/(marketing)/services/page.js",
-  "/(marketing)/blog/page": "app/(marketing)/blog/page.js",
+  "/_global-error/page": "app/_global-error/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
   "/api/automations/route": "app/api/automations/route.js",
+  "/api/intake/route": "app/api/intake/route.js",
   "/api/orgs/route": "app/api/orgs/route.js",
   "/api/pipelines/[id]/items/route": "app/api/pipelines/[id]/items/route.js",
   "/api/pipelines/route": "app/api/pipelines/route.js",
   "/api/users/route": "app/api/users/route.js",
-  "/page": "app/page.js",
-  "/api/intake/route": "app/api/intake/route.js",
   "/astralisops/page": "app/astralisops/page.js",
+  "/page": "app/page.js",
   "/solutions/page": "app/solutions/page.js"
 }

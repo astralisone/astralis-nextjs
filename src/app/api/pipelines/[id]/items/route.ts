@@ -14,10 +14,10 @@ const createItemSchema = z.object({
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { id: pipelineId } = params;
+    const { id: pipelineId } = await params;
 
     // Verify pipeline exists
     const pipeline = await prisma.pipeline.findUnique({
@@ -61,7 +61,7 @@ export async function GET(
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const body = await req.json();
@@ -74,7 +74,7 @@ export async function POST(
       );
     }
 
-    const { id: pipelineId } = params;
+    const { id: pipelineId } = await params;
 
     // Verify stage belongs to this pipeline
     const stage = await prisma.stage.findFirst({
