@@ -1,5 +1,3 @@
-'use client';
-
 import * as React from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -107,16 +105,14 @@ const CTASection = React.forwardRef<HTMLElement, CTASectionProps>(
     ref
   ) => {
     // Background variant styles
-    const backgroundStyles = React.useMemo(() => {
-      const variants = {
-        default: 'bg-white dark:bg-slate-900',
-        navy: 'bg-astralis-navy text-white',
-        gradient:
-          'bg-gradient-to-br from-astralis-blue via-astralis-navy to-astralis-navy text-white',
-        light: 'bg-slate-50 dark:bg-slate-800',
-      };
-      return variants[backgroundVariant];
-    }, [backgroundVariant]);
+    // Converted from React.useMemo to direct computation (server component)
+    const backgroundStyles = backgroundVariant === 'default'
+      ? 'bg-white dark:bg-slate-900'
+      : backgroundVariant === 'navy'
+      ? 'bg-astralis-navy text-white'
+      : backgroundVariant === 'gradient'
+      ? 'bg-gradient-to-br from-astralis-blue via-astralis-navy to-astralis-navy text-white'
+      : 'bg-slate-50 dark:bg-slate-800';
 
     // Text color adjustments for dark backgrounds
     const isDarkBackground = backgroundVariant === 'navy' || backgroundVariant === 'gradient';

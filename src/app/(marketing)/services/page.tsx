@@ -189,15 +189,15 @@ export default function ServicesPage() {
         }}
       />
 
-      {/* Service Packages Section */}
-      <section id="packages" className="w-full px-6 py-20 md:px-12 md:py-24 lg:px-20 lg:py-32 bg-white">
+      {/* Service Packages Section - Dark Navy Background */}
+      <section id="packages" className="w-full px-6 py-20 md:px-12 md:py-24 lg:px-20 lg:py-32 bg-gradient-to-b from-astralis-navy to-slate-900">
         <div className="mx-auto max-w-[1280px]">
           {/* Section Header */}
           <div className="text-center mb-16 max-w-3xl mx-auto space-y-6">
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-semibold text-astralis-navy tracking-tight">
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-semibold text-white tracking-tight">
               Service Packages
             </h2>
-            <p className="text-base md:text-lg text-slate-700 leading-relaxed">
+            <p className="text-base md:text-lg text-slate-300 leading-relaxed">
               Choose the automation solution that fits your business needs. All packages include setup, training, and ongoing support.
             </p>
           </div>
@@ -208,46 +208,46 @@ export default function ServicesPage() {
               <div
                 key={index}
                 className={`
-                  bg-white border rounded-lg p-6 md:p-8 transition-all duration-200
-                  hover:shadow-lg
+                  bg-slate-800/50 backdrop-blur-sm border rounded-lg p-6 md:p-8 transition-all duration-200
+                  hover:bg-slate-800/70 hover:shadow-2xl hover:scale-[1.02]
                   ${pkg.recommended
-                    ? 'border-astralis-blue ring-2 ring-astralis-blue ring-opacity-50 shadow-md'
-                    : 'border-slate-200 shadow-md'
+                    ? 'border-astralis-blue ring-2 ring-astralis-blue ring-opacity-50 shadow-lg shadow-astralis-blue/20'
+                    : 'border-slate-700 shadow-lg'
                   }
                 `}
               >
                 {/* Recommended Badge */}
                 {pkg.recommended && (
-                  <div className="inline-block bg-astralis-blue text-white text-xs font-semibold px-3 py-1 rounded-full mb-4">
+                  <div className="inline-block bg-gradient-to-r from-astralis-blue to-blue-400 text-white text-xs font-semibold px-3 py-1 rounded-full mb-4 shadow-lg">
                     Most Popular
                   </div>
                 )}
 
                 {/* Icon */}
-                <div className="flex items-center justify-center w-14 h-14 bg-blue-50 rounded-lg text-astralis-blue mb-6">
+                <div className="flex items-center justify-center w-14 h-14 bg-astralis-blue/10 border border-astralis-blue/30 rounded-lg text-astralis-blue mb-6">
                   {pkg.icon}
                 </div>
 
                 {/* Package Name */}
-                <h3 className="text-xl md:text-2xl font-semibold text-astralis-navy mb-3">
+                <h3 className="text-xl md:text-2xl font-semibold text-white mb-3">
                   {pkg.name}
                 </h3>
 
                 {/* Description */}
-                <p className="text-base text-slate-700 mb-6 min-h-[80px] leading-relaxed">
+                <p className="text-base text-slate-300 mb-6 min-h-[80px] leading-relaxed">
                   {pkg.description}
                 </p>
 
                 {/* Pricing */}
-                <div className="mb-6 pb-6 border-b border-slate-200">
+                <div className="mb-6 pb-6 border-b border-slate-700">
                   <div className="flex items-baseline gap-2 mb-1">
-                    <span className="text-3xl font-bold text-astralis-navy">
+                    <span className="text-3xl font-bold text-white">
                       {pkg.setupFee}
                     </span>
-                    <span className="text-slate-600 text-sm">setup</span>
+                    <span className="text-slate-400 text-sm">setup</span>
                   </div>
                   {pkg.monthlyFee && (
-                    <div className="text-slate-700 font-medium">
+                    <div className="text-slate-300 font-medium">
                       + {pkg.monthlyFee}
                     </div>
                   )}
@@ -258,7 +258,7 @@ export default function ServicesPage() {
                   {pkg.features.map((feature, idx) => (
                     <li key={idx} className="flex items-start gap-3 text-base">
                       <CheckCircle className="w-5 h-5 text-astralis-blue flex-shrink-0 mt-0.5" />
-                      <span className="text-slate-700">{feature}</span>
+                      <span className="text-slate-300">{feature}</span>
                     </li>
                   ))}
                 </ul>
@@ -266,7 +266,7 @@ export default function ServicesPage() {
                 {/* CTA Button */}
                 <Button
                   variant={pkg.recommended ? 'primary' : 'secondary'}
-                  className="w-full"
+                  className={`w-full ${pkg.recommended ? '' : 'bg-slate-700 border-slate-600 text-white hover:bg-slate-600'}`}
                   asChild
                 >
                   <a href="/contact">Get Started</a>
@@ -277,15 +277,15 @@ export default function ServicesPage() {
 
           {/* Additional Info */}
           <div className="mt-12 text-center">
-            <p className="text-slate-600 text-sm">
+            <p className="text-slate-400 text-sm">
               All packages include initial consultation, custom configuration, training, and 30 days of post-launch support.
             </p>
           </div>
         </div>
       </section>
 
-      {/* Automation Examples Section */}
-      <section className="w-full px-6 py-20 md:px-12 md:py-24 lg:px-20 lg:py-32 bg-slate-50 relative overflow-hidden">
+      {/* Automation Examples Section - White Background */}
+      <section className="w-full px-6 py-20 md:px-12 md:py-24 lg:px-20 lg:py-32 bg-white relative overflow-hidden border-y border-slate-200">
         {/* Background Image with Overlay */}
         <div className="absolute inset-0 opacity-3">
           <Image
@@ -295,7 +295,7 @@ export default function ServicesPage() {
             className="object-cover"
           />
         </div>
-        <div className="mx-auto max-w-[1280px]">
+        <div className="mx-auto max-w-[1280px] relative z-10">
           {/* Section Header */}
           <div className="text-center mb-16 max-w-3xl mx-auto space-y-6">
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-semibold text-astralis-navy tracking-tight">
@@ -311,7 +311,7 @@ export default function ServicesPage() {
             {automationExamples.map((example, index) => (
               <div
                 key={index}
-                className="bg-white border border-slate-200 rounded-lg p-6 md:p-8 hover:shadow-lg transition-shadow duration-200 shadow-md"
+                className="bg-white border border-slate-200 rounded-lg p-6 md:p-8 hover:shadow-xl hover:border-astralis-blue/30 transition-all duration-200 shadow-md"
               >
                 {/* Icon */}
                 <div className="mb-6">
@@ -329,7 +329,7 @@ export default function ServicesPage() {
                 </p>
 
                 {/* Metrics */}
-                <div className="inline-block bg-blue-50 text-astralis-blue text-sm font-semibold px-4 py-2 rounded-md">
+                <div className="inline-block bg-gradient-to-r from-astralis-blue/10 to-blue-50 border border-astralis-blue/20 text-astralis-blue text-sm font-semibold px-4 py-2 rounded-md">
                   {example.metrics}
                 </div>
               </div>
@@ -338,38 +338,40 @@ export default function ServicesPage() {
         </div>
       </section>
 
-      {/* Value Statements Section */}
-      <section className="w-full px-6 py-20 md:px-12 md:py-24 lg:px-20 lg:py-32 bg-white">
+      {/* Value Statements Section - Dark Background */}
+      <section className="w-full px-6 py-20 md:px-12 md:py-24 lg:px-20 lg:py-32 bg-gradient-to-b from-slate-900 to-astralis-navy">
         <div className="mx-auto max-w-[1280px]">
           {/* Section Header */}
           <div className="text-center mb-16 max-w-3xl mx-auto space-y-6">
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-semibold text-astralis-navy tracking-tight">
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-semibold text-white tracking-tight">
               The Astralis Advantage
             </h2>
-            <p className="text-base md:text-lg text-slate-700 leading-relaxed">
+            <p className="text-base md:text-lg text-slate-300 leading-relaxed">
               Our automation solutions deliver measurable results that transform your bottom line.
             </p>
           </div>
 
           {/* Value Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10 mb-16">
             {valueStatements.map((value, index) => (
               <div
                 key={index}
-                className="text-center p-6 md:p-8"
+                className="text-center p-6 md:p-8 bg-slate-800/30 backdrop-blur-sm border border-slate-700 rounded-lg hover:bg-slate-800/50 transition-all duration-200"
               >
                 {/* Icon */}
                 <div className="flex items-center justify-center mb-6">
-                  {value.icon}
+                  <div className="p-3 bg-astralis-blue/10 border border-astralis-blue/30 rounded-lg">
+                    {value.icon}
+                  </div>
                 </div>
 
                 {/* Title */}
-                <h3 className="text-xl md:text-2xl font-semibold text-astralis-navy mb-4">
+                <h3 className="text-xl md:text-2xl font-semibold text-white mb-4">
                   {value.title}
                 </h3>
 
                 {/* Description */}
-                <p className="text-base text-slate-700 leading-relaxed">
+                <p className="text-base text-slate-300 leading-relaxed">
                   {value.description}
                 </p>
               </div>
@@ -377,21 +379,21 @@ export default function ServicesPage() {
           </div>
 
           {/* Supporting Statistics */}
-          <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 bg-slate-50 rounded-lg p-8 md:p-12 shadow-md">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-lg p-8 md:p-12 shadow-xl">
             <div className="text-center space-y-2">
               <div className="text-5xl md:text-6xl font-bold text-astralis-blue mb-3">300%</div>
-              <div className="text-base md:text-lg text-slate-700 font-medium">Average ROI</div>
-              <div className="text-sm text-slate-600">within 12 months</div>
+              <div className="text-base md:text-lg text-white font-medium">Average ROI</div>
+              <div className="text-sm text-slate-400">within 12 months</div>
             </div>
             <div className="text-center space-y-2">
               <div className="text-5xl md:text-6xl font-bold text-astralis-blue mb-3">20+</div>
-              <div className="text-base md:text-lg text-slate-700 font-medium">Hours Saved</div>
-              <div className="text-sm text-slate-600">per week per team</div>
+              <div className="text-base md:text-lg text-white font-medium">Hours Saved</div>
+              <div className="text-sm text-slate-400">per week per team</div>
             </div>
             <div className="text-center space-y-2">
               <div className="text-5xl md:text-6xl font-bold text-astralis-blue mb-3">95%</div>
-              <div className="text-base md:text-lg text-slate-700 font-medium">Error Reduction</div>
-              <div className="text-sm text-slate-600">in automated processes</div>
+              <div className="text-base md:text-lg text-white font-medium">Error Reduction</div>
+              <div className="text-sm text-slate-400">in automated processes</div>
             </div>
           </div>
         </div>

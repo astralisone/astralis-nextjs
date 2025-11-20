@@ -1,5 +1,3 @@
-'use client';
-
 import * as React from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -120,29 +118,18 @@ const Hero = React.forwardRef<HTMLElement, HeroProps>(
     ref
   ) => {
     // Determine grid column classes based on configuration
-    const textColClass = React.useMemo(() => {
-      if (!rightContent) return 'lg:col-span-12';
+    // Converted from React.useMemo to direct computation (server component)
+    const textColClass = !rightContent
+      ? 'lg:col-span-12'
+      : textColumnWidth === 'full'
+      ? 'lg:col-span-12'
+      : textColumnWidth === 'two-thirds'
+      ? 'lg:col-span-8'
+      : 'lg:col-span-6';
 
-      switch (textColumnWidth) {
-        case 'full':
-          return 'lg:col-span-12';
-        case 'two-thirds':
-          return 'lg:col-span-8';
-        case 'half':
-        default:
-          return 'lg:col-span-6';
-      }
-    }, [rightContent, textColumnWidth]);
-
-    const rightColClass = React.useMemo(() => {
-      switch (textColumnWidth) {
-        case 'two-thirds':
-          return 'lg:col-span-4';
-        case 'half':
-        default:
-          return 'lg:col-span-6';
-      }
-    }, [textColumnWidth]);
+    const rightColClass = textColumnWidth === 'two-thirds'
+      ? 'lg:col-span-4'
+      : 'lg:col-span-6';
 
     const textAlignClass = textAlign === 'center' ? 'text-center' : 'text-left';
     const buttonJustifyClass = textAlign === 'center' ? 'justify-center' : 'justify-start';

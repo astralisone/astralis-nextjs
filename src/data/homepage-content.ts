@@ -7,12 +7,18 @@
 export const homepageContent = {
   // 1. Hero Section
   hero: {
-    headline: "Streamline Operations. Scale with AI. Standardize Excellence.",
-    subheadline: "Enterprise-grade automation and SaaS solutions that optimize your workflows, eliminate bottlenecks, and deliver measurable results.",
-    primaryCta: "Explore AstralisOps",
-    secondaryCta: "View Solutions",
-    primaryCtaHref: "/products/astralisops",
-    secondaryCtaHref: "/solutions",
+    headline: "Automate Your Growth. Intelligent AI Solutions for Modern Enterprises.",
+    subheadline: "Transform manual workflows into intelligent automation. Scale your operations with enterprise-grade AI that delivers measurable results.",
+    primaryCta: "Launch the AI Service Wizard",
+    secondaryCta: "Book a Free Strategy Session",
+    primaryCtaHref: "/contact?intent=wizard",
+    secondaryCtaHref: "/contact?intent=strategy",
+    socialProof: {
+      businesses: "500+",
+      successRate: "98%",
+      rating: "4.9",
+      reviews: "500+"
+    }
   },
 
   // 2. What We Do Overview
@@ -113,6 +119,86 @@ export const homepageContent = {
     primaryCtaHref: "/contact",
     secondaryCta: "View Pricing",
     secondaryCtaHref: "/automation-services#pricing",
+  },
+
+  // Additional sections for enhanced homepage
+  processSteps: [
+    {
+      title: "Discovery & Analysis",
+      description: "We analyze your workflows to identify automation opportunities and efficiency gains.",
+    },
+    {
+      title: "Design & Build",
+      description: "Our team designs and implements custom automation solutions tailored to your needs.",
+    },
+    {
+      title: "Deploy & Integrate",
+      description: "Seamless integration with your existing systems and deployment to production.",
+    },
+    {
+      title: "Monitor & Optimize",
+      description: "Continuous monitoring and optimization to ensure peak performance and ROI.",
+    },
+  ],
+
+  quickStats: [
+    {
+      value: "80%",
+      label: "Manual Work Reduced",
+    },
+    {
+      value: "3 weeks",
+      label: "Average Deployment",
+    },
+    {
+      value: "99.9%",
+      label: "Uptime Guaranteed",
+    },
+  ],
+
+  // Case Study
+  caseStudy: {
+    company: "TechCorp Manufacturing",
+    title: "Boosting Manufacturing Output by 43% with Predictive Maintenance AI",
+    description: "Learn how TechCorp reduced downtime by 80% and increased production efficiency using our AI-powered automation platform.",
+    metric: "43%",
+    metricLabel: "Output Increase",
+    ctaText: "Read Story",
+    ctaHref: "/blog/techcorp-case-study",
+  },
+
+  // AI Workflow Services
+  services: {
+    title: "AI Workflow Services",
+    subtitle: "Transform your operations with intelligent automation",
+    featured: {
+      title: "AI-Driven Sales Automation",
+      roi: "278%",
+      description: "Eliminate manual lead qualification, automate follow-ups, and accelerate your sales pipeline with intelligent AI agents.",
+      features: [
+        "Automated lead capture and qualification",
+        "Intelligent email sequences and follow-ups",
+        "CRM integration and data enrichment",
+        "Real-time pipeline analytics and reporting"
+      ],
+      pricing: {
+        step: "STEP 1/4",
+        amount: "$8,800"
+      },
+      timeEstimate: "2-3 weeks",
+      ctaText: "Explore Full Solution",
+      ctaHref: "/solutions#ai-automation"
+    }
+  },
+
+  // CTA Section for Ready to Transform
+  transformCta: {
+    headline: "Ready to Transform Your Business?",
+    description: "Join 500+ businesses already benefiting from AI-powered automation. Start your journey today.",
+    primaryCta: "Get Started Now",
+    primaryCtaHref: "/contact?intent=start",
+    secondaryCta: "Schedule a Demo",
+    secondaryCtaHref: "/contact?intent=demo",
   },
 } as const;
 

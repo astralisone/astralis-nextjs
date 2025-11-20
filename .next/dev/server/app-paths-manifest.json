@@ -1,5 +1,12 @@
 {
+  "/(marketing)/blog/page": "app/(marketing)/blog/page.js",
   "/(marketing)/contact/page": "app/(marketing)/contact/page.js",
-  "/api/booking/route": "app/api/booking/route.js",
-  "/page": "app/page.js"
+  "/(marketing)/services/page": "app/(marketing)/services/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/auth/signup/route": "app/api/auth/signup/route.js",
+  "/astralisops/page": "app/astralisops/page.js",
+  "/auth/signin/page": "app/auth/signin/page.js",
+  "/auth/signup/page": "app/auth/signup/page.js",
+  "/page": "app/page.js",
+  "/solutions/page": "app/solutions/page.js"
 }

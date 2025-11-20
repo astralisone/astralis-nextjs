@@ -216,22 +216,33 @@ export default function BlogPage() {
 
       {/* Featured Article Section */}
       {featuredPost && selectedCategory === 'All' && (
-        <section className="w-full px-6 py-16 md:px-12 md:py-20 lg:px-20 lg:py-24 bg-white">
-          <div className="mx-auto max-w-[1280px]">
+        <section className="w-full px-6 py-16 md:px-12 md:py-20 lg:px-20 lg:py-24 bg-gradient-to-b from-white to-slate-50 relative overflow-hidden">
+          {/* Tech background pattern */}
+          <div className="absolute inset-0 opacity-[0.02]">
+            <Image
+              src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1920&q=60"
+              alt="Technology pattern"
+              fill
+              className="object-cover"
+              loading="lazy"
+              sizes="100vw"
+            />
+          </div>
+          <div className="mx-auto max-w-[1280px] relative z-10">
             <div className="mb-8">
-              <span className="inline-block px-3 py-1 bg-astralis-blue text-white text-xs font-semibold rounded-md uppercase tracking-wide">
+              <span className="inline-block px-4 py-2 bg-gradient-to-r from-astralis-blue to-blue-600 text-white text-xs font-bold rounded-md uppercase tracking-wide shadow-lg">
                 Featured Article
               </span>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12 bg-slate-50 border border-slate-200 rounded-lg p-6 md:p-10 lg:p-12 shadow-md hover:shadow-lg transition-shadow duration-200">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12 bg-white border border-slate-200 rounded-xl p-6 md:p-10 lg:p-12 shadow-xl hover:shadow-2xl transition-all duration-200">
               {/* Left: Content */}
               <div className="space-y-6">
                 <div className="space-y-4">
-                  <span className="inline-block px-3 py-1 bg-white text-astralis-blue text-xs font-semibold rounded-md border border-astralis-blue">
+                  <span className="inline-block px-3 py-1.5 bg-astralis-blue/10 text-astralis-blue text-xs font-semibold rounded-md border border-astralis-blue/30">
                     {featuredPost.category}
                   </span>
-                  <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-astralis-navy leading-tight tracking-tight">
+                  <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-astralis-navy leading-tight tracking-tight">
                     {featuredPost.title}
                   </h2>
                 </div>
@@ -240,17 +251,17 @@ export default function BlogPage() {
                   {featuredPost.excerpt}
                 </p>
 
-                <div className="flex items-center gap-6 text-sm text-slate-600">
+                <div className="flex items-center flex-wrap gap-4 md:gap-6 text-sm text-slate-600">
                   <div className="flex items-center gap-2">
-                    <User className="w-4 h-4" />
-                    <span>{featuredPost.author}</span>
+                    <User className="w-4 h-4 text-astralis-blue" />
+                    <span className="font-medium">{featuredPost.author}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
+                    <Calendar className="w-4 h-4 text-astralis-blue" />
                     <span>{new Date(featuredPost.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
+                    <Clock className="w-4 h-4 text-astralis-blue" />
                     <span>{featuredPost.readTime}</span>
                   </div>
                 </div>
@@ -258,7 +269,7 @@ export default function BlogPage() {
                 <Button
                   variant="primary"
                   size="lg"
-                  className="group"
+                  className="group shadow-lg"
                   asChild
                 >
                   <Link href={`/blog/${featuredPost.slug}`}>
@@ -269,7 +280,7 @@ export default function BlogPage() {
               </div>
 
               {/* Right: Featured Image */}
-              <div className="hidden lg:block relative rounded-lg overflow-hidden h-96">
+              <div className="hidden lg:block relative rounded-xl overflow-hidden h-96 shadow-lg">
                 <Image
                   src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80"
                   alt="AI and data visualization"
@@ -278,7 +289,7 @@ export default function BlogPage() {
                   sizes="(max-width: 1024px) 100vw, 50vw"
                   loading="lazy"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-astralis-navy/60 to-transparent"></div>
               </div>
             </div>
           </div>
@@ -286,9 +297,20 @@ export default function BlogPage() {
       )}
 
       {/* Article Grid Section */}
-      <section className="w-full px-6 py-16 md:px-12 md:py-20 lg:px-20 lg:py-24 bg-white">
-        <div className="mx-auto max-w-[1280px]">
-          <h2 className="text-3xl md:text-4xl font-semibold text-astralis-navy mb-12 tracking-tight">
+      <section className="w-full px-6 py-16 md:px-12 md:py-20 lg:px-20 lg:py-24 bg-slate-50 relative overflow-hidden">
+        {/* Subtle data visualization background */}
+        <div className="absolute inset-0 opacity-[0.02]">
+          <Image
+            src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1920&q=60"
+            alt="Data visualization"
+            fill
+            className="object-cover"
+            loading="lazy"
+            sizes="100vw"
+          />
+        </div>
+        <div className="mx-auto max-w-[1280px] relative z-10">
+          <h2 className="text-3xl md:text-4xl font-bold text-astralis-navy mb-12 tracking-tight">
             {selectedCategory === 'All' ? 'All Articles' : `${selectedCategory} Articles`}
           </h2>
 
@@ -297,32 +319,32 @@ export default function BlogPage() {
             {regularPosts.map((post) => (
               <article
                 key={post.id}
-                className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-1 flex flex-col"
+                className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-200 hover:-translate-y-2 flex flex-col group"
               >
                 {/* Article Image */}
-                <div className="w-full h-48 relative border-b border-slate-200">
+                <div className="w-full h-48 relative border-b border-slate-200 overflow-hidden">
                   <Image
                     src={getArticleImage(post.id)}
                     alt={post.title}
                     fill
-                    className="object-cover"
+                    className="object-cover group-hover:scale-105 transition-transform duration-200"
                     sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     loading="lazy"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 to-transparent"></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-astralis-navy/40 to-transparent group-hover:from-astralis-navy/60 transition-all duration-200"></div>
                 </div>
 
                 {/* Card Content */}
                 <div className="p-6 md:p-8 flex-1 flex flex-col">
                   {/* Category Tag */}
-                  <div className="mb-3">
-                    <span className="inline-block px-2.5 py-1 bg-slate-100 text-astralis-blue text-xs font-semibold rounded border border-slate-200">
+                  <div className="mb-4">
+                    <span className="inline-block px-3 py-1.5 bg-astralis-blue/10 text-astralis-blue text-xs font-semibold rounded border border-astralis-blue/30">
                       {post.category}
                     </span>
                   </div>
 
                   {/* Title */}
-                  <h3 className="text-xl font-semibold text-astralis-navy mb-3 leading-tight">
+                  <h3 className="text-xl font-bold text-astralis-navy mb-3 leading-tight group-hover:text-astralis-blue transition-colors duration-200">
                     {post.title}
                   </h3>
 
@@ -334,17 +356,17 @@ export default function BlogPage() {
                   {/* Meta Information */}
                   <div className="space-y-3 pt-4 border-t border-slate-200">
                     <div className="flex items-center gap-2 text-xs text-slate-600">
-                      <User className="w-3.5 h-3.5" />
-                      <span>{post.author}</span>
+                      <User className="w-4 h-4 text-astralis-blue" />
+                      <span className="font-medium">{post.author}</span>
                     </div>
                     <div className="flex items-center justify-between text-xs text-slate-600">
                       <div className="flex items-center gap-2">
-                        <Calendar className="w-3.5 h-3.5" />
+                        <Calendar className="w-4 h-4 text-astralis-blue" />
                         <span>{new Date(post.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Clock className="w-3.5 h-3.5" />
-                        <span>{post.readTime}</span>
+                        <Clock className="w-4 h-4 text-astralis-blue" />
+                        <span className="font-medium">{post.readTime}</span>
                       </div>
                     </div>
                   </div>
@@ -352,10 +374,10 @@ export default function BlogPage() {
                   {/* Read More Link */}
                   <Link
                     href={`/blog/${post.slug}`}
-                    className="inline-flex items-center gap-2 text-astralis-blue hover:text-blue-700 font-medium text-sm mt-4 group"
+                    className="inline-flex items-center gap-2 text-astralis-blue hover:text-blue-700 font-semibold text-sm mt-4 group/link"
                   >
                     Read more
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
+                    <ArrowRight className="w-4 h-4 group-hover/link:translate-x-1 transition-transform duration-200" />
                   </Link>
                 </div>
               </article>
@@ -382,25 +404,36 @@ export default function BlogPage() {
       </section>
 
       {/* Newsletter CTA Section */}
-      <section className="w-full px-6 py-16 md:px-12 md:py-20 lg:px-20 lg:py-24 bg-slate-50 border-t border-slate-200">
-        <div className="mx-auto max-w-[800px] text-center">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-astralis-navy mb-6 tracking-tight">
+      <section className="w-full px-6 py-16 md:px-12 md:py-20 lg:px-20 lg:py-24 bg-gradient-to-br from-astralis-navy via-slate-800 to-astralis-navy border-t border-slate-700 relative overflow-hidden">
+        {/* Tech grid overlay */}
+        <div className="absolute inset-0 opacity-10">
+          <Image
+            src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1920&q=60"
+            alt="Technology network"
+            fill
+            className="object-cover"
+            loading="lazy"
+            sizes="100vw"
+          />
+        </div>
+        <div className="mx-auto max-w-[800px] text-center relative z-10">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6 tracking-tight">
             Stay Updated
           </h2>
-          <p className="text-base md:text-lg text-slate-700 mb-8 leading-relaxed">
+          <p className="text-base md:text-lg text-slate-300 mb-8 leading-relaxed">
             Get the latest insights on automation, AI, and SaaS engineering delivered to your inbox.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
             <input
               type="email"
               placeholder="your@email.com"
-              className="px-4 py-3 rounded-md border border-slate-300 bg-white text-slate-900 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-astralis-blue focus:border-transparent flex-1"
+              className="px-4 py-3 rounded-lg border border-slate-600 bg-slate-800/50 text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-astralis-blue focus:border-transparent flex-1 backdrop-blur-sm"
             />
-            <Button variant="primary" size="lg" className="sm:w-auto">
+            <Button variant="primary" size="lg" className="sm:w-auto shadow-lg">
               Subscribe
             </Button>
           </div>
-          <p className="text-xs text-slate-600 mt-4">
+          <p className="text-xs text-slate-400 mt-4">
             No spam. Unsubscribe at any time.
           </p>
         </div>

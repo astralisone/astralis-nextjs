@@ -1,7 +1,20 @@
-[00:00:00.341] Server  LOG      ✓ Ready in 229ms
-[00:00:06.975] Browser WARN    Image with src "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
-[00:00:40.104] Server  LOG     New booking received: {}
-[00:40:09.559] Server  LOG        Reload env: .env.local
-[00:40:09.624] Server  LOG      ✓ Compiled in 15ms
-[00:40:09.634] Server  WARN     ⚠ Fast Refresh had to perform a full reload when ./projects/astralis-nextjs/node_modules/next/dist/client/image-component.js changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
-[00:40:09.686] Server  LOG      ✓ Compiled in 0ms
+[00:00:00.492] Server  WARN     ⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+[00:00:00.545] Server  LOG      ✓ Ready in 409ms
+[00:01:09.239] Server  ERROR   (node:57546) [DEP0060] DeprecationWarning: The `util._extend` API is deprecated. Please use Object.assign() instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[00:01:09.245] Server  ERROR   Failed to proxy http://localhost:3000/auth/providers AggregateError
+[00:01:09.246] Server  ERROR   AggregateError
+[00:01:09.250] Browser ERROR   {"kind":"error","name":"ClientFetchError","type":"AuthError"}
+[00:01:09.258] Server  ERROR   Failed to proxy http://localhost:3000/auth/error AggregateError
+[00:01:09.258] Server  ERROR   AggregateError
+[00:01:17.126] Server  ERROR   Failed to proxy http://localhost:3000/auth/providers AggregateError
+[00:01:17.126] Server  ERROR   AggregateError
+[00:01:17.129] Browser ERROR   {"kind":"error","name":"ClientFetchError","type":"AuthError"}
+[00:01:17.134] Server  ERROR   Failed to proxy http://localhost:3000/auth/error AggregateError
+[00:01:17.134] Server  ERROR   AggregateError
+[00:01:42.646] Server  ERROR   Sign up error: TypeError: Cannot read properties of undefined (reading 'findUnique')
+[00:01:56.600] Server  ERROR   Sign up error: TypeError: Cannot read properties of undefined (reading 'findUnique')
+[00:15:21.500] Server  LOG      ✓ Compiled in 47ms
+[00:15:39.151] Server  LOG      ✓ Compiled in 45ms
+[00:16:05.276] Browser WARN    Image with src "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1920&q=60" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading

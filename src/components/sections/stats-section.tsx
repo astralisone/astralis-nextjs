@@ -1,5 +1,3 @@
-'use client';
-
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
@@ -124,14 +122,12 @@ const StatsSection = React.forwardRef<HTMLElement, StatsSectionProps>(
     ref
   ) => {
     // Background variant styles
-    const backgroundStyles = React.useMemo(() => {
-      const variants = {
-        default: 'bg-white dark:bg-slate-900',
-        light: 'bg-slate-50 dark:bg-slate-800',
-        navy: 'bg-astralis-navy text-white',
-      };
-      return variants[backgroundVariant];
-    }, [backgroundVariant]);
+    // Converted from React.useMemo to direct computation (server component)
+    const backgroundStyles = backgroundVariant === 'default'
+      ? 'bg-white dark:bg-slate-900'
+      : backgroundVariant === 'light'
+      ? 'bg-slate-50 dark:bg-slate-800'
+      : 'bg-astralis-navy text-white';
 
     const isDarkBackground = backgroundVariant === 'navy';
 
@@ -170,7 +166,7 @@ const StatsSection = React.forwardRef<HTMLElement, StatsSectionProps>(
         ref={ref}
         className={cn(
           // Section spacing (96-120px per spec)
-          'w-full px-8 py-24 md:px-20 md:py-32 lg:px-24',
+          'w-full px-8 py-24 md:px-20 md:py-32 lg:py-24',
           // Background variant
           backgroundStyles,
           className

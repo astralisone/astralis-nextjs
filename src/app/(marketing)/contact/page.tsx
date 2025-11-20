@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Mail, Calendar, MapPin, Phone, User, Briefcase, MessageSquare, AlertCircle, CheckCircle } from 'lucide-react';
+import { Mail, Calendar, MapPin, Phone, User, Briefcase, MessageSquare, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import { useState, FormEvent } from 'react';
 
 const BookingModal = dynamic(
@@ -132,15 +132,16 @@ export default function ContactPage() {
         textAlign="center"
         textColumnWidth="two-thirds"
       />
-      <section className="w-full px-6 py-20 md:px-12 md:py-24 lg:px-20 lg:py-32 bg-white relative overflow-hidden">
-        <div className="absolute inset-0 opacity-3">
-          <Image src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1920&q=60" alt="Team collaboration" fill className="object-cover" loading="lazy" sizes="100vw" />
+      <section className="w-full px-6 py-20 md:px-12 md:py-24 lg:px-20 lg:py-32 bg-gradient-to-b from-white to-slate-50 relative overflow-hidden">
+        {/* Tech pattern background */}
+        <div className="absolute inset-0 opacity-[0.02]">
+          <Image src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1920&q=60" alt="Technology pattern" fill className="object-cover" loading="lazy" sizes="100vw" />
         </div>
         <div className="mx-auto max-w-[1280px] relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
             <div className="lg:col-span-2">
-              <div className="bg-white border border-slate-200 rounded-lg shadow-md p-6 md:p-8">
-                <h2 className="text-2xl md:text-3xl font-semibold text-astralis-navy mb-4">Send us a message</h2>
+              <div className="bg-white border border-slate-200 rounded-xl shadow-xl p-6 md:p-10 lg:p-12">
+                <h2 className="text-2xl md:text-3xl font-bold text-astralis-navy mb-4">Send us a message</h2>
                 <p className="text-base text-slate-600 mb-2 leading-relaxed">Fill out the form below and we'll get back to you within 24 hours.</p>
                 <p className="text-sm text-slate-500 mb-8"><span className="text-astralis-blue font-medium">*</span> Required fields</p>
                 <form onSubmit={handleSubmit} className="space-y-6" noValidate>
@@ -198,31 +199,52 @@ export default function ContactPage() {
               </div>
             </div>
             <div className="space-y-6 md:space-y-8">
-              <div className="bg-slate-50 border border-slate-200 rounded-lg p-6 md:p-8">
-                <h3 className="text-xl font-semibold text-astralis-navy mb-6">Direct Contact</h3>
+              <div className="bg-white border border-slate-200 rounded-xl p-6 md:p-8 shadow-lg">
+                <h3 className="text-xl font-bold text-astralis-navy mb-6">Direct Contact</h3>
                 <div className="space-y-6">
-                  <div className="flex items-start gap-3">
-                    <Mail className="w-5 h-5 text-astralis-blue flex-shrink-0 mt-0.5" />
-                    <div><p className="text-sm font-medium text-slate-700">Email</p><a href="mailto:support@astralisone.com" className="text-astralis-blue hover:underline">support@astralisone.com</a></div>
+                  <div className="flex items-start gap-4 p-4 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors duration-200">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-astralis-blue/10 flex-shrink-0">
+                      <Mail className="w-5 h-5 text-astralis-blue" />
+                    </div>
+                    <div><p className="text-sm font-semibold text-slate-700 mb-1">Email</p><a href="mailto:support@astralisone.com" className="text-astralis-blue hover:text-blue-700 font-medium hover:underline">support@astralisone.com</a></div>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <Phone className="w-5 h-5 text-astralis-blue flex-shrink-0 mt-0.5" />
-                    <div><p className="text-sm font-medium text-slate-700">Phone</p><a href="tel:+13412234433" className="text-astralis-blue hover:underline">+1 (341) 223-4433</a></div>
+                  <div className="flex items-start gap-4 p-4 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors duration-200">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-astralis-blue/10 flex-shrink-0">
+                      <Phone className="w-5 h-5 text-astralis-blue" />
+                    </div>
+                    <div><p className="text-sm font-semibold text-slate-700 mb-1">Phone</p><a href="tel:+13412234433" className="text-astralis-blue hover:text-blue-700 font-medium hover:underline">+1 (341) 223-4433</a></div>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <MapPin className="w-5 h-5 text-astralis-blue flex-shrink-0 mt-0.5" />
-                    <div><p className="text-sm font-medium text-slate-700">Location</p><p className="text-slate-600">Remote-first operations<br />Serving clients globally</p></div>
+                  <div className="flex items-start gap-4 p-4 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors duration-200">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-astralis-blue/10 flex-shrink-0">
+                      <MapPin className="w-5 h-5 text-astralis-blue" />
+                    </div>
+                    <div><p className="text-sm font-semibold text-slate-700 mb-1">Location</p><p className="text-slate-600 text-sm">Remote-first operations<br />Serving clients globally</p></div>
                   </div>
                 </div>
               </div>
-              <div className="bg-gradient-to-br from-astralis-blue to-blue-600 rounded-lg p-6 md:p-8 text-white">
-                <Calendar className="w-8 h-8 mb-4" />
-                <h3 className="text-xl font-semibold mb-3">Schedule a Consultation</h3>
-                <p className="text-blue-100 text-base mb-6 leading-relaxed">Book a free 30-minute call to discuss your automation needs.</p>
-                <Button variant="secondary" size="default" className="w-full bg-white text-astralis-blue hover:bg-slate-100 border-0" onClick={() => setIsBookingModalOpen(true)}>Book a Call</Button>
+              <div className="bg-gradient-to-br from-astralis-blue via-blue-600 to-astralis-blue rounded-xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden">
+                <div className="absolute inset-0 opacity-10">
+                  <Image src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&q=60" alt="Tech pattern" fill className="object-cover" loading="lazy" sizes="33vw" />
+                </div>
+                <div className="relative z-10">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-white/20 backdrop-blur-sm mb-4">
+                    <Calendar className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-3">Schedule a Consultation</h3>
+                  <p className="text-blue-100 text-base mb-6 leading-relaxed">Book a free 30-minute call to discuss your automation needs.</p>
+                  <Button variant="secondary" size="default" className="w-full bg-white text-astralis-blue hover:bg-slate-100 border-0 shadow-lg font-semibold" onClick={() => setIsBookingModalOpen(true)}>Book a Call</Button>
+                </div>
               </div>
-              <div className="bg-slate-50 border border-slate-200 rounded-lg p-6">
-                <p className="text-base text-slate-600 leading-relaxed"><span className="font-semibold text-astralis-navy">Response time:</span> We typically respond within 24 hours during business days.</p>
+              <div className="bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 rounded-xl p-6 shadow-md">
+                <div className="flex items-start gap-3">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-astralis-blue/10 flex-shrink-0">
+                    <Clock className="w-4 h-4 text-astralis-blue" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-astralis-navy mb-1">Response time</p>
+                    <p className="text-sm text-slate-600 leading-relaxed">We typically respond within 24 hours during business days.</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

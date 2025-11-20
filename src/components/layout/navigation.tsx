@@ -76,10 +76,10 @@ export function Navigation() {
 
   return (
     <header className="sticky top-0 z-50 w-full bg-astralis-navy border-b border-slate-700 shadow-lg">
-      <nav className="mx-auto max-w-[1400px] px-6 sm:px-8 md:px-12 lg:px-20 py-4" aria-label="Main navigation">
-        <div className="flex h-24 items-center justify-between gap-8">
+      <nav className="mx-auto max-w-[1400px] h-30 flex flex-row justify-start items-center p-5" aria-label="Main navigation">
+        <div className="flex items-center justify-between gap-8 w-full">
           {/* Logo */}
-          <div className="flex-shrink-0 py-2">
+          <div className="flex-shrink-0">
             <Link
               href="/"
               className="flex items-center text-2xl font-bold text-white transition-colors duration-200 hover:text-astralis-blue"
@@ -98,10 +98,10 @@ export function Navigation() {
                   <Link
                     href={item.href}
                     className={cn(
-                      'relative inline-block px-4 py-3 text-base font-medium transition-all duration-200',
+                      'relative inline-block px-4 text-base font-medium transition-all duration-200',
                       isActive(item.href)
                         ? 'text-white'
-                        : 'text-slate-300 hover:text-white'
+                        : 'text-slate-100 hover:text-white'
                     )}
                   >
                     {item.label}
@@ -117,14 +117,22 @@ export function Navigation() {
               ))}
             </ul>
 
-            {/* CTA Button - Outlined Style */}
+            {/* Sign In Button - Text Link Style */}
+            <Link
+              href="/auth/signin"
+              className="text-base font-medium text-slate-100 hover:text-white transition-colors duration-200"
+            >
+              Sign In
+            </Link>
+
+            {/* Start Service Wizard Button - Bright Blue Filled */}
             <Button
-              variant="outline"
+              variant="primary"
               size="default"
-              className="border-2 border-white bg-transparent text-white hover:bg-white hover:text-astralis-navy font-semibold px-8 py-3 rounded-md transition-all duration-200 ml-6"
+              className="bg-astralis-blue hover:bg-blue-600 text-white font-semibold rounded-md transition-all duration-200"
               asChild
             >
-              <Link href="/contact">Contact</Link>
+              <Link href="/contact">Start Service Wizard</Link>
             </Button>
           </div>
 
@@ -187,7 +195,7 @@ export function Navigation() {
                       <Link
                         href={item.href}
                         className={cn(
-                          'block py-4 px-5 text-lg font-medium rounded-lg transition-all duration-200',
+                          'block py-4 px-5 min-h-[44px] text-lg font-medium rounded-lg transition-all duration-200 flex items-center',
                           isActive(item.href)
                             ? 'text-white bg-slate-700'
                             : 'text-slate-300 hover:text-white hover:bg-slate-800'
@@ -218,24 +226,6 @@ export function Navigation() {
           </>
         )}
       </nav>
-
-      {/* Custom animation for mobile panel slide-in from right */}
-      <style jsx global>{`
-        @keyframes slide-in-right {
-          from {
-            transform: translateX(100%);
-            opacity: 0;
-          }
-          to {
-            transform: translateX(0);
-            opacity: 1;
-          }
-        }
-
-        .animate-slide-in-right {
-          animation: slide-in-right 250ms ease-out;
-        }
-      `}</style>
     </header>
   );
 }
