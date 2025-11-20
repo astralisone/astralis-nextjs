@@ -108,11 +108,12 @@ function WhatWeDoSection() {
       {/* Background Image with Overlay */}
       <div className="absolute inset-0 opacity-5">
         <Image
-          src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=1920&q=80"
+          src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=1920&q=60"
           alt="Modern office workspace"
           fill
           className="object-cover"
-          priority
+          loading="lazy"
+          sizes="100vw"
         />
       </div>
 
@@ -184,19 +185,60 @@ function PlatformSpotlight() {
               </div>
             </div>
 
-            {/* Right Column: Visual Element with Background Image */}
+            {/* Right Column: Visual Element with Operations Dashboard */}
             <div className="relative">
-              {/* Dashboard/Analytics Image */}
-              <div className="rounded-xl overflow-hidden border border-slate-300 shadow-lg mb-6 relative h-64">
-                <Image
-                  src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80"
-                  alt="Data analytics dashboard"
-                  fill
-                  className="object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent"></div>
-                <div className="absolute bottom-4 left-4 right-4">
-                  <p className="text-white text-sm font-medium">Real-time Analytics & Automation</p>
+              {/* Operations Dashboard - HTML Version */}
+              <div className="rounded-xl p-6 md:p-8 border border-slate-300 bg-gradient-to-br from-slate-800 to-slate-900 shadow-lg mb-6">
+                {/* Dashboard Header */}
+                <div className="mb-6 flex items-center justify-between text-xs text-slate-400">
+                  <span className="font-medium text-slate-300">Operations Dashboard</span>
+                  <span className="text-slate-500">Real-time</span>
+                </div>
+
+                {/* Stat Cards Grid */}
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  {/* New Leads Card */}
+                  <div className="rounded-lg border border-slate-700 bg-slate-900/60 p-4">
+                    <div className="text-xs text-slate-400 mb-2">New leads</div>
+                    <div className="text-3xl font-bold text-white mb-1">18</div>
+                    <div className="text-xs text-emerald-400 flex items-center gap-1">
+                      <TrendingUp className="w-3 h-3" />
+                      <span>+32% vs last week</span>
+                    </div>
+                  </div>
+
+                  {/* Automation Runs Card */}
+                  <div className="rounded-lg border border-slate-700 bg-slate-900/60 p-4">
+                    <div className="text-xs text-slate-400 mb-2">Automation runs</div>
+                    <div className="text-3xl font-bold text-white mb-1">142</div>
+                    <div className="text-xs text-slate-300 flex items-center gap-1">
+                      <CheckCircle className="w-3 h-3" />
+                      <span>No incidents</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Pipeline Progress Card */}
+                <div className="rounded-lg border border-slate-700 bg-slate-900/60 p-4">
+                  <div className="flex items-center justify-between text-xs text-slate-400 mb-3">
+                    <span>Active pipelines</span>
+                    <span className="text-slate-300">Sales · Onboarding · Support</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-astralis-blue to-purple-500 transition-all duration-500"
+                      style={{ width: '67%' }}
+                    />
+                  </div>
+                  <div className="mt-2 text-right text-xs text-slate-400">67% capacity</div>
+                </div>
+
+                {/* Mini Badge */}
+                <div className="mt-4 text-center">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-astralis-blue/10 border border-astralis-blue/30 px-3 py-1 text-xs text-astralis-blue">
+                    <Sparkles className="w-3 h-3" />
+                    AI-Powered Operations
+                  </span>
                 </div>
               </div>
 
