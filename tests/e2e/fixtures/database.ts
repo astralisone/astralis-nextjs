@@ -17,7 +17,7 @@ export class DatabaseFixture {
    */
   async cleanup() {
     // Delete test users (identified by test email pattern)
-    await this.prisma.user.deleteMany({
+    await this.prisma.users.deleteMany({
       where: {
         email: {
           contains: '@test.com',
@@ -55,7 +55,7 @@ export class DatabaseFixture {
     orgId: string;
     role?: 'ADMIN' | 'OPERATOR' | 'CLIENT';
   }) {
-    return await this.prisma.user.create({
+    return await this.prisma.users.create({
       data: {
         email: data.email,
         name: data.name,
@@ -69,7 +69,7 @@ export class DatabaseFixture {
    * Find user by email
    */
   async findUserByEmail(email: string) {
-    return await this.prisma.user.findUnique({
+    return await this.prisma.users.findUnique({
       where: { email },
       include: { organization: true },
     });
@@ -79,7 +79,7 @@ export class DatabaseFixture {
    * Delete user by email
    */
   async deleteUserByEmail(email: string) {
-    return await this.prisma.user.delete({
+    return await this.prisma.users.delete({
       where: { email },
     });
   }

@@ -77,7 +77,7 @@ export async function POST(
     const { id: pipelineId } = await params;
 
     // Verify stage belongs to this pipeline
-    const stage = await prisma.stage.findFirst({
+    const stage = await prisma.pipelineStage.findFirst({
       where: {
         id: parsed.data.stageId,
         pipelineId: pipelineId,

@@ -1,12 +1,13 @@
-import { auth } from '@/lib/auth/config';
-import { Role } from '@prisma/client';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth/config';
+import { UserRole } from '@prisma/client';
 import { NextResponse } from 'next/server';
 
 /**
  * Check if user has required role
  */
-export async function requireRole(allowedRoles: Role[]) {
-  const session = await auth();
+export async function requireRole(allowedRoles: UserRole[]) {
+  const session = await getServerSession(authOptions);
 
   if (!session || !session.user) {
     return NextResponse.json(
@@ -15,7 +16,7 @@ export async function requireRole(allowedRoles: Role[]) {
     );
   }
 
-  const userRole = session.user.role as Role;
+  const userRole = session.user.role as UserRole;
   if (!allowedRoles.includes(userRole)) {
     return NextResponse.json(
       { error: 'Forbidden - insufficient permissions' },
@@ -30,7 +31,7 @@ export async function requireRole(allowedRoles: Role[]) {
  * Check if user belongs to specified organization
  */
 export async function requireOrganization(orgId: string) {
-  const session = await auth();
+  const session = await getServerSession(authOptions);
 
   if (!session || !session.user) {
     return NextResponse.json(
@@ -57,24 +58,24 @@ export const permissions = {
   'user:create': ['ADMIN'],
   'user:update': ['ADMIN'],
   'user:delete': ['ADMIN'],
-  'user:view': ['ADMIN', 'OPERATOR'],
+  'user:view': ['ADMIN', 'EDITOR', 'PM'],
 
   // Pipeline management
   'pipeline:create': ['ADMIN'],
-  'pipeline:update': ['ADMIN', 'OPERATOR'],
+  'pipeline:update': ['ADMIN', 'EDITOR', 'PM'],
   'pipeline:delete': ['ADMIN'],
-  'pipeline:view': ['ADMIN', 'OPERATOR'],
+  'pipeline:view': ['ADMIN', 'EDITOR', 'PM', 'USER'],
 
   // Intake management
-  'intake:create': ['ADMIN', 'OPERATOR', 'CLIENT'],
-  'intake:update': ['ADMIN', 'OPERATOR'],
+  'intake:create': ['ADMIN', 'EDITOR', 'PM', 'USER'],
+  'intake:update': ['ADMIN', 'EDITOR', 'PM'],
   'intake:delete': ['ADMIN'],
-  'intake:view': ['ADMIN', 'OPERATOR', 'CLIENT'],
+  'intake:view': ['ADMIN', 'EDITOR', 'PM', 'USER'],
 
   // Document management
-  'document:upload': ['ADMIN', 'OPERATOR', 'CLIENT'],
-  'document:view': ['ADMIN', 'OPERATOR', 'CLIENT'],
-  'document:delete': ['ADMIN', 'OPERATOR'],
+  'document:upload': ['ADMIN', 'EDITOR', 'PM', 'USER'],
+  'document:view': ['ADMIN', 'EDITOR', 'PM', 'USER'],
+  'document:delete': ['ADMIN', 'EDITOR'],
 
   // Organization settings
   'org:settings': ['ADMIN'],
@@ -85,13 +86,13 @@ export const permissions = {
  * Check if user has specific permission
  */
 export async function hasPermission(permission: keyof typeof permissions): Promise<boolean> {
-  const session = await auth();
+  const session = await getServerSession(authOptions);
 
   if (!session || !session.user) {
     return false;
   }
 
-  const userRole = session.user.role as Role;
+  const userRole = session.user.role as UserRole;
   const allowedRoles = permissions[permission];
 
   return allowedRoles.includes(userRole);
