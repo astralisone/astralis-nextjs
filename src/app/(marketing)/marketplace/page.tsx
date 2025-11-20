@@ -27,7 +27,7 @@
 import Image from 'next/image';
 import { Hero } from '@/components/sections';
 import { Button } from '@/components/ui/button';
-import { Package, Code, Layers, FileText, Bot, Sparkles, Filter } from 'lucide-react';
+import { Package, Code, Layers, FileText, Bot, Sparkles, Filter, Star } from 'lucide-react';
 import { useState } from 'react';
 
 // Product types
@@ -41,6 +41,8 @@ interface Product {
   category: ProductCategory;
   icon: React.ReactNode;
   features: string[];
+  rating: number;
+  reviews: number;
 }
 
 // Marketplace products per spec Section 6
@@ -52,7 +54,9 @@ const products: Product[] = [
     price: 299,
     category: 'toolkit',
     icon: <Package className="w-8 h-8 text-astralis-blue" />,
-    features: ['Workflow Builder', 'Task Scheduling', 'Performance Dashboard', 'Connect Your Apps']
+    features: ['Workflow Builder', 'Task Scheduling', 'Performance Dashboard', 'Connect Your Apps'],
+    rating: 4.9,
+    reviews: 127
   },
   {
     id: 'react-enterprise-component-pack',
@@ -61,7 +65,9 @@ const products: Product[] = [
     price: 199,
     category: 'components',
     icon: <Code className="w-8 h-8 text-astralis-blue" />,
-    features: ['50+ Ready Components', 'Easy to Customize', 'Full Documentation', 'Accessible Design']
+    features: ['50+ Ready Components', 'Easy to Customize', 'Full Documentation', 'Accessible Design'],
+    rating: 4.8,
+    reviews: 203
   },
   {
     id: 'nx-monorepo-starter',
@@ -70,7 +76,9 @@ const products: Product[] = [
     price: 149,
     category: 'templates',
     icon: <Layers className="w-8 h-8 text-astralis-blue" />,
-    features: ['Multi-App Structure', 'Auto-Deploy Setup', 'Shared Code Libraries', 'Time-Saving Scripts']
+    features: ['Multi-App Structure', 'Auto-Deploy Setup', 'Shared Code Libraries', 'Time-Saving Scripts'],
+    rating: 4.7,
+    reviews: 89
   },
   {
     id: 'ai-document-console',
@@ -79,7 +87,9 @@ const products: Product[] = [
     price: 249,
     category: 'ai',
     icon: <FileText className="w-8 h-8 text-astralis-blue" />,
-    features: ['Auto-Sort Documents', 'Extract Text & Data', 'Read Scanned Files', 'Export to Your Systems']
+    features: ['Auto-Sort Documents', 'Extract Text & Data', 'Read Scanned Files', 'Export to Your Systems'],
+    rating: 4.9,
+    reviews: 156
   },
   {
     id: 'agent-blueprint-pack',
@@ -88,7 +98,9 @@ const products: Product[] = [
     price: 279,
     category: 'ai',
     icon: <Bot className="w-8 h-8 text-astralis-blue" />,
-    features: ['Q&A Assistants', 'Task Automation', 'Memory & Learning', 'Easy Integration']
+    features: ['Q&A Assistants', 'Task Automation', 'Memory & Learning', 'Easy Integration'],
+    rating: 5.0,
+    reviews: 94
   },
   {
     id: 'design-system-starter',
@@ -97,7 +109,9 @@ const products: Product[] = [
     price: 99,
     category: 'components',
     icon: <Sparkles className="w-8 h-8 text-astralis-blue" />,
-    features: ['Color & Font System', 'Component Designs', 'Figma Source Files', 'Usage Guidelines']
+    features: ['Color & Font System', 'Component Designs', 'Figma Source Files', 'Usage Guidelines'],
+    rating: 4.6,
+    reviews: 312
   },
 ];
 
@@ -135,12 +149,12 @@ export default function MarketplacePage() {
         }}
       />
 
-      {/* Category Filter Section */}
-      <section className="w-full px-6 py-12 md:px-12 lg:px-20 bg-slate-50 border-b border-slate-200">
+      {/* Category Filter Section - Dark Background */}
+      <section className="w-full px-6 py-12 md:px-12 lg:px-20 bg-gradient-to-b from-astralis-navy to-slate-900 border-b border-slate-700">
         <div className="mx-auto max-w-[1280px]">
           <div className="flex items-center gap-3 mb-6">
             <Filter className="w-5 h-5 text-astralis-blue" />
-            <h2 className="text-xl font-semibold text-astralis-navy">Filter by Category</h2>
+            <h2 className="text-xl font-semibold text-white">Filter by Category</h2>
           </div>
 
           <div className="flex flex-wrap gap-3 md:gap-4">
@@ -150,8 +164,8 @@ export default function MarketplacePage() {
                 onClick={() => setSelectedCategory(category.id)}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-150 ${
                   selectedCategory === category.id
-                    ? 'bg-astralis-blue text-white shadow-sm'
-                    : 'bg-white text-slate-700 border border-slate-300 hover:border-astralis-blue hover:text-astralis-blue'
+                    ? 'bg-astralis-blue text-white shadow-lg shadow-astralis-blue/20'
+                    : 'bg-slate-800/50 text-slate-300 border border-slate-700 hover:border-astralis-blue hover:text-white hover:bg-slate-800'
                 }`}
               >
                 {category.label}
@@ -188,27 +202,46 @@ export default function MarketplacePage() {
             {filteredProducts.map((product) => (
               <div
                 key={product.id}
-                className="bg-white border border-slate-200 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 overflow-hidden group"
+                className="bg-white border border-slate-200 rounded-xl shadow-lg hover:shadow-2xl hover:border-astralis-blue/30 hover:scale-[1.02] transition-all duration-200 overflow-hidden group"
               >
                 {/* Card Content */}
                 <div className="p-6 md:p-8">
                   {/* Icon */}
-                  <div className="mb-6 flex items-center justify-center w-16 h-16 bg-slate-50 rounded-lg group-hover:bg-blue-50 transition-colors duration-200">
+                  <div className="mb-6 flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-50 to-slate-50 border border-slate-200 rounded-lg group-hover:from-astralis-blue/10 group-hover:to-blue-50 group-hover:border-astralis-blue/30 transition-all duration-200">
                     {product.icon}
                   </div>
 
                   {/* Product Name */}
-                  <h3 className="text-xl md:text-2xl font-semibold text-astralis-navy mb-3">
+                  <h3 className="text-xl md:text-2xl font-semibold text-astralis-navy mb-3 group-hover:text-astralis-blue transition-colors duration-200">
                     {product.name}
                   </h3>
 
+                  {/* Star Rating */}
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="flex items-center gap-0.5">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-4 h-4 ${
+                            i < Math.floor(product.rating)
+                              ? 'text-yellow-500 fill-yellow-500'
+                              : 'text-slate-300'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-sm text-slate-600">
+                      {product.rating} ({product.reviews} reviews)
+                    </span>
+                  </div>
+
                   {/* Description */}
-                  <p className="text-base text-slate-700 leading-relaxed mb-6">
+                  <p className="text-base text-slate-700 leading-relaxed mb-6 min-h-[100px]">
                     {product.description}
                   </p>
 
                   {/* Features List */}
-                  <ul className="space-y-3 mb-6">
+                  <ul className="space-y-3 mb-6 pb-6 border-b border-slate-200">
                     {product.features.map((feature, index) => (
                       <li key={index} className="flex items-center gap-2 text-sm text-slate-600">
                         <div className="w-1.5 h-1.5 bg-astralis-blue rounded-full flex-shrink-0" />
@@ -218,21 +251,19 @@ export default function MarketplacePage() {
                   </ul>
 
                   {/* Price & CTA */}
-                  <div className="pt-4 border-t border-slate-200">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <p className="text-sm text-slate-600 mb-1">One-time purchase</p>
-                        <p className="text-3xl font-bold text-astralis-navy">
-                          ${product.price}
-                        </p>
-                      </div>
+                  <div className="space-y-4">
+                    <div className="flex items-baseline gap-2">
+                      <p className="text-4xl font-bold text-astralis-navy">
+                        ${product.price}
+                      </p>
+                      <p className="text-sm text-slate-600">one-time</p>
                     </div>
 
                     {/* Learn More Button */}
                     <Button
                       variant="primary"
                       size="default"
-                      className="w-full"
+                      className="w-full group-hover:shadow-lg group-hover:shadow-astralis-blue/20"
                       asChild
                     >
                       <a href={`/marketplace/${product.id}`}>

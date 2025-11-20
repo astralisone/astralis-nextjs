@@ -1,5 +1,3 @@
-'use client';
-
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { LucideIcon } from 'lucide-react';
@@ -107,21 +105,19 @@ const FeatureGrid = React.forwardRef<HTMLElement, FeatureGridProps>(
     ref
   ) => {
     // Determine grid columns based on configuration
-    const gridColsClass = React.useMemo(() => {
-      const colMap = {
-        2: 'md:grid-cols-2',
-        3: 'md:grid-cols-2 lg:grid-cols-3',
-        4: 'md:grid-cols-2 lg:grid-cols-4',
-      };
-      return colMap[columns];
-    }, [columns]);
+    // Converted from React.useMemo to direct computation (server component)
+    const gridColsClass = columns === 2
+      ? 'md:grid-cols-2'
+      : columns === 3
+      ? 'md:grid-cols-2 lg:grid-cols-3'
+      : 'md:grid-cols-2 lg:grid-cols-4';
 
     return (
       <section
         ref={ref}
         className={cn(
           // Section spacing (96-120px per spec)
-          'w-full px-8 py-24 md:px-20 md:py-32 lg:px-24',
+          'w-full px-8 py-24 md:px-20 md:py-32 lg:py-24',
           className
         )}
         {...props}

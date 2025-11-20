@@ -1,0 +1,479 @@
+/* [project]/projects/astralis-nextjs/src/styles/effects.css [app-client] (css) */
+.particle-system {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.particle {
+  background: #00d4ff99;
+  border-radius: 50%;
+  width: 2px;
+  height: 2px;
+  animation: 15s linear infinite particle-float;
+  position: absolute;
+}
+
+.particle:first-child {
+  animation-delay: 0s;
+  top: 20%;
+  left: 10%;
+}
+
+.particle:nth-child(2) {
+  animation-delay: 2s;
+  top: 80%;
+  left: 20%;
+}
+
+.particle:nth-child(3) {
+  animation-delay: 4s;
+  top: 40%;
+  left: 30%;
+}
+
+.particle:nth-child(4) {
+  animation-delay: 1s;
+  top: 70%;
+  left: 40%;
+}
+
+.particle:nth-child(5) {
+  animation-delay: 3s;
+  top: 30%;
+  left: 50%;
+}
+
+.particle:nth-child(6) {
+  animation-delay: 5s;
+  top: 60%;
+  left: 60%;
+}
+
+.particle:nth-child(7) {
+  animation-delay: 2.5s;
+  top: 25%;
+  left: 70%;
+}
+
+.particle:nth-child(8) {
+  animation-delay: 1.5s;
+  top: 75%;
+  left: 80%;
+}
+
+.particle:nth-child(9) {
+  animation-delay: 3.5s;
+  top: 50%;
+  left: 90%;
+}
+
+.particle:nth-child(10) {
+  animation-delay: 4.5s;
+  top: 65%;
+  left: 15%;
+}
+
+@keyframes particle-float {
+  0% {
+    opacity: 0;
+    transform: translate(0)scale(1);
+  }
+
+  10% {
+    opacity: .6;
+  }
+
+  90% {
+    opacity: .6;
+  }
+
+  100% {
+    transform: translate(var(--particle-x, 100px), var(--particle-y, -100px)) scale(0);
+    opacity: 0;
+  }
+}
+
+.particle-stream {
+  filter: blur(1px);
+  background: linear-gradient(to right, #0000, #00d4ffcc 20%, #fff 50%, #00d4ffcc 80%, #0000);
+  width: 100%;
+  height: 2px;
+  animation: 15s linear infinite particle-stream;
+  position: absolute;
+}
+
+@keyframes particle-stream {
+  0% {
+    opacity: 0;
+    transform: translateX(-100%)scaleX(0);
+  }
+
+  10% {
+    opacity: 1;
+    transform: translateX(-50%)scaleX(1);
+  }
+
+  90% {
+    opacity: 1;
+    transform: translateX(50%)scaleX(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateX(100%)scaleX(0);
+  }
+}
+
+.tech-grid-animated {
+  background-image: linear-gradient(#00d4ff26 1px, #0000 1px), linear-gradient(90deg, #00d4ff26 1px, #0000 1px);
+  background-position: 0 0, 0 0;
+  background-size: 50px 50px;
+  animation: 20s linear infinite grid-shift;
+}
+
+@keyframes grid-shift {
+  0% {
+    background-position: 0 0, 0 0;
+  }
+
+  100% {
+    background-position: 50px 50px, 50px 50px;
+  }
+}
+
+.hex-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg width='50' height='43.4' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M25 0l12.5 7.2v14.6L25 29 12.5 21.8V7.2L25 0z' fill='none' stroke='rgba(0,212,255,0.1)' stroke-width='1'/%3E%3C/svg%3E");
+  background-size: 50px 43.4px;
+}
+
+.circuit-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 10h20M30 10v20M30 30h20M50 30v20M50 50h20M70 50v20M70 70h20' stroke='rgba(0,212,255,0.2)' stroke-width='2' fill='none'/%3E%3Ccircle cx='10' cy='10' r='3' fill='rgba(0,212,255,0.4)'/%3E%3Ccircle cx='30' cy='30' r='3' fill='rgba(0,212,255,0.4)'/%3E%3Ccircle cx='50' cy='50' r='3' fill='rgba(0,212,255,0.4)'/%3E%3Ccircle cx='70' cy='70' r='3' fill='rgba(0,212,255,0.4)'/%3E%3C/svg%3E");
+  background-size: 100px 100px;
+}
+
+.orbit-container {
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  position: relative;
+}
+
+.orbit-ring {
+  border: 1px solid #00d4ff33;
+  border-radius: 50%;
+  position: absolute;
+}
+
+.orbit-ring-1 {
+  width: 200px;
+  height: 200px;
+}
+
+.orbit-ring-2 {
+  width: 300px;
+  height: 300px;
+}
+
+.orbit-ring-3 {
+  width: 400px;
+  height: 400px;
+}
+
+.orbit-item {
+  animation: 30s linear infinite orbit;
+  position: absolute;
+}
+
+.orbit-item:first-child {
+  animation-delay: 0s;
+}
+
+.orbit-item:nth-child(2) {
+  animation-delay: -5s;
+}
+
+.orbit-item:nth-child(3) {
+  animation-delay: -10s;
+}
+
+.orbit-item:nth-child(4) {
+  animation-delay: -15s;
+}
+
+.orbit-item:nth-child(5) {
+  animation-delay: -20s;
+}
+
+.orbit-item:nth-child(6) {
+  animation-delay: -25s;
+}
+
+.orbit-item-content {
+  animation: 30s linear infinite counter-rotate;
+}
+
+@keyframes counter-rotate {
+  0% {
+    transform: rotate(0);
+  }
+
+  100% {
+    transform: rotate(-360deg);
+  }
+}
+
+.connection-line {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000px;
+  animation: 2s ease-out forwards draw-line;
+}
+
+.connection-line-pulse {
+  stroke-dasharray: 10 5;
+  animation: 2s linear infinite pulse-line;
+}
+
+@keyframes pulse-line {
+  0% {
+    stroke-dashoffset: 0;
+  }
+
+  100% {
+    stroke-dashoffset: -15px;
+  }
+}
+
+.gradient-line {
+  background: linear-gradient(to right, #0000, #00d4ffcc, #0000);
+  height: 2px;
+  animation: 3s linear infinite shimmer;
+}
+
+.radial-glow {
+  position: relative;
+}
+
+.radial-glow:before {
+  content: "";
+  pointer-events: none;
+  background: radial-gradient(circle, #00d4ff66 0%, #00d4ff33 25%, #0000 60%);
+  animation: 3s ease-in-out infinite glow-pulse;
+  position: absolute;
+  inset: -50%;
+}
+
+.halo {
+  position: relative;
+}
+
+.halo:before, .halo:after {
+  content: "";
+  border: 2px solid #00d4ff4d;
+  border-radius: 50%;
+  position: absolute;
+}
+
+.halo:before {
+  animation: 2s cubic-bezier(.4, 0, .6, 1) infinite ring-pulse;
+  inset: -20px;
+}
+
+.halo:after {
+  animation: 2s cubic-bezier(.4, 0, .6, 1) .5s infinite ring-pulse;
+  inset: -40px;
+}
+
+.overlay-radial-dark {
+  pointer-events: none;
+  background: radial-gradient(#0a1b2bf2 0%, #051018fa 50%, #000 100%);
+  position: absolute;
+  inset: 0;
+}
+
+.overlay-gradient-light {
+  pointer-events: none;
+  background: linear-gradient(135deg, #0a1b2bf2 0%, #1a3a52b3 25%, #8b95a166 75%, #e5e7eb1a 100%);
+  position: absolute;
+  inset: 0;
+}
+
+.vignette {
+  position: relative;
+}
+
+.vignette:before {
+  content: "";
+  pointer-events: none;
+  background: radial-gradient(#0000 0%, #0000004d 100%);
+  position: absolute;
+  inset: 0;
+}
+
+.starfield {
+  opacity: .3;
+  background-image: radial-gradient(1px 1px at 20% 30%, #fff, #0000), radial-gradient(1px 1px at 60% 70%, #fff, #0000), radial-gradient(2px 2px, #fff, #0000), radial-gradient(1px 1px at 80% 10%, #fff, #0000), radial-gradient(1px 1px at 90% 60%, #fff, #0000), radial-gradient(2px 2px at 33% 80%, #fff, #0000), radial-gradient(1px 1px at 15% 60%, #fff, #0000), radial-gradient(1px 1px at 75% 40%, #fff, #0000);
+  background-position: 0 0, 20% 40%, 50%, 70% 30%, 80% 60%, 30% 80%, 10% 20%, 90% 70%;
+  background-size: 200% 200%, 300% 300%, 250% 250%, 180% 180%, 220% 220%, 280% 280%, 240% 240%, 190% 190%;
+  animation: 10s ease-in-out infinite starfield-twinkle;
+  position: absolute;
+  inset: 0;
+}
+
+@keyframes starfield-twinkle {
+  0%, 100% {
+    opacity: .3;
+  }
+
+  50% {
+    opacity: .6;
+  }
+}
+
+.scan-line-effect {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.scan-line-effect:before {
+  content: "";
+  background: linear-gradient(to right, #0000, #00d4ffcc, #0000);
+  width: 100%;
+  height: 2px;
+  animation: 8s linear infinite scan-line;
+  position: absolute;
+  box-shadow: 0 0 10px #00d4ff99;
+}
+
+.blur-foreground {
+  position: relative;
+}
+
+.blur-foreground:before {
+  content: "";
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  pointer-events: none;
+  background: radial-gradient(#0000 40%, #0a1b2b4d 100%);
+  position: absolute;
+  inset: -10%;
+}
+
+.blur-background {
+  position: relative;
+  overflow: hidden;
+}
+
+.blur-background:after {
+  content: "";
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  -webkit-mask-image: radial-gradient(#0000 30%, #000 70%);
+  mask-image: radial-gradient(#0000 30%, #000 70%);
+}
+
+.gradient-shift {
+  background: linear-gradient(45deg, #0a1b2b, #1a3a52, #0a1b2b, #1a3a52) 0 0 / 400% 400%;
+  animation: 15s infinite gradient-shift;
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 0%;
+  }
+
+  50% {
+    background-position: 100%;
+  }
+
+  100% {
+    background-position: 0%;
+  }
+}
+
+.gradient-cyan-shift {
+  background: linear-gradient(135deg, #00d4ff33, #00a8cc4d, #00d4ff33) 0 0 / 200% 200%;
+  animation: 10s infinite gradient-shift;
+}
+
+.holographic {
+  background: linear-gradient(135deg, #00d4ff1a 0%, #00a8cc33 25%, #2b6cb01a 50%, #00a8cc33 75%, #00d4ff1a 100%) 0 0 / 200% 200%;
+  animation: 3s infinite holographic-shift;
+  position: relative;
+}
+
+.holographic:before {
+  content: "";
+  background: linear-gradient(to right, #0000, #ffffff1a, #0000);
+  animation: 2s linear infinite shimmer;
+  position: absolute;
+  inset: 0;
+}
+
+@keyframes holographic-shift {
+  0%, 100% {
+    background-position: 0%;
+  }
+
+  50% {
+    background-position: 100%;
+  }
+}
+
+.dot-loader {
+  gap: 8px;
+  display: flex;
+}
+
+.dot-loader span {
+  background: #00d4ff;
+  border-radius: 50%;
+  width: 8px;
+  height: 8px;
+  animation: 1.4s ease-in-out infinite both dot-pulse;
+}
+
+.dot-loader span:first-child {
+  animation-delay: -.32s;
+}
+
+.dot-loader span:nth-child(2) {
+  animation-delay: -.16s;
+}
+
+@keyframes dot-pulse {
+  0%, 80%, 100% {
+    opacity: .5;
+    transform: scale(0);
+  }
+
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.ring-loader {
+  border: 3px solid #00d4ff33;
+  border-top-color: #00d4ff;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: 1s linear infinite spin;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/*# sourceMappingURL=projects_astralis-nextjs_src_styles_effects_css_bad6b30c._.single.css.map*/
