@@ -1,12 +1,12 @@
-import { PrismaAdapter } from "@auth/prisma-adapter";
-import NextAuth, { NextAuthConfig } from "next-auth";
+import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword } from "@/lib/utils/crypto";
 import { loginSchema } from "@/lib/validators/auth.validators";
 
-export const authConfig: NextAuthConfig = {
+export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
@@ -27,7 +27,7 @@ export const authConfig: NextAuthConfig = {
         const { email, password } = validatedFields.data;
 
         // Find user
-        const user = await prisma.user.findUnique({
+        const user = await prisma.users.findUnique({
           where: { email },
           include: { organization: true }
         });
@@ -42,24 +42,13 @@ export const authConfig: NextAuthConfig = {
           return null;
         }
 
-        // Check if user is active
-        if (!user.isActive) {
-          throw new Error("Account is disabled");
-        }
-
-        // Update last login
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { lastLoginAt: new Date() }
-        });
-
         return {
           id: user.id,
           email: user.email,
           name: user.name,
           role: user.role,
-          orgId: user.orgId,
-          image: user.image,
+          orgId: user.orgId || '',
+          image: user.avatar,
         };
       }
     }),
@@ -90,7 +79,7 @@ export const authConfig: NextAuthConfig = {
 
       // Google OAuth - find or create organization
       if (account?.provider === "google" && user) {
-        const dbUser = await prisma.user.findUnique({
+        const dbUser = await prisma.users.findUnique({
           where: { id: user.id },
           include: { organization: true }
         });
@@ -119,7 +108,7 @@ export const authConfig: NextAuthConfig = {
 
       // For OAuth, ensure user has organization
       if (account?.provider === "google") {
-        const dbUser = await prisma.user.findUnique({
+        const dbUser = await prisma.users.findUnique({
           where: { email: user.email! },
           include: { organization: true }
         });
@@ -135,7 +124,7 @@ export const authConfig: NextAuthConfig = {
             }
           });
 
-          await prisma.user.update({
+          await prisma.users.update({
             where: { id: dbUser!.id },
             data: { orgId: org.id, role: 'ADMIN' }
           });
@@ -156,19 +145,18 @@ export const authConfig: NextAuthConfig = {
   events: {
     async signIn({ user }) {
       // Log successful sign-in
-      if (user.id) {
-        await prisma.activityLog.create({
-          data: {
-            userId: user.id,
-            orgId: user.orgId || '',
-            action: 'LOGIN',
-            entity: 'USER',
-            entityId: user.id,
-          }
-        });
-      }
+      // TODO: Re-enable when activityLog model is added to schema
+      // if (user.id) {
+      //   await prisma.activityLog.create({
+      //     data: {
+      //       userId: user.id,
+      //       orgId: user.orgId || '',
+      //       action: 'LOGIN',
+      //       entity: 'USER',
+      //       entityId: user.id,
+      //     }
+      //   });
+      // }
     },
   },
 };
-
-export const { handlers, auth, signIn, signOut } = NextAuth(authConfig);

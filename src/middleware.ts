@@ -1,48 +1,54 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { auth } from '@/lib/auth/config';
+import { withAuth } from "next-auth/middleware";
+import { NextResponse } from "next/server";
 
-// Routes that require authentication
-const protectedRoutes = [
-  '/astralisops/dashboard',
-  '/astralisops/pipelines',
-  '/astralisops/intake',
-  '/astralisops/documents',
-  '/astralisops/scheduling',
-  '/astralisops/automations',
-  '/astralisops/settings',
-];
+export default withAuth(
+  function middleware(req) {
+    const { pathname } = req.nextUrl;
+    const token = req.nextauth.token;
 
-// Routes that should redirect to dashboard if authenticated
-const authRoutes = [
-  '/auth/signin',
-  '/auth/signup',
-];
+    // Routes that should redirect to dashboard if authenticated
+    const authRoutes = ['/auth/signin', '/auth/signup'];
+    const isAuthRoute = authRoutes.some(route => pathname.startsWith(route));
 
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+    // Redirect to dashboard if accessing auth routes while authenticated
+    if (isAuthRoute && token) {
+      return NextResponse.redirect(new URL('/astralisops/dashboard', req.url));
+    }
 
-  // Get session
-  const session = await auth();
+    return NextResponse.next();
+  },
+  {
+    callbacks: {
+      authorized: ({ token, req }) => {
+        const { pathname } = req.nextUrl;
 
-  // Check if route is protected
-  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
-  const isAuthRoute = authRoutes.some(route => pathname.startsWith(route));
+        // Routes that require authentication
+        const protectedRoutes = [
+          '/astralisops/dashboard',
+          '/astralisops/pipelines',
+          '/astralisops/intake',
+          '/astralisops/documents',
+          '/astralisops/scheduling',
+          '/astralisops/automations',
+          '/astralisops/settings',
+        ];
 
-  // Redirect to signin if accessing protected route without auth
-  if (isProtectedRoute && !session) {
-    const signInUrl = new URL('/auth/signin', request.url);
-    signInUrl.searchParams.set('callbackUrl', pathname);
-    return NextResponse.redirect(signInUrl);
+        const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
+
+        // Allow access to protected routes only if token exists
+        if (isProtectedRoute) {
+          return !!token;
+        }
+
+        // Allow access to all other routes
+        return true;
+      },
+    },
+    pages: {
+      signIn: '/auth/signin',
+    },
   }
-
-  // Redirect to dashboard if accessing auth routes while authenticated
-  if (isAuthRoute && session) {
-    return NextResponse.redirect(new URL('/astralisops/dashboard', request.url));
-  }
-
-  return NextResponse.next();
-}
+);
 
 export const config = {
   matcher: [

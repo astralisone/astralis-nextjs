@@ -12,7 +12,7 @@ export class AuthService {
     const { email, password, name, orgName } = data;
 
     // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
+    const existingUser = await prisma.users.findUnique({
       where: { email }
     });
 
@@ -37,19 +37,18 @@ export class AuthService {
       });
 
       // Create user
-      const user = await tx.user.create({
+      const user = await tx.users.create({
         data: {
           email,
           password: hashedPassword,
           name,
           role: 'ADMIN', // First user is admin
           orgId: org.id,
-          isActive: true,
         }
       });
 
       // Create verification token
-      await tx.verificationToken.create({
+      await tx.VerificationToken.create({
         data: {
           identifier: email,
           token: verificationToken,
@@ -58,7 +57,7 @@ export class AuthService {
       });
 
       // Log account creation
-      await tx.activityLog.create({
+      await tx.ActivityLog.create({
         data: {
           userId: user.id,
           orgId: org.id,
@@ -90,7 +89,7 @@ export class AuthService {
    * Verify email address
    */
   async verifyEmail(token: string) {
-    const verificationToken = await prisma.verificationToken.findUnique({
+    const verificationToken = await prisma.VerificationToken.findUnique({
       where: { token }
     });
 
@@ -103,13 +102,13 @@ export class AuthService {
     }
 
     // Update user email verification
-    await prisma.user.update({
+    await prisma.users.update({
       where: { email: verificationToken.identifier },
       data: { emailVerified: new Date() }
     });
 
     // Delete used token
-    await prisma.verificationToken.delete({
+    await prisma.VerificationToken.delete({
       where: { token }
     });
 
@@ -123,7 +122,7 @@ export class AuthService {
    * Request password reset
    */
   async requestPasswordReset(email: string) {
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { email }
     });
 
@@ -140,7 +139,7 @@ export class AuthService {
     const tokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
     // Store reset token
-    await prisma.verificationToken.create({
+    await prisma.VerificationToken.create({
       data: {
         identifier: email,
         token: resetToken,
@@ -161,7 +160,7 @@ export class AuthService {
    * Reset password with token
    */
   async resetPassword(token: string, newPassword: string) {
-    const verificationToken = await prisma.verificationToken.findUnique({
+    const verificationToken = await prisma.VerificationToken.findUnique({
       where: { token }
     });
 
@@ -177,13 +176,13 @@ export class AuthService {
     const hashedPassword = await hashPassword(newPassword);
 
     // Update user password
-    await prisma.user.update({
+    await prisma.users.update({
       where: { email: verificationToken.identifier },
       data: { password: hashedPassword }
     });
 
     // Delete used token
-    await prisma.verificationToken.delete({
+    await prisma.VerificationToken.delete({
       where: { token }
     });
 
