@@ -1,1 +1,10 @@
-{}
+{
+  "[project]/projects/astralis-nextjs/src/components/booking/BookingModal.tsx [app-client] (ecmascript, next/dynamic entry)": {
+    "id": "[project]/projects/astralis-nextjs/src/components/booking/BookingModal.tsx [app-client] (ecmascript, next/dynamic entry)",
+    "files": [
+      "static/chunks/projects_astralis-nextjs_src_components_281580a3._.js",
+      "static/chunks/0780a_2b53c9af._.js",
+      "static/chunks/projects_astralis-nextjs_src_components_booking_BookingModal_tsx_fc668eea._.js"
+    ]
+  }
+}

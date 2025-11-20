@@ -1,45 +1,83 @@
 'use client';
 
 import * as React from 'react';
-import { X, Calendar, Clock, Video, Phone, MapPin, CheckCircle2 } from 'lucide-react';
+import { Calendar, Clock, Video, Phone, MapPin, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
 /**
  * Booking Modal Component
  *
  * A comprehensive booking interface for scheduling consultation calls.
+ *
  * Features:
  * - Multi-step form (3 steps: Info -> Schedule -> Confirmation)
  * - Meeting type selection (Video, Phone, In-Person)
  * - Date and time selection
  * - Form validation
  * - Email notification on submission
+ * - Accessible dialog with focus management
+ * - Keyboard navigation (ESC to close)
+ *
+ * @param isOpen - Whether the modal is visible
+ * @param onClose - Callback when the modal is closed
+ *
+ * @example
+ * ```tsx
+ * const [isOpen, setIsOpen] = useState(false);
+ *
+ * <BookingModal
+ *   isOpen={isOpen}
+ *   onClose={() => setIsOpen(false)}
+ * />
+ * ```
  */
 
-interface BookingModalProps {
+/**
+ * BookingModal Props
+ *
+ * @param isOpen - Controls the visibility of the booking modal
+ * @param onClose - Callback invoked when the modal should close
+ */
+export interface BookingModalProps {
+  /** Whether the modal is currently open */
   isOpen: boolean;
+  /** Callback fired when the modal is closed */
   onClose: () => void;
 }
 
+/**
+ * Meeting type options
+ */
 type MeetingType = 'VIDEO_CALL' | 'PHONE_CALL' | 'IN_PERSON';
 
+/**
+ * Booking form data structure
+ */
 interface BookingFormData {
-  // Step 1: Personal Information
+  /** Step 1: Personal Information */
   name: string;
   email: string;
   phone: string;
   company: string;
 
-  // Step 2: Scheduling
+  /** Step 2: Scheduling */
   date: string;
   time: string;
   meetingType: MeetingType;
 
-  // Step 3: Details
+  /** Step 3: Details */
   message: string;
 }
 
@@ -75,6 +113,11 @@ export function BookingModal({ isOpen, onClose }: BookingModalProps) {
   const updateFormData = (field: keyof BookingFormData, value: string | MeetingType) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setError('');
+  };
+
+  // Get user's timezone for display
+  const getUserTimezone = () => {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone;
   };
 
   const validateStep = (currentStep: number): boolean => {
@@ -164,6 +207,12 @@ export function BookingModal({ isOpen, onClose }: BookingModalProps) {
     onClose();
   };
 
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      handleClose();
+    }
+  };
+
   // Get minimum date (tomorrow)
   const getMinDate = () => {
     const tomorrow = new Date();
@@ -178,35 +227,24 @@ export function BookingModal({ isOpen, onClose }: BookingModalProps) {
     return maxDate.toISOString().split('T')[0];
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white rounded-lg shadow-2xl">
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between p-6 border-b bg-white">
-          <div>
-            <h2 className="text-2xl font-bold text-astralis-navy">
-              {isSuccess ? 'Booking Confirmed!' : 'Schedule a Call'}
-            </h2>
-            {!isSuccess && (
-              <p className="text-sm text-slate-600 mt-1">
-                Step {step} of 3
-              </p>
-            )}
-          </div>
-          <button
-            onClick={handleClose}
-            className="p-2 rounded-full hover:bg-slate-100 transition-colors"
-            aria-label="Close"
-          >
-            <X className="w-6 h-6 text-slate-600" />
-          </button>
-        </div>
+        <DialogHeader>
+          <DialogTitle className="text-2xl">
+            {isSuccess ? 'Booking Confirmed!' : 'Schedule a Call'}
+          </DialogTitle>
+          {!isSuccess && (
+            <DialogDescription>
+              Step {step} of 3
+            </DialogDescription>
+          )}
+        </DialogHeader>
 
         {/* Progress Bar */}
         {!isSuccess && (
-          <div className="px-6 pt-4">
+          <div className="pt-2">
             <div className="flex gap-2">
               {[1, 2, 3].map((i) => (
                 <div
@@ -222,7 +260,7 @@ export function BookingModal({ isOpen, onClose }: BookingModalProps) {
         )}
 
         {/* Content */}
-        <div className="p-6">
+        <div className="py-4">
           {isSuccess ? (
             // Success State
             <div className="text-center py-8">
@@ -456,9 +494,10 @@ export function BookingModal({ isOpen, onClose }: BookingModalProps) {
               )}
 
               {error && (
-                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
-                  <p className="text-sm text-red-600">{error}</p>
-                </div>
+                <Alert variant="error" showIcon className="mt-4">
+                  <AlertTitle>Error</AlertTitle>
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
               )}
 
               {/* Navigation */}
@@ -498,7 +537,7 @@ export function BookingModal({ isOpen, onClose }: BookingModalProps) {
             </>
           )}
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

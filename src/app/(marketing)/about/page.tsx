@@ -43,14 +43,16 @@ export default function AboutPage() {
       />
 
       {/* Mission Statement Section */}
-      <section className="w-full px-6 py-20 md:px-12 md:py-24 lg:px-20 lg:py-32 bg-white relative overflow-hidden">
-        {/* Background Image with Overlay */}
-        <div className="absolute inset-0 opacity-4">
+      <section className="w-full px-6 py-20 md:px-12 md:py-24 lg:px-20 lg:py-32 bg-gradient-to-b from-white to-slate-50 relative overflow-hidden">
+        {/* Subtle Tech Pattern Background */}
+        <div className="absolute inset-0 opacity-[0.03]">
           <Image
-            src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1920&q=80"
-            alt="Professional team collaboration"
+            src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1920&q=60"
+            alt="Digital technology pattern"
             fill
             className="object-cover"
+            loading="lazy"
+            sizes="100vw"
           />
         </div>
         <div className="mx-auto max-w-[1280px] relative z-10">
@@ -73,9 +75,9 @@ export default function AboutPage() {
           {/* Value Propositions Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 mt-16">
             {/* Value Prop 1 */}
-            <div className="text-center space-y-4">
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-lg bg-astralis-blue/10">
-                <Zap className="w-7 h-7 text-astralis-blue" />
+            <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-1 text-center space-y-4">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-lg bg-gradient-to-br from-astralis-blue to-blue-600 shadow-lg">
+                <Zap className="w-8 h-8 text-white" />
               </div>
               <h3 className="text-xl font-semibold text-astralis-navy">
                 Rapid Implementation
@@ -86,9 +88,9 @@ export default function AboutPage() {
             </div>
 
             {/* Value Prop 2 */}
-            <div className="text-center space-y-4">
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-lg bg-astralis-blue/10">
-                <TrendingUp className="w-7 h-7 text-astralis-blue" />
+            <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-1 text-center space-y-4">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-lg bg-gradient-to-br from-astralis-blue to-blue-600 shadow-lg">
+                <TrendingUp className="w-8 h-8 text-white" />
               </div>
               <h3 className="text-xl font-semibold text-astralis-navy">
                 Measurable Impact
@@ -99,9 +101,9 @@ export default function AboutPage() {
             </div>
 
             {/* Value Prop 3 */}
-            <div className="text-center space-y-4">
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-lg bg-astralis-blue/10">
-                <CheckCircle2 className="w-7 h-7 text-astralis-blue" />
+            <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-1 text-center space-y-4">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-lg bg-gradient-to-br from-astralis-blue to-blue-600 shadow-lg">
+                <CheckCircle2 className="w-8 h-8 text-white" />
               </div>
               <h3 className="text-xl font-semibold text-astralis-navy">
                 Built to Scale
@@ -112,9 +114,9 @@ export default function AboutPage() {
             </div>
 
             {/* Value Prop 4 */}
-            <div className="text-center space-y-4">
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-lg bg-astralis-blue/10">
-                <Users className="w-7 h-7 text-astralis-blue" />
+            <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-1 text-center space-y-4">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-lg bg-gradient-to-br from-astralis-blue to-blue-600 shadow-lg">
+                <Users className="w-8 h-8 text-white" />
               </div>
               <h3 className="text-xl font-semibold text-astralis-navy">
                 Expert Partnership
@@ -128,8 +130,19 @@ export default function AboutPage() {
       </section>
 
       {/* Experience/Credibility Section */}
-      <section className="w-full px-6 py-20 md:px-12 md:py-24 lg:px-20 lg:py-32 bg-slate-50">
-        <div className="mx-auto max-w-[1280px]">
+      <section className="w-full px-6 py-20 md:px-12 md:py-24 lg:px-20 lg:py-32 bg-slate-50 relative overflow-hidden">
+        {/* Subtle Tech Grid Background */}
+        <div className="absolute inset-0 opacity-[0.02]">
+          <Image
+            src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1920&q=60"
+            alt="Technology infrastructure"
+            fill
+            className="object-cover"
+            loading="lazy"
+            sizes="100vw"
+          />
+        </div>
+        <div className="mx-auto max-w-[1280px] relative z-10">
           <div className="text-center space-y-6 mb-16">
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-semibold text-astralis-navy tracking-tight">
               Proven Experience, Measurable Results
@@ -143,8 +156,8 @@ export default function AboutPage() {
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-16">
             {/* Stat 1 */}
-            <div className="bg-white border border-slate-200 rounded-lg p-6 md:p-8 text-center shadow-md">
-              <div className="text-4xl md:text-5xl font-bold text-astralis-blue mb-2">
+            <div className="bg-white border border-slate-200 rounded-lg p-6 md:p-8 text-center shadow-lg hover:shadow-xl transition-all duration-200 hover:-translate-y-1">
+              <div className="text-5xl md:text-6xl font-bold bg-gradient-to-br from-astralis-blue to-blue-600 bg-clip-text text-transparent mb-3">
                 85%
               </div>
               <div className="text-slate-700 font-medium">
@@ -153,8 +166,8 @@ export default function AboutPage() {
             </div>
 
             {/* Stat 2 */}
-            <div className="bg-white border border-slate-200 rounded-lg p-6 md:p-8 text-center shadow-md">
-              <div className="text-4xl md:text-5xl font-bold text-astralis-blue mb-2">
+            <div className="bg-white border border-slate-200 rounded-lg p-6 md:p-8 text-center shadow-lg hover:shadow-xl transition-all duration-200 hover:-translate-y-1">
+              <div className="text-5xl md:text-6xl font-bold bg-gradient-to-br from-astralis-blue to-blue-600 bg-clip-text text-transparent mb-3">
                 3-6mo
               </div>
               <div className="text-base text-slate-700 font-medium">
@@ -163,8 +176,8 @@ export default function AboutPage() {
             </div>
 
             {/* Stat 3 */}
-            <div className="bg-white border border-slate-200 rounded-lg p-6 md:p-8 text-center shadow-md">
-              <div className="text-4xl md:text-5xl font-bold text-astralis-blue mb-2">
+            <div className="bg-white border border-slate-200 rounded-lg p-6 md:p-8 text-center shadow-lg hover:shadow-xl transition-all duration-200 hover:-translate-y-1">
+              <div className="text-5xl md:text-6xl font-bold bg-gradient-to-br from-astralis-blue to-blue-600 bg-clip-text text-transparent mb-3">
                 99.9%
               </div>
               <div className="text-slate-700 font-medium">
@@ -240,8 +253,19 @@ export default function AboutPage() {
       </section>
 
       {/* Approach Section */}
-      <section className="w-full px-6 py-20 md:px-12 md:py-24 lg:px-20 lg:py-32 bg-white">
-        <div className="mx-auto max-w-[1280px]">
+      <section className="w-full px-6 py-20 md:px-12 md:py-24 lg:px-20 lg:py-32 bg-white relative overflow-hidden">
+        {/* Tech circuit pattern */}
+        <div className="absolute inset-0 opacity-[0.02]">
+          <Image
+            src="https://images.unsplash.com/photo-1518432031352-d6fc5c10da5a?w=1920&q=60"
+            alt="Circuit board pattern"
+            fill
+            className="object-cover"
+            loading="lazy"
+            sizes="100vw"
+          />
+        </div>
+        <div className="mx-auto max-w-[1280px] relative z-10">
           <div className="text-center space-y-6 mb-16">
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-semibold text-astralis-navy tracking-tight">
               Our Approach to Automation
@@ -253,19 +277,19 @@ export default function AboutPage() {
           </div>
 
           {/* Methodology Steps */}
-          <div className="space-y-10">
+          <div className="space-y-6">
             {/* Step 1 */}
-            <div className="flex gap-6">
+            <div className="bg-white border border-slate-200 rounded-lg p-6 md:p-8 shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-1 flex gap-6">
               <div className="flex-shrink-0">
-                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-astralis-blue text-white font-semibold text-lg">
+                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-astralis-blue to-blue-600 text-white font-bold text-xl shadow-lg">
                   1
                 </div>
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-semibold text-astralis-navy mb-2">
+                <h3 className="text-xl md:text-2xl font-semibold text-astralis-navy mb-3">
                   Discovery & Analysis
                 </h3>
-                <p className="text-slate-700 leading-relaxed">
+                <p className="text-base md:text-lg text-slate-700 leading-relaxed">
                   We start by mapping your current processes, identifying bottlenecks, and
                   quantifying improvement opportunities. Every recommendation is backed by data,
                   not assumptions.
@@ -274,17 +298,17 @@ export default function AboutPage() {
             </div>
 
             {/* Step 2 */}
-            <div className="flex gap-6">
+            <div className="bg-white border border-slate-200 rounded-lg p-6 md:p-8 shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-1 flex gap-6">
               <div className="flex-shrink-0">
-                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-astralis-blue text-white font-semibold text-lg">
+                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-astralis-blue to-blue-600 text-white font-bold text-xl shadow-lg">
                   2
                 </div>
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-semibold text-astralis-navy mb-2">
+                <h3 className="text-xl md:text-2xl font-semibold text-astralis-navy mb-3">
                   Strategic Design
                 </h3>
-                <p className="text-slate-700 leading-relaxed">
+                <p className="text-base md:text-lg text-slate-700 leading-relaxed">
                   We architect solutions that align with your business goals, technical
                   infrastructure, and growth trajectory. The result: automation that scales with
                   you.
@@ -293,17 +317,17 @@ export default function AboutPage() {
             </div>
 
             {/* Step 3 */}
-            <div className="flex gap-6">
+            <div className="bg-white border border-slate-200 rounded-lg p-6 md:p-8 shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-1 flex gap-6">
               <div className="flex-shrink-0">
-                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-astralis-blue text-white font-semibold text-lg">
+                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-astralis-blue to-blue-600 text-white font-bold text-xl shadow-lg">
                   3
                 </div>
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-semibold text-astralis-navy mb-2">
+                <h3 className="text-xl md:text-2xl font-semibold text-astralis-navy mb-3">
                   Agile Implementation
                 </h3>
-                <p className="text-slate-700 leading-relaxed">
+                <p className="text-base md:text-lg text-slate-700 leading-relaxed">
                   We build and deploy in iterative sprints, delivering value incrementally. You see
                   progress weekly, with working functionality at each milestone.
                 </p>
@@ -311,17 +335,17 @@ export default function AboutPage() {
             </div>
 
             {/* Step 4 */}
-            <div className="flex gap-6">
+            <div className="bg-white border border-slate-200 rounded-lg p-6 md:p-8 shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-1 flex gap-6">
               <div className="flex-shrink-0">
-                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-astralis-blue text-white font-semibold text-lg">
+                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-astralis-blue to-blue-600 text-white font-bold text-xl shadow-lg">
                   4
                 </div>
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-semibold text-astralis-navy mb-2">
+                <h3 className="text-xl md:text-2xl font-semibold text-astralis-navy mb-3">
                   Testing & Validation
                 </h3>
-                <p className="text-slate-700 leading-relaxed">
+                <p className="text-base md:text-lg text-slate-700 leading-relaxed">
                   Rigorous QA ensures reliability before launch. We test edge cases, simulate load,
                   and validate against your success criteria.
                 </p>
@@ -329,17 +353,17 @@ export default function AboutPage() {
             </div>
 
             {/* Step 5 */}
-            <div className="flex gap-6">
+            <div className="bg-white border border-slate-200 rounded-lg p-6 md:p-8 shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-1 flex gap-6">
               <div className="flex-shrink-0">
-                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-astralis-blue text-white font-semibold text-lg">
+                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-astralis-blue to-blue-600 text-white font-bold text-xl shadow-lg">
                   5
                 </div>
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-semibold text-astralis-navy mb-2">
+                <h3 className="text-xl md:text-2xl font-semibold text-astralis-navy mb-3">
                   Deployment & Optimization
                 </h3>
-                <p className="text-slate-700 leading-relaxed">
+                <p className="text-base md:text-lg text-slate-700 leading-relaxed">
                   We launch with comprehensive monitoring, provide training for your team, and
                   continuously optimize based on real-world performance data.
                 </p>

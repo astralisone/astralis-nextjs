@@ -66,8 +66,8 @@ export default function SolutionsPage() {
   }));
 
   return (
-    <main className="min-h-screen bg-white dark:bg-slate-950">
-      {/* 1. Hero Section */}
+    <main className="min-h-screen bg-astralis-navy">
+      {/* 1. Hero Section - Dark Navy Background */}
       <Hero
         headline={heroContent.headline}
         subheadline={heroContent.subheadline}
@@ -75,55 +75,57 @@ export default function SolutionsPage() {
         primaryButton={heroContent.primaryButton}
         secondaryButton={heroContent.secondaryButton}
         variant="dark"
+        className="bg-astralis-navy"
       />
 
-      {/* 2. AI Automation Systems */}
+      {/* 2. AI Automation Systems - Light Background */}
       <FeatureGrid
         headline={aiAutomationSystems.headline}
         subheadline={aiAutomationSystems.description}
         features={aiFeatures}
         columns={3}
         centerHeader
-        className="bg-slate-50 dark:bg-slate-900"
+        className="bg-white border-b border-slate-200"
       />
 
-      {/* 3. Document Intelligence */}
+      {/* 3. Document Intelligence - Dark Background with Navy Tones */}
       <FeatureGrid
         headline={documentIntelligence.headline}
         subheadline={documentIntelligence.description}
         features={docFeatures}
         columns={3}
         centerHeader
-        className="bg-white dark:bg-slate-950"
+        className="bg-gradient-to-b from-slate-900 to-slate-800 [&_h2]:text-white [&_p]:text-slate-300 [&_.text-astralis-navy]:!text-white [&_.text-slate-700]:!text-slate-300"
       />
 
-      {/* 4. Platform Engineering */}
+      {/* 4. Platform Engineering - Light Background */}
       <FeatureGrid
         headline={platformEngineering.headline}
         subheadline={platformEngineering.description}
         features={platformFeatures}
         columns={3}
         centerHeader
-        className="bg-slate-50 dark:bg-slate-900"
+        className="bg-slate-50 border-y border-slate-200"
       />
 
-      {/* 5. SaaS Development */}
+      {/* 5. SaaS Development - Dark Background with Navy Tones */}
       <FeatureGrid
         headline={saasDevelopment.headline}
         subheadline={saasDevelopment.description}
         features={saasFeatures}
         columns={3}
         centerHeader
-        className="bg-white dark:bg-slate-950"
+        className="bg-gradient-to-b from-slate-800 to-astralis-navy [&_h2]:text-white [&_p]:text-slate-300 [&_.text-astralis-navy]:!text-white [&_.text-slate-700]:!text-slate-300 [&_.border-slate-200]:!border-slate-700 [&_.bg-white]:!bg-slate-800/50"
       />
 
-      {/* 6. CTA Section */}
+      {/* 6. CTA Section - Navy Background */}
       <CTASection
         headline={ctaContent.headline}
         description={ctaContent.description}
         primaryButton={ctaContent.primaryButton}
         secondaryButton={ctaContent.secondaryButton}
         backgroundVariant="navy"
+        className="bg-astralis-navy"
       />
     </main>
   );

@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils";
 /**
  * Button component following Astralis brand specification (Section 3.3)
  *
+ * Versatile button component with multiple variants and sizes.
+ *
  * Primary Button:
  * - Background: Astralis Blue (#2B6CB0)
  * - Text: White
@@ -17,6 +19,13 @@ import { cn } from "@/lib/utils";
  * - Border: Astralis Blue 1.5px
  * - Text: Astralis Blue
  * - Hover: Light blue fill
+ *
+ * @example
+ * ```tsx
+ * <Button variant="primary" size="lg" onClick={handleClick}>
+ *   Click Me
+ * </Button>
+ * ```
  */
 
 const buttonVariants = cva(
@@ -27,45 +36,56 @@ const buttonVariants = cva(
       variant: {
         // Primary: Astralis Blue background, white text with enhanced hover
         primary:
-          "bg-astralis-blue text-white shadow-md hover:bg-[#245a92] hover:shadow-lg hover:scale-105",
+          "bg-astralis-blue text-white shadow-md hover:bg-[#245a92] hover:shadow-lg hover:scale-105 dark:bg-astralis-blue dark:hover:bg-[#245a92]",
 
         // Secondary: Blue border with enhanced styling
         secondary:
-          "border-2 border-astralis-blue text-astralis-blue hover:bg-astralis-blue hover:text-white shadow-sm hover:shadow-md",
+          "border-2 border-astralis-blue text-astralis-blue hover:bg-astralis-blue hover:text-white shadow-sm hover:shadow-md dark:border-astralis-blue dark:text-astralis-blue dark:hover:bg-astralis-blue dark:hover:text-white",
 
         // Destructive: Error color
         destructive:
-          "bg-error text-white shadow-sm hover:bg-error/90 hover:shadow-md",
+          "bg-error text-white shadow-sm hover:bg-error/90 hover:shadow-md dark:bg-error dark:hover:bg-error/90",
 
         // Outline: Neutral border
         outline:
-          "border-2 border-slate-300 bg-white text-slate-700 hover:bg-slate-100 hover:border-slate-400",
+          "border-2 border-slate-300 bg-white text-slate-700 hover:bg-slate-100 hover:border-slate-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:border-slate-500",
 
         // Ghost: No background
         ghost:
-          "text-slate-700 hover:bg-slate-100",
+          "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800",
 
         // Link: Text only
         link:
-          "text-astralis-blue underline-offset-4 hover:underline",
+          "text-astralis-blue underline-offset-4 hover:underline dark:text-astralis-blue",
       },
       size: {
         default: "h-12 px-6 py-3 text-base",
-        sm: "h-10 px-4 py-2 text-sm",
+        sm: "h-11 px-4 py-2 text-sm",
         lg: "h-14 px-8 py-4 text-lg",
         icon: "h-12 w-12",
       },
     },
     defaultVariants: {
       variant: "primary",
-      size: "default",
+      size: "lg",
     },
   }
 );
 
+/**
+ * Button Props
+ *
+ * @param variant - Visual style variant (primary, secondary, destructive, outline, ghost, link)
+ * @param size - Size of the button (sm, default, lg, icon)
+ * @param asChild - Render as a child element using Radix Slot
+ * @param className - Additional CSS classes
+ * @param disabled - Whether the button is disabled
+ * @param onClick - Click event handler
+ */
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
+  /** Render as a child element using Radix Slot */
   asChild?: boolean;
 }
 
