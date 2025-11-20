@@ -56,7 +56,7 @@ test.describe('Sign-In Workflow', () => {
       });
       testOrgId = org.id;
 
-      const user = await prisma.user.create({
+      const user = await prisma.users.create({
         data: {
           email: testEmail,
           name: 'Test User',
@@ -74,7 +74,7 @@ test.describe('Sign-In Workflow', () => {
       // Cleanup
       await prisma.activityLog.deleteMany({ where: { userId: testUserId } });
       await prisma.session.deleteMany({ where: { userId: testUserId } });
-      await prisma.user.delete({ where: { id: testUserId } }).catch(() => {});
+      await prisma.users.delete({ where: { id: testUserId } }).catch(() => {});
       await prisma.organization.delete({ where: { id: testOrgId } }).catch(() => {});
     });
 
@@ -113,7 +113,7 @@ test.describe('Sign-In Workflow', () => {
       expect(sessions.length).toBeGreaterThan(0);
 
       // Verify lastLoginAt was updated
-      const updatedUser = await prisma.user.findUnique({
+      const updatedUser = await prisma.users.findUnique({
         where: { id: testUserId },
       });
       expect(updatedUser?.lastLoginAt).not.toBeNull();
@@ -153,7 +153,7 @@ test.describe('Sign-In Workflow', () => {
       });
       testOrgId = org.id;
 
-      const user = await prisma.user.create({
+      const user = await prisma.users.create({
         data: {
           email: testEmail,
           name: 'Test User',
@@ -168,7 +168,7 @@ test.describe('Sign-In Workflow', () => {
     });
 
     test.afterEach(async () => {
-      await prisma.user.delete({ where: { id: testUserId } }).catch(() => {});
+      await prisma.users.delete({ where: { id: testUserId } }).catch(() => {});
       await prisma.organization.delete({ where: { id: testOrgId } }).catch(() => {});
     });
 
@@ -244,7 +244,7 @@ test.describe('Sign-In Workflow', () => {
       });
       testOrgId = org.id;
 
-      const user = await prisma.user.create({
+      const user = await prisma.users.create({
         data: {
           email: testEmail,
           name: 'Test User Unverified',
@@ -259,7 +259,7 @@ test.describe('Sign-In Workflow', () => {
     });
 
     test.afterEach(async () => {
-      await prisma.user.delete({ where: { id: testUserId } }).catch(() => {});
+      await prisma.users.delete({ where: { id: testUserId } }).catch(() => {});
       await prisma.organization.delete({ where: { id: testOrgId } }).catch(() => {});
     });
 
@@ -320,7 +320,7 @@ test.describe('Sign-In Workflow', () => {
         },
       });
 
-      const user = await prisma.user.create({
+      const user = await prisma.users.create({
         data: {
           email: testEmail,
           name: 'Test User',
@@ -351,7 +351,7 @@ test.describe('Sign-In Workflow', () => {
         // Cleanup
         await prisma.activityLog.deleteMany({ where: { userId: user.id } });
         await prisma.session.deleteMany({ where: { userId: user.id } });
-        await prisma.user.delete({ where: { id: user.id } }).catch(() => {});
+        await prisma.users.delete({ where: { id: user.id } }).catch(() => {});
         await prisma.organization.delete({ where: { id: org.id } }).catch(() => {});
       }
     });
@@ -370,7 +370,7 @@ test.describe('Sign-In Workflow', () => {
         },
       });
 
-      const user = await prisma.user.create({
+      const user = await prisma.users.create({
         data: {
           email: testEmail,
           name: 'Test User',
@@ -417,7 +417,7 @@ test.describe('Sign-In Workflow', () => {
         // Cleanup
         await prisma.activityLog.deleteMany({ where: { userId: user.id } });
         await prisma.session.deleteMany({ where: { userId: user.id } });
-        await prisma.user.delete({ where: { id: user.id } }).catch(() => {});
+        await prisma.users.delete({ where: { id: user.id } }).catch(() => {});
         await prisma.organization.delete({ where: { id: org.id } }).catch(() => {});
       }
     });
@@ -436,7 +436,7 @@ test.describe('Sign-In Workflow', () => {
         },
       });
 
-      const user = await prisma.user.create({
+      const user = await prisma.users.create({
         data: {
           email: testEmail,
           name: 'Test User',
@@ -494,7 +494,7 @@ test.describe('Sign-In Workflow', () => {
         // Cleanup
         await prisma.activityLog.deleteMany({ where: { userId: user.id } });
         await prisma.session.deleteMany({ where: { userId: user.id } });
-        await prisma.user.delete({ where: { id: user.id } }).catch(() => {});
+        await prisma.users.delete({ where: { id: user.id } }).catch(() => {});
         await prisma.organization.delete({ where: { id: org.id } }).catch(() => {});
       }
     });
