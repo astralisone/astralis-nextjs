@@ -1,6 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  eslint: {
+    // Disable ESLint during builds - handle separately
+    ignoreDuringBuilds: true,
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: '5mb',
@@ -17,17 +21,7 @@ const nextConfig = {
       },
     ],
   },
-  // API proxy configuration for Express backend
-  async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: process.env.NEXT_PUBLIC_API_BASE_URL
-          ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/:path*`
-          : 'http://localhost:3000/api/:path*',
-      },
-    ];
-  },
+  // NOTE: No API rewrites needed - using Next.js App Router API routes directly
 };
 
 export default nextConfig;

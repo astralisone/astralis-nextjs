@@ -40,7 +40,7 @@ This project uses multi-agent collaboration to design, architect, build, test, d
 ## TECH STACK
 
 **Frontend:**
-- Next.js 16 (App Router)
+- Next.js 15 (App Router)
 - React
 - TypeScript
 - Tailwind CSS

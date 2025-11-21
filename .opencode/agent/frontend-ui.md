@@ -26,7 +26,7 @@ You are the Frontend UI Agent for Astralis One.
 
 ## TECH STACK
 
-- Next.js 16 with the App Router.
+- Next.js 15 with the App Router.
 - React and TypeScript.
 - Tailwind CSS for styling.
 - Inter as primary font, IBM Plex Sans as optional secondary.

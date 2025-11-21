@@ -4,37 +4,117 @@ import { prisma } from "@/lib/prisma";
 
 const createPipelineSchema = z.object({
   name: z.string().min(2),
+  description: z.string().optional(),
   orgId: z.string(),
 });
 
+const pipelineFiltersSchema = z.object({
+  orgId: z.string().min(1),
+  search: z.string().optional().nullable(),
+  isActive: z.enum(["true", "false"]).optional().nullable(),
+});
+
+/**
+ * GET /api/pipelines
+ * List pipelines with optional filters
+ */
 export async function GET(req: NextRequest) {
-  const orgId = req.nextUrl.searchParams.get("orgId");
-  const where = orgId ? { orgId } : {};
-  const pipelines = await prisma.pipeline.findMany({
-    where,
-    include: { stages: true },
-    orderBy: { createdAt: "desc" },
-  });
-  return NextResponse.json(pipelines);
-}
+  try {
+    const searchParams = req.nextUrl.searchParams;
+    const filters = {
+      orgId: searchParams.get("orgId"),
+      search: searchParams.get("search"),
+      isActive: searchParams.get("isActive"),
+    };
 
-export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const parsed = createPipelineSchema.safeParse(body);
+    const parsed = pipelineFiltersSchema.safeParse(filters);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid filters", details: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
 
-  if (!parsed.success) {
+    const { orgId, search, isActive } = parsed.data;
+
+    // Build where clause
+    const where: any = { orgId };
+
+    if (isActive !== undefined && isActive !== null) {
+      where.isActive = isActive === "true";
+    }
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } },
+      ];
+    }
+
+    const pipelines = await prisma.pipeline.findMany({
+      where,
+      include: {
+        stages: {
+          orderBy: { order: "asc" },
+          include: {
+            _count: {
+              select: { items: true },
+            },
+          },
+        },
+        _count: {
+          select: { stages: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return NextResponse.json({
+      pipelines,
+      total: pipelines.length,
+    });
+  } catch (error) {
+    console.error("Error fetching pipelines:", error);
     return NextResponse.json(
-      { error: "Invalid payload", details: parsed.error.flatten() },
-      { status: 400 },
+      { error: "Failed to fetch pipelines" },
+      { status: 500 }
     );
   }
+}
 
-  const pipeline = await prisma.pipeline.create({
-    data: {
-      name: parsed.data.name,
-      orgId: parsed.data.orgId,
-    },
-  });
+/**
+ * POST /api/pipelines
+ * Create a new pipeline
+ */
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const parsed = createPipelineSchema.safeParse(body);
 
-  return NextResponse.json(pipeline, { status: 201 });
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid payload", details: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
+
+    const pipeline = await prisma.pipeline.create({
+      data: {
+        name: parsed.data.name,
+        description: parsed.data.description,
+        orgId: parsed.data.orgId,
+      },
+      include: {
+        stages: true,
+      },
+    });
+
+    return NextResponse.json(pipeline, { status: 201 });
+  } catch (error) {
+    console.error("Error creating pipeline:", error);
+    return NextResponse.json(
+      { error: "Failed to create pipeline" },
+      { status: 500 }
+    );
+  }
 }

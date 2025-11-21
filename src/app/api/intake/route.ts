@@ -12,6 +12,15 @@ const intakeRequestSchema = z.object({
   priority: z.number().int().min(0).max(10).optional().default(0),
 });
 
+const intakeFiltersSchema = z.object({
+  orgId: z.string().min(1),
+  status: z.enum(["NEW", "ROUTING", "ASSIGNED", "PROCESSING", "COMPLETED", "REJECTED"]).optional().nullable(),
+  source: z.enum(["FORM", "EMAIL", "CHAT", "API"]).optional().nullable(),
+  search: z.string().optional().nullable(),
+  limit: z.string().optional().nullable(),
+  offset: z.string().optional().nullable(),
+});
+
 /**
  * POST /api/intake
  * Capture intake request and route using AI logic
@@ -177,17 +186,38 @@ async function performAIRouting(params: {
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = req.nextUrl;
-    const orgId = searchParams.get("orgId");
-    const status = searchParams.get("status");
-    const source = searchParams.get("source");
-    const limit = parseInt(searchParams.get("limit") || "50");
-    const offset = parseInt(searchParams.get("offset") || "0");
+    const filters = {
+      orgId: searchParams.get("orgId"),
+      status: searchParams.get("status"),
+      source: searchParams.get("source"),
+      search: searchParams.get("search"),
+      limit: searchParams.get("limit"),
+      offset: searchParams.get("offset"),
+    };
+
+    const parsed = intakeFiltersSchema.safeParse(filters);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid filters", details: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
+
+    const { orgId, status, source, search, limit: limitStr, offset: offsetStr } = parsed.data;
+    const limit = parseInt(limitStr || "50");
+    const offset = parseInt(offsetStr || "0");
 
     const where: any = {};
 
     if (orgId) where.orgId = orgId;
     if (status) where.status = status as IntakeStatus;
     if (source) where.source = source as IntakeSource;
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } },
+      ];
+    }
 
     const [intakeRequests, total] = await Promise.all([
       prisma.intakeRequest.findMany({
