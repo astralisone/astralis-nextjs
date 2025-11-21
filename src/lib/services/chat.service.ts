@@ -34,8 +34,11 @@ export class ChatService {
       throw new Error('OPENAI_API_KEY environment variable is not set');
     }
 
+    console.log('[ChatService] Initializing OpenAI client with 30s timeout');
     this.openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
+      timeout: 30000, // 30 second timeout
+      maxRetries: 2, // Retry failed requests twice
     });
   }
 
@@ -121,6 +124,9 @@ export class ChatService {
       const systemPrompt = this.buildSystemPrompt(context, chat.documentId || documentId);
 
       // Call GPT-4 with context
+      console.log(`[ChatService] Calling OpenAI ${this.chatModel} (timeout: 30s)...`);
+      const startTime = Date.now();
+
       const completion = await this.openai.chat.completions.create({
         model: this.chatModel,
         messages: [
@@ -132,8 +138,12 @@ export class ChatService {
         max_tokens: 1000,
       });
 
+      const duration = Date.now() - startTime;
+      console.log(`[ChatService] OpenAI response received in ${duration}ms`);
+
       const assistantMessage = completion.choices[0].message.content || 'I apologize, but I could not generate a response.';
       const tokensUsed = completion.usage?.total_tokens;
+      console.log(`[ChatService] Response generated - ${tokensUsed} tokens used`);
 
       // Build sources array
       const sources: ChatSource[] = searchResults.map(result => ({
@@ -193,6 +203,16 @@ export class ChatService {
       };
     } catch (error) {
       console.error('[ChatService] Send message error:', error);
+
+      // Log detailed error info
+      if (error instanceof Error) {
+        console.error('[ChatService] Error name:', error.name);
+        console.error('[ChatService] Error message:', error.message);
+        if (error.stack) {
+          console.error('[ChatService] Error stack:', error.stack.substring(0, 500));
+        }
+      }
+
       throw new Error(`Failed to send message: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }

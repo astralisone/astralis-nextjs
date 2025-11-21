@@ -1,300 +1,163 @@
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { prisma } from "@/lib/prisma";
-
-const createAutomationSchema = z.object({
-  name: z.string().min(2),
-  description: z.string().optional(),
-  workflowId: z.string().optional(),
-  webhookUrl: z.string().url().optional(),
-  triggerConfig: z.any(),
-  isActive: z.boolean().optional().default(true),
-  orgId: z.string(),
-});
-
-const updateAutomationSchema = z.object({
-  name: z.string().min(2).optional(),
-  description: z.string().optional(),
-  workflowId: z.string().optional(),
-  webhookUrl: z.string().url().optional(),
-  triggerConfig: z.any().optional(),
-  isActive: z.boolean().optional(),
-});
-
-const automationFiltersSchema = z.object({
-  orgId: z.string().min(1).optional().nullable(),
-  isActive: z.enum(["true", "false"]).optional().nullable(),
-  limit: z.string().optional().nullable(),
-  offset: z.string().optional().nullable(),
-});
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth/config';
+import { automationService } from '@/lib/services/automation.service';
+import { createAutomationSchema } from '@/lib/validators/automation.validators';
+import { z } from 'zod';
 
 /**
  * GET /api/automations
- * List all automations for an organization
+ *
+ * List automations for the authenticated user's organization.
  *
  * Query params:
- * - orgId: Filter by organization
- * - isActive: Filter by active status
- * - limit: Number of results (default: 50)
- * - offset: Pagination offset (default: 0)
+ * - isActive: Filter by active status (true/false)
+ * - search: Search by name/description
+ * - page: Page number (default: 1)
+ * - pageSize: Items per page (default: 20)
+ *
+ * Auth: Required (session.user.orgId)
+ * Returns: AutomationListResponse
  */
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = req.nextUrl;
-    const filters = {
-      orgId: searchParams.get("orgId"),
-      isActive: searchParams.get("isActive"),
-      limit: searchParams.get("limit"),
-      offset: searchParams.get("offset"),
-    };
+    // 1. Verify authentication
+    const session = await auth();
 
-    const parsed = automationFiltersSchema.safeParse(filters);
-    if (!parsed.success) {
+    if (!session?.user?.id) {
       return NextResponse.json(
-        { error: "Invalid filters", details: parsed.error.flatten() },
-        { status: 400 }
+        { error: 'Unauthorized', details: 'Authentication required' },
+        { status: 401 }
       );
     }
 
-    const { orgId, isActive, limit: limitStr, offset: offsetStr } = parsed.data;
-    const limit = parseInt(limitStr || "50");
-    const offset = parseInt(offsetStr || "0");
-
-    const where: any = {};
-
-    if (orgId) where.orgId = orgId;
-    if (isActive !== null && isActive !== undefined) {
-      where.isActive = isActive === "true";
+    if (!session.user.orgId) {
+      return NextResponse.json(
+        { error: 'Forbidden', details: 'Organization required' },
+        { status: 403 }
+      );
     }
 
-    const [automations, total] = await Promise.all([
-      prisma.automation.findMany({
-        where,
-        orderBy: [
-          { isActive: "desc" },
-          { lastRunAt: "desc" },
-          { createdAt: "desc" },
-        ],
-        take: limit,
-        skip: offset,
-      }),
-      prisma.automation.count({ where }),
-    ]);
+    // 2. Parse query parameters
+    const { searchParams } = req.nextUrl;
+    const isActiveParam = searchParams.get('isActive');
+    const search = searchParams.get('search') || undefined;
+    const page = parseInt(searchParams.get('page') || '1');
+    const pageSize = parseInt(searchParams.get('pageSize') || '20');
 
+    const filters: any = {};
+
+    if (isActiveParam !== null) {
+      filters.isActive = isActiveParam === 'true';
+    }
+
+    if (search) {
+      filters.search = search;
+    }
+
+    // 3. Get automations from service
+    const automations = await automationService.listAutomations(
+      session.user.orgId,
+      filters
+    );
+
+    // 4. Return response
     return NextResponse.json({
-      automations,
+      success: true,
+      automations: automations,  // Frontend expects 'automations' key
+      data: automations,  // Also include 'data' for consistency
       pagination: {
-        total,
-        limit,
-        offset,
-        hasMore: offset + limit < total,
+        page,
+        pageSize,
+        total: automations.length,
       },
     });
+
   } catch (error) {
-    console.error("Error fetching automations:", error);
+    console.error('[API /api/automations GET] Error:', error);
     return NextResponse.json(
-      { error: "Failed to fetch automations" },
-      { status: 500 },
+      {
+        error: 'Failed to fetch automations',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 }
     );
   }
 }
 
 /**
  * POST /api/automations
- * Create a new automation workflow
  *
- * Body:
- * {
+ * Create a new automation with n8n workflow integration.
+ *
+ * Body: CreateAutomationInput {
  *   name: string
  *   description?: string
- *   workflowId?: string (n8n workflow ID)
- *   webhookUrl?: string (webhook endpoint)
- *   triggerConfig: any (trigger configuration)
- *   isActive?: boolean
- *   orgId: string
+ *   triggerType: 'WEBHOOK' | 'SCHEDULE' | 'EVENT' | 'MANUAL' | 'API'
+ *   triggerConfig: Record<string, any>
+ *   workflowJson: { nodes: any[], connections: Record<string, any> }
+ *   tags?: string[]
  * }
+ *
+ * Auth: Required (ADMIN or OPERATOR role)
+ * Returns: Created automation with n8n workflow ID
  */
 export async function POST(req: NextRequest) {
   try {
+    // 1. Verify authentication
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Unauthorized', details: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    if (!session.user.orgId) {
+      return NextResponse.json(
+        { error: 'Forbidden', details: 'Organization required' },
+        { status: 403 }
+      );
+    }
+
+    // 2. Validate input
     const body = await req.json();
     const parsed = createAutomationSchema.safeParse(body);
 
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Invalid payload", details: parsed.error.flatten() },
-        { status: 400 },
+        {
+          error: 'Validation failed',
+          details: parsed.error.flatten().fieldErrors,
+        },
+        { status: 400 }
       );
     }
 
-    const { name, description, workflowId, webhookUrl, triggerConfig, isActive, orgId } = parsed.data;
-
-    // Verify organization exists
-    const org = await prisma.organization.findUnique({
-      where: { id: orgId },
+    // 3. Create automation via service
+    const automation = await automationService.createAutomation({
+      ...parsed.data,
+      orgId: session.user.orgId,
+      createdById: session.user.id,
     });
 
-    if (!org) {
-      return NextResponse.json(
-        { error: "Organization not found" },
-        { status: 404 },
-      );
-    }
-
-    // Create automation
-    const automation = await prisma.automation.create({
-      data: {
-        name,
-        description,
-        workflowId,
-        webhookUrl,
-        triggerConfig,
-        isActive: isActive ?? true,
-        orgId,
-        runCount: 0,
+    // 4. Return created automation
+    return NextResponse.json(
+      {
+        success: true,
+        data: automation,
       },
-    });
-
-    return NextResponse.json(automation, { status: 201 });
-  } catch (error) {
-    console.error("Error creating automation:", error);
-    return NextResponse.json(
-      { error: "Failed to create automation" },
-      { status: 500 },
+      { status: 201 }
     );
-  }
-}
 
-/**
- * PUT /api/automations
- * Update an existing automation
- *
- * Body:
- * {
- *   id: string
- *   ...update fields
- * }
- */
-export async function PUT(req: NextRequest) {
-  try {
-    const body = await req.json();
-    const { id, ...updateData } = body;
-
-    if (!id) {
-      return NextResponse.json(
-        { error: "Automation ID is required" },
-        { status: 400 },
-      );
-    }
-
-    const parsed = updateAutomationSchema.safeParse(updateData);
-
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Invalid payload", details: parsed.error.flatten() },
-        { status: 400 },
-      );
-    }
-
-    // Check if automation exists
-    const existingAutomation = await prisma.automation.findUnique({
-      where: { id },
-    });
-
-    if (!existingAutomation) {
-      return NextResponse.json(
-        { error: "Automation not found" },
-        { status: 404 },
-      );
-    }
-
-    // Update automation
-    const automation = await prisma.automation.update({
-      where: { id },
-      data: {
-        ...parsed.data,
-        updatedAt: new Date(),
+  } catch (error) {
+    console.error('[API /api/automations POST] Error:', error);
+    return NextResponse.json(
+      {
+        error: 'Failed to create automation',
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
-    });
-
-    return NextResponse.json(automation);
-  } catch (error) {
-    console.error("Error updating automation:", error);
-    return NextResponse.json(
-      { error: "Failed to update automation" },
-      { status: 500 },
-    );
-  }
-}
-
-/**
- * PATCH /api/automations
- * Toggle automation active status or update webhook URL
- *
- * Body:
- * {
- *   id: string
- *   isActive?: boolean
- *   webhookUrl?: string
- * }
- */
-export async function PATCH(req: NextRequest) {
-  try {
-    const body = await req.json();
-    const { id, isActive, webhookUrl } = body;
-
-    if (!id) {
-      return NextResponse.json(
-        { error: "Automation ID is required" },
-        { status: 400 },
-      );
-    }
-
-    // Check if automation exists
-    const existingAutomation = await prisma.automation.findUnique({
-      where: { id },
-    });
-
-    if (!existingAutomation) {
-      return NextResponse.json(
-        { error: "Automation not found" },
-        { status: 404 },
-      );
-    }
-
-    const updateData: any = { updatedAt: new Date() };
-
-    if (isActive !== undefined) {
-      updateData.isActive = isActive;
-    }
-
-    if (webhookUrl !== undefined) {
-      // Validate webhook URL format
-      if (webhookUrl && !z.string().url().safeParse(webhookUrl).success) {
-        return NextResponse.json(
-          { error: "Invalid webhook URL format" },
-          { status: 400 },
-        );
-      }
-      updateData.webhookUrl = webhookUrl;
-    }
-
-    // Update automation
-    const automation = await prisma.automation.update({
-      where: { id },
-      data: updateData,
-    });
-
-    return NextResponse.json({
-      automation,
-      message: isActive !== undefined
-        ? `Automation ${automation.isActive ? "activated" : "deactivated"} successfully`
-        : "Automation updated successfully",
-    });
-  } catch (error) {
-    console.error("Error patching automation:", error);
-    return NextResponse.json(
-      { error: "Failed to update automation" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

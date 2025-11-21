@@ -2,13 +2,19 @@
 
 import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
-import { Send, FileText, Loader2, AlertCircle } from 'lucide-react';
+import { Send, FileText, Loader2, AlertCircle, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import {
   useChatAPI,
   type ChatMessage,
@@ -267,34 +273,45 @@ export function DocumentChat({
 
               {/* Sources (for assistant messages) */}
               {message.role === 'assistant' && message.sources && message.sources.length > 0 && (
-                <div className="w-full space-y-2">
-                  <p className="text-xs font-semibold text-slate-700">
-                    Sources ({message.sources.length}):
-                  </p>
-                  <div className="space-y-2">
-                    {message.sources.map((source, index) => (
-                      <Card
-                        key={`${source.documentId}-${source.chunkIndex}`}
-                        variant="bordered"
-                        className="p-3 bg-slate-50"
-                      >
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <div className="flex items-center gap-2">
-                            <FileText className="h-3.5 w-3.5 text-astralis-blue flex-shrink-0" />
-                            <p className="text-xs font-medium text-slate-900">
-                              {source.documentName}
-                            </p>
-                          </div>
-                          <Badge variant="default" className="text-xs">
-                            {Math.round(source.similarity * 100)}% match
-                          </Badge>
+                <div className="w-full">
+                  <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="sources" className="border-0">
+                      <AccordionTrigger className="py-2 hover:no-underline">
+                        <div className="flex items-center gap-2">
+                          <FileText className="h-3.5 w-3.5 text-astralis-blue" />
+                          <span className="text-xs font-semibold text-slate-700">
+                            Sources ({message.sources.length})
+                          </span>
                         </div>
-                        <p className="text-xs text-slate-600 line-clamp-2">
-                          {source.content}
-                        </p>
-                      </Card>
-                    ))}
-                  </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="pt-2">
+                        <div className="space-y-2">
+                          {message.sources.map((source, index) => (
+                            <Card
+                              key={`${source.documentId}-${source.chunkIndex}`}
+                              variant="bordered"
+                              className="p-3 bg-slate-50"
+                            >
+                              <div className="flex items-start justify-between gap-2 mb-2">
+                                <div className="flex items-center gap-2">
+                                  <FileText className="h-3.5 w-3.5 text-astralis-blue flex-shrink-0" />
+                                  <p className="text-xs font-medium text-slate-900">
+                                    {source.documentName}
+                                  </p>
+                                </div>
+                                <Badge variant="default" className="text-xs">
+                                  {Math.round(source.similarity * 100)}% match
+                                </Badge>
+                              </div>
+                              <p className="text-xs text-slate-600 line-clamp-2">
+                                {source.content}
+                              </p>
+                            </Card>
+                          ))}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
                 </div>
               )}
             </div>
@@ -305,9 +322,12 @@ export function DocumentChat({
         {loading && (
           <div className="flex justify-start">
             <Card variant="default" className="px-4 py-3 bg-slate-50 border-slate-300">
-              <div className="flex items-center gap-2">
-                <Loader2 className="h-4 w-4 text-astralis-blue animate-spin" />
-                <p className="text-sm text-slate-600">Thinking...</p>
+              <div className="flex items-center gap-3">
+                <Loader2
+                  size={'25'}
+                  className="text-astralis-blue animate-spin "
+                />
+                <p className="text-sm text-slate-600 font-medium">Thinking...</p>
               </div>
             </Card>
           </div>
