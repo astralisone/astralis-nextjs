@@ -417,6 +417,14 @@ const config: Config = {
             opacity: "1",
           },
         },
+        "accordion-down": {
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
+        },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
       },
       animation: {
         "fade-in": "fade-in 200ms ease-out",
@@ -457,6 +465,10 @@ const config: Config = {
         // Slide transitions
         "slide-in-right": "slide-in-right 300ms ease-out",
         "slide-in-left": "slide-in-left 300ms ease-out",
+
+        // Accordion animations
+        "accordion-down": "accordion-down 200ms ease-out",
+        "accordion-up": "accordion-up 200ms ease-out",
       },
     },
   },

@@ -44,6 +44,9 @@ export class SpacesService {
     this.cdnUrl = process.env.SPACES_CDN_URL || '';
     this.endpoint = process.env.SPACES_ENDPOINT;
 
+    console.log('[SpacesService] Initialized with bucket:', this.bucket);
+    console.log('[SpacesService] SPACES_BUCKET env var:', process.env.SPACES_BUCKET);
+
     // Initialize S3 client with DigitalOcean Spaces endpoint
     this.client = new S3Client({
       endpoint: `https://${this.endpoint}`,

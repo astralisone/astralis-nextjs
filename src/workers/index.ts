@@ -1,4 +1,13 @@
-import 'dotenv/config'; // Load environment variables from .env files
+// Load environment variables from .env files
+import { config } from 'dotenv';
+import { resolve } from 'path';
+
+// Load .env.local first (takes precedence), then .env
+const envLocal = resolve(process.cwd(), '.env.local');
+const envFile = resolve(process.cwd(), '.env');
+config({ path: envLocal });
+config({ path: envFile });
+
 import { Worker } from 'bullmq';
 import { redisConnection } from './redis';
 import { processDocumentOCR } from './processors/ocr.processor';
@@ -18,6 +27,8 @@ async function startWorkers() {
   console.log('  - OPENAI_API_KEY:', process.env.OPENAI_API_KEY ? 'SET (' + process.env.OPENAI_API_KEY.substring(0, 20) + '...)' : 'NOT SET');
   console.log('  - DATABASE_URL:', process.env.DATABASE_URL ? 'SET' : 'NOT SET');
   console.log('  - REDIS_URL:', process.env.REDIS_URL ? 'SET' : 'NOT SET');
+  console.log('  - SPACES_BUCKET:', process.env.SPACES_BUCKET || 'NOT SET');
+  console.log('  - SPACES_ENDPOINT:', process.env.SPACES_ENDPOINT || 'NOT SET');
 
   if (!process.env.OPENAI_API_KEY) {
     throw new Error('CRITICAL: OPENAI_API_KEY environment variable is not set. Worker cannot start.');

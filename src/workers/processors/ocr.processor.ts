@@ -120,11 +120,20 @@ export async function processDocumentOCR(job: Job<DocumentProcessingJobData>) {
 
     // Update document with results
     await job.updateProgress(90);
+
+    // Sanitize OCR text to remove null bytes and invalid UTF-8 sequences
+    const sanitizedOcrText = ocrText
+      ? ocrText
+          .replace(/\0/g, '') // Remove null bytes
+          .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, '') // Remove control characters except \t, \n, \r
+          .trim()
+      : null;
+
     await prisma.document.update({
       where: { id: documentId },
       data: {
         status: 'COMPLETED',
-        ocrText,
+        ocrText: sanitizedOcrText,
         ocrConfidence,
         extractedData,
         processedAt: new Date(),
