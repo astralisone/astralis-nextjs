@@ -913,6 +913,7 @@ model users {
   revenue_audits_revenue_audits_userIdTousers       revenue_audits[]        @relation("revenue_audits_userIdTousers")
   testimonials                                      testimonials[]
   wishlists                                         wishlists[]
+  documentChats                                     DocumentChat[]
 
   @@index([isActive])
   @@index([orgId])
@@ -937,6 +938,8 @@ model organization {
   users       users[]
   automations automation[]
   intakeRequests intakeRequest[]
+  documents   Document[]   // Phase 4: Document processing
+  documentChats DocumentChat[]
 
   @@index([name])
 }
@@ -1052,6 +1055,7 @@ model pipelineStage {
   id          String         @id @default(cuid())
   name        String
   description String?
+  color       String?
   order       Int
   pipelineId  String
   pipeline    pipeline       @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
@@ -1064,17 +1068,111 @@ model pipelineStage {
 }
 
 model pipelineItem {
-  id        String        @id @default(cuid())
-  title     String
-  data      Json
-  stageId   String
-  stage     pipelineStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @default(now()) @updatedAt
+  id           String        @id @default(cuid())
+  title        String
+  description  String?
+  priority     Int           @default(0) // 0=NONE, 1=LOW, 2=MEDIUM, 3=HIGH, 4=URGENT
+  status       String        @default("NOT_STARTED") // NOT_STARTED, IN_PROGRESS, BLOCKED, COMPLETED
+  dueDate      DateTime?
+  progress     Int           @default(0) // 0-100
+  tags         String[]      @default([])
+  assignedToId String?
+  data         Json?         // Additional flexible data
+  stageId      String
+  stage        pipelineStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @default(now()) @updatedAt
 
   @@index([stageId])
   @@index([createdAt])
+  @@index([assignedToId])
+  @@index([priority])
+  @@index([status])
 }
+
+// ============================================================================
+// Phase 4: Document Processing & OCR
+// ============================================================================
+
+model Document {
+  id              String              @id @default(cuid())
+  fileName        String
+  originalName    String
+  filePath        String              // Path in DigitalOcean Spaces
+  fileSize        Int                 // Bytes
+  mimeType        String
+  thumbnailUrl    String?
+  cdnUrl          String?
+  status          DocumentStatus      @default(PENDING)
+  uploadedById    String
+  orgId           String
+  organization    organization        @relation(fields: [orgId], references: [id])
+  ocrText         String?             @db.Text
+  ocrConfidence   Float?              // 0.0 to 1.0
+  extractedData   Json?               // Structured data from GPT-4 Vision
+  processingError String?             @db.Text
+  metadata        Json?               // Additional metadata (document type, etc.)
+  processedAt     DateTime?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  embeddings      DocumentEmbedding[] // Vector embeddings for RAG
+  chats           DocumentChat[]      // Chat conversations about this document
+
+  @@index([orgId])
+  @@index([uploadedById])
+  @@index([status])
+  @@index([createdAt])
+  @@index([mimeType])
+}
+
+// Document embeddings for vector search (RAG)
+model DocumentEmbedding {
+  id         String   @id @default(cuid())
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  orgId      String
+  chunkIndex Int      // Position in document (0, 1, 2, ...)
+  content    String   @db.Text // The actual text chunk
+  embedding  String   @db.Text // JSON array of 1536 floats (OpenAI text-embedding-3-small)
+  metadata   Json?    // {page: 1, section: "header", etc.}
+  createdAt  DateTime @default(now())
+
+  @@unique([documentId, chunkIndex])
+  @@index([documentId])
+  @@index([orgId])
+}
+
+// Document chat conversations (RAG Q&A)
+model DocumentChat {
+  id          String            @id @default(cuid())
+  documentId  String?           // null = chat across all documents in org
+  document    Document?         @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  userId      String
+  user        users             @relation(fields: [userId], references: [id])
+  orgId       String
+  organization organization     @relation(fields: [orgId], references: [id])
+  title       String?           // Auto-generated from first message
+  messages    Json              // [{role: 'user'|'assistant', content: string, timestamp: ISO}]
+  lastMessageAt DateTime        @default(now())
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([documentId])
+  @@index([userId])
+  @@index([orgId])
+  @@index([lastMessageAt])
+}
+
+enum DocumentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+// ============================================================================
+// End Phase 4 Models
+// ============================================================================
 
 enum AccessStatus {
   PENDING
@@ -1331,8 +1429,9 @@ enum IntakeSource {
 
 enum IntakeStatus {
   NEW
+  ROUTING
   ASSIGNED
-  IN_PROGRESS
+  PROCESSING
   COMPLETED
-  CANCELLED
+  REJECTED
 }

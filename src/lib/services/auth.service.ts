@@ -48,7 +48,7 @@ export class AuthService {
       });
 
       // Create verification token
-      await tx.VerificationToken.create({
+      await tx.verificationToken.create({
         data: {
           identifier: email,
           token: verificationToken,
@@ -57,7 +57,7 @@ export class AuthService {
       });
 
       // Log account creation
-      await tx.ActivityLog.create({
+      await tx.activityLog.create({
         data: {
           userId: user.id,
           orgId: org.id,
@@ -89,7 +89,7 @@ export class AuthService {
    * Verify email address
    */
   async verifyEmail(token: string) {
-    const verificationToken = await prisma.VerificationToken.findUnique({
+    const verificationToken = await prisma.verificationToken.findUnique({
       where: { token }
     });
 
@@ -108,7 +108,7 @@ export class AuthService {
     });
 
     // Delete used token
-    await prisma.VerificationToken.delete({
+    await prisma.verificationToken.delete({
       where: { token }
     });
 
@@ -139,7 +139,7 @@ export class AuthService {
     const tokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
     // Store reset token
-    await prisma.VerificationToken.create({
+    await prisma.verificationToken.create({
       data: {
         identifier: email,
         token: resetToken,
@@ -160,7 +160,7 @@ export class AuthService {
    * Reset password with token
    */
   async resetPassword(token: string, newPassword: string) {
-    const verificationToken = await prisma.VerificationToken.findUnique({
+    const verificationToken = await prisma.verificationToken.findUnique({
       where: { token }
     });
 
@@ -182,7 +182,7 @@ export class AuthService {
     });
 
     // Delete used token
-    await prisma.VerificationToken.delete({
+    await prisma.verificationToken.delete({
       where: { token }
     });
 

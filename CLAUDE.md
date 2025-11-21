@@ -4,7 +4,7 @@ This file provides guidance to AI assistants when working with code in this repo
 
 ## Project Overview
 
-**Astralis One** - Multi-Agent Engineering Platform built with Next.js 16, TypeScript, and Prisma. Enterprise-grade AI operations platform featuring booking systems, email notifications, analytics tracking, and a comprehensive UI component library.
+**Astralis One** - Multi-Agent Engineering Platform built with Next.js 15, TypeScript, and Prisma. Enterprise-grade AI operations platform featuring booking systems, email notifications, analytics tracking, and a comprehensive UI component library.
 
 ## Essential Commands
 
@@ -36,7 +36,7 @@ npm run build-storybook  # Build static Storybook
 ## Architecture Overview
 
 ### Tech Stack
-- **Framework**: Next.js 16 (App Router) on port 3001
+- **Framework**: Next.js 15 (App Router) on port 3001
 - **Language**: TypeScript 5 with strict mode
 - **Styling**: Tailwind CSS 3 with custom Astralis brand theme
 - **Database**: PostgreSQL + Prisma ORM

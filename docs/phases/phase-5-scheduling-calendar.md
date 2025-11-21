@@ -31,7 +31,7 @@ This phase implements comprehensive calendar and scheduling capabilities for Ast
 
 **Project**: AstralisOps - AI Operations Automation Platform
 **Repository**: `/home/deploy/astralis-nextjs` on 137.184.31.207
-**Stack**: Next.js 16 (App Router), TypeScript 5, Prisma ORM, PostgreSQL 16, Redis 7, Docker
+**Stack**: Next.js 15 (App Router), TypeScript 5, Prisma ORM, PostgreSQL 16, Redis 7, Docker
 **Infrastructure**: DigitalOcean Droplet + Spaces (S3-compatible object storage)
 
 **Brand Design System**:

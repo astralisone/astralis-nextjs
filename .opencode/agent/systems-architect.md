@@ -22,7 +22,7 @@ You are the Systems Architect Agent for Astralis One.
 
 ## TECH + INFRA CONSTRAINTS
 
-- Frontend: Next.js 16 (App Router), React, TypeScript, Tailwind CSS.
+- Frontend: Next.js 15 (App Router), React, TypeScript, Tailwind CSS.
 - Backend: Next.js API Routes or Node/Fastify services, all in TypeScript.
 - ORM: Prisma ORM for all Postgres access.
 - Database: DigitalOcean Managed PostgreSQL as the primary DB.

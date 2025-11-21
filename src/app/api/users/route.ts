@@ -10,11 +10,63 @@ const createUserSchema = z.object({
   orgId: z.string().optional(),
 });
 
-export async function GET() {
-  const users = await prisma.users.findMany({
-    orderBy: { createdAt: "desc" },
-  });
-  return NextResponse.json(users);
+const userFiltersSchema = z.object({
+  orgId: z.string().min(1).optional().nullable(),
+  role: z.enum(["USER", "AUTHOR", "EDITOR", "ADMIN", "PM", "OPERATOR", "CLIENT"]).optional().nullable(),
+  search: z.string().optional().nullable(),
+  limit: z.string().optional().nullable(),
+  offset: z.string().optional().nullable(),
+});
+
+export async function GET(req: NextRequest) {
+  try {
+    const { searchParams } = req.nextUrl;
+    const filters = {
+      orgId: searchParams.get("orgId"),
+      role: searchParams.get("role"),
+      search: searchParams.get("search"),
+      limit: searchParams.get("limit"),
+      offset: searchParams.get("offset"),
+    };
+
+    const parsed = userFiltersSchema.safeParse(filters);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid filters", details: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
+
+    const { orgId, role, search, limit: limitStr, offset: offsetStr } = parsed.data;
+    const limit = parseInt(limitStr || "50");
+    const offset = parseInt(offsetStr || "0");
+
+    const where: any = {};
+
+    if (orgId) where.orgId = orgId;
+    if (role) where.role = role;
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
+      ];
+    }
+
+    const users = await prisma.users.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      take: limit,
+      skip: offset,
+    });
+
+    return NextResponse.json(users);
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch users" },
+      { status: 500 }
+    );
+  }
 }
 
 export async function POST(req: NextRequest) {
