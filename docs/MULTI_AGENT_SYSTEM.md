@@ -238,7 +238,7 @@ Skip orchestration for:
 
 All agents operate within the Astralis technical ecosystem:
 
-- **Frontend**: Next.js 16, React, TypeScript, Tailwind CSS
+- **Frontend**: Next.js 15, React, TypeScript, Tailwind CSS
 - **Backend**: Next.js API Routes, Prisma ORM, PostgreSQL
 - **Infrastructure**: DigitalOcean (App Platform, Managed PostgreSQL, Droplets, Spaces)
 - **Automation**: n8n workflows

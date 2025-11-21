@@ -21,6 +21,13 @@ const updateAutomationSchema = z.object({
   isActive: z.boolean().optional(),
 });
 
+const automationFiltersSchema = z.object({
+  orgId: z.string().min(1).optional().nullable(),
+  isActive: z.enum(["true", "false"]).optional().nullable(),
+  limit: z.string().optional().nullable(),
+  offset: z.string().optional().nullable(),
+});
+
 /**
  * GET /api/automations
  * List all automations for an organization
@@ -34,10 +41,24 @@ const updateAutomationSchema = z.object({
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = req.nextUrl;
-    const orgId = searchParams.get("orgId");
-    const isActive = searchParams.get("isActive");
-    const limit = parseInt(searchParams.get("limit") || "50");
-    const offset = parseInt(searchParams.get("offset") || "0");
+    const filters = {
+      orgId: searchParams.get("orgId"),
+      isActive: searchParams.get("isActive"),
+      limit: searchParams.get("limit"),
+      offset: searchParams.get("offset"),
+    };
+
+    const parsed = automationFiltersSchema.safeParse(filters);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid filters", details: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
+
+    const { orgId, isActive, limit: limitStr, offset: offsetStr } = parsed.data;
+    const limit = parseInt(limitStr || "50");
+    const offset = parseInt(offsetStr || "0");
 
     const where: any = {};
 

@@ -13,19 +13,33 @@ import { cn } from "@/lib/utils";
  * - Includes: CardHeader, CardTitle, CardDescription, CardContent, CardFooter
  */
 
-const Card = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      "rounded-lg border border-slate-300 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)] transition-shadow duration-200 dark:bg-slate-800 dark:border-slate-700",
-      className
-    )}
-    {...props}
-  />
-));
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  variant?: 'default' | 'bordered' | 'elevated';
+  hover?: boolean;
+}
+
+const Card = React.forwardRef<HTMLDivElement, CardProps>(
+  ({ className, variant = 'default', hover = false, ...props }, ref) => {
+    const variantStyles = {
+      default: "border border-slate-300 shadow-[0_2px_8px_rgba(0,0,0,0.06)]",
+      bordered: "border-2 border-slate-300",
+      elevated: "shadow-lg",
+    };
+
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          "rounded-lg bg-white transition-shadow duration-200 dark:bg-slate-800 dark:border-slate-700",
+          variantStyles[variant],
+          hover && "hover:shadow-[0_4px_16px_rgba(0,0,0,0.1)]",
+          className
+        )}
+        {...props}
+      />
+    );
+  }
+);
 Card.displayName = "Card";
 
 const CardHeader = React.forwardRef<

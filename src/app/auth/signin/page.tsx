@@ -15,7 +15,7 @@ import Link from 'next/link';
 export default function SignInPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || '/astralisops/dashboard';
+  const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
 
   const [error, setError] = useState<string | null>(null);
 

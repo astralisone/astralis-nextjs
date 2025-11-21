@@ -1,4 +1,4 @@
-import { NextAuthOptions } from "next-auth";
+import { NextAuthOptions, getServerSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
@@ -85,7 +85,7 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (dbUser) {
-          token.orgId = dbUser.orgId;
+          token.orgId = dbUser.orgId || '';
           token.role = dbUser.role;
         }
       }
@@ -160,3 +160,9 @@ export const authOptions: NextAuthOptions = {
     },
   },
 };
+
+/**
+ * Helper function to get the current session in Server Components
+ * Usage: const session = await auth();
+ */
+export const auth = () => getServerSession(authOptions);

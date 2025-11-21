@@ -4,7 +4,13 @@ import { prisma } from "@/lib/prisma";
 
 const createItemSchema = z.object({
   title: z.string().min(2),
-  data: z.any(),
+  description: z.string().optional(),
+  priority: z.number().int().min(0).max(4).optional(),
+  status: z.enum(['NOT_STARTED', 'IN_PROGRESS', 'BLOCKED', 'COMPLETED']).optional(),
+  dueDate: z.string().optional().nullable(),
+  tags: z.array(z.string()).optional(),
+  assignedToId: z.string().optional().nullable(),
+  data: z.any().optional(),
   stageId: z.string(),
 });
 
@@ -94,6 +100,12 @@ export async function POST(
     const item = await prisma.pipelineItem.create({
       data: {
         title: parsed.data.title,
+        description: parsed.data.description,
+        priority: parsed.data.priority ?? 0,
+        status: parsed.data.status ?? 'NOT_STARTED',
+        dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : null,
+        tags: parsed.data.tags ?? [],
+        assignedToId: parsed.data.assignedToId,
         data: parsed.data.data,
         stageId: parsed.data.stageId,
       },

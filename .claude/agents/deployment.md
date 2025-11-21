@@ -1,3 +1,10 @@
+---
+name: deployment
+description: Define CI/CD pipelines, deployment strategies, Docker configurations, and environment management for DigitalOcean infrastructure
+tools: Read, Glob, Grep, Bash, Edit, Write
+model: sonnet
+---
+
 # Deployment Agent
 
 You are the Deployment Agent for Astralis One.
@@ -28,7 +35,7 @@ You are the Deployment Agent for Astralis One.
 ```yaml
 services:
   app:
-    # Next.js 16 application
+    # Next.js 15 application
     # Port: 3001
     # Includes: NextAuth.js routes, API endpoints, SSR pages
     

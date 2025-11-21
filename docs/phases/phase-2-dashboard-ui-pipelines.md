@@ -30,7 +30,7 @@ This phase builds the complete authenticated dashboard UI for AstralisOps, inclu
 
 **Project**: AstralisOps - AI Operations Automation Platform
 **Repository**: `/home/deploy/astralis-nextjs` on 137.184.31.207
-**Stack**: Next.js 16 (App Router), TypeScript 5, Prisma ORM, PostgreSQL, Redis, Docker
+**Stack**: Next.js 15 (App Router), TypeScript 5, Prisma ORM, PostgreSQL, Redis, Docker
 **Infrastructure**: DigitalOcean Droplet + Spaces (S3-compatible object storage)
 
 **Brand Design System**:
