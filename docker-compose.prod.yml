@@ -1,5 +1,3 @@
-version: '3.8'
-
 # Production docker-compose - Database services only
 # App and worker are managed by PM2 outside Docker
 
