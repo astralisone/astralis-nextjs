@@ -1,5 +1,10 @@
 'use client';
 
+/**
+ * KanbanCard - Simple pipeline item card for dashboard Kanban board.
+ * Used for regular pipeline items. For intake items, use IntakeCard.
+ */
+
 import { useDraggable } from '@dnd-kit/core';
 import { GripVertical } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';

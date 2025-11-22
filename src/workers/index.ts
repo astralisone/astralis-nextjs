@@ -12,6 +12,9 @@ import { Worker } from 'bullmq';
 import { redisConnection } from './redis';
 import { processDocumentOCR } from './processors/ocr.processor';
 import { processDocumentEmbedding } from './processors/embedding.processor';
+import { processIntakeRouting } from './processors/intakeRouting.processor';
+import { processCalendarSync } from './processors/calendarSync.processor';
+import { processSchedulingReminder } from './processors/schedulingReminder.processor';
 
 /**
  * Worker Bootstrap
@@ -53,6 +56,24 @@ async function startWorkers() {
     concurrency: 2, // Lower concurrency due to API rate limits
   });
 
+  // Intake routing worker (AI-powered request routing)
+  const intakeRoutingWorker = new Worker('intake-routing', processIntakeRouting, {
+    connection: redisConnection,
+    concurrency: 5, // Higher concurrency for lightweight routing operations
+  });
+
+  // Calendar sync worker (Google Calendar synchronization)
+  const calendarSyncWorker = new Worker('calendar-sync', processCalendarSync, {
+    connection: redisConnection,
+    concurrency: 2, // Lower concurrency due to external API rate limits
+  });
+
+  // Scheduling reminder worker (email reminders for events)
+  const schedulingReminderWorker = new Worker('scheduling-reminders', processSchedulingReminder, {
+    connection: redisConnection,
+    concurrency: 5, // Higher concurrency for email sending
+  });
+
   // Document worker event handlers
   documentWorker.on('completed', (job) => {
     console.log(`[Worker:OCR] Job ${job.id} completed`);
@@ -79,15 +100,67 @@ async function startWorkers() {
     console.error('[Worker:Embedding] Worker error:', err);
   });
 
+  // Intake routing worker event handlers
+  intakeRoutingWorker.on('completed', (job) => {
+    console.log(`[Worker:IntakeRouting] Job ${job.id} completed`);
+  });
+
+  intakeRoutingWorker.on('failed', (job, err) => {
+    console.error(`[Worker:IntakeRouting] Job ${job?.id} failed:`, err.message);
+  });
+
+  intakeRoutingWorker.on('error', (err) => {
+    console.error('[Worker:IntakeRouting] Worker error:', err);
+  });
+
+  // Calendar sync worker event handlers
+  calendarSyncWorker.on('completed', (job) => {
+    console.log(`[Worker:CalendarSync] Job ${job.id} completed`);
+  });
+
+  calendarSyncWorker.on('failed', (job, err) => {
+    console.error(`[Worker:CalendarSync] Job ${job?.id} failed:`, err.message);
+  });
+
+  calendarSyncWorker.on('error', (err) => {
+    console.error('[Worker:CalendarSync] Worker error:', err);
+  });
+
+  // Scheduling reminder worker event handlers
+  schedulingReminderWorker.on('completed', (job) => {
+    console.log(`[Worker:SchedulingReminder] Job ${job.id} completed`);
+  });
+
+  schedulingReminderWorker.on('failed', (job, err) => {
+    console.error(`[Worker:SchedulingReminder] Job ${job?.id} failed:`, err.message);
+  });
+
+  schedulingReminderWorker.on('error', (err) => {
+    console.error('[Worker:SchedulingReminder] Worker error:', err);
+  });
+
   console.log('[Workers] Document processing worker started (concurrency: 3)');
   console.log('[Workers] Document embedding worker started (concurrency: 2)');
+  console.log('[Workers] Intake routing worker started (concurrency: 5)');
+  console.log('[Workers] Calendar sync worker started (concurrency: 2)');
+  console.log('[Workers] Scheduling reminder worker started (concurrency: 5)');
 
   // Graceful shutdown
   const shutdown = async () => {
     console.log('[Workers] Shutting down gracefully...');
-    await documentWorker.close();
-    await embeddingWorker.close();
+
+    // Close all workers in parallel for faster shutdown
+    await Promise.all([
+      documentWorker.close(),
+      embeddingWorker.close(),
+      intakeRoutingWorker.close(),
+      calendarSyncWorker.close(),
+      schedulingReminderWorker.close(),
+    ]);
+
+    console.log('[Workers] All workers closed');
     await redisConnection.quit();
+    console.log('[Workers] Redis connection closed');
     process.exit(0);
   };
 

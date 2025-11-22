@@ -2,10 +2,13 @@
 
 import { useState } from 'react';
 import { useIntake } from '@/hooks/useIntake';
+import { usePipelines } from '@/hooks/usePipelines';
+import { useAssignIntake } from '@/hooks/useIntakeRequests';
 import { IntakeQueueTable } from '@/components/dashboard/IntakeQueueTable';
 import { CreateIntakeModal } from '@/components/intake/CreateIntakeModal';
 import { Button } from '@/components/ui/button';
 import { Plus, Filter } from 'lucide-react';
+import { toast } from '@/components/ui/use-toast';
 
 export default function IntakePage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -13,11 +16,45 @@ export default function IntakePage() {
     status?: string;
     source?: string;
   }>({});
+  const [assigningIntakeId, setAssigningIntakeId] = useState<string | null>(null);
 
   const { data, isLoading, error, refetch } = useIntake(filters);
+  const { data: allPipelines } = usePipelines();
+  const assignIntakeMutation = useAssignIntake();
 
   const handleCreateSuccess = () => {
     refetch();
+  };
+
+  // Get list of pipelines for the dropdown (with stages so we can filter out empty ones)
+  const pipelinesForDropdown = (allPipelines || [])
+    .filter(p => p.isActive && p.stages && p.stages.length > 0)
+    .map(p => ({ id: p.id, name: p.name }));
+
+  const handleAssignToPipeline = async (intakeId: string, pipelineId: string) => {
+    setAssigningIntakeId(intakeId);
+    try {
+      const result = await assignIntakeMutation.mutateAsync({
+        intakeId,
+        pipelineId,
+      });
+
+      toast({
+        title: 'Intake Assigned',
+        description: result.message || 'Successfully assigned intake to pipeline',
+      });
+
+      // Refresh the intake list
+      refetch();
+    } catch (error) {
+      toast({
+        title: 'Assignment Failed',
+        description: error instanceof Error ? error.message : 'Failed to assign intake to pipeline',
+        variant: 'destructive',
+      });
+    } finally {
+      setAssigningIntakeId(null);
+    }
   };
 
   return (
@@ -53,7 +90,12 @@ export default function IntakePage() {
             Failed to load intake requests
           </div>
         ) : (
-          <IntakeQueueTable requests={data?.requests || []} />
+          <IntakeQueueTable
+            requests={data?.requests || []}
+            pipelines={pipelinesForDropdown}
+            onAssignToPipeline={handleAssignToPipeline}
+            assigningIntakeId={assigningIntakeId}
+          />
         )}
       </div>
 

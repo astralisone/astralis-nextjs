@@ -1,3 +1,61 @@
+// Intake Request Types - defined first for use in Pipeline interface
+export enum IntakeSource {
+  FORM = 'FORM',
+  EMAIL = 'EMAIL',
+  CHAT = 'CHAT',
+  API = 'API',
+}
+
+export enum IntakeStatus {
+  NEW = 'NEW',
+  ROUTING = 'ROUTING',
+  ASSIGNED = 'ASSIGNED',
+  PROCESSING = 'PROCESSING',
+  COMPLETED = 'COMPLETED',
+  REJECTED = 'REJECTED',
+}
+
+export interface IntakeRequest {
+  id: string;
+  source: IntakeSource;
+  status: IntakeStatus;
+  title: string;
+  description?: string | null;
+  requestData: Record<string, unknown>;
+  priority: number;
+  orgId: string;
+  assignedPipeline?: string | null;
+  aiRoutingMeta?: {
+    confidence: number;
+    reasoning: string;
+    suggestedPipelines: string[];
+    routedAt: string;
+  } | null;
+  pipeline?: {
+    id: string;
+    name: string;
+  } | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Pipeline Priority and Status enums
+export enum PipelinePriority {
+  NONE = 0,
+  LOW = 1,
+  MEDIUM = 2,
+  HIGH = 3,
+  URGENT = 4,
+}
+
+export enum PipelineItemStatus {
+  NOT_STARTED = 'NOT_STARTED',
+  IN_PROGRESS = 'IN_PROGRESS',
+  BLOCKED = 'BLOCKED',
+  COMPLETED = 'COMPLETED',
+  CLOSED = 'CLOSED',
+}
+
 // Pipeline domain types
 export interface Pipeline {
   id: string;
@@ -6,6 +64,7 @@ export interface Pipeline {
   isActive: boolean;
   orgId: string;
   stages: PipelineStage[];
+  intakeRequests?: IntakeRequest[];
   createdAt: string;
   updatedAt: string;
 }
@@ -42,21 +101,6 @@ export interface PipelineItem {
   tags: string[];
   createdAt: string;
   updatedAt: string;
-}
-
-export enum PipelinePriority {
-  NONE = 0,
-  LOW = 1,
-  MEDIUM = 2,
-  HIGH = 3,
-  URGENT = 4,
-}
-
-export enum PipelineItemStatus {
-  NOT_STARTED = 'NOT_STARTED',
-  IN_PROGRESS = 'IN_PROGRESS',
-  BLOCKED = 'BLOCKED',
-  COMPLETED = 'COMPLETED',
 }
 
 export interface PipelineFilters {
@@ -140,4 +184,19 @@ export interface PipelineDetailResponse {
   name: string;
   description?: string | null;
   stages: PipelineStage[];
+}
+
+export interface IntakeRequestsResponse {
+  intakeRequests: IntakeRequest[];
+  pagination: {
+    total: number;
+    limit: number;
+    offset: number;
+    hasMore: boolean;
+  };
+}
+
+// Pipeline with intake requests
+export interface PipelineWithIntake extends Pipeline {
+  intakeRequests: IntakeRequest[];
 }

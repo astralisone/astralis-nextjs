@@ -44,9 +44,10 @@ interface CalendarChatPanelProps {
   userId: string;
   orgId: string;
   className?: string;
+  onEventCreated?: () => void;
 }
 
-export function CalendarChatPanel({ userId, orgId, className }: CalendarChatPanelProps) {
+export function CalendarChatPanel({ userId, orgId, className, onEventCreated }: CalendarChatPanelProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
@@ -203,6 +204,11 @@ export function CalendarChatPanel({ userId, orgId, className }: CalendarChatPane
 
       setMessages(prev => [...prev, confirmationMessage]);
       setPendingAction(null);
+
+      // Notify parent component of event creation
+      if (onEventCreated) {
+        onEventCreated();
+      }
     } catch (err) {
       console.error('Failed to confirm action:', err);
       setError(err instanceof Error ? err.message : 'Failed to confirm action');
@@ -399,9 +405,9 @@ export function CalendarChatPanel({ userId, orgId, className }: CalendarChatPane
             className="flex-shrink-0"
           >
             {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-5 w-5 animate-spin" />
             ) : (
-              <Send className="h-4 w-4" />
+              <Send className="h-5 w-5" />
             )}
           </Button>
         </div>

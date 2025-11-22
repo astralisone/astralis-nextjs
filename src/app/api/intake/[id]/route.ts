@@ -11,11 +11,8 @@ const updateIntakeSchema = z.object({
   assignedPipeline: z.string().optional(),
 });
 
-/**
- * PUT /api/intake/[id]
- * Update a single intake request
- */
-export async function PUT(
+// Shared handler for PUT and PATCH
+async function handleUpdate(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -68,6 +65,28 @@ export async function PUT(
       { status: 500 },
     );
   }
+}
+
+/**
+ * PUT /api/intake/[id]
+ * Update a single intake request
+ */
+export async function PUT(
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  return handleUpdate(req, context);
+}
+
+/**
+ * PATCH /api/intake/[id]
+ * Partially update a single intake request
+ */
+export async function PATCH(
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  return handleUpdate(req, context);
 }
 
 /**

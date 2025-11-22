@@ -12,8 +12,9 @@ import {
   closestCenter,
 } from '@dnd-kit/core';
 import { KanbanColumn } from './KanbanColumn';
-import { KanbanCard } from './KanbanCard';
+import { UnifiedKanbanCard } from '@/components/pipelines/UnifiedKanbanCard';
 import { useMovePipelineItem } from '@/hooks/usePipelines';
+import { PipelineItemStatus } from '@/types/pipelines';
 
 interface Pipeline {
   id: string;
@@ -25,6 +26,7 @@ interface Stage {
   id: string;
   name: string;
   order: number;
+  color?: string | null;
   items: PipelineItem[];
 }
 
@@ -35,6 +37,7 @@ interface PipelineItem {
   priority: number;
   tags: string[];
   stageId: string;
+  status?: PipelineItemStatus;
 }
 
 interface KanbanBoardProps {
@@ -101,6 +104,12 @@ export function KanbanBoard({ pipeline, onRefetch }: KanbanBoardProps) {
     onRefetch?.();
   };
 
+  // Handler for when item status changes (close/complete)
+  const handleStatusChange = () => {
+    // Trigger refetch to update the board
+    onRefetch?.();
+  };
+
   return (
     <DndContext
       sensors={sensors}
@@ -108,7 +117,7 @@ export function KanbanBoard({ pipeline, onRefetch }: KanbanBoardProps) {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex gap-6 h-full overflow-x-auto pb-6">
+      <div className="flex gap-6 h-full overflow-x-auto pb-6 items-stretch">
         {pipeline.stages.map((stage) => (
           <KanbanColumn
             key={stage.id}
@@ -116,6 +125,7 @@ export function KanbanBoard({ pipeline, onRefetch }: KanbanBoardProps) {
             items={stage.items}
             pipelineId={pipeline.id}
             onItemCreated={handleItemCreated}
+            onStatusChange={handleStatusChange}
           />
         ))}
       </div>
@@ -123,7 +133,18 @@ export function KanbanBoard({ pipeline, onRefetch }: KanbanBoardProps) {
       <DragOverlay>
         {activeItem ? (
           <div className="rotate-2 scale-105">
-            <KanbanCard item={activeItem} isDragging />
+            <UnifiedKanbanCard
+              item={{
+                id: activeItem.id,
+                title: activeItem.title,
+                description: activeItem.description,
+                priority: activeItem.priority,
+                tags: activeItem.tags,
+                stageId: activeItem.stageId,
+              }}
+              isDragging
+              fullCardDrag
+            />
           </div>
         ) : null}
       </DragOverlay>

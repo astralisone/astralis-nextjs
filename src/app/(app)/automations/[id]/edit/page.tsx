@@ -277,7 +277,7 @@ export default function EditAutomationPage() {
             <WorkflowEditor
               workflowJson={workflowJson}
               onChange={setWorkflowJson}
-              n8nWorkflowId={automation?.n8nWorkflowId}
+              n8nWorkflowId={automation?.n8nWorkflowId ?? undefined}
             />
           </TabsContent>
         </Tabs>
@@ -286,15 +286,17 @@ export default function EditAutomationPage() {
         <div className="flex items-center gap-3">
           <Button
             variant="primary"
+            size="sm"
+            className="gap-1.5 text-sm"
             onClick={handleSave}
             disabled={saving || !name}
           >
-            <Save className="w-4 h-4 mr-2" />
+            <Save className="h-4 w-4" />
             {saving ? 'Saving...' : 'Save Changes'}
           </Button>
-          <Button variant="outline" asChild>
+          <Button variant="outline" size="sm" className="gap-1.5 text-sm" asChild>
             <Link href={`/automations/${automationId}`}>
-              <X className="w-4 h-4 mr-2" />
+              <X className="h-4 w-4" />
               Cancel
             </Link>
           </Button>

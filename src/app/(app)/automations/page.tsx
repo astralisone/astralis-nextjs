@@ -124,16 +124,17 @@ export default function AutomationsPage() {
           <div className="flex items-center gap-3">
             <Button
               variant="outline"
-              size="lg"
+              size="sm"
+              className="gap-1.5 text-sm"
               onClick={fetchAutomations}
               disabled={loading}
             >
-              <RefreshCw className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
-            <Button variant="primary" size="lg" asChild>
+            <Button variant="primary" size="sm" className="gap-1.5 text-sm" asChild>
               <Link href="/automations/new">
-                <Plus className="w-5 h-5 mr-2" />
+                <Plus className="h-4 w-4" />
                 Create Automation
               </Link>
             </Button>
@@ -145,7 +146,7 @@ export default function AutomationsPage() {
           <div className="flex flex-col md:flex-row gap-4">
             {/* Search */}
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
               <Input
                 placeholder="Search automations..."
                 value={searchQuery}
