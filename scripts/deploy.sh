@@ -331,7 +331,7 @@ sync_build_to_server() {
     print_step "Syncing config files to server..."
     rsync -avz \
         -e "ssh -i $SSH_KEY" \
-        next.config.mjs tsconfig.json ecosystem.config.js \
+        next.config.mjs tsconfig.json ecosystem.config.js docker-compose.yml \
         "$SERVER_USER@$SERVER_HOST:$SERVER_PATH/"
     print_success "Config files synced"
 
