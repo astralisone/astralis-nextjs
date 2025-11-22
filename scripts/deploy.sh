@@ -451,13 +451,21 @@ deploy_to_server() {
 
         # Start/Restart Docker services (for n8n)
         echo -e "${CYAN}▶ Managing Docker services...${NC}"
+
+        # Use docker compose (plugin) or docker-compose (standalone)
+        if docker compose version &>/dev/null; then
+            DOCKER_COMPOSE="docker compose"
+        else
+            DOCKER_COMPOSE="docker-compose"
+        fi
+
         if docker ps -q &>/dev/null; then
             echo -e "${CYAN}▶ Stopping existing containers...${NC}"
-            docker-compose down || echo -e "${YELLOW}⚠ No containers to stop${NC}"
+            $DOCKER_COMPOSE down || echo -e "${YELLOW}⚠ No containers to stop${NC}"
         fi
 
         echo -e "${CYAN}▶ Starting Docker services (n8n, postgres)...${NC}"
-        docker-compose up -d
+        $DOCKER_COMPOSE up -d
         echo -e "${GREEN}✓ Docker services started${NC}"
 
         # Wait for PostgreSQL to be ready before migrations
