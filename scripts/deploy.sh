@@ -9,11 +9,23 @@
 # 3. Database migrations and seeding
 # 4. Service management (Redis, Docker, PM2, Caddy)
 #
-# Usage: ./scripts/deploy.sh [environment] [commit-message]
-# Example: ./scripts/deploy.sh production "SIT-1234 add Phase 6 automation features"
+# Usage: ./scripts/deploy.sh [-y] [environment] [commit-message]
+# Example: ./scripts/deploy.sh -y production "SIT-1234 add Phase 6 automation features"
+# Flags:
+#   -y  Skip confirmation prompts (non-interactive mode)
 ################################################################################
 
 set -e  # Exit on any error
+
+# Parse flags
+AUTO_CONFIRM=false
+while getopts "y" opt; do
+    case $opt in
+        y) AUTO_CONFIRM=true ;;
+        *) ;;
+    esac
+done
+shift $((OPTIND-1))
 
 # Color codes for output
 RED='\033[0;31m'
@@ -61,6 +73,10 @@ print_warning() {
 }
 
 confirm() {
+    if [ "$AUTO_CONFIRM" = true ]; then
+        print_step "Auto-confirmed: $1"
+        return 0
+    fi
     read -p "$(echo -e ${YELLOW}$1 [y/N]:${NC}) " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
