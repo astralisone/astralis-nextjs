@@ -512,37 +512,23 @@ deploy_to_server() {
 
         # Wait for services to be healthy
         echo -e "${CYAN}▶ Waiting for all services to be healthy...${NC}"
-        sleep 5
-
-        # Check n8n health
-        if docker ps | grep -q astralis_n8n; then
-            echo -e "${GREEN}✓ n8n container running${NC}"
-        else
-            echo -e "${RED}✗ n8n container not running${NC}"
-        fi
+        sleep 3
 
         # Restart PM2 applications (main app + worker)
         echo -e "${CYAN}▶ Managing PM2 applications...${NC}"
 
-        # Main application
-        if pm2 list | grep -q astralis; then
-            echo -e "${CYAN}▶ Restarting PM2 main app...${NC}"
-            pm2 restart astralis
-        else
-            echo -e "${CYAN}▶ Starting PM2 main app...${NC}"
-            pm2 start ecosystem.config.js
-        fi
-        echo -e "${GREEN}✓ PM2 main app running${NC}"
+        # Main application - use startOrRestart with ecosystem file
+        echo -e "${CYAN}▶ Starting/restarting PM2 applications...${NC}"
+        pm2 delete all 2>/dev/null || true
+        pm2 start ecosystem.config.js
+        echo -e "${GREEN}✓ PM2 applications started${NC}"
 
-        # Worker process
-        if pm2 list | grep -q astralis-worker; then
-            echo -e "${CYAN}▶ Restarting PM2 worker...${NC}"
-            pm2 restart astralis-worker
-        else
+        # Worker process (if not in ecosystem file, start separately)
+        if ! pm2 list | grep -q "astralis-worker"; then
             echo -e "${CYAN}▶ Starting PM2 worker...${NC}"
             pm2 start npm --name "astralis-worker" -- run worker
+            echo -e "${GREEN}✓ PM2 worker started${NC}"
         fi
-        echo -e "${GREEN}✓ PM2 worker running${NC}"
 
         pm2 save
         echo -e "${GREEN}✓ PM2 process list saved${NC}"
