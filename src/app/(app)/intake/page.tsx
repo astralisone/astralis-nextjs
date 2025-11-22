@@ -1,13 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useIntake } from '@/hooks/useIntake';
 import { usePipelines } from '@/hooks/usePipelines';
 import { useAssignIntake } from '@/hooks/useIntakeRequests';
 import { IntakeQueueTable } from '@/components/dashboard/IntakeQueueTable';
 import { CreateIntakeModal } from '@/components/intake/CreateIntakeModal';
 import { Button } from '@/components/ui/button';
-import { Plus, Filter } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Plus, Search } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 
 export default function IntakePage() {
@@ -17,8 +18,29 @@ export default function IntakePage() {
     source?: string;
   }>({});
   const [assigningIntakeId, setAssigningIntakeId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  // Debounce search query with 300ms delay
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const { data, isLoading, error, refetch } = useIntake(filters);
+
+  // Filter requests client-side by title (description not available in interface)
+  const filteredRequests = useMemo(() => {
+    const requests = data?.requests || [];
+    if (!debouncedSearch.trim()) return requests;
+
+    const searchLower = debouncedSearch.toLowerCase();
+    return requests.filter((request) =>
+      request.title.toLowerCase().includes(searchLower)
+    );
+  }, [data?.requests, debouncedSearch]);
   const { data: allPipelines } = usePipelines();
   const assignIntakeMutation = useAssignIntake();
 
@@ -65,20 +87,26 @@ export default function IntakePage() {
             <h1 className="text-3xl font-bold text-astralis-navy">Intake Queue</h1>
             <p className="text-slate-600 mt-1">Review and route incoming requests</p>
           </div>
-          <div className="flex items-center gap-3">
-            <Button variant="outline" className="gap-2">
-              <Filter className="w-4 h-4" />
-              Filters
-            </Button>
-            <Button
-              variant="primary"
-              className="gap-2"
-              onClick={() => setIsCreateModalOpen(true)}
-            >
-              <Plus className="w-4 h-4" />
-              New Request
-            </Button>
-          </div>
+          <Button
+            variant="primary"
+            className="gap-2"
+            onClick={() => setIsCreateModalOpen(true)}
+          >
+            <Plus className="w-5 h-5" />
+            New Request
+          </Button>
+        </div>
+
+        {/* Full-width search bar */}
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+          <Input
+            type="text"
+            placeholder="Search requests by title..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-12 w-full"
+          />
         </div>
 
         {isLoading ? (
@@ -91,7 +119,7 @@ export default function IntakePage() {
           </div>
         ) : (
           <IntakeQueueTable
-            requests={data?.requests || []}
+            requests={filteredRequests}
             pipelines={pipelinesForDropdown}
             onAssignToPipeline={handleAssignToPipeline}
             assigningIntakeId={assigningIntakeId}

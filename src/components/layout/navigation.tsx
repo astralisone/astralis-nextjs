@@ -128,7 +128,7 @@ export function Navigation() {
             {/* Start Service Wizard Button - Bright Blue Filled */}
             <Button
               variant="primary"
-              size="default"
+              size="sm"
               className="bg-astralis-blue hover:bg-blue-600 text-white font-semibold rounded-md transition-all duration-200"
               asChild
             >

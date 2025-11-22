@@ -59,15 +59,15 @@ const buttonVariants = cva(
           "text-astralis-blue underline-offset-4 hover:underline dark:text-astralis-blue",
       },
       size: {
-        default: "h-12 px-6 py-3 text-base",
-        sm: "h-11 px-4 py-2 text-sm",
-        lg: "h-14 px-8 py-4 text-lg",
-        icon: "h-12 w-12",
+        default: "px-6 py-3 text-base",
+        sm: "px-4 py-2 text-sm",
+        lg: "px-8 py-4 text-lg",
+        icon: "p-3",
       },
     },
     defaultVariants: {
       variant: "primary",
-      size: "lg",
+      size: "default",
     },
   }
 );

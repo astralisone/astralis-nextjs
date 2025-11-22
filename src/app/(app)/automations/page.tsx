@@ -124,17 +124,16 @@ export default function AutomationsPage() {
           <div className="flex items-center gap-3">
             <Button
               variant="outline"
-              size="sm"
-              className="gap-1.5 text-sm"
+              className="gap-2"
               onClick={fetchAutomations}
               disabled={loading}
             >
-              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
-            <Button variant="primary" size="sm" className="gap-1.5 text-sm" asChild>
+            <Button variant="primary" className="gap-2" asChild>
               <Link href="/automations/new">
-                <Plus className="h-4 w-4" />
+                <Plus className="h-5 w-5" />
                 Create Automation
               </Link>
             </Button>
@@ -237,7 +236,7 @@ export default function AutomationsPage() {
                 <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
                   <Button variant="primary" asChild>
                     <Link href="/automations/new">
-                      <Plus className="w-4 h-4 mr-2" />
+                      <Plus className="w-5 h-5 mr-2" />
                       Create Automation
                     </Link>
                   </Button>

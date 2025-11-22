@@ -1,7 +1,15 @@
 import { Job } from 'bullmq';
 import { prisma } from '@/lib/prisma';
 import { getDefaultPipeline } from '@/lib/services/defaultPipelines.service';
+import { getAIRoutingService } from '@/lib/services/aiRouting.service';
 import type { IntakeRoutingJobData } from '../queues/intakeRouting.queue';
+
+/**
+ * Check if OpenAI is configured for AI routing
+ */
+function isOpenAIConfigured(): boolean {
+  return Boolean(process.env.OPENAI_API_KEY);
+}
 
 /**
  * Intake Routing Processor
@@ -57,10 +65,54 @@ export async function processIntakeRouting(job: Job<IntakeRoutingJobData>) {
 
     await job.updateProgress(50);
 
-    // Perform routing logic
-    // TODO: Integrate with aiRoutingService when available
-    // For now, use rule-based routing as fallback
-    const routingResult = await performRouting(intakeRequest, pipelines);
+    // Perform routing logic - use AI service if configured, otherwise fallback to rule-based
+    let routingResult: RoutingResult;
+
+    if (isOpenAIConfigured()) {
+      console.log('[IntakeRouting] Using AI-powered routing (OpenAI configured)');
+      try {
+        const aiRoutingService = getAIRoutingService();
+
+        // Use the AI service for classification and routing
+        const classification = await aiRoutingService.classifyRequest(
+          intakeRequest.title,
+          intakeRequest.description || '',
+          intakeRequest.source as Parameters<typeof aiRoutingService.classifyRequest>[2],
+          intakeRequest.requestData as Record<string, unknown>
+        );
+
+        await job.updateProgress(60);
+
+        const routing = await aiRoutingService.routeRequest(orgId, classification);
+
+        routingResult = {
+          assigned: Boolean(routing.assignedToId || routing.assignedPipelineId),
+          pipelineId: routing.assignedPipelineId || null,
+          assignedUserId: routing.assignedToId || null,
+          method: 'ai',
+          metadata: {
+            ...routing.routingMeta,
+            matchedPipeline: routing.assignedPipelineId ?
+              pipelines.find(p => p.id === routing.assignedPipelineId)?.name : undefined,
+            tags: routing.tags,
+            priority: routing.priority,
+          },
+        };
+
+        console.log(`[IntakeRouting] AI classification: ${classification.category} (confidence: ${classification.confidence})`);
+      } catch (aiError) {
+        console.error('[IntakeRouting] AI routing failed, falling back to rule-based:', aiError);
+        routingResult = await performRouting(intakeRequest, pipelines);
+        routingResult.metadata = {
+          ...routingResult.metadata,
+          aiError: aiError instanceof Error ? aiError.message : 'AI routing failed',
+          fallbackReason: 'AI service error',
+        };
+      }
+    } else {
+      console.log('[IntakeRouting] Using rule-based routing (OpenAI not configured)');
+      routingResult = await performRouting(intakeRequest, pipelines);
+    }
 
     await job.updateProgress(70);
 

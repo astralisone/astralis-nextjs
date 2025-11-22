@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ChevronUp, ChevronDown } from 'lucide-react';
 
 interface IntakeRequest {
   id: string;
@@ -21,6 +21,9 @@ interface IntakeRequest {
   priority: number;
   createdAt: string;
 }
+
+type SortColumn = 'title' | 'source' | 'status' | 'priority' | 'createdAt';
+type SortDirection = 'asc' | 'desc';
 
 interface PipelineOption {
   id: string;
@@ -59,7 +62,52 @@ export function IntakeQueueTable({
   onAssignToPipeline,
   assigningIntakeId,
 }: IntakeQueueTableProps) {
+  const [sortColumn, setSortColumn] = useState<SortColumn>('createdAt');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
   const showPipelineColumn = pipelines.length > 0 && onAssignToPipeline;
+
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  const sortedRequests = useMemo(() => {
+    return [...requests].sort((a, b) => {
+      let comparison = 0;
+      switch (sortColumn) {
+        case 'title':
+          comparison = a.title.localeCompare(b.title);
+          break;
+        case 'source':
+          comparison = a.source.localeCompare(b.source);
+          break;
+        case 'status':
+          comparison = a.status.localeCompare(b.status);
+          break;
+        case 'priority':
+          comparison = a.priority - b.priority;
+          break;
+        case 'createdAt':
+          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          break;
+      }
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  }, [requests, sortColumn, sortDirection]);
+
+  const SortIndicator = ({ column }: { column: SortColumn }) => {
+    if (sortColumn !== column) return null;
+    return sortDirection === 'asc' ? (
+      <ChevronUp className="w-3 h-3 inline-block ml-1" />
+    ) : (
+      <ChevronDown className="w-3 h-3 inline-block ml-1" />
+    );
+  };
 
   const handlePipelineSelect = (intakeId: string, pipelineId: string) => {
     if (onAssignToPipeline) {
@@ -71,26 +119,33 @@ export function IntakeQueueTable({
     return status === 'NEW' || status === 'ROUTING';
   };
 
+  const headerClasses = "px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors duration-150 select-none";
+
   return (
     <Card variant="default">
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <th className={headerClasses} onClick={() => handleSort('title')}>
                 Title
+                <SortIndicator column="title" />
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <th className={headerClasses} onClick={() => handleSort('source')}>
                 Source
+                <SortIndicator column="source" />
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <th className={headerClasses} onClick={() => handleSort('status')}>
                 Status
+                <SortIndicator column="status" />
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <th className={headerClasses} onClick={() => handleSort('priority')}>
                 Priority
+                <SortIndicator column="priority" />
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <th className={headerClasses} onClick={() => handleSort('createdAt')}>
                 Created
+                <SortIndicator column="createdAt" />
               </th>
               {showPipelineColumn && (
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
@@ -99,9 +154,9 @@ export function IntakeQueueTable({
               )}
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-slate-200">
-            {requests.map((request) => (
-              <tr key={request.id} className="hover:bg-slate-50 cursor-pointer">
+          <tbody className="divide-y divide-slate-200">
+            {sortedRequests.map((request, index) => (
+              <tr key={request.id} className={`hover:bg-slate-100 cursor-pointer transition-colors duration-150 ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-astralis-navy">
                     {request.title}
@@ -130,10 +185,10 @@ export function IntakeQueueTable({
                         onValueChange={(value) => handlePipelineSelect(request.id, value)}
                         disabled={assigningIntakeId === request.id}
                       >
-                        <SelectTrigger className="h-8 w-[180px] text-xs">
+                        <SelectTrigger className="h-9 w-[200px] text-sm">
                           {assigningIntakeId === request.id ? (
                             <div className="flex items-center gap-2">
-                              <Loader2 className="w-3 h-3 animate-spin" />
+                              <Loader2 className="w-4 h-4 animate-spin" />
                               <span>Assigning...</span>
                             </div>
                           ) : (
@@ -145,7 +200,7 @@ export function IntakeQueueTable({
                             <SelectItem
                               key={pipeline.id}
                               value={pipeline.id}
-                              className="text-xs"
+                              className="text-sm"
                             >
                               {pipeline.name}
                             </SelectItem>
@@ -153,14 +208,14 @@ export function IntakeQueueTable({
                         </SelectContent>
                       </Select>
                     ) : (
-                      <span className="text-xs text-slate-400">-</span>
+                      <span className="text-sm text-slate-400">—</span>
                     )}
                   </td>
                 )}
               </tr>
             ))}
 
-            {requests.length === 0 && (
+            {sortedRequests.length === 0 && (
               <tr>
                 <td colSpan={showPipelineColumn ? 6 : 5} className="px-6 py-12 text-center text-slate-500">
                   No intake requests found

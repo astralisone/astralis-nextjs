@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,21 +8,76 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { User, Mail, Phone, MapPin, Briefcase, Camera } from 'lucide-react';
+import { AvatarUpload } from '@/components/ui/avatar-upload';
+import { User, Mail, Building, Briefcase, Loader2 } from 'lucide-react';
+
+interface ProfileData {
+  name: string;
+  email: string;
+  company: string;
+  teamSize: string;
+  bio: string;
+  avatar: string | null;
+}
 
 export default function ProfilePage() {
   const { data: session, update } = useSession();
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState({
-    name: session?.user?.name || '',
-    email: session?.user?.email || '',
-    phone: '',
-    location: '',
-    title: '',
+  const [formData, setFormData] = useState<ProfileData>({
+    name: '',
+    email: '',
+    company: '',
+    teamSize: '',
     bio: '',
+    avatar: null,
   });
+
+  // Fetch profile data from API on mount
+  const fetchProfile = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch('/api/users/me');
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to fetch profile');
+      }
+
+      const { data } = await response.json();
+      setFormData({
+        name: data.name || '',
+        email: data.email || '',
+        company: data.company || '',
+        teamSize: data.teamSize || '',
+        bio: data.bio || '',
+        avatar: data.avatar || null,
+      });
+    } catch (err) {
+      console.error('Error fetching profile:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load profile');
+      // Fall back to session data if API fails
+      if (session?.user) {
+        setFormData(prev => ({
+          ...prev,
+          name: session.user?.name || '',
+          email: session.user?.email || '',
+        }));
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [session?.user]);
+
+  useEffect(() => {
+    if (session?.user) {
+      fetchProfile();
+    }
+  }, [session?.user, fetchProfile]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({
@@ -34,15 +89,53 @@ export default function ProfilePage() {
   const handleSave = async () => {
     setSaving(true);
     setSuccess(false);
+    setError(null);
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      const response = await fetch('/api/users/me', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          company: formData.company,
+          teamSize: formData.teamSize,
+          bio: formData.bio,
+        }),
+      });
 
-    setSaving(false);
-    setSuccess(true);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update profile');
+      }
 
-    // Auto-hide success message after 3 seconds
-    setTimeout(() => setSuccess(false), 3000);
+      const { data } = await response.json();
+
+      // Update form with returned data
+      setFormData({
+        name: data.name || '',
+        email: data.email || '',
+        company: data.company || '',
+        teamSize: data.teamSize || '',
+        bio: data.bio || '',
+        avatar: data.avatar || null,
+      });
+
+      // Update session if name changed
+      if (data.name !== session?.user?.name) {
+        await update({ name: data.name });
+      }
+
+      setSuccess(true);
+      // Auto-hide success message after 3 seconds
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (err) {
+      console.error('Error saving profile:', err);
+      setError(err instanceof Error ? err.message : 'Failed to save profile');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -60,6 +153,13 @@ export default function ProfilePage() {
         </Alert>
       )}
 
+      {error && (
+        <Alert variant="error" showIcon>
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Profile Picture Card */}
         <Card>
@@ -68,29 +168,33 @@ export default function ProfilePage() {
             <CardDescription>Update your profile photo</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col items-center gap-4">
-            <div className="relative">
-              <div className="w-32 h-32 rounded-full bg-astralis-blue flex items-center justify-center text-white text-4xl font-bold">
-                {session?.user?.image ? (
-                  <img
-                    src={session.user.image}
-                    alt={session.user.name || ''}
-                    className="w-full h-full rounded-full object-cover"
-                  />
-                ) : (
-                  session?.user?.name?.charAt(0).toUpperCase() || 'U'
-                )}
-              </div>
-              <button className="absolute bottom-0 right-0 w-10 h-10 bg-white border border-slate-200 rounded-full flex items-center justify-center shadow-sm hover:bg-slate-50 transition-colors">
-                <Camera className="w-5 h-5 text-slate-600" />
-              </button>
-            </div>
+            <AvatarUpload
+              currentAvatarUrl={formData.avatar}
+              userName={formData.name || session?.user?.name}
+              onUploadSuccess={(newAvatarUrl) => {
+                setFormData((prev) => ({ ...prev, avatar: newAvatarUrl }));
+                // Update session to reflect new avatar
+                update({ image: newAvatarUrl });
+                setSuccess(true);
+                setTimeout(() => setSuccess(false), 3000);
+              }}
+              onDeleteSuccess={() => {
+                setFormData((prev) => ({ ...prev, avatar: null }));
+                // Update session to reflect removed avatar
+                update({ image: null });
+                setSuccess(true);
+                setTimeout(() => setSuccess(false), 3000);
+              }}
+              onError={(errorMessage) => {
+                setError(errorMessage);
+              }}
+              size="md"
+              disabled={loading}
+            />
             <div className="text-center">
-              <p className="font-medium text-astralis-navy">{session?.user?.name || 'User'}</p>
-              <p className="text-sm text-slate-500">{session?.user?.email}</p>
+              <p className="font-medium text-astralis-navy">{formData.name || session?.user?.name || 'User'}</p>
+              <p className="text-sm text-slate-500">{formData.email || session?.user?.email}</p>
             </div>
-            <Button variant="outline" size="sm" className="gap-1.5 text-sm">
-              Upload New Photo
-            </Button>
           </CardContent>
         </Card>
 
@@ -120,6 +224,7 @@ export default function ProfilePage() {
                     onChange={handleChange}
                     className="pl-10"
                     placeholder="John Doe"
+                    disabled={loading}
                   />
                 </div>
               </div>
@@ -143,46 +248,33 @@ export default function ProfilePage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
+                <Label htmlFor="company">Company</Label>
                 <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <Input
-                    id="phone"
-                    name="phone"
-                    value={formData.phone}
+                    id="company"
+                    name="company"
+                    value={formData.company}
                     onChange={handleChange}
                     className="pl-10"
-                    placeholder="+1 (555) 123-4567"
+                    placeholder="Acme Inc."
+                    disabled={loading}
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <Input
-                    id="location"
-                    name="location"
-                    value={formData.location}
-                    onChange={handleChange}
-                    className="pl-10"
-                    placeholder="New York, NY"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="title">Job Title</Label>
+                <Label htmlFor="teamSize">Team Size</Label>
                 <div className="relative">
                   <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <Input
-                    id="title"
-                    name="title"
-                    value={formData.title}
+                    id="teamSize"
+                    name="teamSize"
+                    value={formData.teamSize}
                     onChange={handleChange}
                     className="pl-10"
-                    placeholder="Software Engineer"
+                    placeholder="1-10, 11-50, 51-200, etc."
+                    disabled={loading}
                   />
                 </div>
               </div>
@@ -196,12 +288,13 @@ export default function ProfilePage() {
                   onChange={handleChange}
                   placeholder="Tell us a bit about yourself..."
                   rows={4}
+                  disabled={loading}
                 />
               </div>
             </div>
 
             <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
-              <Button variant="outline" size="sm" className="gap-1.5 text-sm">
+              <Button variant="outline" size="sm" className="gap-1.5 text-sm" disabled={loading || saving}>
                 Cancel
               </Button>
               <Button
@@ -209,8 +302,9 @@ export default function ProfilePage() {
                 size="sm"
                 className="gap-1.5 text-sm"
                 onClick={handleSave}
-                disabled={saving}
+                disabled={loading || saving}
               >
+                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                 {saving ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>

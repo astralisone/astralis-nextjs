@@ -1,9 +1,12 @@
 import { prisma } from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
+import { sendTeamInviteEmail, generateInviteToken } from '@/lib/email';
 
 // Types for organization settings
 export interface OrgSettingsInput {
   name?: string;
+  slug?: string;
+  website?: string;
 }
 
 export interface OrgMember {
@@ -25,6 +28,8 @@ export interface InviteMemberResult {
 export interface OrgSettings {
   id: string;
   name: string;
+  slug: string | null;
+  website: string | null;
   createdAt: Date;
   updatedAt: Date;
   memberCount: number;
@@ -84,6 +89,8 @@ export class OrgSettingsService {
     return {
       id: org.id,
       name: org.name,
+      slug: org.slug,
+      website: org.website,
       createdAt: org.createdAt,
       updatedAt: org.updatedAt,
       memberCount: org._count.users,
@@ -109,6 +116,8 @@ export class OrgSettingsService {
       where: { id: orgId },
       data: {
         name: data.name,
+        slug: data.slug,
+        website: data.website,
       },
       include: {
         _count: {
@@ -134,6 +143,8 @@ export class OrgSettingsService {
     return {
       id: updatedOrg.id,
       name: updatedOrg.name,
+      slug: updatedOrg.slug,
+      website: updatedOrg.website,
       createdAt: updatedOrg.createdAt,
       updatedAt: updatedOrg.updatedAt,
       memberCount: updatedOrg._count.users,
@@ -232,12 +243,16 @@ export class OrgSettingsService {
       };
     }
 
-    // Create new invited user (placeholder - in production would send invite email)
-    // Using a temporary password that should be reset on first login
+    // Generate a secure invite token
+    const inviteToken = generateInviteToken();
+    const inviteTokenExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+    // Create new invited user with invite token stored in password field
+    // Format: PENDING_INVITE:{token}:{expiry_timestamp}
     const newUser = await prisma.users.create({
       data: {
         email,
-        password: `PENDING_INVITE_${Date.now()}`, // Placeholder - user must set password
+        password: `PENDING_INVITE:${inviteToken}:${inviteTokenExpiry.getTime()}`,
         role: role as UserRole,
         orgId,
         isActive: false, // User is inactive until they complete signup
@@ -260,9 +275,39 @@ export class OrgSettingsService {
       },
     });
 
+    // Get inviter details and organization name for the email
+    const [inviter, organization] = await Promise.all([
+      prisma.users.findUnique({
+        where: { id: inviterUserId },
+        select: { name: true, email: true },
+      }),
+      prisma.organization.findUnique({
+        where: { id: orgId },
+        select: { name: true },
+      }),
+    ]);
+
+    const inviterName = inviter?.name || inviter?.email || 'A team member';
+    const organizationName = organization?.name || 'your organization';
+
+    // Send invitation email - don't fail the invite if email fails
+    const emailSent = await sendTeamInviteEmail({
+      inviteeEmail: email,
+      inviterName,
+      organizationName,
+      role,
+      inviteToken,
+    });
+
+    if (!emailSent) {
+      console.error(`[OrgSettings] Failed to send invite email to ${email}, but invite was created`);
+    }
+
     return {
       success: true,
-      message: 'Invitation created. User must complete signup to activate account.',
+      message: emailSent
+        ? 'Invitation sent successfully. User will receive an email with instructions.'
+        : 'Invitation created, but email could not be sent. User can still be activated manually.',
       userId: newUser.id,
     };
   }

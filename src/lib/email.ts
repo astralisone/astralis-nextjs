@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
+import crypto from 'crypto';
 
 /**
  * Email Service using Nodemailer
@@ -33,6 +34,10 @@ function createTransporter(): Transporter {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASSWORD,
     },
+    // Add timeouts to prevent blocking when SMTP is unreachable
+    connectionTimeout: 5000, // 5 seconds to establish connection
+    greetingTimeout: 5000,   // 5 seconds for server greeting
+    socketTimeout: 10000,    // 10 seconds for socket inactivity
   };
 
   return nodemailer.createTransport(smtpConfig);
@@ -597,6 +602,232 @@ export function generateHostNotificationEmail(booking: SchedulingBookingDetails)
 </body>
 </html>
   `;
+}
+
+/**
+ * Team invite email options interface
+ */
+export interface TeamInviteEmailOptions {
+  inviteeEmail: string;
+  inviterName: string;
+  organizationName: string;
+  role: string;
+  inviteToken: string;
+}
+
+/**
+ * Generate HTML email for team member invitation
+ */
+export function generateTeamInviteEmail(options: TeamInviteEmailOptions): string {
+  const { inviteeEmail, inviterName, organizationName, role, inviteToken } = options;
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
+  const acceptUrl = `${baseUrl}/auth/accept-invite?token=${inviteToken}`;
+
+  const roleLabel = {
+    ADMIN: 'Administrator',
+    OPERATOR: 'Operator',
+    CLIENT: 'Client',
+  }[role] || role;
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>You're Invited to Join ${organizationName}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f5f5f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #0A1B2B 0%, #1a3a52 100%); padding: 40px 30px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold;">ASTRALIS</h1>
+              <p style="margin: 10px 0 0 0; color: #94a3b8; font-size: 16px;">You've been invited to join a team!</p>
+            </td>
+          </tr>
+
+          <!-- Envelope Icon -->
+          <tr>
+            <td style="padding: 40px 30px 20px; text-align: center;">
+              <div style="width: 60px; height: 60px; background-color: #2B6CB0; border-radius: 50%; margin: 0 auto; display: flex; align-items: center; justify-content: center;">
+                <span style="color: white; font-size: 28px;">&#9993;</span>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 0 30px 30px;">
+              <h2 style="margin: 0 0 20px; color: #0A1B2B; font-size: 22px; text-align: center;">Hello!</h2>
+              <p style="margin: 0 0 20px; color: #475569; font-size: 16px; line-height: 1.6; text-align: center;">
+                <strong style="color: #0A1B2B;">${inviterName}</strong> has invited you to join
+                <strong style="color: #0A1B2B;">${organizationName}</strong> on Astralis.
+              </p>
+
+              <!-- Invitation Details Card -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; border-radius: 8px; margin: 20px 0;">
+                <tr>
+                  <td style="padding: 25px;">
+                    <h3 style="margin: 0 0 15px; color: #0A1B2B; font-size: 18px;">Invitation Details</h3>
+
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding: 8px 0; color: #64748b; font-size: 14px; font-weight: 600;">Organization:</td>
+                        <td style="padding: 8px 0; color: #1e293b; font-size: 14px; text-align: right;">${organizationName}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0; color: #64748b; font-size: 14px; font-weight: 600;">Your Role:</td>
+                        <td style="padding: 8px 0; color: #1e293b; font-size: 14px; text-align: right;">${roleLabel}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0; color: #64748b; font-size: 14px; font-weight: 600;">Invited By:</td>
+                        <td style="padding: 8px 0; color: #1e293b; font-size: 14px; text-align: right;">${inviterName}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Accept Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
+                <tr>
+                  <td align="center">
+                    <a href="${acceptUrl}" style="display: inline-block; background: linear-gradient(135deg, #2B6CB0 0%, #2563eb 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: bold;">
+                      Accept Invitation
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Link fallback -->
+              <p style="margin: 20px 0; color: #64748b; font-size: 13px; text-align: center; line-height: 1.6;">
+                If the button doesn't work, copy and paste this link into your browser:<br>
+                <a href="${acceptUrl}" style="color: #2B6CB0; word-break: break-all;">${acceptUrl}</a>
+              </p>
+
+              <!-- Expiration notice -->
+              <div style="margin: 30px 0; padding: 15px; background-color: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 4px;">
+                <p style="margin: 0; color: #92400e; font-size: 14px; line-height: 1.6;">
+                  <strong>Note:</strong> This invitation will expire in 7 days. If you don't recognize this invitation or didn't expect it, you can safely ignore this email.
+                </p>
+              </div>
+
+              <p style="margin: 30px 0 0; color: #475569; font-size: 15px; line-height: 1.6;">
+                We're excited to have you join the team!
+              </p>
+              <p style="margin: 10px 0 0; color: #475569; font-size: 15px; line-height: 1.6;">
+                Best regards,<br>
+                <strong style="color: #0A1B2B;">The Astralis Team</strong>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f8fafc; padding: 30px; text-align: center; border-top: 1px solid #e2e8f0;">
+              <p style="margin: 0 0 10px; color: #64748b; font-size: 14px;">
+                <strong>ASTRALIS</strong>
+              </p>
+              <p style="margin: 0; color: #94a3b8; font-size: 12px;">
+                <a href="mailto:support@astralisone.com" style="color: #3b82f6; text-decoration: none;">support@astralisone.com</a> |
+                <a href="tel:+13412234433" style="color: #3b82f6; text-decoration: none;">+1 (341) 223-4433</a>
+              </p>
+              <p style="margin: 15px 0 0 0; color: #94a3b8; font-size: 11px;">
+                You're receiving this email because ${inviterName} invited ${inviteeEmail} to join ${organizationName}.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+}
+
+/**
+ * Generate plain text version of team invite email
+ */
+export function generateTeamInviteText(options: TeamInviteEmailOptions): string {
+  const { inviteeEmail, inviterName, organizationName, role, inviteToken } = options;
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
+  const acceptUrl = `${baseUrl}/auth/accept-invite?token=${inviteToken}`;
+
+  const roleLabel = {
+    ADMIN: 'Administrator',
+    OPERATOR: 'Operator',
+    CLIENT: 'Client',
+  }[role] || role;
+
+  return `
+ASTRALIS - You've been invited to join a team!
+
+Hello!
+
+${inviterName} has invited you to join ${organizationName} on Astralis.
+
+INVITATION DETAILS
+------------------
+Organization: ${organizationName}
+Your Role: ${roleLabel}
+Invited By: ${inviterName}
+
+ACCEPT YOUR INVITATION
+----------------------
+Click the link below or copy and paste it into your browser:
+${acceptUrl}
+
+IMPORTANT
+---------
+This invitation will expire in 7 days. If you don't recognize this invitation or didn't expect it, you can safely ignore this email.
+
+We're excited to have you join the team!
+
+Best regards,
+The Astralis Team
+
+---
+ASTRALIS
+support@astralisone.com | +1 (341) 223-4433
+
+You're receiving this email because ${inviterName} invited ${inviteeEmail} to join ${organizationName}.
+  `.trim();
+}
+
+/**
+ * Send team invitation email
+ * Returns true if sent successfully, false if failed (but logs the error)
+ */
+export async function sendTeamInviteEmail(options: TeamInviteEmailOptions): Promise<boolean> {
+  try {
+    const html = generateTeamInviteEmail(options);
+    const text = generateTeamInviteText(options);
+
+    await sendEmail({
+      to: options.inviteeEmail,
+      subject: `You've been invited to join ${options.organizationName} on Astralis`,
+      html,
+      text,
+    });
+
+    console.log(`[Email] Team invite sent successfully to ${options.inviteeEmail}`);
+    return true;
+  } catch (error) {
+    console.error(`[Email] Failed to send team invite to ${options.inviteeEmail}:`, error);
+    return false;
+  }
+}
+
+/**
+ * Generate a secure invite token
+ */
+export function generateInviteToken(): string {
+  return crypto.randomBytes(32).toString('hex');
 }
 
 export function generateInternalNotificationEmail(booking: {
