@@ -257,8 +257,348 @@ support@astralisone.com | +1 (341) 223-4433
 }
 
 /**
- * Generate HTML email for internal notification to support team
+ * Scheduling booking details interface
  */
+interface SchedulingBookingDetails {
+  eventId: string;
+  title: string;
+  startTime: Date;
+  endTime: Date;
+  timezone: string;
+  guestName: string;
+  guestEmail: string;
+  guestPhone?: string;
+  meetingType: string;
+  hostName: string;
+  hostEmail: string;
+}
+
+/**
+ * Generate HTML email for scheduling confirmation (public booking)
+ */
+export function generateSchedulingConfirmationEmail(
+  booking: SchedulingBookingDetails,
+  isHost: boolean
+): string {
+  const meetingTypeLabel = {
+    VIDEO_CALL: 'Video Call',
+    PHONE_CALL: 'Phone Call',
+    IN_PERSON: 'In-Person Meeting',
+  }[booking.meetingType] || booking.meetingType;
+
+  const dateStr = booking.startTime.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: booking.timezone,
+  });
+
+  const timeStr = booking.startTime.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: booking.timezone,
+  });
+
+  const endTimeStr = booking.endTime.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: booking.timezone,
+  });
+
+  const recipientName = isHost ? booking.hostName : booking.guestName;
+  const otherPartyName = isHost ? booking.guestName : booking.hostName;
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Booking Confirmation</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f5f5f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #0A1B2B 0%, #1a3a52 100%); padding: 40px 30px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold;">ASTRALIS</h1>
+              <p style="margin: 10px 0 0 0; color: #94a3b8; font-size: 16px;">Booking Confirmed</p>
+            </td>
+          </tr>
+
+          <!-- Success Icon -->
+          <tr>
+            <td style="padding: 40px 30px 20px; text-align: center;">
+              <div style="width: 60px; height: 60px; background-color: #22c55e; border-radius: 50%; margin: 0 auto; display: flex; align-items: center; justify-content: center;">
+                <span style="color: white; font-size: 30px;">&#10003;</span>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 0 30px 30px;">
+              <h2 style="margin: 0 0 20px; color: #0A1B2B; font-size: 22px; text-align: center;">Hi ${recipientName},</h2>
+              <p style="margin: 0 0 20px; color: #475569; font-size: 16px; line-height: 1.6;">
+                Your meeting with ${otherPartyName} has been confirmed.
+              </p>
+
+              <!-- Booking Details Card -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; border-radius: 8px; margin: 20px 0;">
+                <tr>
+                  <td style="padding: 25px;">
+                    <h3 style="margin: 0 0 15px; color: #0A1B2B; font-size: 18px;">Meeting Details</h3>
+
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding: 8px 0; color: #64748b; font-size: 14px; font-weight: 600;">Title:</td>
+                        <td style="padding: 8px 0; color: #1e293b; font-size: 14px; text-align: right;">${booking.title}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0; color: #64748b; font-size: 14px; font-weight: 600;">Date:</td>
+                        <td style="padding: 8px 0; color: #1e293b; font-size: 14px; text-align: right;">${dateStr}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0; color: #64748b; font-size: 14px; font-weight: 600;">Time:</td>
+                        <td style="padding: 8px 0; color: #1e293b; font-size: 14px; text-align: right;">${timeStr} - ${endTimeStr}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0; color: #64748b; font-size: 14px; font-weight: 600;">Timezone:</td>
+                        <td style="padding: 8px 0; color: #1e293b; font-size: 14px; text-align: right;">${booking.timezone}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0; color: #64748b; font-size: 14px; font-weight: 600;">Meeting Type:</td>
+                        <td style="padding: 8px 0; color: #1e293b; font-size: 14px; text-align: right;">${meetingTypeLabel}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 30px 0 0; color: #475569; font-size: 15px; line-height: 1.6;">
+                Best regards,<br>
+                <strong style="color: #0A1B2B;">The Astralis Team</strong>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f8fafc; padding: 30px; text-align: center; border-top: 1px solid #e2e8f0;">
+              <p style="margin: 0 0 10px; color: #64748b; font-size: 14px;">
+                <strong>ASTRALIS</strong>
+              </p>
+              <p style="margin: 0; color: #94a3b8; font-size: 12px;">
+                <a href="mailto:support@astralisone.com" style="color: #3b82f6; text-decoration: none;">support@astralisone.com</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+}
+
+/**
+ * Generate plain text email for scheduling confirmation (public booking)
+ */
+export function generateSchedulingConfirmationText(
+  booking: SchedulingBookingDetails,
+  isHost: boolean
+): string {
+  const meetingTypeLabel = {
+    VIDEO_CALL: 'Video Call',
+    PHONE_CALL: 'Phone Call',
+    IN_PERSON: 'In-Person Meeting',
+  }[booking.meetingType] || booking.meetingType;
+
+  const dateStr = booking.startTime.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: booking.timezone,
+  });
+
+  const timeStr = booking.startTime.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: booking.timezone,
+  });
+
+  const endTimeStr = booking.endTime.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: booking.timezone,
+  });
+
+  const recipientName = isHost ? booking.hostName : booking.guestName;
+  const otherPartyName = isHost ? booking.guestName : booking.hostName;
+
+  return `
+ASTRALIS - Booking Confirmed
+
+Hi ${recipientName},
+
+Your meeting with ${otherPartyName} has been confirmed.
+
+MEETING DETAILS
+----------------
+Title: ${booking.title}
+Date: ${dateStr}
+Time: ${timeStr} - ${endTimeStr}
+Timezone: ${booking.timezone}
+Meeting Type: ${meetingTypeLabel}
+
+Best regards,
+The Astralis Team
+
+---
+ASTRALIS
+support@astralisone.com
+  `.trim();
+}
+
+/**
+ * Generate HTML email for host notification (new booking received)
+ */
+export function generateHostNotificationEmail(booking: SchedulingBookingDetails): string {
+  const meetingTypeLabel = {
+    VIDEO_CALL: 'Video Call',
+    PHONE_CALL: 'Phone Call',
+    IN_PERSON: 'In-Person Meeting',
+  }[booking.meetingType] || booking.meetingType;
+
+  const dateStr = booking.startTime.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: booking.timezone,
+  });
+
+  const timeStr = booking.startTime.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: booking.timezone,
+  });
+
+  const endTimeStr = booking.endTime.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: booking.timezone,
+  });
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Booking Received</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f5f5f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 30px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: bold;">New Booking Received</h1>
+              <p style="margin: 10px 0 0 0; color: #dbeafe; font-size: 14px;">Event ID: ${booking.eventId}</p>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 30px;">
+              <h2 style="margin: 0 0 20px; color: #0A1B2B; font-size: 20px;">Guest Information</h2>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; border-radius: 8px; margin-bottom: 20px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding: 6px 0; color: #64748b; font-size: 14px; font-weight: 600; width: 40%;">Name:</td>
+                        <td style="padding: 6px 0; color: #1e293b; font-size: 14px;">${booking.guestName}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 6px 0; color: #64748b; font-size: 14px; font-weight: 600;">Email:</td>
+                        <td style="padding: 6px 0; color: #1e293b; font-size: 14px;">
+                          <a href="mailto:${booking.guestEmail}" style="color: #3b82f6; text-decoration: none;">${booking.guestEmail}</a>
+                        </td>
+                      </tr>
+                      ${booking.guestPhone ? `
+                      <tr>
+                        <td style="padding: 6px 0; color: #64748b; font-size: 14px; font-weight: 600;">Phone:</td>
+                        <td style="padding: 6px 0; color: #1e293b; font-size: 14px;">
+                          <a href="tel:${booking.guestPhone}" style="color: #3b82f6; text-decoration: none;">${booking.guestPhone}</a>
+                        </td>
+                      </tr>
+                      ` : ''}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <h2 style="margin: 30px 0 20px; color: #0A1B2B; font-size: 20px;">Meeting Details</h2>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0f9ff; border-radius: 8px; border: 2px solid #3b82f6; margin-bottom: 20px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding: 6px 0; color: #1e40af; font-size: 14px; font-weight: 600; width: 40%;">Title:</td>
+                        <td style="padding: 6px 0; color: #1e293b; font-size: 14px; font-weight: bold;">${booking.title}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 6px 0; color: #1e40af; font-size: 14px; font-weight: 600;">Date:</td>
+                        <td style="padding: 6px 0; color: #1e293b; font-size: 14px; font-weight: bold;">${dateStr}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 6px 0; color: #1e40af; font-size: 14px; font-weight: 600;">Time:</td>
+                        <td style="padding: 6px 0; color: #1e293b; font-size: 14px; font-weight: bold;">${timeStr} - ${endTimeStr}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 6px 0; color: #1e40af; font-size: 14px; font-weight: 600;">Timezone:</td>
+                        <td style="padding: 6px 0; color: #1e293b; font-size: 14px;">${booking.timezone}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 6px 0; color: #1e40af; font-size: 14px; font-weight: 600;">Meeting Type:</td>
+                        <td style="padding: 6px 0; color: #1e293b; font-size: 14px;">${meetingTypeLabel}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
+              <p style="margin: 0; color: #64748b; font-size: 12px;">
+                This is an automated notification from the Astralis booking system.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+}
+
 export function generateInternalNotificationEmail(booking: {
   bookingId: string;
   name: string;

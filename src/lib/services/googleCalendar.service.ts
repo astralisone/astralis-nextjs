@@ -133,12 +133,20 @@ export async function exchangeCodeForTokens(code: string, userId: string): Promi
       ? new Date(tokens.expiry_date)
       : new Date(Date.now() + 3600 * 1000); // Default 1 hour
 
+    // Get user's Google profile to get account ID
+    oauth2Client.setCredentials(tokens);
+    const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client });
+    const userInfo = await oauth2.userinfo.get();
+    const providerAccountId = userInfo.data.id || 'default';
+    const scope = tokens.scope || 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events';
+
     // Store or update connection
     await prisma.calendarConnection.upsert({
       where: {
-        userId_provider: {
+        userId_provider_providerAccountId: {
           userId,
           provider: 'GOOGLE',
+          providerAccountId,
         },
       },
       update: {
@@ -146,16 +154,19 @@ export async function exchangeCodeForTokens(code: string, userId: string): Promi
         refreshToken: tokens.refresh_token || undefined,
         expiresAt,
         isActive: true,
-        lastSyncedAt: new Date(),
+        lastSyncAt: new Date(),
+        scope,
       },
       create: {
         userId,
         provider: 'GOOGLE',
+        providerAccountId,
         accessToken: tokens.access_token,
         refreshToken: tokens.refresh_token || undefined,
         expiresAt,
         isActive: true,
-        lastSyncedAt: new Date(),
+        lastSyncAt: new Date(),
+        scope,
       },
     });
 
@@ -431,11 +442,14 @@ export async function syncFromGoogle(userId: string): Promise<{ synced: number; 
         const startTime = new Date(event.start.dateTime);
         const endTime = new Date(event.end.dateTime);
 
-        // Check if event already exists
+        // Check if event already exists by looking in calendarIntegrationData
         const existing = await prisma.schedulingEvent.findFirst({
           where: {
             userId,
-            googleEventId: event.id,
+            calendarIntegrationData: {
+              path: ['googleEventId'],
+              equals: event.id,
+            },
           },
         });
 
@@ -450,6 +464,11 @@ export async function syncFromGoogle(userId: string): Promise<{ synced: number; 
               startTime,
               endTime,
               status: event.status === 'cancelled' ? 'CANCELLED' : existing.status,
+              calendarIntegrationData: {
+                googleEventId: event.id,
+                provider: 'GOOGLE',
+                syncedAt: new Date().toISOString(),
+              },
             },
           });
         } else {
@@ -462,7 +481,11 @@ export async function syncFromGoogle(userId: string): Promise<{ synced: number; 
               location: event.location,
               startTime,
               endTime,
-              googleEventId: event.id,
+              calendarIntegrationData: {
+                googleEventId: event.id,
+                provider: 'GOOGLE',
+                syncedAt: new Date().toISOString(),
+              },
               status: event.status === 'cancelled' ? 'CANCELLED' : 'CONFIRMED',
             },
           });
@@ -483,7 +506,7 @@ export async function syncFromGoogle(userId: string): Promise<{ synced: number; 
         isActive: true,
       },
       data: {
-        lastSyncedAt: new Date(),
+        lastSyncAt: new Date(),
       },
     });
 
@@ -534,7 +557,7 @@ export async function disconnectCalendar(connectionId: string, userId: string): 
       where: { id: connectionId },
       data: {
         isActive: false,
-        accessToken: null,
+        accessToken: '', // Clear token (required field, can't be null)
         refreshToken: null,
       },
     });

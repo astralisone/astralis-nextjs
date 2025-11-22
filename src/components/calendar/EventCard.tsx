@@ -128,14 +128,14 @@ export function EventCard({ event, onClick }: EventCardProps) {
           {/* Status Indicator */}
           <div className="flex items-center gap-1.5 flex-shrink-0">
             <span className={`w-2 h-2 rounded-full ${statusConfig.dotColor}`} />
-            <StatusIcon className={`h-4 w-4 ${statusConfig.color}`} />
+            <StatusIcon className={`h-5 w-5 ${statusConfig.color}`} />
           </div>
         </div>
 
         {/* Time and Date */}
         <div className="space-y-1.5">
           <div className="flex items-center gap-2 text-sm">
-            <Calendar className="h-4 w-4 text-slate-400 flex-shrink-0" />
+            <Calendar className="h-5 w-5 text-slate-400 flex-shrink-0" />
             <span className="text-slate-700">
               {formatDate(startDate)}
               {isToday() && (
@@ -147,7 +147,7 @@ export function EventCard({ event, onClick }: EventCardProps) {
           </div>
 
           <div className="flex items-center gap-2 text-sm">
-            <Clock className="h-4 w-4 text-slate-400 flex-shrink-0" />
+            <Clock className="h-5 w-5 text-slate-400 flex-shrink-0" />
             <span className="text-slate-700">
               {formatTime(startDate)} - {formatTime(endDate)}
             </span>
@@ -157,7 +157,7 @@ export function EventCard({ event, onClick }: EventCardProps) {
         {/* Location */}
         {event.location && (
           <div className="flex items-center gap-2 text-sm">
-            <MapPin className="h-4 w-4 text-slate-400 flex-shrink-0" />
+            <MapPin className="h-5 w-5 text-slate-400 flex-shrink-0" />
             <span className="text-slate-700 truncate">{event.location}</span>
           </div>
         )}
@@ -167,7 +167,7 @@ export function EventCard({ event, onClick }: EventCardProps) {
           {/* Participants */}
           {event.participants && event.participants.length > 0 && (
             <div className="flex items-center gap-1.5">
-              <Users className="h-3.5 w-3.5 text-slate-400" />
+              <Users className="h-5 w-5 text-slate-400" />
               <span className="text-xs text-slate-600">
                 {event.participants.length} participant
                 {event.participants.length !== 1 ? "s" : ""}
@@ -180,7 +180,7 @@ export function EventCard({ event, onClick }: EventCardProps) {
             {/* Meeting Link */}
             {event.meetingLink && (
               <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 rounded text-xs text-blue-700">
-                <Video className="h-3 w-3" />
+                <Video className="h-5 w-5" />
                 <span className="hidden sm:inline">Video call</span>
               </div>
             )}
@@ -188,10 +188,10 @@ export function EventCard({ event, onClick }: EventCardProps) {
             {/* Conflict Badge */}
             {hasConflicts && (
               <div className="flex items-center gap-1 px-2 py-1 bg-red-50 rounded text-xs text-red-700">
-                <AlertCircle className="h-3 w-3" />
+                <AlertCircle className="h-5 w-5" />
                 <span className="hidden sm:inline">
-                  {event.conflicts.length} conflict
-                  {event.conflicts.length !== 1 ? "s" : ""}
+                  {event.conflicts?.length ?? 0} conflict
+                  {(event.conflicts?.length ?? 0) !== 1 ? "s" : ""}
                 </span>
               </div>
             )}

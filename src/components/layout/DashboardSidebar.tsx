@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { signOut } from 'next-auth/react';
 import { useDashboardStore } from '@/stores/dashboardStore';
 import {
   LayoutDashboard,
@@ -13,9 +14,21 @@ import {
   ChevronLeft,
   ChevronRight,
   Zap,
+  Bell,
+  LogOut,
+  User,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { OrgSwitcher } from './OrgSwitcher';
+import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface DashboardSidebarProps {
   user: {
@@ -48,7 +61,7 @@ const navigation = [
  * - Navigation menu with active state
  * - Collapsible on desktop
  * - Mobile drawer support
- * - User profile section
+ * - Notifications and user profile section
  */
 export function DashboardSidebar({ user, isMobile = false, onClose }: DashboardSidebarProps) {
   const pathname = usePathname();
@@ -60,6 +73,10 @@ export function DashboardSidebar({ user, isMobile = false, onClose }: DashboardS
     }
   };
 
+  const handleSignOut = async () => {
+    await signOut({ callbackUrl: '/auth/signin' });
+  };
+
   return (
     <div
       className={cn(
@@ -69,7 +86,10 @@ export function DashboardSidebar({ user, isMobile = false, onClose }: DashboardS
       )}
     >
       {/* Logo & Toggle */}
-      <div className="h-16 flex items-center justify-between px-4 border-b border-white/10">
+      <div className={cn(
+        "flex items-center py-3 border-b border-white/10",
+        sidebarCollapsed && !isMobile ? "justify-center px-2" : "justify-between pl-6 pr-4"
+      )}>
         {(!sidebarCollapsed || isMobile) && (
           <Link href="/dashboard" className="flex items-center gap-2">
             <span className="text-xl font-bold">AstralisOps</span>
@@ -122,24 +142,115 @@ export function DashboardSidebar({ user, isMobile = false, onClose }: DashboardS
         })}
       </nav>
 
-      {/* User Profile */}
-      <div className="p-4 border-t border-white/10">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-astralis-blue flex items-center justify-center flex-shrink-0">
-            {user.image ? (
-              <img src={user.image} alt={user.name || ''} className="w-full h-full rounded-full object-cover" />
-            ) : (
-              <span className="text-lg font-semibold">
-                {user.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || 'U'}
-              </span>
-            )}
-          </div>
-          {(!sidebarCollapsed || isMobile) && (
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{user.name || 'User'}</p>
-              <p className="text-xs text-slate-400 truncate">{user.email}</p>
-            </div>
-          )}
+      {/* Bottom Section: Notifications & User Profile */}
+      <div className="border-t border-white/10">
+        {/* Notifications */}
+        <div className={cn(
+          "px-3 py-3 border-b border-white/10",
+          sidebarCollapsed && !isMobile && "flex justify-center"
+        )}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-slate-300 hover:bg-white/10 hover:text-white relative",
+                  sidebarCollapsed && !isMobile ? "justify-center" : "w-full"
+                )}
+                aria-label="Notifications"
+              >
+                <Bell className="w-5 h-5 flex-shrink-0" />
+                {(!sidebarCollapsed || isMobile) && <span className="font-medium">Notifications</span>}
+                <Badge
+                  variant="error"
+                  className="absolute top-1 left-7 h-4 w-4 flex items-center justify-center p-0 text-[10px]"
+                >
+                  3
+                </Badge>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" side="right" className="w-80">
+              <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <div className="flex flex-col gap-1">
+                  <p className="text-sm font-medium">New pipeline created</p>
+                  <p className="text-xs text-slate-500">2 minutes ago</p>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <div className="flex flex-col gap-1">
+                  <p className="text-sm font-medium">Document processed</p>
+                  <p className="text-xs text-slate-500">1 hour ago</p>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <div className="flex flex-col gap-1">
+                  <p className="text-sm font-medium">Meeting scheduled</p>
+                  <p className="text-xs text-slate-500">3 hours ago</p>
+                </div>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* User Profile with Dropdown */}
+        <div className={cn(
+          "p-4",
+          sidebarCollapsed && !isMobile && "flex justify-center"
+        )}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className={cn(
+                  "flex items-center gap-3 rounded-lg transition-colors hover:bg-white/10 p-2 -m-2",
+                  sidebarCollapsed && !isMobile ? "justify-center" : "w-full"
+                )}
+                aria-label="User menu"
+              >
+                <div className="w-10 h-10 rounded-full bg-astralis-blue flex items-center justify-center flex-shrink-0">
+                  {user.image ? (
+                    <img src={user.image} alt={user.name || ''} className="w-full h-full rounded-full object-cover" />
+                  ) : (
+                    <span className="text-lg font-semibold">
+                      {user.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || 'U'}
+                    </span>
+                  )}
+                </div>
+                {(!sidebarCollapsed || isMobile) && (
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-sm font-medium truncate">{user.name || 'User'}</p>
+                    <p className="text-xs text-slate-400 truncate">{user.email}</p>
+                  </div>
+                )}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" side="right" className="w-56">
+              <DropdownMenuLabel>
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium">{user.name || 'User'}</p>
+                  <p className="text-xs text-slate-500">{user.email}</p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href="/settings/profile">
+                  <User className="w-5 h-5 mr-2" />
+                  Profile
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/settings">
+                  <Settings className="w-5 h-5 mr-2" />
+                  Settings
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleSignOut}>
+                <LogOut className="w-5 h-5 mr-2" />
+                Sign Out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </div>

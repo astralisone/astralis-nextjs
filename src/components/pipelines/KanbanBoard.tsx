@@ -14,19 +14,26 @@ import {
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { KanbanColumn } from './KanbanColumn';
-import { PipelineCard } from './PipelineCard';
+import { UnifiedKanbanCard } from './UnifiedKanbanCard';
 import { useMovePipelineItem } from '@/hooks/usePipelines';
-import { PipelineStage, PipelineItem } from '@/types/pipelines';
+import { PipelineStage, PipelineItem, PipelineItemStatus } from '@/types/pipelines';
 
 interface KanbanBoardProps {
   pipelineId: string;
   stages: PipelineStage[];
   onItemClick?: (item: PipelineItem) => void;
+  onRefetch?: () => void;
 }
 
-export function KanbanBoard({ pipelineId, stages, onItemClick }: KanbanBoardProps) {
+export function KanbanBoard({ pipelineId, stages, onItemClick, onRefetch }: KanbanBoardProps) {
   const [activeItem, setActiveItem] = useState<PipelineItem | null>(null);
   const moveItem = useMovePipelineItem();
+
+  // Handler for when item status changes (close/complete)
+  const handleStatusChange = (itemId: string, newStatus: PipelineItemStatus) => {
+    // Trigger refetch to update the board
+    onRefetch?.();
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -94,7 +101,9 @@ export function KanbanBoard({ pipelineId, stages, onItemClick }: KanbanBoardProp
             key={stage.id}
             stage={stage}
             items={stage.items}
+            pipelineId={pipelineId}
             onItemClick={onItemClick}
+            onStatusChange={handleStatusChange}
           />
         ))}
       </div>
@@ -102,7 +111,7 @@ export function KanbanBoard({ pipelineId, stages, onItemClick }: KanbanBoardProp
       <DragOverlay>
         {activeItem ? (
           <div className="rotate-3 scale-105">
-            <PipelineCard item={activeItem} isDragging />
+            <UnifiedKanbanCard item={activeItem} isDragging />
           </div>
         ) : null}
       </DragOverlay>

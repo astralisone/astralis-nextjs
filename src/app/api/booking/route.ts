@@ -7,6 +7,7 @@ import {
   generateCustomerConfirmationText,
   generateInternalNotificationEmail,
 } from "@/lib/email";
+import { prisma } from "@/lib/prisma";
 
 const bookingSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -29,7 +30,10 @@ const bookingSchema = z.object({
  * 3. Creates an ICS calendar file
  * 4. Sends confirmation email to customer (with calendar attachment)
  * 5. Sends notification email to support team (with calendar attachment)
- * 6. Logs the booking for tracking
+ * 6. Creates an IntakeRequest record for the intake pipeline system
+ * 7. Logs the booking for tracking
+ *
+ * Note: Requires DEFAULT_ORG_ID environment variable for intake request creation
  */
 export async function POST(req: NextRequest) {
   try {
@@ -121,27 +125,60 @@ export async function POST(req: NextRequest) {
       // Continue processing even if email fails
     }
 
-    // TODO: Store in database for persistence
-    // await prisma.booking.create({
-    //   data: {
-    //     bookingId,
-    //     name,
-    //     email,
-    //     phone,
-    //     company,
-    //     date,
-    //     time,
-    //     meetingType,
-    //     message,
-    //     status: 'CONFIRMED',
-    //     createdAt: new Date(),
-    //   },
-    // });
+    // Create intake request for the booking to appear in the intake pipeline
+    const DEFAULT_ORG_ID = process.env.DEFAULT_ORG_ID;
+    let intakeRequestId: string | null = null;
+
+    if (DEFAULT_ORG_ID) {
+      try {
+        // Verify organization exists before creating intake request
+        const org = await prisma.organization.findUnique({
+          where: { id: DEFAULT_ORG_ID },
+        });
+
+        if (org) {
+          const intakeRequest = await prisma.intakeRequest.create({
+            data: {
+              source: "FORM",
+              status: "NEW",
+              title: `Consultation Request: ${name}`,
+              description: message || `${meetingType} consultation requested for ${date} at ${time}`,
+              requestData: {
+                bookingId,
+                name,
+                email,
+                phone,
+                company: company || null,
+                date,
+                time,
+                meetingType,
+                message: message || null,
+                formType: "booking",
+                submittedAt: new Date().toISOString(),
+              },
+              priority: 2, // Medium priority
+              orgId: DEFAULT_ORG_ID,
+            },
+          });
+
+          intakeRequestId = intakeRequest.id;
+          console.log(`[Booking] Intake request created: ${intakeRequest.id} for booking ${bookingId}`);
+        } else {
+          console.error(`[Booking] Organization not found: ${DEFAULT_ORG_ID}`);
+        }
+      } catch (intakeError) {
+        // Log error but don't fail the booking - email/calendar is more important
+        console.error("[Booking] Failed to create intake request:", intakeError);
+      }
+    } else {
+      console.warn("[Booking] DEFAULT_ORG_ID not configured, skipping intake request creation");
+    }
 
     return NextResponse.json(
       {
         success: true,
         bookingId,
+        intakeRequestId,
         message: "Booking confirmed! Check your email for details and calendar invite.",
       },
       { status: 200 }
