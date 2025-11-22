@@ -223,21 +223,18 @@ export default function IntegrationsPage() {
             <div className="flex gap-2">
               <Button
                 variant={filter === 'all' ? 'primary' : 'outline'}
-                size="sm"
                 onClick={() => setFilter('all')}
               >
                 All ({integrations.length})
               </Button>
               <Button
                 variant={filter === 'connected' ? 'primary' : 'outline'}
-                size="sm"
                 onClick={() => setFilter('connected')}
               >
                 Connected ({connectedCount})
               </Button>
               <Button
                 variant={filter === 'available' ? 'primary' : 'outline'}
-                size="sm"
                 onClick={() => setFilter('available')}
               >
                 Available ({integrations.length - connectedCount})

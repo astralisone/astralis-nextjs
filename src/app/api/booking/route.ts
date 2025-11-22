@@ -8,6 +8,44 @@ import {
   generateInternalNotificationEmail,
 } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
+import { detectConflicts } from "@/lib/services/conflict.service";
+
+/**
+ * Parse time string (e.g., "09:00 AM", "02:30 PM") to 24-hour format hours and minutes
+ */
+function parseTimeString(timeStr: string): { hours: number; minutes: number } {
+  const match = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!match) {
+    throw new Error(`Invalid time format: ${timeStr}`);
+  }
+
+  let hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10);
+  const period = match[3].toUpperCase();
+
+  if (period === "PM" && hours !== 12) {
+    hours += 12;
+  } else if (period === "AM" && hours === 12) {
+    hours = 0;
+  }
+
+  return { hours, minutes };
+}
+
+/**
+ * Convert date string (YYYY-MM-DD) and time string ("HH:MM AM/PM") to Date objects
+ * Returns startTime and endTime (1 hour duration for consultations)
+ */
+function createDateTimeRange(dateStr: string, timeStr: string): { startTime: Date; endTime: Date } {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const { hours, minutes } = parseTimeString(timeStr);
+
+  const startTime = new Date(year, month - 1, day, hours, minutes, 0, 0);
+  const endTime = new Date(startTime);
+  endTime.setHours(endTime.getHours() + 1); // Default 1-hour consultation
+
+  return { startTime, endTime };
+}
 
 const bookingSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -22,18 +60,23 @@ const bookingSchema = z.object({
 
 /**
  * POST /api/booking
- * Handle consultation booking submissions
+ * Handle consultation booking submissions with conflict detection
  *
  * This endpoint:
  * 1. Validates booking data
- * 2. Generates a unique booking ID
- * 3. Creates an ICS calendar file
- * 4. Sends confirmation email to customer (with calendar attachment)
- * 5. Sends notification email to support team (with calendar attachment)
- * 6. Creates an IntakeRequest record for the intake pipeline system
- * 7. Logs the booking for tracking
+ * 2. Checks for scheduling conflicts (if DEFAULT_USER_ID is configured)
+ * 3. Creates a SchedulingEvent record for calendar management
+ * 4. Generates a unique booking ID
+ * 5. Creates an ICS calendar file
+ * 6. Sends confirmation email to customer (with calendar attachment)
+ * 7. Sends notification email to support team (with calendar attachment)
+ * 8. Creates an IntakeRequest record for the intake pipeline system
+ * 9. Logs the booking for tracking
  *
  * Note: Requires DEFAULT_ORG_ID environment variable for intake request creation
+ * Note: Requires DEFAULT_USER_ID environment variable for conflict detection and SchedulingEvent creation
+ *
+ * Returns 409 Conflict if the requested time slot has scheduling conflicts
  */
 export async function POST(req: NextRequest) {
   try {
@@ -51,6 +94,148 @@ export async function POST(req: NextRequest) {
     }
 
     const { name, email, phone, company, date, time, meetingType, message } = parsed.data;
+
+    // Parse date and time to create proper Date objects
+    const { startTime, endTime } = createDateTimeRange(date, time);
+
+    // Get default user ID for conflict detection and event creation
+    const DEFAULT_USER_ID = process.env.DEFAULT_USER_ID;
+    let schedulingEventId: string | null = null;
+
+    // Step 1: Check for scheduling conflicts (if DEFAULT_USER_ID is configured)
+    if (DEFAULT_USER_ID) {
+      // Verify user exists before checking conflicts
+      const user = await prisma.users.findUnique({
+        where: { id: DEFAULT_USER_ID },
+        select: { id: true, name: true, email: true, isActive: true },
+      });
+
+      if (!user) {
+        console.error(`[Booking] Default user not found: ${DEFAULT_USER_ID}`);
+        return NextResponse.json(
+          { error: "Booking system configuration error", details: "Default host user not found" },
+          { status: 500 }
+        );
+      }
+
+      if (!user.isActive) {
+        console.error(`[Booking] Default user is inactive: ${DEFAULT_USER_ID}`);
+        return NextResponse.json(
+          { error: "Booking system unavailable", details: "The booking host is not accepting bookings" },
+          { status: 503 }
+        );
+      }
+
+      // Check for conflicts using the conflict detection service
+      const conflictResult = await detectConflicts(DEFAULT_USER_ID, startTime, endTime);
+
+      if (conflictResult.hasConflict) {
+        const conflictDetails = conflictResult.conflicts.map((c) => ({
+          eventId: c.eventId,
+          eventTitle: c.eventTitle,
+          startTime: c.startTime.toISOString(),
+          endTime: c.endTime.toISOString(),
+          conflictType: c.conflictType,
+        }));
+
+        const availabilityIssueDetails = conflictResult.availabilityIssues.map((a) => ({
+          message: a.message,
+          affectedTime: a.affectedTime,
+        }));
+
+        console.log(`[Booking] Conflict detected for ${date} at ${time}:`, {
+          severity: conflictResult.severity,
+          conflicts: conflictDetails,
+          availabilityIssues: availabilityIssueDetails,
+        });
+
+        return NextResponse.json(
+          {
+            error: "Scheduling conflict detected",
+            severity: conflictResult.severity,
+            conflicts: conflictDetails,
+            availabilityIssues: availabilityIssueDetails,
+            message:
+              conflictResult.severity === "high"
+                ? "The requested time slot is not available. Please choose a different time."
+                : "There are potential conflicts with this time slot. Please choose a different time.",
+          },
+          { status: 409 }
+        );
+      }
+
+      // Step 2: Create SchedulingEvent record
+      try {
+        const schedulingEvent = await prisma.schedulingEvent.create({
+          data: {
+            userId: DEFAULT_USER_ID,
+            title: `Consultation: ${name}${company ? ` (${company})` : ""}`,
+            description: message || `${meetingType} consultation requested`,
+            startTime,
+            endTime,
+            timezone: "America/New_York", // Default timezone for consultations
+            participantEmails: [email],
+            status: "SCHEDULED",
+            aiSuggestionMeta: {
+              guestName: name,
+              guestEmail: email,
+              guestPhone: phone,
+              company: company || null,
+              meetingType,
+              bookedAt: new Date().toISOString(),
+              source: "booking_modal",
+            },
+          },
+        });
+
+        schedulingEventId = schedulingEvent.id;
+        console.log(`[Booking] SchedulingEvent created: ${schedulingEvent.id}`);
+
+        // Create EventReminder entries (24h and 1h before)
+        const now = new Date();
+        const reminders = [];
+
+        const reminder24h = new Date(startTime);
+        reminder24h.setHours(reminder24h.getHours() - 24);
+
+        const reminder1h = new Date(startTime);
+        reminder1h.setHours(reminder1h.getHours() - 1);
+
+        if (reminder24h > now) {
+          reminders.push(
+            prisma.eventReminder.create({
+              data: {
+                eventId: schedulingEvent.id,
+                reminderTime: reminder24h,
+                status: "PENDING",
+              },
+            })
+          );
+        }
+
+        if (reminder1h > now) {
+          reminders.push(
+            prisma.eventReminder.create({
+              data: {
+                eventId: schedulingEvent.id,
+                reminderTime: reminder1h,
+                status: "PENDING",
+              },
+            })
+          );
+        }
+
+        if (reminders.length > 0) {
+          await Promise.all(reminders);
+          console.log(`[Booking] Created ${reminders.length} reminders for event ${schedulingEvent.id}`);
+        }
+      } catch (eventError) {
+        console.error("[Booking] Failed to create SchedulingEvent:", eventError);
+        // Continue without SchedulingEvent - the booking can still proceed via intake
+      }
+    } else {
+      console.warn("[Booking] DEFAULT_USER_ID not configured, skipping conflict detection and event creation");
+    }
 
     // Generate a unique booking ID
     const bookingId = `BK-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
@@ -70,6 +255,7 @@ export async function POST(req: NextRequest) {
     // Log the booking
     console.log("New booking received:", {
       ...bookingData,
+      schedulingEventId,
       timestamp: new Date().toISOString(),
     });
 
@@ -178,6 +364,7 @@ export async function POST(req: NextRequest) {
       {
         success: true,
         bookingId,
+        schedulingEventId,
         intakeRequestId,
         message: "Booking confirmed! Check your email for details and calendar invite.",
       },

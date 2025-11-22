@@ -53,11 +53,10 @@ export default function PipelinesPage() {
           </div>
           <Button
             variant="primary"
-            size="sm"
-            className="gap-1.5 text-sm"
+            className="gap-2"
             onClick={() => setIsCreateModalOpen(true)}
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-5 h-5" />
             New Pipeline
           </Button>
         </div>

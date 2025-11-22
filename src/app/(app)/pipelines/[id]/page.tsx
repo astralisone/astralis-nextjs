@@ -110,8 +110,8 @@ export default function PipelinePage({ params }: { params: Promise<{ id: string 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href="/pipelines">
-            <Button variant="ghost" size="sm" className="gap-2">
-              <ArrowLeft className="w-4 h-4" />
+            <Button variant="ghost" className="gap-2">
+              <ArrowLeft className="w-5 h-5" />
               Back
             </Button>
           </Link>
@@ -150,8 +150,8 @@ export default function PipelinePage({ params }: { params: Promise<{ id: string 
 
         <Sheet open={isStageManagerOpen} onOpenChange={setIsStageManagerOpen}>
           <SheetTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-1.5 text-sm">
-              <Settings className="w-4 h-4" />
+            <Button variant="outline" className="gap-2">
+              <Settings className="w-5 h-5" />
               Manage Stages
             </Button>
           </SheetTrigger>

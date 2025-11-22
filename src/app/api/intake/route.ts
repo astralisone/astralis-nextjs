@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { IntakeSource, IntakeStatus } from "@prisma/client";
+import { quotaTrackingService, QuotaExceededError } from "@/lib/services/quotaTracking.service";
+import { AIRoutingService } from "@/lib/services/aiRouting.service";
 
 const intakeRequestSchema = z.object({
   source: z.enum(["FORM", "EMAIL", "CHAT", "API"]),
@@ -22,14 +24,22 @@ const intakeFiltersSchema = z.object({
 });
 
 /**
+ * Check if OpenAI API key is configured
+ */
+function isOpenAIConfigured(): boolean {
+  return Boolean(process.env.OPENAI_API_KEY);
+}
+
+/**
  * POST /api/intake
  * Capture intake request and route using AI logic
  *
  * This endpoint:
  * 1. Validates and stores the intake request
- * 2. Applies AI routing logic (placeholder for now)
- * 3. Assigns to appropriate pipeline
- * 4. Returns routing result
+ * 2. Checks quota limits before processing
+ * 3. Applies AI routing logic (uses AIRoutingService if OpenAI configured, fallback otherwise)
+ * 4. Assigns to appropriate pipeline
+ * 5. Returns routing result
  */
 export async function POST(req: NextRequest) {
   try {
@@ -57,77 +67,208 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // AI Routing Logic Placeholder
-    // TODO: Implement actual AI routing based on:
-    // - Request content analysis
-    // - Historical patterns
-    // - Available pipelines
-    // - Current workload
-    const aiRoutingResult = await performAIRouting({
-      title,
-      description,
-      requestData,
-      orgId,
-    });
+    // Check quota before creating intake request
+    try {
+      await quotaTrackingService.enforceIntakeQuota(orgId);
+    } catch (quotaError) {
+      if (quotaError instanceof QuotaExceededError) {
+        console.error(`[Intake API] Quota exceeded for org ${orgId}:`, quotaError.message);
+        return NextResponse.json(
+          {
+            error: "Quota exceeded",
+            details: {
+              quotaType: quotaError.quotaType,
+              used: quotaError.used,
+              limit: quotaError.limit,
+              plan: quotaError.plan,
+              message: `Monthly intake request quota exceeded (${quotaError.used}/${quotaError.limit}). Please upgrade your plan to continue.`,
+            },
+          },
+          { status: 429 },
+        );
+      }
+      throw quotaError;
+    }
 
-    // Create intake request with routing metadata
-    const intakeRequest = await prisma.intakeRequest.create({
-      data: {
-        source: source as IntakeSource,
-        status: aiRoutingResult.assignedPipeline ? IntakeStatus.ASSIGNED : IntakeStatus.NEW,
-        title,
-        description,
-        requestData,
-        priority: priority || 0,
-        orgId,
-        assignedPipeline: aiRoutingResult.assignedPipeline,
-        aiRoutingMeta: {
-          confidence: aiRoutingResult.confidence,
-          reasoning: aiRoutingResult.reasoning,
-          suggestedPipelines: aiRoutingResult.suggestedPipelines,
-          routedAt: new Date().toISOString(),
-        },
-      },
-      include: {
-        pipeline: true,
-      },
-    });
+    // Use AI routing if OpenAI is configured, otherwise use fallback
+    const useAIRouting = isOpenAIConfigured();
+    let aiRoutingResult: {
+      assignedPipeline: string | null;
+      confidence: number;
+      reasoning: string;
+      suggestedPipelines: string[];
+      usedAIRouting: boolean;
+    };
 
-    return NextResponse.json(
-      {
-        intakeRequest,
-        routing: {
-          assigned: !!aiRoutingResult.assignedPipeline,
-          confidence: aiRoutingResult.confidence,
-          reasoning: aiRoutingResult.reasoning,
+    if (useAIRouting) {
+      console.log(`[Intake API] Using AIRoutingService for intake request (org: ${orgId})`);
+
+      // First create the intake request with NEW status
+      const intakeRequest = await prisma.intakeRequest.create({
+        data: {
+          source: source as IntakeSource,
+          status: IntakeStatus.NEW,
+          title,
+          description,
+          requestData,
+          priority: priority || 0,
+          orgId,
+          aiRoutingMeta: {
+            routingMethod: "ai",
+            routedAt: new Date().toISOString(),
+            pending: true,
+          },
         },
-      },
-      { status: 201 },
-    );
+        include: {
+          pipeline: true,
+        },
+      });
+
+      // Process with AIRoutingService (updates the intake request directly)
+      try {
+        const aiService = new AIRoutingService();
+        await aiService.processIntakeRequest(intakeRequest.id);
+
+        // Fetch updated intake request after AI processing
+        const updatedIntake = await prisma.intakeRequest.findUnique({
+          where: { id: intakeRequest.id },
+          include: { pipeline: true },
+        });
+
+        if (!updatedIntake) {
+          throw new Error("Intake request not found after AI processing");
+        }
+
+        const routingMeta = updatedIntake.aiRoutingMeta as Record<string, unknown> | null;
+
+        return NextResponse.json(
+          {
+            intakeRequest: updatedIntake,
+            routing: {
+              assigned: Boolean(updatedIntake.assignedPipeline),
+              confidence: (routingMeta?.confidence as number) ?? 0,
+              reasoning: (routingMeta?.reasoning as string) ?? "AI routing completed",
+              usedAIRouting: true,
+            },
+          },
+          { status: 201 },
+        );
+      } catch (aiError) {
+        // If AI routing fails, the intake request still exists with NEW status
+        console.error("[Intake API] AI routing failed, intake created with NEW status:", aiError);
+
+        // Update routing meta to indicate AI failure
+        await prisma.intakeRequest.update({
+          where: { id: intakeRequest.id },
+          data: {
+            aiRoutingMeta: {
+              routingMethod: "ai_failed",
+              error: aiError instanceof Error ? aiError.message : "Unknown error",
+              routedAt: new Date().toISOString(),
+              fallbackRequired: true,
+            },
+          },
+        });
+
+        const finalIntake = await prisma.intakeRequest.findUnique({
+          where: { id: intakeRequest.id },
+          include: { pipeline: true },
+        });
+
+        return NextResponse.json(
+          {
+            intakeRequest: finalIntake,
+            routing: {
+              assigned: false,
+              confidence: 0,
+              reasoning: "AI routing failed - manual routing required",
+              usedAIRouting: false,
+              error: aiError instanceof Error ? aiError.message : "Unknown error",
+            },
+          },
+          { status: 201 },
+        );
+      }
+    } else {
+      // Fallback to basic keyword routing (no OpenAI key configured)
+      console.log(`[Intake API] Using fallback routing for intake request (org: ${orgId}) - OpenAI not configured`);
+
+      aiRoutingResult = {
+        ...(await performFallbackRouting({
+          title,
+          description,
+          requestData,
+          orgId,
+        })),
+        usedAIRouting: false,
+      };
+
+      // Create intake request with fallback routing metadata
+      const intakeRequest = await prisma.intakeRequest.create({
+        data: {
+          source: source as IntakeSource,
+          status: aiRoutingResult.assignedPipeline ? IntakeStatus.ASSIGNED : IntakeStatus.NEW,
+          title,
+          description,
+          requestData,
+          priority: priority || 0,
+          orgId,
+          assignedPipeline: aiRoutingResult.assignedPipeline,
+          aiRoutingMeta: {
+            confidence: aiRoutingResult.confidence,
+            reasoning: aiRoutingResult.reasoning,
+            suggestedPipelines: aiRoutingResult.suggestedPipelines,
+            routingMethod: "fallback_keyword",
+            routedAt: new Date().toISOString(),
+          },
+        },
+        include: {
+          pipeline: true,
+        },
+      });
+
+      return NextResponse.json(
+        {
+          intakeRequest,
+          routing: {
+            assigned: Boolean(aiRoutingResult.assignedPipeline),
+            confidence: aiRoutingResult.confidence,
+            reasoning: aiRoutingResult.reasoning,
+            usedAIRouting: false,
+          },
+        },
+        { status: 201 },
+      );
+    }
   } catch (error) {
     console.error("Error processing intake request:", error);
     return NextResponse.json(
-      { error: "Failed to process intake request" },
+      {
+        error: "Failed to process intake request",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
       { status: 500 },
     );
   }
 }
 
 /**
- * AI Routing Logic Placeholder
+ * Fallback Routing Logic (Keyword-based)
  *
- * In production, this would:
- * - Analyze request content using NLP/LLM
- * - Match against pipeline definitions
- * - Consider current workload and capacity
- * - Apply business rules and priorities
+ * Used when OpenAI API key is not configured.
+ * Provides basic keyword-based routing as a fallback.
  *
- * For now, returns a basic routing decision
+ * Features:
+ * - Basic keyword pattern matching
+ * - Pipeline name matching
+ * - Priority keywords detection (urgent, emergency)
+ *
+ * For production AI routing, see AIRoutingService.
  */
-async function performAIRouting(params: {
+async function performFallbackRouting(params: {
   title: string;
   description?: string;
-  requestData: any;
+  requestData: unknown;
   orgId: string;
 }): Promise<{
   assignedPipeline: string | null;
@@ -150,13 +291,13 @@ async function performAIRouting(params: {
     };
   }
 
-  // Basic keyword-based routing (placeholder for AI logic)
+  // Basic keyword-based routing (fallback when OpenAI not configured)
   const content = `${params.title} ${params.description || ""}`.toLowerCase();
 
-  // Simple pattern matching (to be replaced with actual AI)
+  // Simple pattern matching (fallback - use AIRoutingService for production AI routing)
   let selectedPipeline = null;
-  let confidence = 0.3; // Low confidence for basic routing
-  let reasoning = "Default routing to first available pipeline";
+  let confidence = 0.3; // Low confidence for keyword-based routing
+  let reasoning = "Fallback routing to first available pipeline (AI routing not configured)";
 
   // Example routing patterns
   if (content.includes("urgent") || content.includes("emergency")) {

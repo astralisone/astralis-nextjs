@@ -5,6 +5,10 @@ import { orgSettingsService, isOrgAdmin, isOrgMember } from '@/lib/services/orgS
 // Validation schema for updating organization settings
 const updateOrgSettingsSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100).optional(),
+  slug: z.string().min(2, 'Slug must be at least 2 characters').max(50)
+    .regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and hyphens')
+    .optional(),
+  website: z.string().url('Invalid website URL').max(255).optional().or(z.literal('')),
 });
 
 // Header names for user authentication (in production, use proper auth middleware)

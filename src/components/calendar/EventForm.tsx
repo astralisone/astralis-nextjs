@@ -503,7 +503,7 @@ export function EventForm({ event, onSubmit, onCancel, mode }: EventFormProps) {
         >
           {isSubmitting ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              <Loader2 className="h-5 w-5 animate-spin mr-2" />
               {mode === "create" ? "Creating..." : "Updating..."}
             </>
           ) : mode === "create" ? (
