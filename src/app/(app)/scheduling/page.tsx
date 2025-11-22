@@ -201,25 +201,23 @@ export default function SchedulingPage() {
           <div className="flex gap-2">
             <Button
               variant="outline"
-              size="sm"
-              className="gap-1.5 text-sm"
+              className="gap-2"
               onClick={fetchEvents}
               disabled={loading}
             >
-              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
-            <Button variant="primary" size="sm" className="gap-1.5 text-sm" onClick={() => setShowCreateSheet(true)}>
-              <Plus className="h-4 w-4" />
+            <Button variant="primary" className="gap-2" onClick={() => setShowCreateSheet(true)}>
+              <Plus className="h-5 w-5" />
               Create Event
             </Button>
             <Button
               variant={showChatPanel ? 'primary' : 'outline'}
-              size="sm"
-              className="gap-1.5 text-sm"
+              className="gap-2"
               onClick={() => setShowChatPanel(!showChatPanel)}
             >
-              <MessageSquare className="h-4 w-4" />
+              <MessageSquare className="h-5 w-5" />
               {showChatPanel ? 'Hide Chat' : 'Chat Assistant'}
             </Button>
           </div>

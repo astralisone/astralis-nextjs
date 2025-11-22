@@ -1,7 +1,20 @@
 'use client';
 
-import { useState } from 'react';
-import { Search, Filter, Upload as UploadIcon, MessageSquare } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { format } from 'date-fns';
+import {
+  Search,
+  Filter,
+  Upload as UploadIcon,
+  MessageSquare,
+  ChevronUp,
+  ChevronDown,
+  Eye,
+  Download,
+  Trash2,
+  LayoutGrid,
+  LayoutList,
+} from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useDocuments, useDocumentStats } from '@/hooks/useDocuments';
 import { DocumentUploader } from '@/components/documents/DocumentUploader';
@@ -23,6 +36,47 @@ import {
 } from '@/components/ui/sheet';
 import { Document, DocumentStatus } from '@/types/documents';
 
+type SortColumn = 'name' | 'type' | 'size' | 'status' | 'createdAt';
+type SortDirection = 'asc' | 'desc';
+type ViewMode = 'grid' | 'table';
+
+const statusVariants: Record<DocumentStatus, 'default' | 'warning' | 'success' | 'error'> = {
+  PENDING: 'default',
+  PROCESSING: 'warning',
+  COMPLETED: 'success',
+  FAILED: 'error',
+};
+
+/**
+ * Format file size to human-readable string
+ */
+function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+/**
+ * Get file type label from mime type
+ */
+function getFileTypeLabel(mimeType: string): string {
+  if (mimeType.startsWith('image/')) {
+    return mimeType.replace('image/', '').toUpperCase();
+  }
+  if (mimeType === 'application/pdf') {
+    return 'PDF';
+  }
+  if (mimeType.includes('word')) {
+    return 'DOC';
+  }
+  if (mimeType.includes('spreadsheet') || mimeType.includes('excel')) {
+    return 'XLS';
+  }
+  return mimeType.split('/').pop()?.toUpperCase() || 'FILE';
+}
+
 /**
  * Document Queue Page
  * Displays all documents with filtering, search, and upload functionality
@@ -41,6 +95,9 @@ export default function DocumentsPage() {
   const [statusFilter, setStatusFilter] = useState<DocumentStatus | undefined>();
   const [mimeTypeFilter, setMimeTypeFilter] = useState<string | undefined>();
   const [currentPage, setCurrentPage] = useState(1);
+  const [viewMode, setViewMode] = useState<ViewMode>('table');
+  const [sortColumn, setSortColumn] = useState<SortColumn>('createdAt');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   const itemsPerPage = 12;
 
@@ -62,6 +119,80 @@ export default function DocumentsPage() {
   const documents = documentsData?.documents || [];
   const totalDocuments = documentsData?.total || 0;
   const hasMore = documentsData?.hasMore || false;
+
+  /**
+   * Sorted documents for table view
+   */
+  const sortedDocuments = useMemo(() => {
+    return [...documents].sort((a, b) => {
+      let comparison = 0;
+
+      switch (sortColumn) {
+        case 'name':
+          comparison = a.originalName.localeCompare(b.originalName);
+          break;
+        case 'type':
+          comparison = a.mimeType.localeCompare(b.mimeType);
+          break;
+        case 'size':
+          comparison = a.fileSize - b.fileSize;
+          break;
+        case 'status':
+          comparison = a.status.localeCompare(b.status);
+          break;
+        case 'createdAt':
+          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          break;
+        default:
+          comparison = 0;
+      }
+
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  }, [documents, sortColumn, sortDirection]);
+
+  /**
+   * Handle column sort
+   */
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  /**
+   * Render sort icon for table header
+   */
+  const renderSortIcon = (column: SortColumn) => {
+    if (sortColumn !== column) {
+      return <ChevronUp className="h-4 w-4 text-slate-300" />;
+    }
+    return sortDirection === 'asc' ? (
+      <ChevronUp className="h-4 w-4 text-astralis-blue" />
+    ) : (
+      <ChevronDown className="h-4 w-4 text-astralis-blue" />
+    );
+  };
+
+  /**
+   * Handle download document
+   */
+  const handleDownloadDocument = (document: Document) => {
+    if (document.cdnUrl) {
+      window.open(document.cdnUrl, '_blank');
+    }
+  };
+
+  /**
+   * Handle delete document (placeholder - no write operations)
+   */
+  const handleDeleteDocument = (document: Document) => {
+    // NOTE: Delete functionality requires explicit user approval for database writes
+    console.log('Delete requested for document:', document.id);
+  };
 
   /**
    * Handle upload complete
@@ -112,21 +243,20 @@ export default function DocumentsPage() {
         title="Documents"
         description="Manage and view all uploaded documents with OCR processing"
         actions={
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <Button
               variant="outline"
-              size="sm"
-              className="gap-1.5 text-sm"
+              className="gap-2"
               onClick={() => {
                 setChatDocumentId(undefined);
                 setShowChat(true);
               }}
             >
-              <MessageSquare className="h-4 w-4" />
+              <MessageSquare className="h-5 w-5" />
               Chat with Documents
             </Button>
-            <Button variant="primary" size="sm" className="gap-1.5 text-sm" onClick={() => setShowUploader(true)}>
-              <UploadIcon className="h-4 w-4" />
+            <Button variant="primary" className="gap-2" onClick={() => setShowUploader(true)}>
+              <UploadIcon className="h-5 w-5" />
               Upload Documents
             </Button>
           </div>
@@ -169,48 +299,70 @@ export default function DocumentsPage() {
         </div>
       )}
 
+      {/* View Toggle Tabs */}
+      <div className="flex items-center gap-1 mb-4 border-b border-slate-200">
+        <button
+          onClick={() => setViewMode('table')}
+          className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
+            viewMode === 'table'
+              ? 'border-astralis-blue text-astralis-blue'
+              : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+          }`}
+        >
+          <LayoutList className="h-5 w-5" />
+          Table View
+        </button>
+        <button
+          onClick={() => setViewMode('grid')}
+          className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
+            viewMode === 'grid'
+              ? 'border-astralis-blue text-astralis-blue'
+              : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+          }`}
+        >
+          <LayoutGrid className="h-5 w-5" />
+          Grid View
+        </button>
+      </div>
+
       {/* Search and Filters */}
-      <Card className="mb-6">
-        <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row gap-3">
-            {/* Search */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input
-                type="search"
-                placeholder="Search documents..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
+        {/* Search - Full Width */}
+        <div className="flex-1 relative">
+          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+          <Input
+            type="search"
+            placeholder="Search documents..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-12"
+          />
+        </div>
 
-            {/* Filter Button */}
-            <Button
-              variant="outline"
-              onClick={() => setShowFilters(true)}
-              className="flex items-center gap-2"
-            >
-              <Filter className="h-4 w-4" />
-              Filters
-              {hasFilters && (
-                <Badge variant="primary" className="ml-1">
-                  {[statusFilter, mimeTypeFilter, searchQuery].filter(Boolean).length}
-                </Badge>
-              )}
-            </Button>
+        {/* Filter Button */}
+        <Button
+          variant="outline"
+          onClick={() => setShowFilters(true)}
+          className="flex items-center gap-2"
+        >
+          <Filter className="h-5 w-5" />
+          Filters
+          {hasFilters && (
+            <Badge variant="primary" className="ml-1">
+              {[statusFilter, mimeTypeFilter, searchQuery].filter(Boolean).length}
+            </Badge>
+          )}
+        </Button>
 
-            {/* Clear Filters */}
-            {hasFilters && (
-              <Button variant="ghost" onClick={clearFilters}>
-                Clear
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+        {/* Clear Filters */}
+        {hasFilters && (
+          <Button variant="ghost" onClick={clearFilters}>
+            Clear
+          </Button>
+        )}
+      </div>
 
-      {/* Documents Grid */}
+      {/* Documents List */}
       {isLoading && (
         <div className="text-center py-12">
           <p className="text-slate-500">Loading documents...</p>
@@ -247,16 +399,139 @@ export default function DocumentsPage() {
 
       {!isLoading && !error && documents.length > 0 && (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            {documents.map((document) => (
-              <DocumentCard
-                key={document.id}
-                document={document}
-                onView={handleViewDocument}
-                onChat={handleChatWithDocument}
-              />
-            ))}
-          </div>
+          {/* Table View */}
+          {viewMode === 'table' && (
+            <Card variant="default" className="mb-6">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-slate-50 border-b border-slate-200">
+                    <tr>
+                      <th
+                        className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors"
+                        onClick={() => handleSort('name')}
+                      >
+                        <div className="flex items-center gap-1">
+                          Name
+                          {renderSortIcon('name')}
+                        </div>
+                      </th>
+                      <th
+                        className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors"
+                        onClick={() => handleSort('type')}
+                      >
+                        <div className="flex items-center gap-1">
+                          Type
+                          {renderSortIcon('type')}
+                        </div>
+                      </th>
+                      <th
+                        className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors"
+                        onClick={() => handleSort('size')}
+                      >
+                        <div className="flex items-center gap-1">
+                          Size
+                          {renderSortIcon('size')}
+                        </div>
+                      </th>
+                      <th
+                        className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors"
+                        onClick={() => handleSort('status')}
+                      >
+                        <div className="flex items-center gap-1">
+                          Status
+                          {renderSortIcon('status')}
+                        </div>
+                      </th>
+                      <th
+                        className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors"
+                        onClick={() => handleSort('createdAt')}
+                      >
+                        <div className="flex items-center gap-1">
+                          Uploaded
+                          {renderSortIcon('createdAt')}
+                        </div>
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-slate-200">
+                    {sortedDocuments.map((document, index) => (
+                      <tr
+                        key={document.id}
+                        className={`hover:bg-slate-100 transition-colors ${
+                          index % 2 === 1 ? 'bg-slate-50' : ''
+                        }`}
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-astralis-navy truncate max-w-[250px]" title={document.originalName}>
+                            {document.originalName}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <Badge variant="default">
+                            {getFileTypeLabel(document.mimeType)}
+                          </Badge>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                          {formatFileSize(document.fileSize)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <Badge variant={statusVariants[document.status]}>
+                            {document.status}
+                          </Badge>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                          {format(new Date(document.createdAt), 'MMM d, yyyy')}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleViewDocument(document)}
+                              className="p-2 text-slate-600 hover:text-astralis-blue hover:bg-slate-100 rounded-md transition-colors"
+                              title="View document"
+                            >
+                              <Eye className="h-5 w-5" />
+                            </button>
+                            <button
+                              onClick={() => handleDownloadDocument(document)}
+                              className="p-2 text-slate-600 hover:text-astralis-blue hover:bg-slate-100 rounded-md transition-colors"
+                              title="Download document"
+                              disabled={!document.cdnUrl}
+                            >
+                              <Download className="h-5 w-5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteDocument(document)}
+                              className="p-2 text-slate-600 hover:text-error hover:bg-red-50 rounded-md transition-colors"
+                              title="Delete document"
+                            >
+                              <Trash2 className="h-5 w-5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          )}
+
+          {/* Grid View */}
+          {viewMode === 'grid' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              {documents.map((document) => (
+                <DocumentCard
+                  key={document.id}
+                  document={document}
+                  onView={handleViewDocument}
+                  onChat={handleChatWithDocument}
+                />
+              ))}
+            </div>
+          )}
 
           {/* Pagination */}
           {totalDocuments > itemsPerPage && (

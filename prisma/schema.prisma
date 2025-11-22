@@ -1023,6 +1023,7 @@ model users {
   revenue_audits_revenue_audits_assignedToIdTousers revenue_audits[]        @relation("revenue_audits_assignedToIdTousers")
   revenue_audits_revenue_audits_userIdTousers       revenue_audits[]        @relation("revenue_audits_userIdTousers")
   schedulingEvents                                  SchedulingEvent[]
+  schedulingAgentTasks                              SchedulingAgentTask[]
   testimonials                                      testimonials[]
   organization                                      organization?           @relation(fields: [orgId], references: [id])
   wishlists                                         wishlists[]
@@ -1045,6 +1046,8 @@ model wishlists {
 model organization {
   id                     String                  @id @default(cuid())
   name                   String
+  slug                   String?                 @unique
+  website                String?
   createdAt              DateTime                @default(now())
   updatedAt              DateTime                @default(now()) @updatedAt
   documents              Document[]
@@ -1053,11 +1056,13 @@ model organization {
   intakeRequests         intakeRequest[]
   integrationCredentials IntegrationCredential[]
   schedulingEvents       SchedulingEvent[]
+  schedulingAgentTasks   SchedulingAgentTask[]
   users                  users[]
   workflowExecutions     WorkflowExecution[]
   workflowTriggers       WorkflowTrigger[]
 
   @@index([name])
+  @@index([slug])
 }
 
 model Account {
@@ -1318,6 +1323,7 @@ model SchedulingEvent {
   createdAt               DateTime        @default(now())
   updatedAt               DateTime        @updatedAt
   reminders               EventReminder[]
+  schedulingAgentTasks    SchedulingAgentTask[]
   organization            organization?   @relation(fields: [orgId], references: [id], onDelete: Cascade)
   user                    users           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -1710,4 +1716,98 @@ enum IntegrationProvider {
   OPENAI
   ANTHROPIC
   OTHER
+}
+
+// ============================================================================
+// SCHEDULING AGENT MODELS
+// ============================================================================
+
+enum AgentTaskSource {
+  FORM
+  EMAIL
+  SMS
+  API
+  CHAT
+  VOICE
+}
+
+enum AgentTaskType {
+  SCHEDULE_MEETING
+  RESCHEDULE_MEETING
+  CANCEL_MEETING
+  CHECK_AVAILABILITY
+  CREATE_TASK
+  UPDATE_TASK
+  INQUIRY
+  REMINDER
+  UNKNOWN
+}
+
+enum AgentTaskStatus {
+  PENDING
+  PROCESSING
+  AWAITING_INPUT
+  SCHEDULED
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model SchedulingAgentTask {
+  id              String            @id @default(uuid())
+  userId          String
+  orgId           String?
+
+  // Source tracking
+  source          AgentTaskSource
+  sourceId        String?           // Reference to original message/form/email
+  rawContent      String            @db.Text // Original input text
+
+  // AI Classification
+  taskType        AgentTaskType     @default(UNKNOWN)
+  intent          String?           // Extracted intent description
+  entities        Json?             // { date, time, duration, participants, subject, location }
+  priority        Int               @default(3) // 1-5 (5 = highest)
+  confidence      Float             @default(0) // AI confidence 0-1
+
+  // Task Details (when taskType = CREATE_TASK or UPDATE_TASK)
+  title           String?
+  description     String?           @db.Text
+  dueDate         DateTime?
+  assignedTo      String?
+
+  // Scheduling Details (when taskType = SCHEDULE_*, RESCHEDULE_*, CANCEL_*)
+  schedulingEventId String?
+  proposedSlots   Json?             // Array of AI-suggested alternative slots
+  selectedSlot    Json?             // The slot that was finally selected
+
+  // Status tracking
+  status          AgentTaskStatus   @default(PENDING)
+  resolution      String?           // How the task was resolved
+  errorMessage    String?           // Error details if status = FAILED
+
+  // Metadata
+  aiMetadata      Json?             // Full AI response for audit/debugging
+  processingTime  Int?              // Processing time in milliseconds
+  retryCount      Int               @default(0)
+
+  // Timestamps
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  processedAt     DateTime?         // When AI classification completed
+  completedAt     DateTime?         // When task was fully resolved
+
+  // Relations
+  user            users             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization    organization?     @relation(fields: [orgId], references: [id], onDelete: SetNull)
+  schedulingEvent SchedulingEvent?  @relation(fields: [schedulingEventId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([orgId])
+  @@index([status])
+  @@index([taskType])
+  @@index([priority])
+  @@index([createdAt])
+  @@index([source])
+  @@map("scheduling_agent_tasks")
 }

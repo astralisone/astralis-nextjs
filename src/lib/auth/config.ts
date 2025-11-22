@@ -69,12 +69,23 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, account, trigger, session: updateSession }) {
       // Initial sign in
       if (user) {
         token.id = user.id;
         token.role = user.role;
         token.orgId = user.orgId;
+        token.picture = user.image;
+      }
+
+      // Handle session updates (e.g., avatar change)
+      if (trigger === "update" && updateSession) {
+        if (updateSession.image !== undefined) {
+          token.picture = updateSession.image;
+        }
+        if (updateSession.name !== undefined) {
+          token.name = updateSession.name;
+        }
       }
 
       // Google OAuth - find or create organization
@@ -87,6 +98,7 @@ export const authOptions: NextAuthOptions = {
         if (dbUser) {
           token.orgId = dbUser.orgId || '';
           token.role = dbUser.role;
+          token.picture = dbUser.avatar;
         }
       }
 
@@ -95,8 +107,9 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.id as string;
-        session.user.role = token.role as string;
+        session.user.role = token.role;
         session.user.orgId = token.orgId as string;
+        session.user.image = token.picture as string | null | undefined;
       }
       return session;
     },

@@ -68,12 +68,12 @@ const statusConfig: Record<string, {
   [IntakeStatus.NEW]: {
     label: 'New',
     className: 'bg-yellow-100 text-yellow-700',
-    icon: <AlertTriangle className="w-4 h-4" />,
+    icon: <AlertTriangle className="w-5 h-5" />,
   },
   [IntakeStatus.ROUTING]: {
     label: 'Routing',
     className: 'bg-blue-100 text-blue-700',
-    icon: <Inbox className="w-4 h-4" />,
+    icon: <Inbox className="w-5 h-5" />,
   },
   [IntakeStatus.ASSIGNED]: {
     label: 'Assigned',
@@ -104,22 +104,22 @@ const sourceConfig: Record<string, {
 }> = {
   [IntakeSource.FORM]: {
     label: 'Form',
-    icon: <Inbox className="w-4 h-4" />,
+    icon: <Inbox className="w-5 h-5" />,
     className: 'text-purple-600',
   },
   [IntakeSource.EMAIL]: {
     label: 'Email',
-    icon: <Mail className="w-4 h-4" />,
+    icon: <Mail className="w-5 h-5" />,
     className: 'text-blue-600',
   },
   [IntakeSource.CHAT]: {
     label: 'Chat',
-    icon: <MessageSquare className="w-4 h-4" />,
+    icon: <MessageSquare className="w-5 h-5" />,
     className: 'text-green-600',
   },
   [IntakeSource.API]: {
     label: 'API',
-    icon: <Zap className="w-4 h-4" />,
+    icon: <Zap className="w-5 h-5" />,
     className: 'text-orange-600',
   },
 };
@@ -255,8 +255,8 @@ export function IntakeCard({
                   // Show assigned pipeline label with reclassify button
                   <>
                     <div className="flex items-center gap-1.5 flex-1">
-                      <GitBranch className="w-3 h-3 text-astralis-blue" />
-                      <span className="text-xs font-medium text-astralis-blue">
+                      <GitBranch className="w-5 h-5 text-astralis-blue" />
+                      <span className="text-sm font-medium text-astralis-blue">
                         {pipelineName}
                       </span>
                     </div>
@@ -269,9 +269,9 @@ export function IntakeCard({
                         aria-label="Reclassify with AI"
                       >
                         {isReclassifying ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <Loader2 className="w-5 h-5 animate-spin" />
                         ) : (
-                          <RefreshCw className="w-4 h-4" />
+                          <RefreshCw className="w-5 h-5" />
                         )}
                       </button>
                     )}
@@ -284,12 +284,12 @@ export function IntakeCard({
                         onValueChange={handlePipelineSelect}
                         disabled={isAssigning}
                       >
-                        <SelectTrigger className="h-7 text-xs bg-white flex-1">
+                        <SelectTrigger className="h-8 text-sm bg-white flex-1">
                           <div className="flex items-center gap-1.5">
                             {isAssigning ? (
-                              <Loader2 className="w-3 h-3 animate-spin" />
+                              <Loader2 className="w-4 h-4 animate-spin" />
                             ) : (
-                              <GitBranch className="w-4 h-4" />
+                              <GitBranch className="w-5 h-5"/>
                             )}
                             <SelectValue placeholder="Assign to pipeline..." />
                           </div>
@@ -304,8 +304,8 @@ export function IntakeCard({
                       </Select>
                     ) : (
                       <div className="flex items-center gap-1.5 text-slate-400 flex-1">
-                        <GitBranch className="w-4 h-4" />
-                        <span className="text-xs">Unassigned</span>
+                        <GitBranch className="w-5 h-5" />
+                        <span className="text-sm">Unassigned</span>
                       </div>
                     )}
                     {onReclassify && (
@@ -317,9 +317,9 @@ export function IntakeCard({
                         aria-label="Auto-classify with AI"
                       >
                         {isReclassifying ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <Loader2 className="w-5 h-5 animate-spin" />
                         ) : (
-                          <RefreshCw className="w-4 h-4" />
+                          <RefreshCw className="w-5 h-5" />
                         )}
                       </button>
                     )}
@@ -348,8 +348,8 @@ export function IntakeCard({
 
               {/* Timestamp */}
               {intake.createdAt && (
-                <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                  <Clock className="w-4 h-4" />
+                <div className="flex items-center gap-1.5 text-sm text-slate-500">
+                  <Clock className="w-5 h-5" />
                   <span>
                     {formatDistanceToNow(parseISO(intake.createdAt), { addSuffix: true })}
                   </span>
