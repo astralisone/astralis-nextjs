@@ -231,36 +231,40 @@ export default function AutomationDetailPage() {
           <div className="flex items-center gap-2">
             <Button
               variant="primary"
+              size="sm"
+              className="gap-1.5 text-sm"
               onClick={handleExecute}
               disabled={isExecuting}
             >
-              <Play className="w-4 h-4 mr-2" />
+              <Play className="h-4 w-4" />
               {isExecuting ? 'Executing...' : 'Execute Now'}
             </Button>
             <Button
               variant="secondary"
+              size="sm"
+              className="gap-1.5 text-sm"
               onClick={handleToggle}
             >
               {automation.isActive ? (
                 <>
-                  <Pause className="w-4 h-4 mr-2" />
+                  <Pause className="h-4 w-4" />
                   Deactivate
                 </>
               ) : (
                 <>
-                  <Play className="w-4 h-4 mr-2" />
+                  <Play className="h-4 w-4" />
                   Activate
                 </>
               )}
             </Button>
-            <Button variant="outline" asChild>
+            <Button variant="outline" size="sm" className="gap-1.5 text-sm" asChild>
               <Link href={`/automations/${automationId}/edit`}>
-                <Settings className="w-4 h-4 mr-2" />
+                <Settings className="h-5 w-5" />
                 Edit
               </Link>
             </Button>
-            <Button variant="destructive" onClick={handleDelete}>
-              <Trash2 className="w-4 h-4" />
+            <Button variant="destructive" size="icon" className="h-9 w-9" onClick={handleDelete}>
+              <Trash2 className="h-5 w-5" />
             </Button>
           </div>
         </div>
@@ -271,7 +275,7 @@ export default function AutomationDetailPage() {
             <CardContent className="p-6">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-astralis-blue/10 text-astralis-blue">
-                  <TrendingUp className="h-5 w-5" />
+                  <TrendingUp className="h-6 w-6" />
                 </div>
                 <div>
                   <p className="text-sm text-slate-600">Total Executions</p>
@@ -287,7 +291,7 @@ export default function AutomationDetailPage() {
             <CardContent className="p-6">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success/10 text-success">
-                  <CheckCircle2 className="h-5 w-5" />
+                  <CheckCircle2 className="h-6 w-6" />
                 </div>
                 <div>
                   <p className="text-sm text-slate-600">Success Rate</p>
@@ -301,7 +305,7 @@ export default function AutomationDetailPage() {
             <CardContent className="p-6">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-warning/10 text-warning">
-                  <Clock className="h-5 w-5" />
+                  <Clock className="h-6 w-6" />
                 </div>
                 <div>
                   <p className="text-sm text-slate-600">Avg Execution Time</p>
@@ -319,7 +323,7 @@ export default function AutomationDetailPage() {
             <CardContent className="p-6">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-info/10 text-info">
-                  <Activity className="h-5 w-5" />
+                  <Activity className="h-6 w-6" />
                 </div>
                 <div>
                   <p className="text-sm text-slate-600">Last Executed</p>

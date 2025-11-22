@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth/config";
 import * as schedulingService from "@/lib/services/scheduling.service";
 import { z } from "zod";
 
@@ -31,11 +31,10 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = session.user.id;
     const { id: eventId } = await params;
 
     // Fetch event
-    const event = await schedulingService.getEventById(eventId, userId);
+    const event = await schedulingService.getEventById(eventId);
 
     if (!event) {
       return NextResponse.json(
@@ -86,7 +85,6 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = session.user.id;
     const { id: eventId } = await params;
 
     // Parse and validate request body
@@ -118,17 +116,21 @@ export async function PUT(
       }
     }
 
-    // Convert date strings to Date objects
+    // Convert date strings to Date objects and map fields to match service interface
     const dataWithDates = {
-      ...updateData,
+      title: updateData.title,
+      description: updateData.description,
       startTime: updateData.startTime ? new Date(updateData.startTime) : undefined,
       endTime: updateData.endTime ? new Date(updateData.endTime) : undefined,
+      location: updateData.location,
+      participantEmails: updateData.attendees,
+      status: updateData.status,
+      syncToGoogle: false, // Don't sync updates to Google Calendar by default
     };
 
     // Update event
     const event = await schedulingService.updateEvent(
       eventId,
-      userId,
       dataWithDates
     );
 
@@ -192,11 +194,10 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = session.user.id;
     const { id: eventId } = await params;
 
     // Delete event
-    await schedulingService.deleteEvent(eventId, userId);
+    await schedulingService.deleteEvent(eventId);
 
     return NextResponse.json(
       {

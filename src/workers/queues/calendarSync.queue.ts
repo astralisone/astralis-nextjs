@@ -63,3 +63,11 @@ export async function getQueueStats() {
     total: waiting + active + completed + failed,
   };
 }
+
+/**
+ * Queue a calendar sync job (alias for addSyncJob)
+ * Follows naming convention specified in Phase 10
+ */
+export async function queueCalendarSync(data: CalendarSyncJobData): Promise<void> {
+  return addSyncJob(data);
+}

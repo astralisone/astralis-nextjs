@@ -123,6 +123,7 @@ export async function createEvent(data: CreateEventInput) {
 
   try {
     // Create event in database
+    // Note: isRecurring and recurrenceRule are validated but not stored in DB schema yet
     const event = await prisma.schedulingEvent.create({
       data: {
         userId: validated.userId,
@@ -131,8 +132,7 @@ export async function createEvent(data: CreateEventInput) {
         location: validated.location,
         startTime: validated.startTime,
         endTime: validated.endTime,
-        isRecurring: validated.isRecurring || false,
-        recurrenceRule: validated.recurrenceRule,
+        participantEmails: validated.participantEmails ?? [],
         status: 'SCHEDULED',
       },
       include: {
@@ -157,23 +157,21 @@ export async function createEvent(data: CreateEventInput) {
     const now = new Date();
 
     if (reminder24h > now) {
-      await prisma.reminder.create({
+      await prisma.eventReminder.create({
         data: {
           eventId: event.id,
           reminderTime: reminder24h,
-          message: `Reminder: "${event.title}" starts in 24 hours`,
-          isSent: false,
+          status: 'PENDING',
         },
       });
     }
 
     if (reminder1h > now) {
-      await prisma.reminder.create({
+      await prisma.eventReminder.create({
         data: {
           eventId: event.id,
           reminderTime: reminder1h,
-          message: `Reminder: "${event.title}" starts in 1 hour`,
-          isSent: false,
+          status: 'PENDING',
         },
       });
     }
@@ -205,10 +203,16 @@ export async function createEvent(data: CreateEventInput) {
 
         const googleEvent = await googleCalendar.createEvent(validated.userId, googleEventData);
 
-        // Store Google event ID
+        // Store Google event ID in calendarIntegrationData JSON field
         await prisma.schedulingEvent.update({
           where: { id: event.id },
-          data: { googleEventId: googleEvent.id },
+          data: {
+            calendarIntegrationData: {
+              googleEventId: googleEvent.id,
+              provider: 'google',
+              syncedAt: new Date().toISOString(),
+            },
+          },
         });
 
         console.log(`Event ${event.id} synced to Google Calendar as ${googleEvent.id}`);
@@ -278,7 +282,9 @@ export async function updateEvent(id: string, data: UpdateEventInput) {
     });
 
     // Sync to Google Calendar if enabled and event has Google ID
-    if (validated.syncToGoogle && existing.googleEventId) {
+    const calendarData = existing.calendarIntegrationData as { googleEventId?: string } | null;
+    const googleEventId = calendarData?.googleEventId;
+    if (validated.syncToGoogle && googleEventId) {
       try {
         const googleEventData = {
           summary: event.title,
@@ -296,7 +302,7 @@ export async function updateEvent(id: string, data: UpdateEventInput) {
 
         await googleCalendar.updateEvent(
           existing.userId,
-          existing.googleEventId,
+          googleEventId,
           googleEventData
         );
 
@@ -330,9 +336,11 @@ export async function deleteEvent(id: string): Promise<void> {
     }
 
     // Delete from Google Calendar if synced
-    if (event.googleEventId) {
+    const calendarData = event.calendarIntegrationData as { googleEventId?: string } | null;
+    const googleEventId = calendarData?.googleEventId;
+    if (googleEventId) {
       try {
-        await googleCalendar.deleteEvent(event.userId, event.googleEventId);
+        await googleCalendar.deleteEvent(event.userId, googleEventId);
         console.log(`Event ${id} deleted from Google Calendar`);
       } catch (syncError) {
         console.error('Failed to delete event from Google Calendar:', syncError);
@@ -340,7 +348,7 @@ export async function deleteEvent(id: string): Promise<void> {
     }
 
     // Delete reminders first (due to foreign key constraint)
-    await prisma.reminder.deleteMany({
+    await prisma.eventReminder.deleteMany({
       where: { eventId: id },
     });
 

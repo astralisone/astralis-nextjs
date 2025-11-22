@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth/config";
 import * as aiSchedulingService from "@/lib/services/aiScheduling.service";
 import { z } from "zod";
 
@@ -42,20 +42,22 @@ export async function POST(req: NextRequest) {
 
     const { duration, participantEmails, preferredDates, context } = result.data;
 
-    // Convert preferred dates from strings to Date objects
-    const preferredDateObjects = preferredDates.map(date => new Date(date));
+    // Use the first preferred date, or default to today
+    const date = preferredDates.length > 0
+      ? new Date(preferredDates[0])
+      : new Date();
 
     // Generate AI suggestions
     const suggestions = await aiSchedulingService.suggestTimeSlots({
       userId,
       duration,
       participantEmails,
-      preferredDates: preferredDateObjects,
+      date,
       context,
     });
 
     // Return top 5 suggestions
-    const topSuggestions = suggestions.slice(0, 5);
+    const topSuggestions = suggestions.slots.slice(0, 5);
 
     return NextResponse.json(
       {
@@ -63,6 +65,8 @@ export async function POST(req: NextRequest) {
         data: {
           suggestions: topSuggestions,
           count: topSuggestions.length,
+          totalCandidates: suggestions.totalCandidates,
+          analysisContext: suggestions.analysisContext,
           requestedDuration: duration,
           participantsConsidered: participantEmails.length,
         },

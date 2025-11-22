@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { randomUUID } from 'crypto';
 import { prisma } from '@/lib/prisma';
 import { addDays, addWeeks, addMonths, startOfDay, endOfDay, parseISO, format, addHours, addMinutes } from 'date-fns';
 
@@ -20,7 +21,7 @@ import { addDays, addWeeks, addMonths, startOfDay, endOfDay, parseISO, format, a
 // Types
 // ============================================================================
 
-export type Intent = 'query' | 'schedule' | 'reschedule' | 'cancel' | 'availability' | 'suggest' | 'unknown';
+export type Intent = 'query' | 'schedule' | 'schedule_event' | 'reschedule' | 'cancel' | 'cancel_event' | 'availability' | 'suggest' | 'unknown';
 
 export interface Entities {
   dates?: Date[];
@@ -232,6 +233,50 @@ export class CalendarChatService {
             required: ['eventId'],
           },
         },
+        {
+          name: 'set_reminder',
+          description: 'Set a reminder for an event or create a standalone reminder. Use when user asks to remind them about something.',
+          parameters: {
+            type: 'object',
+            properties: {
+              title: {
+                type: 'string',
+                description: 'What to remind about',
+              },
+              reminderTime: {
+                type: 'string',
+                description: 'When to send the reminder in ISO format',
+              },
+              eventId: {
+                type: 'string',
+                description: 'Optional event ID to attach reminder to',
+              },
+              notifyBefore: {
+                type: 'number',
+                description: 'Minutes before event to remind (e.g., 15, 60, 1440 for 24h)',
+              },
+            },
+            required: ['title', 'reminderTime'],
+          },
+        },
+        {
+          name: 'list_reminders',
+          description: 'List upcoming reminders for the user.',
+          parameters: {
+            type: 'object',
+            properties: {
+              startDate: {
+                type: 'string',
+                description: 'Start date in ISO format',
+              },
+              endDate: {
+                type: 'string',
+                description: 'End date in ISO format',
+              },
+            },
+            required: ['startDate', 'endDate'],
+          },
+        },
       ];
 
       const systemPrompt = `You are a helpful calendar assistant. You help users manage their calendar using natural language.
@@ -359,6 +404,23 @@ Guidelines:
         case 'cancel_event':
           return await this.prepareCancelEvent(userId, orgId, args.eventId);
 
+        case 'set_reminder':
+          return await this.setReminder(
+            userId,
+            orgId,
+            args.title,
+            parseISO(args.reminderTime),
+            args.eventId,
+            args.notifyBefore
+          );
+
+        case 'list_reminders':
+          return await this.listReminders(
+            userId,
+            parseISO(args.startDate),
+            parseISO(args.endDate)
+          );
+
         default:
           return {
             success: false,
@@ -462,6 +524,21 @@ Guidelines:
         orderBy: { scheduledDate: 'asc' },
       });
 
+      // Fetch scheduling events
+      const schedulingEvents = await prisma.schedulingEvent.findMany({
+        where: {
+          userId,
+          startTime: {
+            gte: startDate,
+            lte: endDate,
+          },
+          status: {
+            in: ['SCHEDULED', 'CONFIRMED'],
+          },
+        },
+        orderBy: { startTime: 'asc' },
+      });
+
       const events: CalendarEvent[] = [
         ...consultations.map(c => ({
           id: c.id,
@@ -485,6 +562,17 @@ Guidelines:
           status: a.status,
           type: 'audit' as const,
         })),
+        ...schedulingEvents.map(s => ({
+          id: s.id,
+          title: s.title,
+          startTime: s.startTime,
+          endTime: s.endTime,
+          description: s.description || undefined,
+          location: s.location || s.meetingLink || undefined,
+          participants: s.participantEmails,
+          status: s.status,
+          type: 'meeting' as const,
+        })),
       ];
 
       events.sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
@@ -500,7 +588,7 @@ Guidelines:
       const eventList = events
         .map(
           (e, idx) =>
-            `${idx + 1}. **${e.title}**\n   📅 ${format(e.startTime, 'EEE, MMM d')} at ${format(e.startTime, 'h:mm a')}\n   ⏱️ ${Math.round((e.endTime.getTime() - e.startTime.getTime()) / 60000)} minutes${e.location ? `\n   📍 ${e.location}` : ''}${e.participants.length > 0 ? `\n   👥 ${e.participants.join(', ')}` : ''}`
+            `${idx + 1}. **${e.title}**\n   📅 ${format(e.startTime, 'EEE, MMM d')} at ${format(e.startTime, 'h:mm a')}\n   ⏱️ ${Math.round((e.endTime.getTime() - e.startTime.getTime()) / 60000)} minutes${e.location ? `\n   📍 ${e.location}` : ''}${(e.participants?.length ?? 0) > 0 ? `\n   👥 ${e.participants?.join(', ')}` : ''}`
         )
         .join('\n\n');
 
@@ -532,7 +620,7 @@ Guidelines:
         return result;
       }
 
-      const events = result.data?.events || [];
+      const events: CalendarEvent[] = result.data?.events || [];
 
       if (events.length === 0) {
         return {
@@ -543,7 +631,7 @@ Guidelines:
       }
 
       const conflictList = events
-        .map(e => `- ${format(e.startTime, 'EEE, MMM d at h:mm a')}: ${e.title}`)
+        .map((e: CalendarEvent) => `- ${format(e.startTime, 'EEE, MMM d at h:mm a')}: ${e.title}`)
         .join('\n');
 
       return {
@@ -583,29 +671,41 @@ Guidelines:
   private async scheduleEvent(userId: string, orgId: string, data: any): Promise<ActionResult> {
     try {
       const startTime = parseISO(data.startDateTime);
+      const endTime = addMinutes(startTime, data.duration);
 
-      // Create consultation event
-      const consultation = await prisma.consultations.create({
+      // Create SchedulingEvent
+      const schedulingEvent = await prisma.schedulingEvent.create({
         data: {
-          title: data.title,
-          description: data.description,
-          consultationType: 'GENERAL',
-          status: 'CONFIRMED',
-          scheduledAt: startTime,
-          duration: data.duration,
-          timeZone: 'UTC',
-          clientName: 'Calendar Event',
-          clientEmail: data.participants?.[0] || 'no-reply@example.com',
-          meetingType: 'VIDEO_CALL',
-          meetingUrl: data.location,
+          id: randomUUID(),
           userId,
+          orgId: orgId || undefined,
+          title: data.title,
+          description: data.description || undefined,
+          startTime,
+          endTime,
+          timezone: 'UTC',
+          location: data.location || undefined,
+          meetingLink: data.meetingLink || undefined,
+          participantEmails: data.participants || [],
+          status: 'SCHEDULED',
+        },
+      });
+
+      // Create default reminder 15 minutes before the event
+      const reminderTime = addMinutes(startTime, -15);
+      await prisma.eventReminder.create({
+        data: {
+          id: randomUUID(),
+          eventId: schedulingEvent.id,
+          reminderTime,
+          status: 'PENDING',
         },
       });
 
       return {
         success: true,
-        message: `✅ Event scheduled successfully!\n\n**${data.title}** is now on your calendar for ${format(startTime, 'EEEE, MMMM d')} at ${format(startTime, 'h:mm a')}.`,
-        data: { eventId: consultation.id },
+        message: `Event scheduled successfully!\n\n**${data.title}** is now on your calendar for ${format(startTime, 'EEEE, MMMM d')} at ${format(startTime, 'h:mm a')}.\nA reminder has been set for 15 minutes before the event.`,
+        data: { eventId: schedulingEvent.id },
       };
     } catch (error) {
       console.error('[CalendarChat] Schedule event error:', error);
@@ -714,7 +814,7 @@ Guidelines:
     try {
       // Get all events in range
       const eventsResult = await this.listEvents(userId, orgId, startDate, endDate);
-      const events = eventsResult.data?.events || [];
+      const events: CalendarEvent[] = eventsResult.data?.events || [];
 
       // Business hours: 9 AM - 5 PM, Monday - Friday
       const businessHours = { start: 9, end: 17 };
@@ -789,6 +889,148 @@ Guidelines:
       };
     } catch (error) {
       console.error('[CalendarChat] Find time slots error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Set a reminder for an event or create a standalone reminder
+   * Note: EventReminder requires an eventId, so for standalone reminders we create a placeholder SchedulingEvent
+   */
+  private async setReminder(
+    userId: string,
+    orgId: string,
+    title: string,
+    reminderTime: Date,
+    eventId?: string,
+    notifyBefore?: number
+  ): Promise<ActionResult> {
+    try {
+      let targetEventId = eventId;
+
+      // If no eventId provided, create a placeholder SchedulingEvent for the standalone reminder
+      if (!targetEventId) {
+        const placeholderEvent = await prisma.schedulingEvent.create({
+          data: {
+            id: randomUUID(),
+            userId,
+            orgId: orgId || undefined,
+            title: `Reminder: ${title}`,
+            startTime: reminderTime,
+            endTime: addMinutes(reminderTime, 15), // Default 15-minute duration for placeholder
+            timezone: 'UTC',
+            status: 'SCHEDULED',
+          },
+        });
+        targetEventId = placeholderEvent.id;
+      }
+
+      // Calculate actual reminder time if notifyBefore is specified
+      let actualReminderTime = reminderTime;
+      if (notifyBefore && eventId) {
+        // If notifyBefore is set and we have an existing event, fetch the event to calculate reminder time
+        const event = await prisma.schedulingEvent.findUnique({
+          where: { id: eventId },
+        });
+        if (event) {
+          actualReminderTime = addMinutes(event.startTime, -notifyBefore);
+        }
+      }
+
+      // Create the EventReminder record
+      const reminder = await prisma.eventReminder.create({
+        data: {
+          id: randomUUID(),
+          eventId: targetEventId,
+          reminderTime: actualReminderTime,
+          status: 'PENDING',
+          retryCount: 0,
+        },
+      });
+
+      const formattedTime = format(actualReminderTime, 'EEEE, MMMM d, yyyy \'at\' h:mm a');
+
+      return {
+        success: true,
+        message: `Reminder set successfully!\n\n**${title}**\nYou will be reminded on ${formattedTime}.`,
+        data: {
+          reminderId: reminder.id,
+          eventId: targetEventId,
+          reminderTime: actualReminderTime,
+        },
+      };
+    } catch (error) {
+      console.error('[CalendarChat] Set reminder error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * List reminders for a user within a date range
+   */
+  private async listReminders(
+    userId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<ActionResult> {
+    try {
+      // Query EventReminder records within the date range for this user's events
+      const reminders = await prisma.eventReminder.findMany({
+        where: {
+          reminderTime: {
+            gte: startDate,
+            lte: endDate,
+          },
+          event: {
+            userId,
+          },
+        },
+        include: {
+          event: {
+            select: {
+              id: true,
+              title: true,
+              startTime: true,
+              endTime: true,
+            },
+          },
+        },
+        orderBy: {
+          reminderTime: 'asc',
+        },
+      });
+
+      if (reminders.length === 0) {
+        return {
+          success: true,
+          message: `You have no reminders scheduled between ${format(startDate, 'MMM d')} and ${format(endDate, 'MMM d, yyyy')}.`,
+          data: { reminders: [] },
+        };
+      }
+
+      const reminderList = reminders
+        .map((r, idx) => {
+          const statusIcon = r.status === 'SENT' ? '(sent)' : r.status === 'FAILED' ? '(failed)' : '(pending)';
+          return `${idx + 1}. **${r.event.title}** ${statusIcon}\n   Reminder: ${format(r.reminderTime, 'EEE, MMM d \'at\' h:mm a')}\n   Event: ${format(r.event.startTime, 'EEE, MMM d \'at\' h:mm a')}`;
+        })
+        .join('\n\n');
+
+      return {
+        success: true,
+        message: `Here are your ${reminders.length} upcoming reminder${reminders.length > 1 ? 's' : ''}:\n\n${reminderList}`,
+        data: {
+          reminders: reminders.map((r) => ({
+            id: r.id,
+            eventId: r.eventId,
+            eventTitle: r.event.title,
+            reminderTime: r.reminderTime,
+            eventStartTime: r.event.startTime,
+            status: r.status,
+          })),
+        },
+      };
+    } catch (error) {
+      console.error('[CalendarChat] List reminders error:', error);
       throw error;
     }
   }

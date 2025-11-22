@@ -203,20 +203,22 @@ export function AutomationCard({
               </Button>
               <Button
                 variant="outline"
-                size="sm"
+                size="icon"
+                className="h-9 w-9"
                 onClick={(e) => {
                   e.preventDefault();
                   window.location.href = `/automations/${automation.id}/settings`;
                 }}
               >
-                <Settings className="h-4 w-4" />
+                <Settings className="h-5 w-5" />
               </Button>
               <Button
                 variant="destructive"
-                size="sm"
+                size="icon"
+                className="h-9 w-9"
                 onClick={handleDelete}
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-5 w-5" />
               </Button>
             </div>
           )}

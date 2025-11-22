@@ -13,6 +13,21 @@ import OpenAI from 'openai';
 import { prisma } from '@/lib/prisma';
 import { addMinutes, format, startOfDay, endOfDay } from 'date-fns';
 import * as conflictService from './conflict.service';
+import { DayOfWeek } from '@prisma/client';
+
+/**
+ * Maps JavaScript Date.getDay() (0=Sunday, 1=Monday, ..., 6=Saturday)
+ * to Prisma DayOfWeek enum
+ */
+const dayOfWeekMap: DayOfWeek[] = [
+  DayOfWeek.SUNDAY,
+  DayOfWeek.MONDAY,
+  DayOfWeek.TUESDAY,
+  DayOfWeek.WEDNESDAY,
+  DayOfWeek.THURSDAY,
+  DayOfWeek.FRIDAY,
+  DayOfWeek.SATURDAY,
+];
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -191,14 +206,15 @@ export async function filterByAvailability(slots: TimeSlot[], userId: string): P
     const availableSlots: TimeSlot[] = [];
 
     for (const slot of slots) {
-      const dayOfWeek = slot.startTime.getDay();
+      const dayIndex = slot.startTime.getDay();
+      const dayOfWeek = dayOfWeekMap[dayIndex];
 
       // Get availability rules for this day
       const rules = await prisma.availabilityRule.findMany({
         where: {
           userId,
           dayOfWeek,
-          isAvailable: true,
+          isActive: true,
         },
       });
 

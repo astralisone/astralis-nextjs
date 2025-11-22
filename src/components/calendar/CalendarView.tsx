@@ -39,7 +39,7 @@ export function CalendarView({
       description: event.description,
       location: event.location,
       meetingLink: event.meetingLink,
-      participants: event.participants,
+      participants: event.participantEmails,
       status: event.status,
       hasConflict: event.status === "CONFLICT",
     },

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth/config";
 import * as schedulingService from "@/lib/services/scheduling.service";
 import { z } from "zod";
 
@@ -129,10 +129,15 @@ export async function POST(req: NextRequest) {
 
     // Create event
     const event = await schedulingService.createEvent({
-      ...eventData,
+      title: eventData.title,
+      description: eventData.description,
+      location: eventData.location,
+      participantEmails: eventData.attendees,
       startTime,
       endTime,
       userId,
+      syncToGoogle: !!eventData.calendarConnectionId,
+      isRecurring: false,
     });
 
     return NextResponse.json(

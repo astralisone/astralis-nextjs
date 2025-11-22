@@ -15,7 +15,7 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen bg-slate-50">
+    <div className="fixed inset-0 top-[70px] flex bg-slate-50">
       <DashboardSidebar user={session.user} />
 
       <div className="flex-1 flex flex-col overflow-hidden">

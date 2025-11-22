@@ -10,7 +10,7 @@ const updatePipelineSchema = z.object({
 
 /**
  * GET /api/pipelines/[id]
- * Get a single pipeline with all stages and items
+ * Get a single pipeline with all stages, items, and intake requests
  */
 export async function GET(
   req: NextRequest,
@@ -29,6 +29,12 @@ export async function GET(
               orderBy: { createdAt: "desc" },
             },
           },
+        },
+        intakeRequests: {
+          orderBy: [
+            { priority: "desc" },
+            { createdAt: "desc" },
+          ],
         },
       },
     });

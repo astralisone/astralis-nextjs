@@ -1,20 +1,27 @@
 'use client';
 
 import { useDroppable } from '@dnd-kit/core';
-import { PipelineCard } from './PipelineCard';
+import { UnifiedKanbanCard } from './UnifiedKanbanCard';
 import { cn } from '@/lib/utils';
-import { PipelineStage, PipelineItem } from '@/types/pipelines';
+import { PipelineStage, PipelineItem, PipelineItemStatus } from '@/types/pipelines';
 
 interface KanbanColumnProps {
   stage: PipelineStage;
   items: PipelineItem[];
+  pipelineId: string;
   onItemClick?: (item: PipelineItem) => void;
+  onStatusChange?: (itemId: string, newStatus: PipelineItemStatus) => void;
 }
 
-export function KanbanColumn({ stage, items, onItemClick }: KanbanColumnProps) {
+export function KanbanColumn({ stage, items, pipelineId, onItemClick, onStatusChange }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: stage.id,
   });
+
+  // Filter out CLOSED and COMPLETED items from display
+  const visibleItems = items.filter(
+    (item) => item.status !== PipelineItemStatus.CLOSED && item.status !== PipelineItemStatus.COMPLETED
+  );
 
   return (
     <div className="flex-shrink-0 w-80">
@@ -34,7 +41,7 @@ export function KanbanColumn({ stage, items, onItemClick }: KanbanColumnProps) {
               </h3>
             </div>
             <span className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded font-medium">
-              {items.length}
+              {visibleItems.length}
             </span>
           </div>
           {stage.description && (
@@ -52,15 +59,17 @@ export function KanbanColumn({ stage, items, onItemClick }: KanbanColumnProps) {
             isOver && 'bg-astralis-blue/5 ring-2 ring-astralis-blue/20 ring-inset'
           )}
         >
-          {items.map((item) => (
-            <PipelineCard
+          {visibleItems.map((item) => (
+            <UnifiedKanbanCard
               key={item.id}
               item={item}
+              pipelineId={pipelineId}
               onClick={() => onItemClick?.(item)}
+              onStatusChange={onStatusChange}
             />
           ))}
 
-          {items.length === 0 && (
+          {visibleItems.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 text-slate-400">
               <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-2">
                 <svg

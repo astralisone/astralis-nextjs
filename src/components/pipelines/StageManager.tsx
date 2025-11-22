@@ -158,12 +158,12 @@ export function StageManager({ pipelineId, stages, onStagesChange }: StageManage
               className="text-slate-400 hover:text-slate-600 cursor-grab"
               aria-label="Drag to reorder"
             >
-              <GripVertical className="w-4 h-4" />
+              <GripVertical className="w-6 h-6" />
             </button>
 
             {stage.color && (
               <div
-                className="w-3 h-3 rounded-full flex-shrink-0"
+                className="w-5 h-5 rounded-full flex-shrink-0"
                 style={{ backgroundColor: stage.color }}
               />
             )}
@@ -184,17 +184,17 @@ export function StageManager({ pipelineId, stages, onStagesChange }: StageManage
                 variant="ghost"
                 size="icon"
                 onClick={() => handleOpen(stage)}
-                className="h-8 w-8"
+                className="h-9 w-9"
               >
-                <Edit2 className="w-4 h-4" />
+                <Edit2 className="w-5 h-5" />
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => handleDelete(stage.id)}
-                className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                className="h-9 w-9 text-red-600 hover:text-red-700 hover:bg-red-50"
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="w-5 h-5" />
               </Button>
             </div>
           </div>
@@ -206,7 +206,7 @@ export function StageManager({ pipelineId, stages, onStagesChange }: StageManage
           onClick={() => handleOpen()}
           className="w-full"
         >
-          <Plus className="w-4 h-4 mr-2" />
+          <Plus className="w-6 h-6 mr-2" />
           Add Stage
         </Button>
       </div>

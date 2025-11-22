@@ -115,16 +115,18 @@ export default function DocumentsPage() {
           <div className="flex gap-2">
             <Button
               variant="outline"
+              size="sm"
+              className="gap-1.5 text-sm"
               onClick={() => {
                 setChatDocumentId(undefined);
                 setShowChat(true);
               }}
             >
-              <MessageSquare className="h-4 w-4 mr-2" />
+              <MessageSquare className="h-4 w-4" />
               Chat with Documents
             </Button>
-            <Button variant="primary" onClick={() => setShowUploader(true)}>
-              <UploadIcon className="h-4 w-4 mr-2" />
+            <Button variant="primary" size="sm" className="gap-1.5 text-sm" onClick={() => setShowUploader(true)}>
+              <UploadIcon className="h-4 w-4" />
               Upload Documents
             </Button>
           </div>

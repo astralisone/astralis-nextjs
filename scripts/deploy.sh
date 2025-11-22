@@ -70,6 +70,100 @@ confirm() {
 }
 
 ################################################################################
+# Environment File Sync
+################################################################################
+
+sync_env_file() {
+    print_header "ENVIRONMENT FILE SYNC"
+
+    # Check for local .env.production file
+    if [ -f ".env.production" ]; then
+        print_step "Found .env.production file"
+
+        # Create backup on server if file exists
+        print_step "Creating backup of server .env (if exists)..."
+        ssh -i "$SSH_KEY" "$SERVER_USER@$SERVER_HOST" "cd $SERVER_PATH && [ -f .env ] && cp .env .env.backup.\$(date +%Y%m%d_%H%M%S) || echo 'No existing .env to backup'"
+
+        # Copy .env.production to server as .env
+        print_step "Copying .env.production to server..."
+        scp -i "$SSH_KEY" ".env.production" "$SERVER_USER@$SERVER_HOST:$SERVER_PATH/.env"
+        print_success "Environment file synced to server"
+    elif [ -f ".env.local" ]; then
+        print_warning ".env.production not found, checking .env.local..."
+        confirm "Copy .env.local to server? (Only use for staging/testing)"
+
+        ssh -i "$SSH_KEY" "$SERVER_USER@$SERVER_HOST" "cd $SERVER_PATH && [ -f .env ] && cp .env .env.backup.\$(date +%Y%m%d_%H%M%S) || echo 'No existing .env to backup'"
+        scp -i "$SSH_KEY" ".env.local" "$SERVER_USER@$SERVER_HOST:$SERVER_PATH/.env"
+        print_success "Environment file synced to server"
+    else
+        print_warning "No .env.production or .env.local found locally"
+
+        # Check if server has .env file
+        if ssh -i "$SSH_KEY" "$SERVER_USER@$SERVER_HOST" "[ -f $SERVER_PATH/.env ]"; then
+            print_success "Server already has .env file"
+        else
+            print_error "Server is missing .env file!"
+            echo ""
+            echo -e "${YELLOW}Create .env.production locally with required values:${NC}"
+            echo "  DATABASE_URL"
+            echo "  NEXTAUTH_SECRET"
+            echo "  NEXTAUTH_URL"
+            echo "  SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD"
+            echo "  NEXT_PUBLIC_GA_MEASUREMENT_ID (optional)"
+            echo ""
+            confirm "Continue deployment without .env sync?"
+        fi
+    fi
+
+    # Verify critical env vars on server
+    print_step "Verifying critical environment variables on server..."
+    ssh -i "$SSH_KEY" "$SERVER_USER@$SERVER_HOST" <<-'ENDSSH'
+        cd /home/deploy/astralis-nextjs
+
+        MISSING_CRITICAL=""
+        MISSING_OPTIONAL=""
+
+        # Check for variables
+        if [ -f .env ]; then
+            # Critical - deployment will fail without these
+            if ! grep -q "DATABASE_URL" .env; then
+                MISSING_CRITICAL="$MISSING_CRITICAL DATABASE_URL"
+            fi
+            if ! grep -q "NEXTAUTH_SECRET" .env; then
+                MISSING_CRITICAL="$MISSING_CRITICAL NEXTAUTH_SECRET"
+            fi
+
+            # Optional - app may work without these (uses defaults)
+            if ! grep -q "NEXTAUTH_URL" .env; then
+                MISSING_OPTIONAL="$MISSING_OPTIONAL NEXTAUTH_URL"
+            fi
+
+            # Report findings
+            if [ -n "$MISSING_CRITICAL" ]; then
+                echo "✗ Missing critical variables:$MISSING_CRITICAL"
+                exit 1
+            fi
+
+            if [ -n "$MISSING_OPTIONAL" ]; then
+                echo "⚠ Missing optional variables:$MISSING_OPTIONAL (will use defaults)"
+            fi
+
+            echo "✓ Critical environment variables present"
+        else
+            echo "✗ .env file not found on server"
+            exit 1
+        fi
+ENDSSH
+
+    if [ $? -ne 0 ]; then
+        print_error "Environment verification failed"
+        confirm "Continue anyway? (Not recommended)"
+    else
+        print_success "Environment verification passed"
+    fi
+}
+
+################################################################################
 # Pre-flight Checks
 ################################################################################
 
@@ -135,11 +229,10 @@ local_build() {
 git_operations() {
     print_header "GIT OPERATIONS"
 
-    # Check if commit message was provided
-    if [ -z "$COMMIT_MESSAGE" ]; then
-        print_error "Commit message required!"
-        echo "Usage: $0 [environment] \"SIT-XXXX commit message\""
-        exit 1
+    # Check if there are changes to commit
+    if [ -z "$(git status --porcelain)" ]; then
+        print_warning "No changes to commit"
+        return 0
     fi
 
     # Add all changes
@@ -152,6 +245,33 @@ git_operations() {
     print_step "Changes to be committed:"
     git status --short
     echo ""
+
+    # Auto-generate commit message if not provided
+    if [ -z "$COMMIT_MESSAGE" ]; then
+        # Count changes by type
+        ADDED=$(git diff --cached --name-only --diff-filter=A | wc -l | tr -d ' ')
+        MODIFIED=$(git diff --cached --name-only --diff-filter=M | wc -l | tr -d ' ')
+        DELETED=$(git diff --cached --name-only --diff-filter=D | wc -l | tr -d ' ')
+
+        # Get the main changed directories/files
+        CHANGED_AREAS=$(git diff --cached --name-only | cut -d'/' -f1-2 | sort -u | head -5 | tr '\n' ', ' | sed 's/,$//')
+
+        # Determine commit type based on changes
+        if [ "$ADDED" -gt 0 ] && [ "$MODIFIED" -eq 0 ]; then
+            COMMIT_TYPE="feat"
+        elif [ "$DELETED" -gt 0 ] && [ "$ADDED" -eq 0 ] && [ "$MODIFIED" -eq 0 ]; then
+            COMMIT_TYPE="chore"
+        else
+            COMMIT_TYPE="update"
+        fi
+
+        # Build auto-generated message
+        COMMIT_MESSAGE="$COMMIT_TYPE: deploy changes to $CHANGED_AREAS ($ADDED added, $MODIFIED modified, $DELETED deleted)"
+
+        print_step "Auto-generated commit message:"
+        echo -e "  ${YELLOW}$COMMIT_MESSAGE${NC}"
+        echo ""
+    fi
 
     # Confirm commit
     confirm "Commit with message: \"$COMMIT_MESSAGE\""
@@ -169,6 +289,58 @@ Co-Authored-By: Claude <noreply@anthropic.com>" || print_warning "Nothing to com
     confirm "Push branch '$CURRENT_BRANCH' to remote?"
     git push origin "$CURRENT_BRANCH"
     print_success "Pushed to remote"
+}
+
+################################################################################
+# Sync Build to Server
+################################################################################
+
+sync_build_to_server() {
+    print_header "SYNCING BUILD TO SERVER"
+
+    print_step "Syncing .next build folder to server (excluding cache)..."
+    rsync -avz --delete \
+        --exclude 'cache/' \
+        --exclude 'trace' \
+        -e "ssh -i $SSH_KEY" \
+        .next/ \
+        "$SERVER_USER@$SERVER_HOST:$SERVER_PATH/.next/"
+    print_success ".next folder synced (cache excluded)"
+
+    print_step "Syncing public folder to server..."
+    rsync -avz --delete \
+        -e "ssh -i $SSH_KEY" \
+        public/ \
+        "$SERVER_USER@$SERVER_HOST:$SERVER_PATH/public/"
+    print_success "Public folder synced"
+
+    print_step "Syncing package files to server..."
+    rsync -avz \
+        -e "ssh -i $SSH_KEY" \
+        package.json package-lock.json \
+        "$SERVER_USER@$SERVER_HOST:$SERVER_PATH/"
+    print_success "Package files synced"
+
+    print_step "Syncing Prisma schema to server..."
+    rsync -avz \
+        -e "ssh -i $SSH_KEY" \
+        prisma/ \
+        "$SERVER_USER@$SERVER_HOST:$SERVER_PATH/prisma/"
+    print_success "Prisma schema synced"
+
+    print_step "Syncing config files to server..."
+    rsync -avz \
+        -e "ssh -i $SSH_KEY" \
+        next.config.ts tsconfig.json ecosystem.config.js \
+        "$SERVER_USER@$SERVER_HOST:$SERVER_PATH/"
+    print_success "Config files synced"
+
+    print_step "Syncing src folder to server..."
+    rsync -avz --delete \
+        -e "ssh -i $SSH_KEY" \
+        src/ \
+        "$SERVER_USER@$SERVER_HOST:$SERVER_PATH/src/"
+    print_success "Source folder synced"
 }
 
 ################################################################################
@@ -194,32 +366,55 @@ deploy_to_server() {
         echo -e "${CYAN}▶ Navigating to project directory...${NC}"
         cd /home/deploy/astralis-nextjs
 
-        echo -e "${CYAN}▶ Pulling latest changes...${NC}"
-        git fetch origin
-        git pull origin $(git branch --show-current)
-        echo -e "${GREEN}✓ Code updated${NC}"
+        # Note: Build artifacts are synced via rsync, no git pull or npm build needed
+        echo -e "${GREEN}✓ Build artifacts already synced from local machine${NC}"
 
         echo -e "${CYAN}▶ Installing dependencies...${NC}"
-        npm install --production=false
+        npm install
         echo -e "${GREEN}✓ Dependencies installed${NC}"
 
         echo -e "${CYAN}▶ Generating Prisma client...${NC}"
         npx prisma generate
         echo -e "${GREEN}✓ Prisma client generated${NC}"
 
-        echo -e "${CYAN}▶ Running database migrations...${NC}"
-        npx prisma migrate deploy
-        echo -e "${GREEN}✓ Migrations applied${NC}"
-
-        echo -e "${CYAN}▶ Building production bundle...${NC}"
-        npm run build
-        echo -e "${GREEN}✓ Build completed${NC}"
-
         echo ""
         echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
         echo -e "${BLUE}SERVICE MANAGEMENT${NC}"
         echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
         echo ""
+
+        # Check and install Docker if needed
+        echo -e "${CYAN}▶ Checking Docker installation...${NC}"
+        if ! command -v docker &> /dev/null; then
+            echo -e "${YELLOW}⚠ Docker not found, installing...${NC}"
+            curl -fsSL https://get.docker.com -o get-docker.sh
+            sudo sh get-docker.sh
+            sudo usermod -aG docker $USER
+            rm get-docker.sh
+            echo -e "${GREEN}✓ Docker installed${NC}"
+        else
+            echo -e "${GREEN}✓ Docker is installed${NC}"
+        fi
+
+        # Check and install Docker Compose if needed
+        if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
+            echo -e "${YELLOW}⚠ Docker Compose not found, installing...${NC}"
+            sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+            echo -e "${GREEN}✓ Docker Compose installed${NC}"
+        else
+            echo -e "${GREEN}✓ Docker Compose is installed${NC}"
+        fi
+
+        # Ensure Docker service is running
+        echo -e "${CYAN}▶ Ensuring Docker service is running...${NC}"
+        if ! systemctl is-active --quiet docker; then
+            echo -e "${YELLOW}⚠ Docker service not running, starting...${NC}"
+            sudo systemctl start docker
+            sudo systemctl enable docker
+        else
+            echo -e "${GREEN}✓ Docker service is running${NC}"
+        fi
 
         # Start/Restart Redis
         echo -e "${CYAN}▶ Managing Redis...${NC}"
@@ -233,7 +428,27 @@ deploy_to_server() {
         sudo systemctl enable redis
         echo -e "${GREEN}✓ Redis running${NC}"
 
-        # Start/Restart Docker (for n8n)
+        # Pull required Docker images before starting services
+        echo -e "${CYAN}▶ Pulling required Docker images...${NC}"
+
+        echo -e "${CYAN}  ▶ Pulling PostgreSQL image...${NC}"
+        docker pull postgres:14 || docker pull postgres:latest
+        echo -e "${GREEN}  ✓ PostgreSQL image ready${NC}"
+
+        echo -e "${CYAN}  ▶ Pulling n8n image...${NC}"
+        docker pull n8nio/n8n:latest || echo -e "${YELLOW}⚠ n8n image pull failed, will use cached${NC}"
+        echo -e "${GREEN}  ✓ n8n image ready${NC}"
+
+        # Verify PostgreSQL image is available
+        echo -e "${CYAN}▶ Verifying PostgreSQL image availability...${NC}"
+        if docker images | grep -q postgres; then
+            echo -e "${GREEN}✓ PostgreSQL image verified${NC}"
+        else
+            echo -e "${RED}✗ PostgreSQL image not available, cannot proceed with migrations${NC}"
+            exit 1
+        fi
+
+        # Start/Restart Docker services (for n8n)
         echo -e "${CYAN}▶ Managing Docker services...${NC}"
         if docker ps -q &>/dev/null; then
             echo -e "${CYAN}▶ Stopping existing containers...${NC}"
@@ -244,8 +459,31 @@ deploy_to_server() {
         docker-compose up -d
         echo -e "${GREEN}✓ Docker services started${NC}"
 
+        # Wait for PostgreSQL to be ready before migrations
+        echo -e "${CYAN}▶ Waiting for PostgreSQL to be ready...${NC}"
+        MAX_RETRIES=30
+        RETRY_COUNT=0
+        while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            if docker exec $(docker ps -qf "ancestor=postgres:14" 2>/dev/null || docker ps -qf "name=postgres" 2>/dev/null) pg_isready -U postgres &>/dev/null 2>&1; then
+                echo -e "${GREEN}✓ PostgreSQL is ready${NC}"
+                break
+            fi
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            echo -e "${YELLOW}  Waiting for PostgreSQL... ($RETRY_COUNT/$MAX_RETRIES)${NC}"
+            sleep 2
+        done
+
+        if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+            echo -e "${YELLOW}⚠ PostgreSQL readiness check timed out, proceeding anyway...${NC}"
+        fi
+
+        # Now run database migrations (after PostgreSQL is ready)
+        echo -e "${CYAN}▶ Running database migrations...${NC}"
+        npx prisma migrate deploy
+        echo -e "${GREEN}✓ Migrations applied${NC}"
+
         # Wait for services to be healthy
-        echo -e "${CYAN}▶ Waiting for services to be healthy...${NC}"
+        echo -e "${CYAN}▶ Waiting for all services to be healthy...${NC}"
         sleep 5
 
         # Check n8n health
@@ -255,17 +493,31 @@ deploy_to_server() {
             echo -e "${RED}✗ n8n container not running${NC}"
         fi
 
-        # Restart PM2 application
-        echo -e "${CYAN}▶ Managing PM2 application...${NC}"
+        # Restart PM2 applications (main app + worker)
+        echo -e "${CYAN}▶ Managing PM2 applications...${NC}"
+
+        # Main application
         if pm2 list | grep -q astralis; then
-            echo -e "${CYAN}▶ Restarting PM2 app...${NC}"
+            echo -e "${CYAN}▶ Restarting PM2 main app...${NC}"
             pm2 restart astralis
         else
-            echo -e "${CYAN}▶ Starting PM2 app...${NC}"
+            echo -e "${CYAN}▶ Starting PM2 main app...${NC}"
             pm2 start ecosystem.config.js
         fi
+        echo -e "${GREEN}✓ PM2 main app running${NC}"
+
+        # Worker process
+        if pm2 list | grep -q astralis-worker; then
+            echo -e "${CYAN}▶ Restarting PM2 worker...${NC}"
+            pm2 restart astralis-worker
+        else
+            echo -e "${CYAN}▶ Starting PM2 worker...${NC}"
+            pm2 start npm --name "astralis-worker" -- run worker
+        fi
+        echo -e "${GREEN}✓ PM2 worker running${NC}"
+
         pm2 save
-        echo -e "${GREEN}✓ PM2 application running${NC}"
+        echo -e "${GREEN}✓ PM2 process list saved${NC}"
 
         # Reload Caddy
         echo -e "${CYAN}▶ Reloading Caddy...${NC}"
@@ -295,8 +547,11 @@ deploy_to_server() {
         echo -n "  n8n: "
         docker ps | grep -q astralis_n8n && echo -e "${GREEN}running${NC}" || echo -e "${RED}stopped${NC}"
 
-        echo -n "  PM2: "
-        pm2 list | grep -q astralis && echo -e "${GREEN}running${NC}" || echo -e "${RED}stopped${NC}"
+        echo -n "  PM2 (app): "
+        pm2 list | grep -q "astralis " && echo -e "${GREEN}running${NC}" || echo -e "${RED}stopped${NC}"
+
+        echo -n "  PM2 (worker): "
+        pm2 list | grep -q "astralis-worker" && echo -e "${GREEN}running${NC}" || echo -e "${RED}stopped${NC}"
 
         echo -n "  Caddy: "
         systemctl is-active caddy && echo -e "${GREEN}active${NC}" || echo -e "${RED}inactive${NC}"
@@ -366,6 +621,9 @@ main() {
 
     preflight_checks
 
+    # Sync environment file first
+    sync_env_file
+
     # Confirm deployment
     echo ""
     confirm "Deploy to $ENVIRONMENT environment on $SERVER_HOST?"
@@ -373,11 +631,11 @@ main() {
     # Execute deployment steps
     local_build
 
-    if [ -n "$COMMIT_MESSAGE" ]; then
-        git_operations
-    else
-        print_warning "Skipping git operations (no commit message provided)"
-    fi
+    # Git operations (auto-generates commit message if not provided)
+    git_operations
+
+    # Sync build artifacts to server (no server-side build)
+    sync_build_to_server
 
     deploy_to_server
     post_deployment

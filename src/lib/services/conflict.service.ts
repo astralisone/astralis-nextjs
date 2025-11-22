@@ -11,6 +11,21 @@
 
 import { prisma } from '@/lib/prisma';
 import { addMinutes, startOfDay, endOfDay, parseISO } from 'date-fns';
+import { DayOfWeek } from '@prisma/client';
+
+/**
+ * Maps JavaScript Date.getDay() (0=Sunday, 1=Monday, ..., 6=Saturday)
+ * to Prisma DayOfWeek enum
+ */
+const dayOfWeekMap: DayOfWeek[] = [
+  DayOfWeek.SUNDAY,
+  DayOfWeek.MONDAY,
+  DayOfWeek.TUESDAY,
+  DayOfWeek.WEDNESDAY,
+  DayOfWeek.THURSDAY,
+  DayOfWeek.FRIDAY,
+  DayOfWeek.SATURDAY,
+];
 
 /**
  * Type definitions
@@ -32,7 +47,7 @@ export interface ConflictDetail {
 }
 
 export interface AvailabilityIssue {
-  dayOfWeek: number;
+  dayOfWeek: DayOfWeek | number;
   message: string;
   affectedTime: string;
 }
@@ -97,7 +112,8 @@ export async function detectConflicts(
     }
 
     // Check availability rules
-    const dayOfWeek = startTime.getDay();
+    const dayIndex = startTime.getDay();
+    const dayOfWeek = dayOfWeekMap[dayIndex];
     const startTimeStr = `${startTime.getHours().toString().padStart(2, '0')}:${startTime.getMinutes().toString().padStart(2, '0')}`;
     const endTimeStr = `${endTime.getHours().toString().padStart(2, '0')}:${endTime.getMinutes().toString().padStart(2, '0')}`;
 
@@ -112,7 +128,7 @@ export async function detectConflicts(
     let isWithinAvailableHours = false;
 
     for (const rule of availabilityRules) {
-      if (rule.isAvailable) {
+      if (rule.isActive) {
         // Check if proposed time falls within this availability window
         if (startTimeStr >= rule.startTime && endTimeStr <= rule.endTime) {
           isWithinAvailableHours = true;
@@ -135,7 +151,7 @@ export async function detectConflicts(
     }
 
     // If there are available hour rules and time is not within them
-    const hasAvailabilityRules = availabilityRules.some(r => r.isAvailable);
+    const hasAvailabilityRules = availabilityRules.some(r => r.isActive);
     if (hasAvailabilityRules && !isWithinAvailableHours) {
       availabilityIssues.push({
         dayOfWeek,
@@ -344,7 +360,8 @@ export async function findAlternativeSlots(
   date: Date
 ): Promise<TimeSlot[]> {
   try {
-    const dayOfWeek = date.getDay();
+    const dayIndex = date.getDay();
+    const dayOfWeek = dayOfWeekMap[dayIndex];
     const dateStart = startOfDay(date);
     const dateEnd = endOfDay(date);
 
@@ -353,7 +370,7 @@ export async function findAlternativeSlots(
       where: {
         userId,
         dayOfWeek,
-        isAvailable: true,
+        isActive: true,
       },
       orderBy: {
         startTime: 'asc',
