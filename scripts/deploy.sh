@@ -418,14 +418,15 @@ deploy_to_server() {
 
         # Start/Restart Redis
         echo -e "${CYAN}▶ Managing Redis...${NC}"
-        if systemctl is-active --quiet redis; then
+        if systemctl is-active --quiet redis || systemctl is-active --quiet redis-server; then
             echo -e "${YELLOW}⚠ Redis already running, restarting...${NC}"
-            sudo systemctl restart redis
+            sudo systemctl restart redis 2>/dev/null || sudo systemctl restart redis-server 2>/dev/null || echo "Redis restart skipped"
         else
             echo -e "${CYAN}▶ Starting Redis...${NC}"
-            sudo systemctl start redis
+            sudo systemctl start redis 2>/dev/null || sudo systemctl start redis-server 2>/dev/null
         fi
-        sudo systemctl enable redis
+        # Enable may fail on linked units - that's ok
+        sudo systemctl enable redis 2>/dev/null || sudo systemctl enable redis-server 2>/dev/null || true
         echo -e "${GREEN}✓ Redis running${NC}"
 
         # Pull required Docker images before starting services
