@@ -347,7 +347,7 @@ sync_build_to_server() {
     print_step "Syncing config files to server..."
     rsync -avz \
         -e "ssh -i $SSH_KEY" \
-        next.config.mjs tsconfig.json ecosystem.config.js docker-compose.yml \
+        next.config.mjs tsconfig.json ecosystem.config.js docker-compose.prod.yml \
         "$SERVER_USER@$SERVER_HOST:$SERVER_PATH/"
     print_success "Config files synced"
 
@@ -465,7 +465,7 @@ deploy_to_server() {
             exit 1
         fi
 
-        # Start/Restart Docker services (for n8n)
+        # Start/Restart Docker services (postgres only - PM2 manages app)
         echo -e "${CYAN}▶ Managing Docker services...${NC}"
 
         # Use docker compose (plugin) or docker-compose (standalone)
@@ -475,13 +475,16 @@ deploy_to_server() {
             DOCKER_COMPOSE="docker-compose"
         fi
 
+        # Use production docker-compose file (postgres only)
+        COMPOSE_FILE="-f docker-compose.prod.yml"
+
         if docker ps -q &>/dev/null; then
             echo -e "${CYAN}▶ Stopping existing containers...${NC}"
-            $DOCKER_COMPOSE down || echo -e "${YELLOW}⚠ No containers to stop${NC}"
+            $DOCKER_COMPOSE $COMPOSE_FILE down || echo -e "${YELLOW}⚠ No containers to stop${NC}"
         fi
 
-        echo -e "${CYAN}▶ Starting Docker services (n8n, postgres)...${NC}"
-        $DOCKER_COMPOSE up -d
+        echo -e "${CYAN}▶ Starting Docker services (postgres)...${NC}"
+        $DOCKER_COMPOSE $COMPOSE_FILE up -d
         echo -e "${GREEN}✓ Docker services started${NC}"
 
         # Wait for PostgreSQL to be ready before migrations
@@ -489,7 +492,7 @@ deploy_to_server() {
         MAX_RETRIES=30
         RETRY_COUNT=0
         while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-            if docker exec $(docker ps -qf "ancestor=postgres:14" 2>/dev/null || docker ps -qf "name=postgres" 2>/dev/null) pg_isready -U postgres &>/dev/null 2>&1; then
+            if docker exec astralis_postgres pg_isready -U gregorystarr -d astralis &>/dev/null 2>&1; then
                 echo -e "${GREEN}✓ PostgreSQL is ready${NC}"
                 break
             fi
