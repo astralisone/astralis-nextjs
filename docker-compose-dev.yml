@@ -1,0 +1,43 @@
+# Development Docker Compose
+# Simplified configuration for local development
+# Uses host PostgreSQL instead of containerized database
+
+services:
+  # n8n Workflow Automation
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: astralis_n8n_dev
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - N8N_HOST=localhost
+      - WEBHOOK_URL=http://localhost:5678
+      - N8N_BASIC_AUTH_ACTIVE=false
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:-changeme_dev_encryption_key}
+      # Use host database (Mac: host.docker.internal)
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=host.docker.internal
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=astralis
+      - DB_POSTGRESDB_USER=gregorystarr
+      - DB_POSTGRESDB_PASSWORD=
+      - DB_POSTGRESDB_SCHEMA=n8n
+      - GENERIC_TIMEZONE=America/New_York
+      - TZ=America/New_York
+    volumes:
+      - n8n-dev-data:/home/node/.n8n
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5678/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  n8n-dev-data:
+    driver: local

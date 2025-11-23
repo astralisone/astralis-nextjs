@@ -1,0 +1,90 @@
+{
+  "name": "AI Intake & Lead Routing",
+  "nodes": [
+    {
+      "id": "webhook",
+      "name": "Intake Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "path": "astralisops/intake",
+        "httpMethod": "POST"
+      }
+    },
+    {
+      "id": "ai_classify",
+      "name": "Classify Request",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [
+        500,
+        300
+      ],
+      "parameters": {
+        "mode": "chat",
+        "operation": "chat",
+        "systemMessage": "You classify inbound business requests into category, intent, urgency, and a short summary."
+      }
+    },
+    {
+      "id": "switch_route",
+      "name": "Route by Category",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        750,
+        300
+      ],
+      "parameters": {
+        "property": "category"
+      }
+    },
+    {
+      "id": "create_item",
+      "name": "Create Pipeline Item",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://your-astralisops-domain.com/api/pipelines/{{ $json.pipelineId }}/items"
+      }
+    }
+  ],
+  "connections": {
+    "Intake Webhook": {
+      "main": [
+        {
+          "node": "Classify Request",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    },
+    "Classify Request": {
+      "main": [
+        {
+          "node": "Route by Category",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    },
+    "Route by Category": {
+      "main": [
+        {
+          "node": "Create Pipeline Item",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    }
+  }
+}

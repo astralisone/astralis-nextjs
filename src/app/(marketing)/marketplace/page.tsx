@@ -1,331 +1,335 @@
-"use client"
+/**
+ * Marketplace Page - Astralis Specification Section 4.5
+ *
+ * Structure:
+ * 1. Hero Section - Dark navy background
+ * 2. Category Filter Row - Filter by product type
+ * 3. Product Grid - 3 columns, product cards with pricing
+ *
+ * Products (per spec Section 6):
+ * - Enterprise Automation Toolkit
+ * - React Enterprise Component Pack
+ * - Nx Monorepo Starter
+ * - AI Document Console
+ * - Agent Blueprint Pack
+ *
+ * Pricing (per spec Section 7): $29-$299
+ *
+ * Design:
+ * - Light theme with white backgrounds
+ * - Hero with dark navy background
+ * - 3-column grid on desktop
+ * - Dark text on white backgrounds (text-astralis-navy, text-slate-700)
+ */
 
-import { useState, useEffect, useCallback } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { Loader2, Grid, List, SlidersHorizontal } from "lucide-react"
-import { ProductGrid } from "@/components/marketplace/product-grid"
-import { HorizontalFilters, HorizontalFilterState } from "@/components/marketplace/horizontal-filters"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { MarketplaceItem, ConsolidatedProduct } from "@/types/marketplace"
-import { seoConfigs } from "@/hooks/useSEO"
-import api from "@/lib/axios"
-import { useToast } from "@/components/ui/use-toast"
-import { Metadata } from "next"
+'use client';
 
-interface ConsolidatedMarketplaceResponse {
-  items: ConsolidatedProduct[]
-  pagination: {
-    total: number
-    page: number
-    limit: number
-    totalPages: number
-    hasNextPage: boolean
-    hasPrevPage: boolean
-  }
+import Image from 'next/image';
+import { Hero } from '@/components/sections';
+import { Button } from '@/components/ui/button';
+import { Package, Code, Layers, FileText, Bot, Sparkles, Filter, Star } from 'lucide-react';
+import { useState } from 'react';
+
+// Product types
+type ProductCategory = 'all' | 'toolkit' | 'components' | 'templates' | 'ai';
+
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  category: ProductCategory;
+  icon: React.ReactNode;
+  features: string[];
+  rating: number;
+  reviews: number;
 }
 
-interface MarketplaceResponse {
-  items: MarketplaceItem[]
-  pagination: {
-    total: number
-    page: number
-    limit: number
-    totalPages: number
-    hasNextPage: boolean
-    hasPrevPage: boolean
-  }
-}
+// Marketplace products per spec Section 6
+const products: Product[] = [
+  {
+    id: 'enterprise-automation-toolkit',
+    name: 'Complete Automation System',
+    description: 'Ready-to-use automation system for your business. Schedule tasks, connect your tools, and monitor everything from one dashboard. Just install and customize for your needs.',
+    price: 299,
+    category: 'toolkit',
+    icon: <Package className="w-8 h-8 text-astralis-blue" />,
+    features: ['Workflow Builder', 'Task Scheduling', 'Performance Dashboard', 'Connect Your Apps'],
+    rating: 4.9,
+    reviews: 127
+  },
+  {
+    id: 'react-enterprise-component-pack',
+    name: 'Website Building Blocks',
+    description: 'Professional website components ready to use. Over 50 pre-built pieces (buttons, forms, menus, etc.) you can customize for your site. Saves months of design work.',
+    price: 199,
+    category: 'components',
+    icon: <Code className="w-8 h-8 text-astralis-blue" />,
+    features: ['50+ Ready Components', 'Easy to Customize', 'Full Documentation', 'Accessible Design'],
+    rating: 4.8,
+    reviews: 203
+  },
+  {
+    id: 'nx-monorepo-starter',
+    name: 'Multi-App Project Template',
+    description: 'Pre-configured project setup for managing multiple applications together. Includes automated testing, deployment tools, and shared code libraries. Save weeks of setup time.',
+    price: 149,
+    category: 'templates',
+    icon: <Layers className="w-8 h-8 text-astralis-blue" />,
+    features: ['Multi-App Structure', 'Auto-Deploy Setup', 'Shared Code Libraries', 'Time-Saving Scripts'],
+    rating: 4.7,
+    reviews: 89
+  },
+  {
+    id: 'ai-document-console',
+    name: 'Smart Document Organizer',
+    description: 'AI-powered system that reads, sorts, and organizes your documents automatically. Upload PDFs or scans and it extracts the information you need.',
+    price: 249,
+    category: 'ai',
+    icon: <FileText className="w-8 h-8 text-astralis-blue" />,
+    features: ['Auto-Sort Documents', 'Extract Text & Data', 'Read Scanned Files', 'Export to Your Systems'],
+    rating: 4.9,
+    reviews: 156
+  },
+  {
+    id: 'agent-blueprint-pack',
+    name: 'Pre-Built AI Assistants',
+    description: 'Ready-made AI helpers for common business tasks. These pre-configured AI assistants can handle customer questions, process data, and automate workflows.',
+    price: 279,
+    category: 'ai',
+    icon: <Bot className="w-8 h-8 text-astralis-blue" />,
+    features: ['Q&A Assistants', 'Task Automation', 'Memory & Learning', 'Easy Integration'],
+    rating: 5.0,
+    reviews: 94
+  },
+  {
+    id: 'design-system-starter',
+    name: 'Professional Design Kit',
+    description: 'Complete design system with color schemes, fonts, and ready-made components. Includes Figma design files so you can customize everything to match your brand.',
+    price: 99,
+    category: 'components',
+    icon: <Sparkles className="w-8 h-8 text-astralis-blue" />,
+    features: ['Color & Font System', 'Component Designs', 'Figma Source Files', 'Usage Guidelines'],
+    rating: 4.6,
+    reviews: 312
+  },
+];
+
+// Categories for filtering
+const categories = [
+  { id: 'all' as const, label: 'All Products' },
+  { id: 'toolkit' as const, label: 'Toolkits' },
+  { id: 'components' as const, label: 'Components' },
+  { id: 'templates' as const, label: 'Templates' },
+  { id: 'ai' as const, label: 'AI & ML' },
+];
 
 export default function MarketplacePage() {
-  const [products, setProducts] = useState<ConsolidatedProduct[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [totalItems, setTotalItems] = useState(0)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [filters, setFilters] = useState<HorizontalFilterState>({
-    search: '',
-    category: '',
-    itemType: '',
-    sortBy: 'createdAt',
-    sortOrder: 'desc'
-  })
-  const { toast } = useToast()
+  const [selectedCategory, setSelectedCategory] = useState<ProductCategory>('all');
 
-  // Fetch products with current filters
-  const fetchProducts = useCallback(async (page = 1, newFilters = filters) => {
-    console.log('🔄 fetchProducts called with:', { page, newFilters })
-    try {
-      setLoading(true)
-      setError(null)
-
-      const params = new URLSearchParams()
-      params.set('page', page.toString())
-      params.set('limit', '12')
-
-      if (newFilters.search) params.set('search', newFilters.search)
-      if (newFilters.category) params.set('category', newFilters.category)
-      if (newFilters.itemType) params.set('itemType', newFilters.itemType)
-      params.set('sortBy', newFilters.sortBy)
-      params.set('sortOrder', newFilters.sortOrder)
-
-      console.log('🌐 Making API call to:', `/marketplace/consolidated?${params.toString()}`)
-      const response = await api.get(`/marketplace/consolidated?${params.toString()}`)
-
-      if (response.data.status === 'success') {
-        const data: ConsolidatedMarketplaceResponse = response.data.data
-        console.log('✅ Consolidated Marketplace API Success:', {
-          itemsReceived: data.items?.length,
-          total: data.pagination.total,
-          firstFewNames: data.items?.slice(0, 3).map(item => item.baseProductName)
-        })
-        setProducts(data.items || [])
-        setTotalItems(data.pagination.total || 0)
-        setCurrentPage(data.pagination.page || 1)
-        setTotalPages(data.pagination.totalPages || 1)
-      } else {
-        throw new Error(response.data.message || 'Failed to fetch products')
-      }
-    } catch (err: any) {
-      console.error('❌ Error fetching products:', err)
-      setError(err.message || 'Failed to load products')
-      toast({
-        title: "Error",
-        description: "Failed to load products. Please try again.",
-        variant: "destructive"
-      })
-    } finally {
-      setLoading(false)
-    }
-  }, [filters, toast])
-
-  // Handle filter changes
-  const handleFiltersChange = useCallback((newFilters: HorizontalFilterState) => {
-    setFilters(newFilters)
-    setCurrentPage(1) // Reset to first page
-    fetchProducts(1, newFilters)
-  }, [fetchProducts])
-
-  // Handle pagination
-  const handlePageChange = useCallback((page: number) => {
-    setCurrentPage(page)
-    fetchProducts(page)
-    // Smooth scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }, [fetchProducts])
-
-  // Initial load
-  useEffect(() => {
-    console.log('🚀 MarketplacePage useEffect - initial load')
-    fetchProducts()
-  }, [fetchProducts])
-
+  // Filter products based on category
+  const filteredProducts = selectedCategory === 'all'
+    ? products
+    : products.filter(p => p.category === selectedCategory);
 
   return (
-    <>
-      <div className="min-h-screen bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-950">
+    <main className="min-h-screen bg-white">
       {/* Hero Section */}
-      <div className="glass-card border-0 border-b border-border/20">
-        <div className="container mx-auto px-4 py-16 sm:py-20">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="max-w-4xl mx-auto text-center"
-          >
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6">
-              <span className="bg-gradient-to-r from-white via-gray-200 to-white bg-clip-text text-transparent">
-                Digital
-              </span>
-              <span className="bg-gradient-to-r from-primary-400 to-blue-400 bg-clip-text text-transparent">
-                Marketplace
-              </span>
-            </h1>
-            <p className="text-lg sm:text-xl text-muted-foreground mb-8 leading-relaxed">
-              Explore our curated collection of digital products, design assets, and professional services.
-              Everything you need to elevate your projects.
-            </p>
-
-            {/* Quick Stats */}
-            <div className="flex flex-wrap justify-center gap-6 sm:gap-8">
-              <div className="glass-card p-4 sm:p-6 text-center">
-                <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary-400 to-blue-400 bg-clip-text text-transparent">
-                  {totalItems}
-                </div>
-                <div className="text-sm text-muted-foreground">Products</div>
-              </div>
-              <div className="glass-card p-4 sm:p-6 text-center">
-                <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
-                  24/7
-                </div>
-                <div className="text-sm text-muted-foreground">Support</div>
-              </div>
-              <div className="glass-card p-4 sm:p-6 text-center">
-                <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
-                  Instant
-                </div>
-                <div className="text-sm text-muted-foreground">Delivery</div>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </div>
-
-      {/* Horizontal Filters Bar */}
-      <HorizontalFilters
-        onFiltersChange={handleFiltersChange}
-        totalItems={totalItems}
+      <Hero
+        headline="Enterprise-Grade Digital Assets"
+        subheadline="Marketplace"
+        description="Accelerate your development with production-ready templates, components, and automation tools. Built by experts, validated in production."
+        variant="dark"
+        className="bg-astralis-navy"
+        textAlign="center"
+        textColumnWidth="two-thirds"
+        primaryButton={{
+          text: "Browse All Assets",
+          href: "#products"
+        }}
       />
 
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-8 sm:py-12">
-        <div className="space-y-6">
-          {/* View Mode Toggle */}
-          <div className="flex justify-end">
-            <div className="glass-card p-1 flex">
-              <Button
-                variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('grid')}
-                className="px-3"
-              >
-                <Grid className="w-4 h-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'list' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('list')}
-                className="px-3"
-              >
-                <List className="w-4 h-4" />
-              </Button>
-            </div>
+      {/* Category Filter Section - Dark Background */}
+      <section className="w-full px-6 py-12 md:px-12 lg:px-20 bg-gradient-to-b from-astralis-navy to-slate-900 border-b border-slate-700">
+        <div className="mx-auto max-w-[1280px]">
+          <div className="flex items-center gap-3 mb-6">
+            <Filter className="w-5 h-5 text-astralis-blue" />
+            <h2 className="text-xl font-semibold text-white">Filter by Category</h2>
           </div>
 
-            {/* Loading State */}
-            <AnimatePresence mode="wait">
-              {loading ? (
-                <motion.div
-                  key="loading"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex flex-col items-center justify-center py-16 space-y-4"
-                >
-                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                  <p className="text-muted-foreground">Loading products...</p>
-                </motion.div>
-              ) : error ? (
-                <motion.div
-                  key="error"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className="glass-card p-8 text-center border-red-500/20 bg-red-500/5"
-                >
-                  <p className="text-red-400 mb-4">{error}</p>
-                  <Button
-                    onClick={() => fetchProducts(currentPage)}
-                    variant="outline"
-                    className="glass-button"
-                  >
-                    Try Again
-                  </Button>
-                </motion.div>
-              ) : products.length === 0 ? (
-                <motion.div
-                  key="empty"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className="glass-card p-12 text-center"
-                >
-                  <SlidersHorizontal className="w-16 h-16 mx-auto mb-6 text-muted-foreground/50" />
-                  <h3 className="text-xl font-semibold mb-2">No products found</h3>
-                  <p className="text-muted-foreground mb-6">
-                    Try adjusting your filters or search terms to find what you're looking for.
-                  </p>
-                  <Button
-                    onClick={() => handleFiltersChange({
-                      search: '',
-                      category: '',
-                      itemType: '',
-                      sortBy: 'createdAt',
-                      sortOrder: 'desc'
-                    })}
-                    variant="outline"
-                    className="glass-button"
-                  >
-                    Clear All Filters
-                  </Button>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="products"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                >
-                  <ProductGrid
-                    products={products}
-                    viewMode={viewMode}
-                    loading={loading}
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Pagination */}
-            {!loading && !error && totalPages > 1 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex justify-center mt-12"
+          <div className="flex flex-wrap gap-3 md:gap-4">
+            {categories.map((category) => (
+              <button
+                key={category.id}
+                onClick={() => setSelectedCategory(category.id)}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-150 ${
+                  selectedCategory === category.id
+                    ? 'bg-astralis-blue text-white shadow-lg shadow-astralis-blue/20'
+                    : 'bg-slate-800/50 text-slate-300 border border-slate-700 hover:border-astralis-blue hover:text-white hover:bg-slate-800'
+                }`}
               >
-                <div className="glass-card p-2 flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className="glass-button"
-                  >
-                    Previous
-                  </Button>
-
-                  {[...Array(Math.min(5, totalPages))].map((_, i) => {
-                    const page = Math.max(1, currentPage - 2) + i
-                    if (page > totalPages) return null
-
-                    return (
-                      <Button
-                        key={page}
-                        variant={page === currentPage ? 'default' : 'ghost'}
-                        size="sm"
-                        onClick={() => handlePageChange(page)}
-                        className={page === currentPage ? '' : 'glass-button'}
-                      >
-                        {page}
-                      </Button>
-                    )
-                  })}
-
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    className="glass-button"
-                  >
-                    Next
-                  </Button>
-                </div>
-              </motion.div>
-            )}
+                {category.label}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
-    </div>
-    </>
-  )
+      </section>
+
+      {/* Products Grid Section */}
+      <section id="products" className="w-full px-6 py-20 md:px-12 md:py-24 lg:px-20 lg:py-32 bg-white relative overflow-hidden">
+        {/* Background Image with Overlay */}
+        <div className="absolute inset-0 opacity-3">
+          <Image
+            src="https://images.unsplash.com/photo-1563986768609-322da13575f3?w=1920&q=80"
+            alt="Digital marketplace"
+            fill
+            className="object-cover"
+          />
+        </div>
+        <div className="mx-auto max-w-[1280px] relative z-10">
+          {/* Section Header */}
+          <div className="text-center mb-16 space-y-4">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-astralis-navy tracking-tight">
+              {selectedCategory === 'all' ? 'All Products' : categories.find(c => c.id === selectedCategory)?.label}
+            </h2>
+            <p className="text-base md:text-lg text-slate-700 max-w-2xl mx-auto leading-relaxed">
+              {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'} available
+            </p>
+          </div>
+
+          {/* Product Grid - 3 columns */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+            {filteredProducts.map((product) => (
+              <div
+                key={product.id}
+                className="bg-white border border-slate-200 rounded-xl shadow-lg hover:shadow-2xl hover:border-astralis-blue/30 hover:scale-[1.02] transition-all duration-200 overflow-hidden group"
+              >
+                {/* Card Content */}
+                <div className="p-6 md:p-8">
+                  {/* Icon */}
+                  <div className="mb-6 flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-50 to-slate-50 border border-slate-200 rounded-lg group-hover:from-astralis-blue/10 group-hover:to-blue-50 group-hover:border-astralis-blue/30 transition-all duration-200">
+                    {product.icon}
+                  </div>
+
+                  {/* Product Name */}
+                  <h3 className="text-xl md:text-2xl font-semibold text-astralis-navy mb-3 group-hover:text-astralis-blue transition-colors duration-200">
+                    {product.name}
+                  </h3>
+
+                  {/* Star Rating */}
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="flex items-center gap-0.5">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-4 h-4 ${
+                            i < Math.floor(product.rating)
+                              ? 'text-yellow-500 fill-yellow-500'
+                              : 'text-slate-300'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-sm text-slate-600">
+                      {product.rating} ({product.reviews} reviews)
+                    </span>
+                  </div>
+
+                  {/* Description */}
+                  <p className="text-base text-slate-700 leading-relaxed mb-6 min-h-[100px]">
+                    {product.description}
+                  </p>
+
+                  {/* Features List */}
+                  <ul className="space-y-3 mb-6 pb-6 border-b border-slate-200">
+                    {product.features.map((feature, index) => (
+                      <li key={index} className="flex items-center gap-2 text-sm text-slate-600">
+                        <div className="w-1.5 h-1.5 bg-astralis-blue rounded-full flex-shrink-0" />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* Price & CTA */}
+                  <div className="space-y-4">
+                    <div className="flex items-baseline gap-2">
+                      <p className="text-4xl font-bold text-astralis-navy">
+                        ${product.price}
+                      </p>
+                      <p className="text-sm text-slate-600">one-time</p>
+                    </div>
+
+                    {/* Learn More Button */}
+                    <Button
+                      variant="primary"
+                      size="default"
+                      className="w-full group-hover:shadow-lg group-hover:shadow-astralis-blue/20"
+                      asChild
+                    >
+                      <a href={`/marketplace/${product.id}`}>
+                        Learn More
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Empty State */}
+          {filteredProducts.length === 0 && (
+            <div className="text-center py-16">
+              <Package className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-slate-700 mb-2">
+                No products found
+              </h3>
+              <p className="text-slate-600 mb-6">
+                Try selecting a different category
+              </p>
+              <Button
+                variant="secondary"
+                onClick={() => setSelectedCategory('all')}
+              >
+                View All Products
+              </Button>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="w-full px-6 py-20 md:px-12 md:py-24 lg:px-20 lg:py-32 bg-gradient-to-br from-astralis-navy to-slate-900">
+        <div className="mx-auto max-w-[1280px] text-center">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-white mb-6 tracking-tight">
+            Need a Custom Solution?
+          </h2>
+          <p className="text-base md:text-lg text-slate-300 mb-8 max-w-2xl mx-auto leading-relaxed">
+            Looking for something specific? We build custom solutions tailored to your enterprise needs.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button
+              variant="primary"
+              size="lg"
+              className="bg-white text-astralis-navy hover:bg-slate-100"
+              asChild
+            >
+              <a href="/contact">
+                Contact Sales
+              </a>
+            </Button>
+            <Button
+              variant="secondary"
+              size="lg"
+              className="border-white text-white hover:bg-white/10"
+              asChild
+            >
+              <a href="/process">
+                Learn Our Process
+              </a>
+            </Button>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
 }

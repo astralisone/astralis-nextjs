@@ -1,29 +1,34 @@
-import type { Metadata } from "next";
 import "./globals.css";
-import { Providers } from "@/components/providers";
-import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
+import "../styles/effects.css";
+import { Inter } from "next/font/google";
+import type { ReactNode } from "react";
+import { Navigation } from "@/components/layout/navigation";
+import { Footer } from "@/components/layout/footer";
+import { GoogleAnalytics } from "@/components/analytics";
+import { Providers } from "./providers";
 
-// Using system fonts for build compatibility
-// Note: In production, consider using a CDN or local font files
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
 
-export const metadata: Metadata = {
-  title: "Astralis Agency",
-  description: "Premium digital agency services with dark theme design system",
+export const metadata = {
+  title: "Astralis One | AI-Powered Operations Platform",
+  description: "Automate your operations. Scale without hiring. AstralisOps centralizes intake, scheduling, document processing, and workflows into one AI-driven console.",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className="dark">
-      <head>
+    <html lang="en" className={inter.variable}>
+      <body className="min-h-screen bg-background text-foreground antialiased font-sans">
         <GoogleAnalytics />
-      </head>
-      <body className="font-sans antialiased">
         <Providers>
-          {children}
+          <div className="flex min-h-screen flex-col">
+            <Navigation />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </div>
         </Providers>
       </body>
     </html>

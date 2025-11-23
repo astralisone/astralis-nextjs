@@ -1,3 +1,0 @@
-module.exports=[427219,a=>{"use strict";function b(a){a.languages.hoon={comment:{pattern:/::.*/,greedy:!0},string:{pattern:/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/,greedy:!0},constant:/%(?:\.[ny]|[\w-]+)/,"class-name":/@(?:[a-z0-9-]*[a-z0-9])?|\*/i,function:/(?:\+[-+] {2})?(?:[a-z](?:[a-z0-9-]*[a-z0-9])?)/,keyword:/\.[\^\+\*=\?]|![><:\.=\?!]|=[>|:,\.\-\^<+;/~\*\?]|\?[>|:\.\-\^<\+&~=@!]|\|[\$_%:\.\-\^~\*=@\?]|\+[|\$\+\*]|:[_\-\^\+~\*]|%[_:\.\-\^\+~\*=]|\^[|:\.\-\+&~\*=\?]|\$[|_%:<>\-\^&~@=\?]|;[:<\+;\/~\*=]|~[>|\$_%<\+\/&=\?!]|--|==/}}b.displayName="hoon",b.aliases=[],a.s(["default",()=>b])}];
-
-//# sourceMappingURL=0780a_refractor_lang_hoon_a71ac178.js.map
