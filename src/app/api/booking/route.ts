@@ -9,6 +9,12 @@ import {
 } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
 import { detectConflicts } from "@/lib/services/conflict.service";
+import { getEventBus, getAgentInstance } from "@/lib/agent";
+
+// Extend global type to include our custom property
+declare global {
+  var agentSystemInitialized: boolean | undefined;
+}
 
 /**
  * Parse time string (e.g., "09:00 AM", "02:30 PM") to 24-hour format hours and minutes
@@ -349,6 +355,68 @@ export async function POST(req: NextRequest) {
 
           intakeRequestId = intakeRequest.id;
           console.log(`[Booking] Intake request created: ${intakeRequest.id} for booking ${bookingId}`);
+
+          // Emit intake:created event to trigger orchestration agent
+          const eventBus = getEventBus();
+          await eventBus.emit('intake:created', {
+            id: intakeRequest.id,
+            source: 'api',
+            timestamp: new Date(),
+            payload: {
+              intakeId: intakeRequest.id,
+              type: 'booking_request',
+              data: {
+                title: intakeRequest.title,
+                description: intakeRequest.description,
+                source: intakeRequest.source,
+                status: intakeRequest.status,
+                priority: intakeRequest.priority,
+                requestData: intakeRequest.requestData,
+              },
+              contactInfo: {
+                email: (intakeRequest.requestData as any)?.email,
+                name: (intakeRequest.requestData as any)?.name,
+                phone: (intakeRequest.requestData as any)?.phone,
+              },
+            },
+          });
+
+          // Ensure agent is running for this organization (if system is initialized)
+          try {
+            const agent = getAgentInstance(intakeRequest.orgId);
+            if (!agent.isActive()) {
+              agent.start();
+            }
+          } catch (agentError) {
+            console.log('Agent not available for booking, attempting to initialize system...');
+            // Try to initialize the agent system if not already done
+            if (!globalThis.agentSystemInitialized) {
+              try {
+                const { initializeAgentSystem } = await import('@/lib/agent');
+                const hasClaudeKey = !!process.env.ANTHROPIC_API_KEY;
+                const hasOpenAIKey = !!process.env.OPENAI_API_KEY;
+
+                if (hasClaudeKey || hasOpenAIKey) {
+                  await initializeAgentSystem({
+                    enableWebhooks: true,
+                    enableEmail: true,
+                    enableDBTriggers: true,
+                    enableWorkerEvents: true,
+                  });
+                  globalThis.agentSystemInitialized = true;
+                  console.log('✅ Agent system initialized during booking processing');
+
+                  // Now try to get the agent again
+                  const agent = getAgentInstance(intakeRequest.orgId);
+                  if (!agent.isActive()) {
+                    agent.start();
+                  }
+                }
+              } catch (initError) {
+                console.log('Agent system initialization failed:', initError instanceof Error ? initError.message : String(initError));
+              }
+            }
+          }
         } else {
           console.error(`[Booking] Organization not found: ${DEFAULT_ORG_ID}`);
         }
