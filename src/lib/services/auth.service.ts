@@ -75,12 +75,18 @@ export class AuthService {
       return { user, org, verificationToken };
     });
 
-    // Send verification email
-    await sendVerificationEmail(email, verificationToken);
+   // Send verification email (best-effort)
+    try {
+      await sendVerificationEmail(email, verificationToken);
+    } catch (err) {
+      console.error('[AuthService.signUp] Failed to send verification email:', err);
+      // Do NOT throw – account is created, email is optional side-effect
+      // TODO: throw an error
+    }
 
     return {
       success: true,
-      message: 'Account created. Please check your email to verify your account.',
+      message: 'Account created. If email delivery is delayed, you can request a new verification link from the app.',
       userId: result.user.id,
     };
   }
