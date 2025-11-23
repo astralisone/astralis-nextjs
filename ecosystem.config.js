@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: 'astralis',
+      name: 'astralis-nextjs',
       script: 'npm',
       args: 'run start',
       cwd: '/home/deploy/astralis-nextjs',
