@@ -2,8 +2,7 @@ import { useCallback } from 'react';
 import { event, trackPurchase, trackAuditBooking } from '@/lib/analytics/gtag';
 
 /**
- * Custom hook for tracking analytics events
- * Provides convenient wrappers for common tracking scenarios
+ * Custom hook for convenient Google Analytics event tracking
  */
 export function useAnalytics() {
   /**
@@ -14,7 +13,7 @@ export function useAnalytics() {
   }, []);
 
   /**
-   * Track a purchase conversion
+   * Track an e-commerce purchase
    */
   const trackPurchaseEvent = useCallback((orderData: {
     id: string;
@@ -26,39 +25,39 @@ export function useAnalytics() {
   }, []);
 
   /**
-   * Track audit booking completion
+   * Track an audit booking
    */
   const trackAuditBookingEvent = useCallback((auditType: string) => {
     trackAuditBooking(auditType);
   }, []);
 
   /**
-   * Track form submission
+   * Track a form submission
    */
-  const trackFormSubmit = useCallback((formName: string, additionalData?: Record<string, any>) => {
+  const trackFormSubmit = useCallback((formName: string, parameters?: Record<string, any>) => {
     event('form_submit', {
       form_name: formName,
-      ...additionalData,
+      ...parameters,
     });
   }, []);
 
   /**
-   * Track button click
+   * Track a button click
    */
-  const trackButtonClick = useCallback((buttonName: string, additionalData?: Record<string, any>) => {
+  const trackButtonClick = useCallback((buttonName: string, parameters?: Record<string, any>) => {
     event('button_click', {
       button_name: buttonName,
-      ...additionalData,
+      ...parameters,
     });
   }, []);
 
   /**
-   * Track link click
+   * Track a link click
    */
-  const trackLinkClick = useCallback((linkUrl: string, linkText?: string) => {
+  const trackLinkClick = useCallback((linkUrl: string, parameters?: Record<string, any>) => {
     event('link_click', {
       link_url: linkUrl,
-      link_text: linkText,
+      ...parameters,
     });
   }, []);
 

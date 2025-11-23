@@ -1,0 +1,26 @@
+# Production docker-compose - Database services only
+# App and worker are managed by PM2 outside Docker
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:14
+    container_name: astralis_postgres
+    restart: unless-stopped
+    ports:
+      - "5433:5432"  # Map to 5433 to avoid conflicts
+    environment:
+      POSTGRES_DB: astralis
+      POSTGRES_USER: gregorystarr
+      POSTGRES_PASSWORD: p05tgr355P455!
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gregorystarr -d astralis"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-data:
+    driver: local

@@ -1,8 +1,0 @@
-__turbopack_load_page_chunks__("/onboarding", [
-  "static/chunks/963ec5c91fa160ad.js",
-  "static/chunks/ef101e870dea217e.js",
-  "static/chunks/c033c8b70096924d.js",
-  "static/chunks/6f330500b8ae44f2.js",
-  "static/chunks/8173c68536de6bcf.js",
-  "static/chunks/turbopack-8bd159d7666ae604.js"
-])

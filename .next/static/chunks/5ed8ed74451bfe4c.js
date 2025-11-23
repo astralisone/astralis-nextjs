@@ -1,1 +1,0 @@
-(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,493109,s=>{"use strict";function t(s){s.languages.csv={value:/[^\r\n,"]+|"(?:[^"]|"")*"(?!")/,punctuation:/,/}}t.displayName="csv",t.aliases=[],s.s(["default",()=>t])}]);

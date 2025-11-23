@@ -1,3 +1,0 @@
-module.exports=[20053,a=>{"use strict";function b(a){a.languages.matlab={comment:[/%\{[\s\S]*?\}%/,/%.+/],string:{pattern:/\B'(?:''|[^'\r\n])*'/,greedy:!0},number:/(?:\b\d+(?:\.\d*)?|\B\.\d+)(?:[eE][+-]?\d+)?(?:[ij])?|\b[ij]\b/,keyword:/\b(?:NaN|break|case|catch|continue|else|elseif|end|for|function|if|inf|otherwise|parfor|pause|pi|return|switch|try|while)\b/,function:/\b(?!\d)\w+(?=\s*\()/,operator:/\.?[*^\/\\']|[+\-:@]|[<>=~]=?|&&?|\|\|?/,punctuation:/\.{3}|[.,;\[\](){}!]/}}b.displayName="matlab",b.aliases=[],a.s(["default",()=>b])}];
-
-//# sourceMappingURL=0780a_refractor_lang_matlab_a36732d3.js.map
