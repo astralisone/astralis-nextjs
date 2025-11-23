@@ -656,10 +656,10 @@ export class ClaudeClient extends BaseLLMClient implements ILLMClient {
   /**
    * Extract retry-after header from error if available.
    */
-  private extractRetryAfter(error: Anthropic.APIError): number | undefined {
+  private extractRetryAfter(error: InstanceType<typeof Anthropic.APIError>): number | undefined {
     const headers = error.headers;
-    if (headers) {
-      const retryAfter = headers['retry-after'];
+    if (headers && typeof headers.get === 'function') {
+      const retryAfter = headers.get('retry-after');
       if (retryAfter) {
         const seconds = parseInt(retryAfter, 10);
         if (!isNaN(seconds)) {
