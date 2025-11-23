@@ -3,6 +3,12 @@ import crypto from 'crypto';
 import { prisma } from '@/lib/prisma';
 import { IntakeSource, IntakeStatus } from '@prisma/client';
 import { queueIntakeRouting } from '@/workers/queues/intakeRouting.queue';
+import {
+  EmailInputHandler,
+  EmailProvider,
+  type EmailHandlerConfig,
+} from '@/lib/agent/inputs';
+import { emitAgentEvent } from '@/lib/agent/inputs';
 
 /**
  * Email Webhook Configuration
@@ -13,6 +19,7 @@ import { queueIntakeRouting } from '@/workers/queues/intakeRouting.queue';
  */
 const EMAIL_WEBHOOK_SECRET = process.env.EMAIL_WEBHOOK_SECRET || '';
 const DEFAULT_ORG_ID = process.env.DEFAULT_ORG_ID || '';
+const ENABLE_AGENT_PROCESSING = process.env.ENABLE_AGENT_EMAIL_PROCESSING === 'true';
 
 // Maximum description length for intake request
 const MAX_DESCRIPTION_LENGTH = 2000;
@@ -192,6 +199,57 @@ function parseEmailBody(text?: string, html?: string): string {
   }
 
   return '';
+}
+
+/**
+ * Process email through the orchestration agent system
+ *
+ * @param emailPayload - The email webhook payload
+ * @param orgId - Organization ID
+ */
+async function processEmailThroughAgent(
+  emailPayload: EmailWebhookPayload,
+  orgId: string
+): Promise<void> {
+  if (!ENABLE_AGENT_PROCESSING) {
+    return;
+  }
+
+  try {
+    // Create email handler with agent configuration
+    const handlerConfig: EmailHandlerConfig = {
+      orgId,
+      skipSpam: true,
+      skipBounces: true,
+      skipAutoReplies: false, // We want to track auto-replies for context
+      logger: {
+        debug: (msg, data) => console.debug(`[Email Agent] ${msg}`, data ?? ''),
+        info: (msg, data) => console.info(`[Email Agent] ${msg}`, data ?? ''),
+        warn: (msg, data) => console.warn(`[Email Agent] ${msg}`, data ?? ''),
+        error: (msg, err, data) => console.error(`[Email Agent] ${msg}`, err, data ?? ''),
+      },
+    };
+
+    const emailHandler = new EmailInputHandler(handlerConfig);
+
+    // Process email through agent handler
+    // This will emit 'email:received' event for the orchestration agent
+    const result = await emailHandler.handleInput(emailPayload);
+
+    if (result.success) {
+      console.log('[Email Webhook] Agent processing completed', {
+        correlationId: result.input.correlationId,
+        eventEmitted: result.eventEmitted,
+      });
+    } else {
+      console.warn('[Email Webhook] Agent processing failed', {
+        error: result.error?.message,
+      });
+    }
+  } catch (error) {
+    // Log but don't fail the request - agent processing is supplementary
+    console.error('[Email Webhook] Agent processing error:', error);
+  }
 }
 
 /**
@@ -420,6 +478,12 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // 10b. Process through orchestration agent (async, non-blocking)
+    // This supplements the existing queue-based routing with LLM-powered decisions
+    processEmailThroughAgent(emailPayload, org.id).catch((error) => {
+      console.error('[Email Webhook] Agent processing failed:', error);
+    });
+
     // 11. Return success response
     const processingTime = Date.now() - startTime;
     console.log(`[Email Webhook] Processed in ${processingTime}ms`);
@@ -461,7 +525,7 @@ export async function POST(req: NextRequest) {
  * Health check endpoint for email webhook.
  * Used by email providers to verify webhook URL is valid.
  */
-export async function GET(req: NextRequest) {
+export async function GET() {
   return NextResponse.json({
     success: true,
     service: 'email-webhook',
@@ -470,6 +534,8 @@ export async function GET(req: NextRequest) {
     config: {
       signatureVerification: !!EMAIL_WEBHOOK_SECRET,
       defaultOrgConfigured: !!DEFAULT_ORG_ID,
+      agentProcessingEnabled: ENABLE_AGENT_PROCESSING,
     },
+    supportedProviders: ['sendgrid', 'mailgun', 'postmark', 'generic'],
   });
 }
