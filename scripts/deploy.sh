@@ -186,97 +186,99 @@ ENDSSH
 # DEFAULT_USER_ID Setup
 ################################################################################
 
-setup_default_user_id() {
-    print_header "DEFAULT_USER_ID SETUP"
+# setup_default_user_id() {
+#     print_header "DEFAULT_USER_ID SETUP"
 
-    print_step "Setting up DEFAULT_USER_ID for booking system..."
+#     print_step "Setting up DEFAULT_USER_ID for booking system..."
 
-    # Run Node.js script on server to query database and set DEFAULT_USER_ID
-    ssh -i "$SSH_KEY" "$SERVER_USER@$SERVER_HOST" <<-'ENDSSH'
-        set -e
-        cd /home/deploy/astralis-nextjs
+#     # Run Node.js script on server to query database and set DEFAULT_USER_ID
+#     ssh -i "$SSH_KEY" "$SERVER_USER@$SERVER_HOST" <<-'ENDSSH'
+#         set -e
+#         cd /home/deploy/astralis-nextjs
 
-        # Color codes for SSH session
-        RED='\033[0;31m'
-        GREEN='\033[0;32m'
-        YELLOW='\033[0;33m'
-        NC='\033[0m'
+#         # Color codes for SSH session
+#         RED='\033[0;31m'
+#         GREEN='\033[0;32m'
+#         YELLOW='\033[0;33m'
+#         NC='\033[0m'
 
-        echo -e "${YELLOW}▶ Querying database for admin user...${NC}"
+#         echo -e "${YELLOW}▶ Querying database for admin user...${NC}"
+       
+#         # Create a temporary Node.js script to query the database
+#         cat > /tmp/setup-default-user.js << 'EOF'
 
-        # Create a temporary Node.js script to query the database
-        cat > /tmp/setup-default-user.js << 'EOF'
-const { PrismaClient } = require('@prisma/client');
+        
+# const { PrismaClient } = require('@prisma/client');
 
-const prisma = new PrismaClient();
+# const prisma = new PrismaClient();
 
-async function setupDefaultUserId() {
-  try {
-    // Find the admin user (test user created by seed)
-    const adminUser = await prisma.users.findFirst({
-      where: {
-        email: 'test@astralisone.com',
-        role: 'ADMIN',
-        isActive: true
-      }
-    });
+# async function setupDefaultUserId() {
+#   try {
+#     // Find the admin user (test user created by seed)
+#     const adminUser = await prisma.users.findFirst({
+#       where: {
+#         email: 'test@astralisone.com',
+#         role: 'ADMIN',
+#         isActive: true
+#       }
+#     });
 
-    if (!adminUser) {
-      console.error('❌ Admin user not found. Please run seed script first.');
-      process.exit(1);
-    }
+#     if (!adminUser) {
+#       console.error('❌ Admin user not found. Please run seed script first.');
+#       process.exit(1);
+#     }
 
-    console.log(`✅ Found admin user: ${adminUser.email} (ID: ${adminUser.id})`);
+#     console.log(`✅ Found admin user: ${adminUser.email} (ID: ${adminUser.id})`);
 
-    // Check if DEFAULT_USER_ID is already set
-    const fs = require('fs');
-    const path = require('path');
-    const envPath = path.join(process.cwd(), '.env');
+#     // Check if DEFAULT_USER_ID is already set
+#     const fs = require('fs');
+#     const path = require('path');
+#     const envPath = path.join(process.cwd(), '.env');
 
-    let envContent = '';
-    if (fs.existsSync(envPath)) {
-      envContent = fs.readFileSync(envPath, 'utf8');
-    }
+#     let envContent = '';
+#     if (fs.existsSync(envPath)) {
+#       envContent = fs.readFileSync(envPath, 'utf8');
+#     }
 
-    // Remove existing DEFAULT_USER_ID if present
-    envContent = envContent.replace(/^DEFAULT_USER_ID=.*$/gm, '');
+#     // Remove existing DEFAULT_USER_ID if present
+#     envContent = envContent.replace(/^DEFAULT_USER_ID=.*$/gm, '');
 
-    // Add DEFAULT_USER_ID
-    envContent = envContent.trim() + '\nDEFAULT_USER_ID=' + adminUser.id + '\n';
+#     // Add DEFAULT_USER_ID
+#     envContent = envContent.trim() + '\nDEFAULT_USER_ID=' + adminUser.id + '\n';
 
-    // Write back to .env
-    fs.writeFileSync(envPath, envContent);
+#     // Write back to .env
+#     fs.writeFileSync(envPath, envContent);
 
-    console.log('✅ DEFAULT_USER_ID set in .env file');
-    console.log(`   DEFAULT_USER_ID=${adminUser.id}`);
+#     console.log('✅ DEFAULT_USER_ID set in .env file');
+#     console.log(`   DEFAULT_USER_ID=${adminUser.id}`);
 
-  } catch (error) {
-    console.error('❌ Failed to setup DEFAULT_USER_ID:', error.message);
-    process.exit(1);
-  } finally {
-    await prisma.$disconnect();
-  }
-}
+#   } catch (error) {
+#     console.error('❌ Failed to setup DEFAULT_USER_ID:', error.message);
+#     process.exit(1);
+#   } finally {
+#     await prisma.$disconnect();
+#   }
+# }
 
-setupDefaultUserId();
-EOF
+# setupDefaultUserId();
+# EOF
 
-        # Run the script
-        node /tmp/setup-default-user.js
+#         # Run the script
+#         node /tmp/setup-default-user.js
 
-        # Clean up
-        rm -f /tmp/setup-default-user.js
+#         # Clean up
+#         rm -f /tmp/setup-default-user.js
 
-        echo -e "${GREEN}✓ DEFAULT_USER_ID setup completed${NC}"
-ENDSSH
+#         echo -e "${GREEN}✓ DEFAULT_USER_ID setup completed${NC}"
+# ENDSSH
 
-    if [ $? -ne 0 ]; then
-        print_error "DEFAULT_USER_ID setup failed"
-        confirm "Continue deployment without DEFAULT_USER_ID? (Booking features will be limited)"
-    else
-        print_success "DEFAULT_USER_ID setup completed"
-    fi
-}
+#     if [ $? -ne 0 ]; then
+#         print_error "DEFAULT_USER_ID setup failed"
+#         confirm "Continue deployment without DEFAULT_USER_ID? (Booking features will be limited)"
+#     else
+#         print_success "DEFAULT_USER_ID setup completed"
+#     fi
+# }
 
 ################################################################################
 # Pre-flight Checks
@@ -743,7 +745,7 @@ main() {
     sync_env_file
 
     # Setup DEFAULT_USER_ID after env sync
-    setup_default_user_id
+    # setup_default_user_id
 
     # Confirm deployment
     echo ""
