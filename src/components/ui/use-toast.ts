@@ -1,17 +1,22 @@
 import * as React from "react"
-import type {
-  ToastActionElement,
-  ToastProps,
-} from "@/components/ui/toast"
 
-const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 1000000
+type ToastActionElement = React.ReactElement<any>
 
-type ToasterToast = ToastProps & {
+export interface Toast {
   id: string
   title?: React.ReactNode
   description?: React.ReactNode
   action?: ToastActionElement
+  variant?: "default" | "destructive"
+}
+
+const TOAST_LIMIT = 3
+const TOAST_REMOVE_DELAY = 5000
+
+type ToasterToast = Toast & {
+  id: string
+  action?: ToastActionElement
+  onOpenChange?: (open: boolean) => void
 }
 
 const actionTypes = {
@@ -103,7 +108,9 @@ export const reducer = (state: State, action: Action): State => {
           t.id === toastId || toastId === undefined
             ? {
                 ...t,
-                open: false,
+                onOpenChange: (open: boolean) => {
+                  if (!open) addToRemoveQueue(t.id)
+                },
               }
             : t
         ),
@@ -134,9 +141,9 @@ function dispatch(action: Action) {
   })
 }
 
-type Toast = Omit<ToasterToast, "id">
+type ToastOptions = Omit<ToasterToast, "id">
 
-function toast({ ...props }: Toast) {
+function toast(options: ToastOptions) {
   const id = genId()
 
   const update = (props: ToasterToast) =>
@@ -149,17 +156,16 @@ function toast({ ...props }: Toast) {
   dispatch({
     type: "ADD_TOAST",
     toast: {
-      ...props,
+      ...options,
       id,
-      open: true,
-      onOpenChange: (open) => {
+      onOpenChange: (open: boolean) => {
         if (!open) dismiss()
       },
     },
   })
 
   return {
-    id,
+    id: id,
     dismiss,
     update,
   }

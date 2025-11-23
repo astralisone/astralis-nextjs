@@ -1,0 +1,11 @@
+{
+  "id": "document-processing-kit",
+  "name": "Document Processing Kit",
+  "version": "0.1.0",
+  "tags": [
+    "astralisops",
+    "automation"
+  ],
+  "price": 0,
+  "status": "draft"
+}

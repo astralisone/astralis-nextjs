@@ -1,0 +1,11 @@
+{
+  "id": "ai-scheduling-pack",
+  "name": "Ai Scheduling Pack",
+  "version": "0.1.0",
+  "tags": [
+    "astralisops",
+    "automation"
+  ],
+  "price": 0,
+  "status": "draft"
+}

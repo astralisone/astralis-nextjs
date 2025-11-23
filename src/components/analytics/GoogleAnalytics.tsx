@@ -1,15 +1,14 @@
 'use client';
 
 import Script from 'next/script';
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { pageview, GA_TRACKING_ID } from '@/lib/analytics/gtag';
 
 /**
- * Google Analytics component for Next.js App Router
- * Automatically tracks page views on route changes
+ * Analytics tracking logic (needs Suspense for useSearchParams)
  */
-export function GoogleAnalytics() {
+function AnalyticsTracking() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -20,6 +19,14 @@ export function GoogleAnalytics() {
     }
   }, [pathname, searchParams]);
 
+  return null;
+}
+
+/**
+ * Google Analytics component for Next.js App Router
+ * Automatically tracks page views on route changes
+ */
+export function GoogleAnalytics() {
   return (
     <>
       {/* Global Site Tag (gtag.js) - Google Analytics */}
@@ -41,6 +48,9 @@ export function GoogleAnalytics() {
           `,
         }}
       />
+      <Suspense fallback={null}>
+        <AnalyticsTracking />
+      </Suspense>
     </>
   );
 }

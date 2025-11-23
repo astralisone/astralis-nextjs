@@ -1,3 +1,0 @@
-module.exports=[336001,a=>{"use strict";function b(a){a.languages.false={comment:{pattern:/\{[^}]*\}/},string:{pattern:/"[^"]*"/,greedy:!0},"character-code":{pattern:/'(?:[^\r]|\r\n?)/,alias:"number"},"assembler-code":{pattern:/\d+`/,alias:"important"},number:/\d+/,operator:/[-!#$%&'*+,./:;=>?@\\^_`|~ßø]/,punctuation:/\[|\]/,variable:/[a-z]/,"non-standard":{pattern:/[()<BDO®]/,alias:"bold"}}}b.displayName="false",b.aliases=[],a.s(["default",()=>b])}];
-
-//# sourceMappingURL=0780a_refractor_lang_false_14c501da.js.map
