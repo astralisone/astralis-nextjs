@@ -388,7 +388,7 @@ deploy_to_server() {
 
   print_step "Connecting to server..."
 
-  ssh -i "$SSH_KEY" "$SERVER_USER@$SERVER_HOST" <<-'ENDSSH'
+  ssh -i "$SSH_KEY" "$SERVER_USER@$SERVER_HOST" 'bash -s' << 'ENDSSH'
     set -e
     echo "▶ Navigating to project directory..."
     cd /home/deploy/astralis-nextjs
