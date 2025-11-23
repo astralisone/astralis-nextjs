@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import  {PrismaClient}  from '@prisma/client';
 import { hashPassword } from '../src/lib/utils/crypto';
 
 const prisma = new PrismaClient();
