@@ -467,22 +467,40 @@ deploy_to_server() {
       exit 1
     fi
 
-    echo "▶ Managing Docker services..."
-    if docker compose version &>/dev/null; then
-      DOCKER_COMPOSE="docker compose"
-    else
-      DOCKER_COMPOSE="docker-compose"
-    fi
-    COMPOSE_FILE="-f docker-compose.prod.yml"
+   # Start/Restart Docker services (postgres only - PM2 manages app)
+        echo -e "${CYAN}▶ Managing Docker services...${NC}"
 
-    if docker ps -q &>/dev/null; then
-      echo "▶ Stopping existing containers..."
-      \$DOCKER_COMPOSE \$COMPOSE_FILE down || echo "⚠ No containers to stop"
-    fi
+        COMPOSE_FILE="-f docker-compose.prod.yml"
 
-    echo "▶ Starting Docker services (postgres)..."
-    \$DOCKER_COMPOSE \$COMPOSE_FILE up -d
-    echo "✓ Docker services started"
+        # Use docker compose plugin if available, otherwise docker-compose
+        if docker compose version &>/dev/null; then
+            echo -e "${CYAN}▶ Using 'docker compose'...${NC}"
+
+            if docker ps -q &>/dev/null; then
+                echo -e "${CYAN}▶ Stopping existing containers...${NC}"
+                docker compose $COMPOSE_FILE down || echo -e "${YELLOW}⚠ No containers to stop${NC}"
+            fi
+
+            echo -e "${CYAN}▶ Starting Docker services (postgres)...${NC}"
+            docker compose $COMPOSE_FILE up -d
+
+        elif command -v docker-compose &>/dev/null; then
+            echo -e "${CYAN}▶ Using 'docker-compose'...${NC}"
+
+            if docker ps -q &>/dev/null; then
+                echo -e "${CYAN}▶ Stopping existing containers...${NC}"
+                docker-compose $COMPOSE_FILE down || echo -e "${YELLOW}⚠ No containers to stop${NC}"
+            fi
+
+            echo -e "${CYAN}▶ Starting Docker services (postgres)...${NC}"
+            docker-compose $COMPOSE_FILE up -d
+
+        else
+            echo -e "${RED}✗ Neither 'docker compose' nor 'docker-compose' found. Cannot manage services.${NC}"
+            exit 1
+        fi
+
+        echo -e "${GREEN}✓ Docker services started${NC}"
 
     echo "▶ Waiting for PostgreSQL to be ready..."
     MAX_RETRIES=30
