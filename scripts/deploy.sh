@@ -505,15 +505,9 @@ deploy_to_server() {
     echo "▶ Waiting for PostgreSQL to be ready..."
     MAX_RETRIES=30
     RETRY_COUNT=0
-    while [ \$RETRY_COUNT -lt \$MAX_RETRIES ]; do
-      if docker exec astralis_postgres pg_isready -U gregorystarr -d astralis &>/dev/null 2>&1; then
-        echo "✓ PostgreSQL is ready"
-        break
-      fi
-      RETRY_COUNT=\$((RETRY_COUNT + 1))
-      echo "  Waiting for PostgreSQL... (\$RETRY_COUNT/\$MAX_RETRIES)"
-      sleep 2
-    done
+    echo -e "${CYAN}▶ Waiting 10 seconds for PostgreSQL to start...${NC}"
+    sleep 10
+    echo -e "${GREEN}✓ Proceeding with migrations${NC}"
 
     if [ \$RETRY_COUNT -eq \$MAX_RETRIES ]; then
       echo "⚠ PostgreSQL readiness check timed out, proceeding anyway..."
