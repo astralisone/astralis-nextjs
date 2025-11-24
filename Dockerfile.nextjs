@@ -2,27 +2,34 @@
 FROM node:20-bullseye AS builder
 
 WORKDIR /app
+ENV NODE_ENV=production
 
-# Optional: install system deps for sharp etc
 RUN apt-get update && apt-get install -y python3 make g++
 
-COPY package*.json ./
-COPY yarn.lock ./
-COPY .npmrc ./
+COPY package.json yarn.lock ./
+COPY tsconfig.json ./
+COPY next.config.mjs ./
+COPY .env.production ./
 
-RUN npm ci
+RUN yarn install --frozen-lockfile
 
 COPY . .
 
-RUN npm run build
+RUN yarn prisma:gen
 
-# ---- PRODUCTION RUNTIME ----
+RUN find /app/src/components/ui
+
+ENV NODE_OPTIONS=--max-old-space-size=6096
+RUN yarn build
+
+# ---- RUNTIME STAGE ----
 FROM node:20-bullseye-slim
 
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=3001
+ENV NODE_OPTIONS=--max-old-space-size=6096
 
 RUN apt-get update && apt-get install -y dumb-init && rm -rf /var/lib/apt/lists/*
 
@@ -30,12 +37,14 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
-COPY --from=builder /app/next.config.js ./
+COPY --from=builder /app/yarn.lock ./
+COPY --from=builder /app/tsconfig.json ./
+COPY --from=builder /app/next.config.mjs ./
 COPY --from=builder /app/ecosystem.config.js ./
 COPY --from=builder /app/prisma ./prisma
 
-COPY .env.production .env
-
 EXPOSE 3001
 
-CMD ["dumb-init", "npx", "next", "start"]
+# No .env.production here! Compose will inject at runtime
+# Use yarn commands for Prisma/seed/start, loaded with the environment from Compose
+CMD ["dumb-init", "sh", "-c", "yarn prisma:migrate && yarn prisma:seed && yarn start"]

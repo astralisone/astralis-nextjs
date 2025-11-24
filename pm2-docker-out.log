@@ -1,0 +1,567 @@
+2025-11-24 05:00:05 -05:00: Attaching to astralis_app, astralis_n8n, astralis_postgres, astralis_redis
+2025-11-24 05:00:05 -05:00: astralis_redis  | 1:C 24 Nov 2025 10:00:05.749 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+2025-11-24 05:00:05 -05:00: astralis_redis  | 1:C 24 Nov 2025 10:00:05.749 * Redis version=7.4.7, bits=64, commit=00000000, modified=0, pid=1, just started
+2025-11-24 05:00:05 -05:00: astralis_redis  | 1:C 24 Nov 2025 10:00:05.749 * Configuration loaded
+2025-11-24 05:00:05 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:00:05.749 * monotonic clock: POSIX clock_gettime
+2025-11-24 05:00:05 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:00:05.750 * Running mode=standalone, port=6379.
+2025-11-24 05:00:05 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:00:05.751 * Server initialized
+2025-11-24 05:00:05 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:00:05.751 * Reading RDB base file on AOF loading...
+2025-11-24 05:00:05 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:00:05.751 * Loading RDB produced by version 7.4.7
+2025-11-24 05:00:05 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:00:05.751 * RDB age 6732 seconds
+2025-11-24 05:00:05 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:00:05.751 * RDB memory usage when created 0.94 Mb
+2025-11-24 05:00:05 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:00:05.751 * RDB is base AOF
+2025-11-24 05:00:05 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:00:05.751 * Done loading RDB, keys loaded: 0, keys expired: 0.
+2025-11-24 05:00:05 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:00:05.751 * DB loaded from base file appendonly.aof.1.base.rdb: 0.000 seconds
+2025-11-24 05:00:05 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:00:05.751 * DB loaded from append only file: 0.000 seconds
+2025-11-24 05:00:05 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:00:05.751 * Opening AOF incr file appendonly.aof.1.incr.aof on server start
+2025-11-24 05:00:05 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:00:05.751 * Ready to accept connections tcp
+2025-11-24 05:00:05 -05:00: astralis_postgres  | 
+2025-11-24 05:00:05 -05:00: astralis_postgres  | PostgreSQL Database directory appears to contain a database; Skipping initialization
+2025-11-24 05:00:05 -05:00: astralis_postgres  | 
+2025-11-24 05:00:16 -05:00: astralis_app       | yarn run v1.22.22
+2025-11-24 05:00:16 -05:00: astralis_app       | $ prisma migrate deploy
+2025-11-24 05:00:16 -05:00: astralis_app       | Prisma schema loaded from prisma/schema.prisma
+2025-11-24 05:00:16 -05:00: astralis_app       | Datasource "db": PostgreSQL database "astralis", schema "public" at "postgres:5432"
+2025-11-24 05:00:16 -05:00: astralis_app       | 
+2025-11-24 05:00:16 -05:00: astralis_app       | 3 migrations found in prisma/migrations
+2025-11-24 05:00:16 -05:00: astralis_app       | 
+2025-11-24 05:00:16 -05:00: astralis_app       | 
+2025-11-24 05:00:16 -05:00: astralis_app       | No pending migrations to apply.
+2025-11-24 05:00:16 -05:00: astralis_app       | Done in 0.25s.
+2025-11-24 05:00:16 -05:00: astralis_app       | yarn run v1.22.22
+2025-11-24 05:00:16 -05:00: astralis_app       | $ node prisma/seed.js
+2025-11-24 05:00:16 -05:00: astralis_app       | 🌱 Starting database seed...
+2025-11-24 05:00:16 -05:00: astralis_app       | ❌ Test user not found. Skipping seed.
+2025-11-24 05:00:16 -05:00: astralis_app       | Done in 0.07s.
+2025-11-24 05:00:16 -05:00: astralis_app       | yarn run v1.22.22
+2025-11-24 05:00:16 -05:00: astralis_app       | $ next start -p 3001
+2025-11-24 05:00:16 -05:00: astralis_app       |    ▲ Next.js 15.5.6
+2025-11-24 05:00:16 -05:00: astralis_app       |    - Local:        http://localhost:3001
+2025-11-24 05:00:16 -05:00: astralis_app       |    - Network:      http://172.28.0.5:3001
+2025-11-24 05:00:16 -05:00: astralis_app       | 
+2025-11-24 05:00:16 -05:00: astralis_app       |  ✓ Starting...
+2025-11-24 05:00:17 -05:00: astralis_app       |  ✓ Ready in 131ms
+2025-11-24 05:00:17 -05:00: astralis_n8n       | Permissions 0644 for n8n settings file /home/node/.n8n/config are too wide. This is ignored for now, but in the future n8n will attempt to change the permissions automatically. To automatically enforce correct permissions now set N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true (recommended), or turn this check off set N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=false.
+2025-11-24 05:00:17 -05:00: astralis_n8n       | Initializing n8n process
+2025-11-24 05:00:17 -05:00: astralis_app       | [N8N Service] Using API key authentication
+2025-11-24 05:00:17 -05:00: astralis_n8n       | n8n ready on ::, port 5678
+2025-11-24 05:00:17 -05:00: astralis_n8n       | 
+2025-11-24 05:00:17 -05:00: astralis_n8n       | There are deprecations related to your environment variables. Please take the recommended actions to update your configuration:
+2025-11-24 05:00:17 -05:00: astralis_n8n       |  - DB_SQLITE_POOL_SIZE -> Running SQLite without a pool of read connections is deprecated. Please set `DB_SQLITE_POOL_SIZE` to a value higher than zero. See: https://docs.n8n.io/hosting/configuration/environment-variables/database/#sqlite
+2025-11-24 05:00:17 -05:00: astralis_n8n       |  - N8N_RUNNERS_ENABLED -> Running n8n without task runners is deprecated. Task runners will be turned on by default in a future version. Please set `N8N_RUNNERS_ENABLED=true` to enable task runners now and avoid potential issues in the future. Learn more: https://docs.n8n.io/hosting/configuration/task-runners/
+2025-11-24 05:00:17 -05:00: astralis_n8n       |  - N8N_BLOCK_ENV_ACCESS_IN_NODE -> The default value of N8N_BLOCK_ENV_ACCESS_IN_NODE will be changed from false to true in a future version. If you need to access environment variables from the Code Node or from expressions, please set N8N_BLOCK_ENV_ACCESS_IN_NODE=false. Learn more: https://docs.n8n.io/hosting/configuration/environment-variables/security/
+2025-11-24 05:00:17 -05:00: astralis_n8n       |  - N8N_GIT_NODE_DISABLE_BARE_REPOS -> Support for bare repositories in the Git Node will be removed in a future version due to security concerns. If you are not using bare repositories in the Git Node, please set N8N_GIT_NODE_DISABLE_BARE_REPOS=true. Learn more: https://docs.n8n.io/hosting/configuration/environment-variables/security/
+2025-11-24 05:00:17 -05:00: astralis_n8n       | 
+2025-11-24 05:00:17 -05:00: astralis_n8n       | [license SDK] Skipping renewal on init: license cert is not initialized
+2025-11-24 05:00:17 -05:00: astralis_app       | [AIRoutingService] Initializing OpenAI client
+2025-11-24 05:00:17 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:17 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:17 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:17 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:17 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:17 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:17 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:17 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:18 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:18 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:18 -05:00: astralis_n8n       | Version: 1.120.4
+2025-11-24 05:00:18 -05:00: astralis_n8n       | 
+2025-11-24 05:00:18 -05:00: astralis_n8n       | Editor is now accessible via:
+2025-11-24 05:00:18 -05:00: astralis_n8n       | http://localhost:5678
+2025-11-24 05:00:18 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:18 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:18 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:18 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:19 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:19 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:19 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:19 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:20 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:20 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:20 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:20 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:21 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:21 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:21 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:21 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:22 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:22 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:23 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:23 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:23 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:23 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:24 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:24 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:25 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:25 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:26 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:26 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:27 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:27 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:28 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:28 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:29 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:29 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:30 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:30 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:31 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:31 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:32 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:32 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:34 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:34 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:35 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:35 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:36 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:36 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:38 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:38 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:39 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:39 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:41 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:41 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:42 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:42 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:44 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:44 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:46 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:46 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:47 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:47 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:49 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:49 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:51 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:51 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:53 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:53 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:55 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:55 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:57 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:57 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:00:59 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:00:59 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:01:01 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:01:01 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:01:03 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:01:03 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:01:05 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:01:05 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:01:07 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:01:07 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:01:09 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:01:09 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:01:11 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:01:11 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:01:13 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:01:13 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:01:15 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:01:15 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:01:17 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:01:17 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:01:19 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:01:19 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:01:21 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:01:21 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:01:23 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:01:23 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:01:25 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:01:25 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:01:27 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:01:27 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:01:29 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:01:29 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:01:31 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:01:31 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:01:33 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:01:33 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:01:35 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:01:35 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:01:37 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:01:37 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:01:39 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:01:39 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:01:41 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:01:41 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:01:43 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:01:43 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:01:45 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:01:45 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:01:47 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:01:47 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:01:49 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:01:49 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:01:51 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:01:51 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:01:53 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:01:53 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:01:55 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:01:55 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:01:57 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:01:57 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:01:59 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:01:59 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:02:01 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:02:01 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:02:03 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:02:03 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:02:05 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:02:05 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:02:07 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:02:07 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:02:09 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:02:09 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:02:11 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:02:11 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:02:13 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:02:13 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:02:15 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:02:15 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:02:17 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:02:17 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:02:19 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:02:19 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:02:21 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:02:21 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:02:23 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:02:23 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:02:25 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:02:25 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:02:27 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:02:27 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:02:29 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:02:29 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:02:31 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:02:31 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:02:33 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:02:33 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:02:35 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:02:35 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:02:37 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:02:37 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:02:39 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:02:39 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:02:41 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:02:41 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:02:43 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:02:43 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:02:45 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:02:45 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:02:47 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:02:47 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:02:49 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:02:49 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:02:51 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:02:51 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:02:53 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:02:53 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:02:55 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:02:55 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:02:57 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:02:57 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:02:59 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:02:59 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:03:01 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:03:01 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:03:03 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:03:03 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:03:05 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:03:05 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:03:07 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:03:07 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:03:09 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:03:09 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:03:11 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:03:11 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:03:13 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:03:13 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:03:15 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:03:15 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:03:17 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:03:17 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:03:19 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:03:19 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:03:21 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:03:21 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:03:23 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:03:23 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:03:25 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:03:25 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:03:27 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:03:27 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:03:29 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:03:29 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:03:31 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:03:31 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:03:33 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:03:33 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:03:35 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:03:35 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:03:37 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:03:37 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:03:39 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:03:39 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:03:41 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:03:41 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:03:43 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:03:43 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:03:45 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:03:45 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:03:47 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:03:47 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:03:49 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:03:49 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:03:51 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:03:51 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:03:53 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:03:53 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:03:55 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:03:55 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:03:57 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:03:57 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:03:59 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:03:59 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:04:01 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:04:01 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:04:03 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:04:03 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:04:05 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:04:05 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:04:07 -05:00: astralis_app       | [Redis] Connection closed
+2025-11-24 05:04:07 -05:00: astralis_app       | [Redis] Reconnecting...
+2025-11-24 05:04:07 -05:00: Gracefully Stopping... press Ctrl+C again to force
+2025-11-24 05:04:08 -05:00: [Kastralis_app exited with code 143
+2025-11-24 05:04:08 -05:00: [Kastralis_n8n exited with code 0
+2025-11-24 05:04:08 -05:00: [Kastralis_postgres exited with code 0
+2025-11-24 05:04:08 -05:00: Attaching to astralis_app, astralis_n8n, astralis_postgres, astralis_redis
+2025-11-24 05:04:08 -05:00: astralis_redis  | 1:C 24 Nov 2025 10:04:08.744 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+2025-11-24 05:04:08 -05:00: astralis_redis  | 1:C 24 Nov 2025 10:04:08.744 * Redis version=7.4.7, bits=64, commit=00000000, modified=0, pid=1, just started
+2025-11-24 05:04:08 -05:00: astralis_redis  | 1:C 24 Nov 2025 10:04:08.744 * Configuration loaded
+2025-11-24 05:04:08 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:04:08.744 * monotonic clock: POSIX clock_gettime
+2025-11-24 05:04:08 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:04:08.744 * Running mode=standalone, port=6379.
+2025-11-24 05:04:08 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:04:08.745 * Server initialized
+2025-11-24 05:04:08 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:04:08.745 * Reading RDB base file on AOF loading...
+2025-11-24 05:04:08 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:04:08.745 * Loading RDB produced by version 7.4.7
+2025-11-24 05:04:08 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:04:08.745 * RDB age 6975 seconds
+2025-11-24 05:04:08 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:04:08.745 * RDB memory usage when created 0.94 Mb
+2025-11-24 05:04:08 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:04:08.745 * RDB is base AOF
+2025-11-24 05:04:08 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:04:08.745 * Done loading RDB, keys loaded: 0, keys expired: 0.
+2025-11-24 05:04:08 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:04:08.745 * DB loaded from base file appendonly.aof.1.base.rdb: 0.000 seconds
+2025-11-24 05:04:08 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:04:08.745 * DB loaded from append only file: 0.000 seconds
+2025-11-24 05:04:08 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:04:08.745 * Opening AOF incr file appendonly.aof.1.incr.aof on server start
+2025-11-24 05:04:08 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:04:08.745 * Ready to accept connections tcp
+2025-11-24 05:04:08 -05:00: astralis_postgres  | 
+2025-11-24 05:04:08 -05:00: astralis_postgres  | PostgreSQL Database directory appears to contain a database; Skipping initialization
+2025-11-24 05:04:08 -05:00: astralis_postgres  | 
+2025-11-24 05:04:19 -05:00: astralis_app       | yarn run v1.22.22
+2025-11-24 05:04:19 -05:00: astralis_app       | $ prisma migrate deploy
+2025-11-24 05:04:19 -05:00: astralis_app       | Prisma schema loaded from prisma/schema.prisma
+2025-11-24 05:04:19 -05:00: astralis_app       | Datasource "db": PostgreSQL database "astralis", schema "public" at "postgres:5432"
+2025-11-24 05:04:19 -05:00: astralis_app       | 
+2025-11-24 05:04:19 -05:00: astralis_app       | 3 migrations found in prisma/migrations
+2025-11-24 05:04:19 -05:00: astralis_app       | 
+2025-11-24 05:04:19 -05:00: astralis_app       | 
+2025-11-24 05:04:19 -05:00: astralis_app       | No pending migrations to apply.
+2025-11-24 05:04:19 -05:00: astralis_app       | Done in 0.25s.
+2025-11-24 05:04:19 -05:00: astralis_app       | yarn run v1.22.22
+2025-11-24 05:04:19 -05:00: astralis_app       | $ node prisma/seed.js
+2025-11-24 05:04:19 -05:00: astralis_app       | 🌱 Starting database seed...
+2025-11-24 05:04:19 -05:00: astralis_app       | ❌ Test user not found. Skipping seed.
+2025-11-24 05:04:19 -05:00: astralis_app       | Done in 0.07s.
+2025-11-24 05:04:19 -05:00: astralis_app       | yarn run v1.22.22
+2025-11-24 05:04:19 -05:00: astralis_app       | $ next start -p 3001
+2025-11-24 05:04:20 -05:00: astralis_app       |    ▲ Next.js 15.5.6
+2025-11-24 05:04:20 -05:00: astralis_app       |    - Local:        http://localhost:3001
+2025-11-24 05:04:20 -05:00: astralis_app       |    - Network:      http://172.28.0.4:3001
+2025-11-24 05:04:20 -05:00: astralis_app       | 
+2025-11-24 05:04:20 -05:00: astralis_app       |  ✓ Starting...
+2025-11-24 05:04:20 -05:00: astralis_app       |  ✓ Ready in 136ms
+2025-11-24 05:04:20 -05:00: astralis_n8n       | Permissions 0644 for n8n settings file /home/node/.n8n/config are too wide. This is ignored for now, but in the future n8n will attempt to change the permissions automatically. To automatically enforce correct permissions now set N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true (recommended), or turn this check off set N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=false.
+2025-11-24 05:04:20 -05:00: astralis_n8n       | Initializing n8n process
+2025-11-24 05:04:20 -05:00: astralis_app       | [N8N Service] Using API key authentication
+2025-11-24 05:04:20 -05:00: astralis_n8n       | n8n ready on ::, port 5678
+2025-11-24 05:04:20 -05:00: astralis_n8n       | 
+2025-11-24 05:04:20 -05:00: astralis_n8n       | There are deprecations related to your environment variables. Please take the recommended actions to update your configuration:
+2025-11-24 05:04:20 -05:00: astralis_n8n       |  - DB_SQLITE_POOL_SIZE -> Running SQLite without a pool of read connections is deprecated. Please set `DB_SQLITE_POOL_SIZE` to a value higher than zero. See: https://docs.n8n.io/hosting/configuration/environment-variables/database/#sqlite
+2025-11-24 05:04:20 -05:00: astralis_n8n       |  - N8N_RUNNERS_ENABLED -> Running n8n without task runners is deprecated. Task runners will be turned on by default in a future version. Please set `N8N_RUNNERS_ENABLED=true` to enable task runners now and avoid potential issues in the future. Learn more: https://docs.n8n.io/hosting/configuration/task-runners/
+2025-11-24 05:04:20 -05:00: astralis_n8n       |  - N8N_BLOCK_ENV_ACCESS_IN_NODE -> The default value of N8N_BLOCK_ENV_ACCESS_IN_NODE will be changed from false to true in a future version. If you need to access environment variables from the Code Node or from expressions, please set N8N_BLOCK_ENV_ACCESS_IN_NODE=false. Learn more: https://docs.n8n.io/hosting/configuration/environment-variables/security/
+2025-11-24 05:04:20 -05:00: astralis_n8n       |  - N8N_GIT_NODE_DISABLE_BARE_REPOS -> Support for bare repositories in the Git Node will be removed in a future version due to security concerns. If you are not using bare repositories in the Git Node, please set N8N_GIT_NODE_DISABLE_BARE_REPOS=true. Learn more: https://docs.n8n.io/hosting/configuration/environment-variables/security/
+2025-11-24 05:04:20 -05:00: astralis_n8n       | 
+2025-11-24 05:04:20 -05:00: astralis_n8n       | [license SDK] Skipping renewal on init: license cert is not initialized
+2025-11-24 05:04:20 -05:00: astralis_app       | [AIRoutingService] Initializing OpenAI client
+2025-11-24 05:04:20 -05:00: astralis_app       | [Redis] Connected successfully
+2025-11-24 05:04:20 -05:00: astralis_app       | [Redis] Ready to accept commands
+2025-11-24 05:04:21 -05:00: astralis_n8n       | Version: 1.120.4
+2025-11-24 05:04:21 -05:00: astralis_n8n       | 
+2025-11-24 05:04:21 -05:00: astralis_n8n       | Editor is now accessible via:
+2025-11-24 05:04:21 -05:00: astralis_n8n       | http://localhost:5678
+2025-11-24 05:51:23 -05:00: Gracefully Stopping... press Ctrl+C again to force
+2025-11-24 05:51:23 -05:00: [Kastralis_app exited with code 143
+2025-11-24 05:51:23 -05:00: [Kastralis_n8n exited with code 0
+2025-11-24 05:51:24 -05:00: [Kastralis_postgres exited with code 0
+2025-11-24 05:51:24 -05:00: Attaching to astralis_app, astralis_n8n, astralis_postgres, astralis_redis
+2025-11-24 05:51:24 -05:00: astralis_redis  | 1:C 24 Nov 2025 10:51:24.462 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+2025-11-24 05:51:24 -05:00: astralis_redis  | 1:C 24 Nov 2025 10:51:24.462 * Redis version=7.4.7, bits=64, commit=00000000, modified=0, pid=1, just started
+2025-11-24 05:51:24 -05:00: astralis_redis  | 1:C 24 Nov 2025 10:51:24.462 * Configuration loaded
+2025-11-24 05:51:24 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:51:24.462 * monotonic clock: POSIX clock_gettime
+2025-11-24 05:51:24 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:51:24.463 * Running mode=standalone, port=6379.
+2025-11-24 05:51:24 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:51:24.463 * Server initialized
+2025-11-24 05:51:24 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:51:24.463 * Reading RDB base file on AOF loading...
+2025-11-24 05:51:24 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:51:24.463 * Loading RDB produced by version 7.4.7
+2025-11-24 05:51:24 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:51:24.463 * RDB age 9811 seconds
+2025-11-24 05:51:24 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:51:24.463 * RDB memory usage when created 0.94 Mb
+2025-11-24 05:51:24 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:51:24.463 * RDB is base AOF
+2025-11-24 05:51:24 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:51:24.463 * Done loading RDB, keys loaded: 0, keys expired: 0.
+2025-11-24 05:51:24 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:51:24.463 * DB loaded from base file appendonly.aof.1.base.rdb: 0.000 seconds
+2025-11-24 05:51:24 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:51:24.463 * DB loaded from incr file appendonly.aof.1.incr.aof: 0.000 seconds
+2025-11-24 05:51:24 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:51:24.463 * DB loaded from append only file: 0.000 seconds
+2025-11-24 05:51:24 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:51:24.464 * Opening AOF incr file appendonly.aof.1.incr.aof on server start
+2025-11-24 05:51:24 -05:00: astralis_redis  | 1:M 24 Nov 2025 10:51:24.464 * Ready to accept connections tcp
+2025-11-24 05:51:24 -05:00: astralis_postgres  | 
+2025-11-24 05:51:24 -05:00: astralis_postgres  | PostgreSQL Database directory appears to contain a database; Skipping initialization
+2025-11-24 05:51:24 -05:00: astralis_postgres  | 
+2025-11-24 05:51:35 -05:00: astralis_app       | yarn run v1.22.22
+2025-11-24 05:51:35 -05:00: astralis_app       | $ prisma migrate deploy
+2025-11-24 05:51:35 -05:00: astralis_app       | Prisma schema loaded from prisma/schema.prisma
+2025-11-24 05:51:35 -05:00: astralis_app       | Datasource "db": PostgreSQL database "astralis", schema "public" at "postgres:5432"
+2025-11-24 05:51:35 -05:00: astralis_app       | 
+2025-11-24 05:51:35 -05:00: astralis_app       | 3 migrations found in prisma/migrations
+2025-11-24 05:51:35 -05:00: astralis_app       | 
+2025-11-24 05:51:35 -05:00: astralis_app       | 
+2025-11-24 05:51:35 -05:00: astralis_app       | No pending migrations to apply.
+2025-11-24 05:51:35 -05:00: astralis_app       | Done in 0.29s.
+2025-11-24 05:51:35 -05:00: astralis_app       | yarn run v1.22.22
+2025-11-24 05:51:35 -05:00: astralis_app       | $ node prisma/seed.js
+2025-11-24 05:51:35 -05:00: astralis_app       | 🌱 Starting database seed...
+2025-11-24 05:51:35 -05:00: astralis_app       | ✅ Found test user: test@astralisone.com
+2025-11-24 05:51:35 -05:00: astralis_app       | ✅ Found existing organization: Test Organization (cmid0n6zm00005zze0d3jrz4o)
+2025-11-24 05:51:35 -05:00: astralis_app       | ✅ Test user already configured correctly
+2025-11-24 05:51:35 -05:00: astralis_app       | 
+2025-11-24 05:51:35 -05:00: astralis_app       | 🎉 Seed completed successfully!
+2025-11-24 05:51:35 -05:00: astralis_app       | 
+2025-11-24 05:51:35 -05:00: astralis_app       | Test credentials:
+2025-11-24 05:51:35 -05:00: astralis_app       |   Email: test@astralisone.com
+2025-11-24 05:51:35 -05:00: astralis_app       |   Password: Test123!
+2025-11-24 05:51:35 -05:00: astralis_app       |   Role: ADMIN
+2025-11-24 05:51:35 -05:00: astralis_app       |   Organization: Test Organization
+2025-11-24 05:51:35 -05:00: astralis_app       | Done in 0.08s.
+2025-11-24 05:51:35 -05:00: astralis_app       | yarn run v1.22.22
+2025-11-24 05:51:35 -05:00: astralis_app       | $ next start -p 3001
+2025-11-24 05:51:35 -05:00: astralis_app       |    ▲ Next.js 15.5.6
+2025-11-24 05:51:35 -05:00: astralis_app       |    - Local:        http://localhost:3001
+2025-11-24 05:51:35 -05:00: astralis_app       |    - Network:      http://172.28.0.5:3001
+2025-11-24 05:51:35 -05:00: astralis_app       | 
+2025-11-24 05:51:35 -05:00: astralis_app       |  ✓ Starting...
+2025-11-24 05:51:35 -05:00: astralis_app       |  ✓ Ready in 145ms
+2025-11-24 05:51:35 -05:00: astralis_n8n       | Permissions 0644 for n8n settings file /home/node/.n8n/config are too wide. This is ignored for now, but in the future n8n will attempt to change the permissions automatically. To automatically enforce correct permissions now set N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true (recommended), or turn this check off set N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=false.
+2025-11-24 05:51:35 -05:00: astralis_n8n       | Initializing n8n process
+2025-11-24 05:51:36 -05:00: astralis_app       | [N8N Service] Using API key authentication
+2025-11-24 05:51:36 -05:00: astralis_n8n       | n8n ready on ::, port 5678
+2025-11-24 05:51:36 -05:00: astralis_n8n       | 
+2025-11-24 05:51:36 -05:00: astralis_n8n       | There are deprecations related to your environment variables. Please take the recommended actions to update your configuration:
+2025-11-24 05:51:36 -05:00: astralis_n8n       |  - DB_SQLITE_POOL_SIZE -> Running SQLite without a pool of read connections is deprecated. Please set `DB_SQLITE_POOL_SIZE` to a value higher than zero. See: https://docs.n8n.io/hosting/configuration/environment-variables/database/#sqlite
+2025-11-24 05:51:36 -05:00: astralis_n8n       |  - N8N_RUNNERS_ENABLED -> Running n8n without task runners is deprecated. Task runners will be turned on by default in a future version. Please set `N8N_RUNNERS_ENABLED=true` to enable task runners now and avoid potential issues in the future. Learn more: https://docs.n8n.io/hosting/configuration/task-runners/
+2025-11-24 05:51:36 -05:00: astralis_n8n       |  - N8N_BLOCK_ENV_ACCESS_IN_NODE -> The default value of N8N_BLOCK_ENV_ACCESS_IN_NODE will be changed from false to true in a future version. If you need to access environment variables from the Code Node or from expressions, please set N8N_BLOCK_ENV_ACCESS_IN_NODE=false. Learn more: https://docs.n8n.io/hosting/configuration/environment-variables/security/
+2025-11-24 05:51:36 -05:00: astralis_n8n       |  - N8N_GIT_NODE_DISABLE_BARE_REPOS -> Support for bare repositories in the Git Node will be removed in a future version due to security concerns. If you are not using bare repositories in the Git Node, please set N8N_GIT_NODE_DISABLE_BARE_REPOS=true. Learn more: https://docs.n8n.io/hosting/configuration/environment-variables/security/
+2025-11-24 05:51:36 -05:00: astralis_n8n       | 
+2025-11-24 05:51:36 -05:00: astralis_n8n       | [license SDK] Skipping renewal on init: license cert is not initialized
+2025-11-24 05:51:36 -05:00: astralis_app       | [AIRoutingService] Initializing OpenAI client
+2025-11-24 05:51:36 -05:00: astralis_app       | [Redis] Connected successfully
+2025-11-24 05:51:36 -05:00: astralis_app       | [Redis] Ready to accept commands
+2025-11-24 05:51:37 -05:00: astralis_n8n       | Version: 1.120.4
+2025-11-24 05:51:37 -05:00: astralis_n8n       | 
+2025-11-24 05:51:37 -05:00: astralis_n8n       | Editor is now accessible via:
+2025-11-24 05:51:37 -05:00: astralis_n8n       | http://localhost:5678
+2025-11-24 06:57:01 -05:00: astralis_redis     | 1:M 24 Nov 2025 11:57:01.335 * 1 changes in 3600 seconds. Saving...
+2025-11-24 06:57:01 -05:00: astralis_redis     | 1:M 24 Nov 2025 11:57:01.337 * Background saving started by pid 2077
+2025-11-24 06:57:01 -05:00: astralis_redis     | 2077:C 24 Nov 2025 11:57:01.344 * DB saved on disk
+2025-11-24 06:57:01 -05:00: astralis_redis     | 2077:C 24 Nov 2025 11:57:01.345 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+2025-11-24 06:57:01 -05:00: astralis_redis     | 1:M 24 Nov 2025 11:57:01.447 * Background saving terminated with success
+2025-11-24 07:07:54 -05:00: Gracefully Stopping... press Ctrl+C again to force
+2025-11-24 07:07:54 -05:00: [Kastralis_app exited with code 143
+2025-11-24 07:07:54 -05:00: [Kastralis_n8n exited with code 0
+2025-11-24 07:07:55 -05:00: [Kastralis_postgres exited with code 0
+2025-11-24 07:08:03 -05:00: Attaching to astralis_app, astralis_n8n, astralis_postgres, astralis_redis
+2025-11-24 07:08:03 -05:00: astralis_redis  | 1:C 24 Nov 2025 12:08:03.450 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+2025-11-24 07:08:03 -05:00: astralis_redis  | 1:C 24 Nov 2025 12:08:03.450 * Redis version=7.4.7, bits=64, commit=00000000, modified=0, pid=1, just started
+2025-11-24 07:08:03 -05:00: astralis_redis  | 1:C 24 Nov 2025 12:08:03.450 * Configuration loaded
+2025-11-24 07:08:03 -05:00: astralis_redis  | 1:M 24 Nov 2025 12:08:03.450 * monotonic clock: POSIX clock_gettime
+2025-11-24 07:08:03 -05:00: astralis_redis  | 1:M 24 Nov 2025 12:08:03.451 * Running mode=standalone, port=6379.
+2025-11-24 07:08:03 -05:00: astralis_redis  | 1:M 24 Nov 2025 12:08:03.451 * Server initialized
+2025-11-24 07:08:03 -05:00: astralis_redis  | 1:M 24 Nov 2025 12:08:03.451 * Reading RDB base file on AOF loading...
+2025-11-24 07:08:03 -05:00: astralis_redis  | 1:M 24 Nov 2025 12:08:03.451 * Loading RDB produced by version 7.4.7
+2025-11-24 07:08:03 -05:00: astralis_redis  | 1:M 24 Nov 2025 12:08:03.451 * RDB age 14410 seconds
+2025-11-24 07:08:03 -05:00: astralis_redis  | 1:M 24 Nov 2025 12:08:03.451 * RDB memory usage when created 0.94 Mb
+2025-11-24 07:08:03 -05:00: astralis_redis  | 1:M 24 Nov 2025 12:08:03.451 * RDB is base AOF
+2025-11-24 07:08:03 -05:00: astralis_redis  | 1:M 24 Nov 2025 12:08:03.451 * Done loading RDB, keys loaded: 0, keys expired: 0.
+2025-11-24 07:08:03 -05:00: astralis_redis  | 1:M 24 Nov 2025 12:08:03.451 * DB loaded from base file appendonly.aof.1.base.rdb: 0.000 seconds
+2025-11-24 07:08:03 -05:00: astralis_redis  | 1:M 24 Nov 2025 12:08:03.451 * DB loaded from incr file appendonly.aof.1.incr.aof: 0.000 seconds
+2025-11-24 07:08:03 -05:00: astralis_redis  | 1:M 24 Nov 2025 12:08:03.451 * DB loaded from append only file: 0.001 seconds
+2025-11-24 07:08:03 -05:00: astralis_redis  | 1:M 24 Nov 2025 12:08:03.452 * Opening AOF incr file appendonly.aof.1.incr.aof on server start
+2025-11-24 07:08:03 -05:00: astralis_redis  | 1:M 24 Nov 2025 12:08:03.452 * Ready to accept connections tcp
+2025-11-24 07:08:03 -05:00: astralis_postgres  | 
+2025-11-24 07:08:03 -05:00: astralis_postgres  | PostgreSQL Database directory appears to contain a database; Skipping initialization
+2025-11-24 07:08:03 -05:00: astralis_postgres  | 
+2025-11-24 07:08:14 -05:00: astralis_app       | yarn run v1.22.22
+2025-11-24 07:08:14 -05:00: astralis_app       | $ prisma migrate deploy
+2025-11-24 07:08:14 -05:00: astralis_app       | Prisma schema loaded from prisma/schema.prisma
+2025-11-24 07:08:14 -05:00: astralis_app       | Datasource "db": PostgreSQL database "astralis", schema "public" at "postgres:5432"
+2025-11-24 07:08:14 -05:00: astralis_app       | 
+2025-11-24 07:08:14 -05:00: astralis_app       | 3 migrations found in prisma/migrations
+2025-11-24 07:08:14 -05:00: astralis_app       | 
+2025-11-24 07:08:14 -05:00: astralis_app       | 
+2025-11-24 07:08:14 -05:00: astralis_app       | No pending migrations to apply.
+2025-11-24 07:08:14 -05:00: astralis_app       | Done in 0.29s.
+2025-11-24 07:08:14 -05:00: astralis_app       | yarn run v1.22.22
+2025-11-24 07:08:14 -05:00: astralis_app       | $ node prisma/seed.js
+2025-11-24 07:08:14 -05:00: astralis_app       | 🌱 Starting database seed...
+2025-11-24 07:08:14 -05:00: astralis_app       | ✅ Found test user: test@astralisone.com
+2025-11-24 07:08:14 -05:00: astralis_app       | ✅ Found existing organization: Test Organization (cmid0n6zm00005zze0d3jrz4o)
+2025-11-24 07:08:14 -05:00: astralis_app       | ✅ Test user already configured correctly
+2025-11-24 07:08:14 -05:00: astralis_app       | 
+2025-11-24 07:08:14 -05:00: astralis_app       | 🎉 Seed completed successfully!
+2025-11-24 07:08:14 -05:00: astralis_app       | 
+2025-11-24 07:08:14 -05:00: astralis_app       | Test credentials:
+2025-11-24 07:08:14 -05:00: astralis_app       |   Email: test@astralisone.com
+2025-11-24 07:08:14 -05:00: astralis_app       |   Password: Test123!
+2025-11-24 07:08:14 -05:00: astralis_app       |   Role: ADMIN
+2025-11-24 07:08:14 -05:00: astralis_app       |   Organization: Test Organization
+2025-11-24 07:08:14 -05:00: astralis_app       | Done in 0.08s.
+2025-11-24 07:08:14 -05:00: astralis_app       | yarn run v1.22.22
+2025-11-24 07:08:14 -05:00: astralis_app       | $ next start -p 3001
+2025-11-24 07:08:14 -05:00: astralis_app       |    ▲ Next.js 15.5.6
+2025-11-24 07:08:14 -05:00: astralis_app       |    - Local:        http://localhost:3001
+2025-11-24 07:08:14 -05:00: astralis_app       |    - Network:      http://172.28.0.4:3001
+2025-11-24 07:08:14 -05:00: astralis_app       | 
+2025-11-24 07:08:14 -05:00: astralis_app       |  ✓ Starting...
+2025-11-24 07:08:14 -05:00: astralis_app       |  ✓ Ready in 146ms
+2025-11-24 07:08:14 -05:00: astralis_app       | [N8N Service] Using API key authentication
+2025-11-24 07:08:15 -05:00: astralis_n8n       | Permissions 0644 for n8n settings file /home/node/.n8n/config are too wide. This is ignored for now, but in the future n8n will attempt to change the permissions automatically. To automatically enforce correct permissions now set N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true (recommended), or turn this check off set N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=false.
+2025-11-24 07:08:15 -05:00: astralis_n8n       | Initializing n8n process
+2025-11-24 07:08:15 -05:00: astralis_n8n       | n8n ready on ::, port 5678
+2025-11-24 07:08:15 -05:00: astralis_n8n       | 
+2025-11-24 07:08:15 -05:00: astralis_n8n       | There are deprecations related to your environment variables. Please take the recommended actions to update your configuration:
+2025-11-24 07:08:15 -05:00: astralis_n8n       |  - DB_SQLITE_POOL_SIZE -> Running SQLite without a pool of read connections is deprecated. Please set `DB_SQLITE_POOL_SIZE` to a value higher than zero. See: https://docs.n8n.io/hosting/configuration/environment-variables/database/#sqlite
+2025-11-24 07:08:15 -05:00: astralis_n8n       |  - N8N_RUNNERS_ENABLED -> Running n8n without task runners is deprecated. Task runners will be turned on by default in a future version. Please set `N8N_RUNNERS_ENABLED=true` to enable task runners now and avoid potential issues in the future. Learn more: https://docs.n8n.io/hosting/configuration/task-runners/
+2025-11-24 07:08:15 -05:00: astralis_n8n       |  - N8N_BLOCK_ENV_ACCESS_IN_NODE -> The default value of N8N_BLOCK_ENV_ACCESS_IN_NODE will be changed from false to true in a future version. If you need to access environment variables from the Code Node or from expressions, please set N8N_BLOCK_ENV_ACCESS_IN_NODE=false. Learn more: https://docs.n8n.io/hosting/configuration/environment-variables/security/
+2025-11-24 07:08:15 -05:00: astralis_n8n       |  - N8N_GIT_NODE_DISABLE_BARE_REPOS -> Support for bare repositories in the Git Node will be removed in a future version due to security concerns. If you are not using bare repositories in the Git Node, please set N8N_GIT_NODE_DISABLE_BARE_REPOS=true. Learn more: https://docs.n8n.io/hosting/configuration/environment-variables/security/
+2025-11-24 07:08:15 -05:00: astralis_n8n       | 
+2025-11-24 07:08:15 -05:00: astralis_n8n       | [license SDK] Skipping renewal on init: license cert is not initialized
+2025-11-24 07:08:15 -05:00: astralis_app       | [AIRoutingService] Initializing OpenAI client
+2025-11-24 07:08:15 -05:00: astralis_app       | [Redis] Connected successfully
+2025-11-24 07:08:15 -05:00: astralis_app       | [Redis] Ready to accept commands
+2025-11-24 07:08:16 -05:00: astralis_n8n       | Version: 1.120.4
+2025-11-24 07:08:16 -05:00: astralis_n8n       | 
+2025-11-24 07:08:16 -05:00: astralis_n8n       | Editor is now accessible via:
+2025-11-24 07:08:16 -05:00: astralis_n8n       | http://localhost:5678
+2025-11-24 07:14:40 -05:00: astralis_n8n       | Received SIGTERM. Shutting down...
+2025-11-24 07:14:40 -05:00: astralis_n8n       | 
+2025-11-24 07:14:40 -05:00: astralis_n8n       | Stopping n8n...
+2025-11-24 07:14:40 -05:00: [Kastralis_app exited with code 143
+2025-11-24 07:14:40 -05:00: [Kastralis_n8n exited with code 0
+2025-11-24 07:14:40 -05:00: astralis_redis     | 1:signal-handler (1763986480) Received SIGTERM scheduling shutdown...
+2025-11-24 07:14:40 -05:00: astralis_redis     | 1:M 24 Nov 2025 12:14:40.564 * User requested shutdown...
+2025-11-24 07:14:40 -05:00: astralis_redis     | 1:M 24 Nov 2025 12:14:40.564 * Calling fsync() on the AOF file.
+2025-11-24 07:14:40 -05:00: astralis_redis     | 1:M 24 Nov 2025 12:14:40.565 * Saving the final RDB snapshot before exiting.
+2025-11-24 07:14:40 -05:00: astralis_redis     | 1:M 24 Nov 2025 12:14:40.566 * DB saved on disk
+2025-11-24 07:14:40 -05:00: astralis_redis     | 1:M 24 Nov 2025 12:14:40.566 # Redis is now ready to exit, bye bye...
+2025-11-24 07:14:40 -05:00: [Kastralis_postgres exited with code 0
