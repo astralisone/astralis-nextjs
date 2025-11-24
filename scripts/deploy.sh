@@ -503,15 +503,12 @@ deploy_to_server() {
         echo -e "${GREEN}✓ Docker services started${NC}"
 
     echo "▶ Waiting for PostgreSQL to be ready..."
+    ifconfig
     MAX_RETRIES=30
     RETRY_COUNT=0
     echo -e "${CYAN}▶ Waiting 10 seconds for PostgreSQL to start...${NC}"
     sleep 10
     echo -e "${GREEN}✓ Proceeding with migrations${NC}"
-
-    if [ \$RETRY_COUNT -eq \$MAX_RETRIES ]; then
-      echo "⚠ PostgreSQL readiness check timed out, proceeding anyway..."
-    fi
 
     echo "▶ Running database migrations..."
     npx prisma migrate deploy
