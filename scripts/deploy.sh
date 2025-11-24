@@ -293,6 +293,15 @@ sync_build_to_server() {
     public/ \
     "$SERVER_USER@$SERVER_HOST:$SERVER_PATH/public/"
   print_success "Public folder synced"
+  
+  print_step "Syncing node_modules folder to server..."
+  sleep 1
+  print_step "Begining node_modules syncing..."
+    rsync -avz --delete \
+    -e "ssh -i $SSH_KEY" \
+    node_modules/ \
+    "$SERVER_USER@$SERVER_HOST:$SERVER_PATH/node_modules/"
+  print_success "node_modules folder synced"
 
   print_step "Syncing package files to server..."
   rsync -avz \
@@ -395,9 +404,9 @@ deploy_to_server() {
 
     echo "✓ Build artifacts already synced from local machine"
 
-    echo "▶ Installing dependencies..."
-    npm install
-    echo "✓ Dependencies installed"
+    # echo "▶ Installing dependencies..."
+    # npm install
+    # echo "✓ Dependencies installed"
 
     echo "▶ Generating Prisma client..."
     npx prisma generate
