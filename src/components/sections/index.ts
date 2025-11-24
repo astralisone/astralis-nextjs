@@ -44,7 +44,6 @@ export { HomepageProcessFlow } from './HomepageProcessFlow';
 export { HomepageCapabilities } from './HomepageCapabilities';
 
 // Mockup-specific components
-export { ROICalculator } from './roi-calculator';
 export { SolutionFinder } from './solution-finder';
 export type { Solution } from './solution-finder';
 export { ServicePricingCard } from './service-pricing-card';
