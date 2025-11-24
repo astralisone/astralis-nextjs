@@ -1,0 +1,232 @@
+
+> astralis-one@1.0.0 dev
+> next dev -p 3001
+
+ ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of /Users/gregorystarr/package-lock.json as the root directory.
+ To silence this warning, set `outputFileTracingRoot` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/output#caveats for more information.
+ Detected additional lockfiles: 
+   * /Users/gregorystarr/projects/astralis-nextjs/package-lock.json
+
+   ▲ Next.js 15.5.6
+   - Local:        http://localhost:3001
+   - Network:      http://192.168.1.77:3001
+   - Environments: .env.local, .env
+   - Experiments (use with caution):
+     · serverActions
+
+ ✓ Starting...
+ ✓ Ready in 970ms
+ ✓ Compiled /middleware in 105ms (216 modules)
+ ○ Compiling /utils/db-debug ...
+ ✓ Compiled /utils/db-debug in 1253ms (889 modules)
+ ⨯ TypeError: useState only works in Client Components. Add the "use client" directive at the top of the file to use it. Read more: https://nextjs.org/docs/messages/react-client-hook-in-server-component
+    at ConnectionStatus (src/app/utils/db-debug/page.tsx:88:31)
+  86 |
+  87 | function ConnectionStatus() {
+> 88 |   const [status, setStatus] = React.useState<QueryState | null>(null);
+     |                               ^
+  89 |
+  90 |   React.useEffect(() => {
+  91 |     getConnectionStatusAction().then(setStatus); {
+  digest: '94494745'
+}
+ ⨯ TypeError: useState only works in Client Components. Add the "use client" directive at the top of the file to use it. Read more: https://nextjs.org/docs/messages/react-client-hook-in-server-component
+    at TableCounts (src/app/utils/db-debug/page.tsx:111:31)
+  109 |
+  110 | function TableCounts() {
+> 111 |   const [counts, setCounts] = React.useState<QueryState | null>(null);
+      |                               ^
+  112 |
+  113 |   React.useEffect(() => {
+  114 |     getTableCountsAction().then(setCounts); {
+  digest: '1196224369'
+}
+ GET /utils/db-debug 200 in 1554ms
+ ✓ Compiled in 562ms (369 modules)
+ ○ Compiling /dashboard ...
+ ✓ Compiled /dashboard in 911ms (1363 modules)
+ GET /dashboard 200 in 1235ms
+ ✓ Compiled /api/auth/[...nextauth] in 146ms (1368 modules)
+ GET /api/auth/session 200 in 504ms
+ GET /api/auth/session 200 in 15ms
+ GET /api/auth/session 200 in 15ms
+ ✓ Compiled /pipelines in 303ms (1551 modules)
+ GET /pipelines 200 in 396ms
+ ✓ Compiled /api/pipelines in 140ms (1565 modules)
+ GET /api/pipelines?orgId=cmi8otvva000093g3xj96k877 200 in 213ms
+ ✓ Compiled /automations in 498ms (1594 modules)
+ GET /automations 200 in 634ms
+ ✓ Compiled /api/automations in 349ms (1723 modules)
+[N8N Service] Using API key authentication
+ GET /api/automations 200 in 431ms
+ GET /api/automations 200 in 13ms
+ ✓ Compiled /api/automations/[id]/execute in 150ms (1725 modules)
+[N8N Service] Using API key authentication
+[N8N Service] Using API key authentication
+ POST /api/automations/cmi8stetp000t1ugp1spvo8zp/execute 400 in 478ms
+ ✓ Compiled /_not-found in 319ms (1730 modules)
+ GET /automations/cmi8stetp000t1ugp1spvo8zp/settings 404 in 453ms
+ GET /api/auth/session 200 in 36ms
+ GET /api/auth/session 200 in 15ms
+ GET /api/auth/session 200 in 24ms
+ GET /automations 200 in 119ms
+ GET /api/auth/session 200 in 19ms
+ GET /api/auth/session 200 in 18ms
+ GET /api/auth/session 200 in 26ms
+[N8N Service] Using API key authentication
+ GET /api/automations 200 in 26ms
+ ○ Compiling /scheduling ...
+ ✓ Compiled /scheduling in 723ms (1815 modules)
+ GET /scheduling 200 in 843ms
+ ○ Compiling /api/calendar/events ...
+ ✓ Compiled /api/calendar/events in 3s (2845 modules)
+ GET /api/calendar/events 200 in 4192ms
+ GET /api/calendar/events 200 in 19ms
+ ○ Compiling /contact ...
+ ✓ Compiled /contact in 1247ms (2978 modules)
+ GET /contact 200 in 1356ms
+ ○ Compiling /api/booking ...
+ ✓ Compiled /api/booking in 874ms (3244 modules)
+Conflict check for user cmi8otw12000293g3wosl51sf: no conflicts (severity: none)
+[Booking] SchedulingEvent created: 1eb01732-3929-4281-9856-47f608609b30
+[Booking] Created 2 reminders for event 1eb01732-3929-4281-9856-47f608609b30
+New booking received: {
+  bookingId: 'BK-1763992098060-CYC85',
+  name: 'Gregory A Starr',
+  email: 'gregory.a.starr@gmail.com',
+  phone: '5129533552',
+  company: 'Starrit llc',
+  date: '2025-11-27',
+  time: '11:00 AM',
+  meetingType: 'VIDEO_CALL',
+  message: '',
+  schedulingEventId: '1eb01732-3929-4281-9856-47f608609b30',
+  timestamp: '2025-11-24T13:48:18.060Z'
+}
+Confirmation email sent to gregory.a.starr@gmail.com
+Internal notification email sent to support@astralisone.com
+[Booking] Intake request created: cmid7cmsi0001w33tiz8sd8pu for booking BK-1763992098060-CYC85
+[EventBus] EventBus initialized { historySize: 100 }
+[Agent] Creating agent for organization {
+  orgId: 'cmi8otvva000093g3xj96k877',
+  llmProvider: 'CLAUDE',
+  llmModel: 'claude-sonnet-4-20250514'
+}
+[Agent] Initializing OrchestrationAgent {
+  agentId: 'agent-1763992099177-h43yqn',
+  orgId: 'cmi8otvva000093g3xj96k877',
+  llmProvider: 'CLAUDE',
+  llmModel: 'claude-sonnet-4-20250514'
+}
+[LLMFactory] Creating CLAUDE client with model: claude-sonnet-4-20250514
+[LLMFactory] Creating Claude client
+[LLMClient] Initialized client with model: claude-sonnet-4-20250514
+[ClaudeClient] Initialized with model: claude-sonnet-4-20250514
+[ClaudeClient] Max tokens to sample: 4096
+[Agent] DecisionEngine initialized {
+  autoExecuteThreshold: 0.85,
+  requireApprovalThreshold: 0.5,
+  enabledActions: 8
+}
+[Agent] Registered handler for action type: ASSIGN_PIPELINE 
+[Agent] Registered handler for action type: CREATE_EVENT 
+[Agent] Registered handler for action type: UPDATE_EVENT 
+[Agent] Registered handler for action type: CANCEL_EVENT 
+[Agent] Registered handler for action type: SEND_NOTIFICATION 
+[Agent] Registered handler for action type: TRIGGER_AUTOMATION 
+[Agent] Registered handler for action type: ESCALATE 
+[Agent] Registered handler for action type: NO_ACTION 
+[Agent] ActionExecutor initialized { dryRun: false, maxExecutionTime: 300000, enableRollback: true }
+[Agent] OrchestrationAgent initialized successfully { agentId: 'agent-1763992099177-h43yqn' }
+[Agent] Starting OrchestrationAgent { agentId: 'agent-1763992099177-h43yqn' }
+[Agent] Subscribed to event: intake:created { subscriptionId: 'sub_876bb427' }
+[Agent] Subscribed to event: intake:updated { subscriptionId: 'sub_85ecd0ee' }
+[Agent] Subscribed to event: intake:escalated { subscriptionId: 'sub_e9b51d45' }
+[Agent] Subscribed to event: webhook:form_submitted { subscriptionId: 'sub_2e31d891' }
+[Agent] Subscribed to event: webhook:booking_requested { subscriptionId: 'sub_c0c44690' }
+[Agent] Subscribed to event: email:received { subscriptionId: 'sub_6fa953f4' }
+[Agent] Subscribed to event: pipeline:stage_changed { subscriptionId: 'sub_f20be561' }
+[Agent] Subscribed to event: calendar:reminder_due { subscriptionId: 'sub_49f0415d' }
+[Agent] Subscribed to event: schedule:triggered { subscriptionId: 'sub_de91a7ab' }
+[Agent] OrchestrationAgent started { agentId: 'agent-1763992099177-h43yqn', subscribedEvents: 9 }
+ POST /api/booking 200 in 2185ms
+[N8N Service] Using API key authentication
+ GET /api/automations 200 in 72ms
+ GET /api/automations 200 in 15ms
+ GET /scheduling 200 in 37ms
+ GET /api/calendar/events 200 in 821ms
+ GET /api/calendar/events 200 in 14ms
+ ○ Compiling /intake ...
+ ✓ Compiled /intake in 679ms (3334 modules)
+ GET /intake 200 in 744ms
+ ✓ Compiled /api/intake in 233ms (2599 modules)
+ ✓ Compiled in 202ms (737 modules)
+[AIRoutingService] Initializing OpenAI client
+ GET /api/intake?orgId=cmi8otvva000093g3xj96k877 200 in 615ms
+ GET /api/pipelines?orgId=cmi8otvva000093g3xj96k877 200 in 616ms
+ GET /pipelines 200 in 42ms
+ GET /api/pipelines?orgId=cmi8otvva000093g3xj96k877 200 in 12ms
+ POST /api/pipelines 201 in 24ms
+ GET /api/pipelines?orgId=cmi8otvva000093g3xj96k877 200 in 24ms
+ GET /api/pipelines?orgId=cmi8otvva000093g3xj96k877 200 in 15ms
+ ○ Compiling /pipelines/[id] ...
+ ✓ Compiled /pipelines/[id] in 1321ms (1968 modules)
+ GET /pipelines/cmid7fito0002w33tp2a1du26 200 in 1726ms
+ ✓ Compiled /api/intake in 420ms (2162 modules)
+[AIRoutingService] Initializing OpenAI client
+ GET /api/intake?orgId=cmi8otvva000093g3xj96k877&status=NEW 200 in 524ms
+ GET /api/intake?orgId=cmi8otvva000093g3xj96k877&status=ROUTING 200 in 11ms
+ GET /api/pipelines/cmid7fito0002w33tp2a1du26?orgId=cmi8otvva000093g3xj96k877 200 in 770ms
+ ✓ Compiled /api/pipelines/[id]/stages in 232ms (2164 modules)
+ POST /api/pipelines/cmid7fito0002w33tp2a1du26/stages 201 in 483ms
+ GET /api/pipelines/cmid7fito0002w33tp2a1du26?orgId=cmi8otvva000093g3xj96k877 200 in 17ms
+ POST /api/pipelines/cmid7fito0002w33tp2a1du26/stages 201 in 13ms
+ GET /api/pipelines/cmid7fito0002w33tp2a1du26?orgId=cmi8otvva000093g3xj96k877 200 in 22ms
+[AIRoutingService] Initializing OpenAI client
+ GET /api/intake?orgId=cmi8otvva000093g3xj96k877&status=NEW 200 in 67ms
+ GET /api/intake?orgId=cmi8otvva000093g3xj96k877&status=ROUTING 200 in 11ms
+ POST /api/pipelines/cmid7fito0002w33tp2a1du26/stages 201 in 19ms
+ GET /api/pipelines/cmid7fito0002w33tp2a1du26?orgId=cmi8otvva000093g3xj96k877 200 in 18ms
+ POST /api/pipelines/cmid7fito0002w33tp2a1du26/stages 201 in 14ms
+ GET /api/pipelines/cmid7fito0002w33tp2a1du26?orgId=cmi8otvva000093g3xj96k877 200 in 16ms
+ ✓ Compiled /api/pipelines/[id]/stages/[stageId] in 242ms (2166 modules)
+ PUT /api/pipelines/cmid7fito0002w33tp2a1du26/stages/cmid7gp31000aw33tvtxvkmx7 200 in 482ms
+ GET /api/pipelines/cmid7fito0002w33tp2a1du26?orgId=cmi8otvva000093g3xj96k877 200 in 17ms
+[AIRoutingService] Initializing OpenAI client
+ GET /api/intake?orgId=cmi8otvva000093g3xj96k877&status=NEW 200 in 61ms
+ GET /api/intake?orgId=cmi8otvva000093g3xj96k877&status=ROUTING 200 in 10ms
+ PUT /api/pipelines/cmid7fito0002w33tp2a1du26/stages/cmid7gdkt0008w33te057fljf 200 in 18ms
+ GET /api/pipelines/cmid7fito0002w33tp2a1du26?orgId=cmi8otvva000093g3xj96k877 200 in 17ms
+ GET /intake 200 in 48ms
+ GET /api/intake?orgId=cmi8otvva000093g3xj96k877 200 in 22ms
+ GET /api/pipelines?orgId=cmi8otvva000093g3xj96k877 200 in 31ms
+ ✓ Compiled /api/intake/[id]/assign in 380ms (2160 modules)
+ POST /api/intake/cmid7cmsi0001w33tiz8sd8pu/assign 200 in 691ms
+[AIRoutingService] Initializing OpenAI client
+ GET /api/intake?orgId=cmi8otvva000093g3xj96k877 200 in 72ms
+ GET /api/pipelines?orgId=cmi8otvva000093g3xj96k877 200 in 78ms
+ GET /api/intake?orgId=cmi8otvva000093g3xj96k877 200 in 12ms
+ ✓ Compiled /pipelines in 163ms (1396 modules)
+ GET /pipelines 200 in 219ms
+ GET /pipelines/cmid7fito0002w33tp2a1du26 200 in 25ms
+[AIRoutingService] Initializing OpenAI client
+ GET /api/intake?orgId=cmi8otvva000093g3xj96k877&status=NEW 200 in 66ms
+ GET /api/pipelines/cmid7fito0002w33tp2a1du26?orgId=cmi8otvva000093g3xj96k877 200 in 72ms
+ GET /api/intake?orgId=cmi8otvva000093g3xj96k877&status=ROUTING 200 in 9ms
+ ✓ Compiled /api/pipelines/[id]/items/[itemId]/move in 311ms (2170 modules)
+ PATCH /api/pipelines/cmid7fito0002w33tp2a1du26/items/cmid7ha1m000dw33tunhuutce/move 200 in 587ms
+ GET /api/pipelines/cmid7fito0002w33tp2a1du26?orgId=cmi8otvva000093g3xj96k877 200 in 16ms
+ PATCH /api/pipelines/cmid7fito0002w33tp2a1du26/items/cmid7ha1m000dw33tunhuutce/move 200 in 14ms
+ GET /api/pipelines/cmid7fito0002w33tp2a1du26?orgId=cmi8otvva000093g3xj96k877 200 in 16ms
+[AIRoutingService] Initializing OpenAI client
+ GET /api/intake?orgId=cmi8otvva000093g3xj96k877&status=NEW 200 in 70ms
+ GET /api/intake?orgId=cmi8otvva000093g3xj96k877&status=ROUTING 200 in 14ms
+ PATCH /api/pipelines/cmid7fito0002w33tp2a1du26/items/cmid7ha1m000dw33tunhuutce/move 200 in 18ms
+ GET /api/pipelines/cmid7fito0002w33tp2a1du26?orgId=cmi8otvva000093g3xj96k877 200 in 13ms
+ PATCH /api/pipelines/cmid7fito0002w33tp2a1du26/items/cmid7ha1m000dw33tunhuutce/move 200 in 19ms
+ GET /api/pipelines/cmid7fito0002w33tp2a1du26?orgId=cmi8otvva000093g3xj96k877 200 in 14ms
+ GET /intake 200 in 45ms
+ GET /api/intake?orgId=cmi8otvva000093g3xj96k877 200 in 18ms
+ GET /api/pipelines?orgId=cmi8otvva000093g3xj96k877 200 in 26ms

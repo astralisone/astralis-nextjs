@@ -8,7 +8,6 @@
     "build": "next build",
     "start": "next start -p 3001",
     "lint": "next lint",
-    "postinstall": "prisma generate",
     "worker": "NODE_ENV=development tsx watch src/workers/index.ts",
     "worker:prod": "NODE_ENV=production tsx src/workers/index.ts",
     "prod:start": "pm2 start ecosystem.config.js && pm2 save",
@@ -23,7 +22,10 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
-    "test:e2e:report": "playwright show-report"
+    "test:e2e:report": "playwright show-report",
+    "prisma:gen": "prisma generate",
+    "prisma:migrate": "prisma migrate deploy",
+    "prisma:seed": "node prisma/seed.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.70.1",
@@ -56,6 +58,7 @@
     "@tanstack/react-query": "^5.90.10",
     "@tanstack/react-query-devtools": "^5.90.2",
     "@tanstack/react-table": "^8.21.3",
+    "autoprefixer": "^10.4.20",
     "axios": "^1.13.2",
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.3",
@@ -66,6 +69,7 @@
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "dotenv": "^17.2.3",
+    "dotenv-cli": "^11.0.0",
     "file-type": "^21.1.1",
     "fullcalendar": "^6.1.19",
     "googleapis": "^166.0.0",
@@ -77,6 +81,8 @@
     "nodemailer": "^7.0.10",
     "openai": "^6.9.1",
     "pdf-parse": "^1.1.1",
+    "pm2": "^6.0.13",
+    "postcss": "^8.4.49",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.66.1",
@@ -102,11 +108,9 @@
     "@types/nodemailer": "^7.0.4",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
-    "autoprefixer": "^10.4.20",
     "eslint": "^8.57.1",
     "eslint-config-next": "^14.2.18",
     "eslint-plugin-storybook": "^10.0.8",
-    "postcss": "^8.4.49",
     "prisma": "5.22.0",
     "storybook": "^10.0.8",
     "tailwindcss": "^3.4.16",
@@ -117,8 +121,5 @@
     "extends": [
       "plugin:storybook/recommended"
     ]
-  },
-  "prisma": {
-    "seed": "node prisma/seed.js"
   }
 }

@@ -27,12 +27,12 @@ interface EmailOptions {
  */
 function createTransporter(): Transporter {
   const smtpConfig = {
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+   host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT),
+    secure: false, // port 587 = STARTTLS, so false
     auth: {
       user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASSWORD,
+      pass: process.env.SMTP_PASS,
     },
     // Add timeouts to prevent blocking when SMTP is unreachable
     connectionTimeout: 5000, // 5 seconds to establish connection
