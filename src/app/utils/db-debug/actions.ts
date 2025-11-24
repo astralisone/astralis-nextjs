@@ -38,7 +38,7 @@ export async function runQueryAction(state: QueryState, formData: FormData): Pro
   }
 }
 
-export async function resetDatabaseAction(): Promise<QueryState> {
+export async function resetDatabaseAction(_state: QueryState, _formData: FormData): Promise<QueryState> {
   try {
     // Drop all tables
     await prisma.$executeRawUnsafe(`

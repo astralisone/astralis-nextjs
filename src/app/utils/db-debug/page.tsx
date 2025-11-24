@@ -1,4 +1,7 @@
+'use client';
+
 import * as React from 'react';
+import { useFormState } from 'react-dom';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,7 +10,14 @@ import { Button } from '@/components/ui/button';
 import { DbQueryRunner, type QueryState } from '@/components/debug/DbQueryRunner';
 import { runQueryAction, resetDatabaseAction, getConnectionStatusAction, getTableCountsAction } from './actions';
 
+const RESET_INITIAL_STATE: QueryState = {
+  status: 'idle',
+  message: 'Ready to reset the database. This action drops all tables and recreates baseline structures.',
+};
+
 export default function DbDebugPage() {
+  const [resetState, resetAction] = useFormState(resetDatabaseAction, RESET_INITIAL_STATE);
+
   return (
     <div className="container mx-auto max-w-6xl p-6">
       <div className="mb-8">
@@ -65,19 +75,35 @@ export default function DbDebugPage() {
             These actions will permanently modify the database. Use only in development.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <form action={resetDatabaseAction} className="flex items-center gap-4">
+        <CardContent className="space-y-4">
+          <form action={resetAction} className="flex flex-col gap-4 sm:flex-row sm:items-center">
             <Button type="submit" variant="destructive">
               Reset Database
             </Button>
-            <p className="text-sm text-red-700">
-              This will drop all tables and re-run migrations. All data will be lost.
+            <p className="text-sm text-red-700 sm:max-w-xl">
+              This will drop all tables and re-run migrations. All data will be lost. Ensure you have backups before
+              proceeding.
             </p>
           </form>
+          <div className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm">
+            <Badge variant={statusBadgeVariant(resetState.status)}>{resetState.status.toUpperCase()}</Badge>
+            <span className="text-slate-700">{resetState.message}</span>
+          </div>
         </CardContent>
       </Card>
     </div>
   );
+}
+
+function statusBadgeVariant(status: QueryState['status']) {
+  switch (status) {
+    case 'success':
+      return 'success' as const;
+    case 'error':
+      return 'error' as const;
+    default:
+      return 'secondary' as const;
+  }
 }
 
 function ConnectionStatusBadge() {

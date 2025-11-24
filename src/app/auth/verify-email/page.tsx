@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import Link from 'next/link';
+import { AuthLayout } from '@/components/auth/AuthLayout';
 
 export default function VerifyEmailPage() {
   const searchParams = useSearchParams();
@@ -45,40 +46,72 @@ export default function VerifyEmailPage() {
     }
   };
 
+  const titles = {
+    loading: {
+      title: 'Verifying your email',
+      subtitle: 'This ensures your credentials stay secure',
+    },
+    success: {
+      title: 'Email verified successfully',
+      subtitle: 'Thanks for confirming. You can sign in now.',
+    },
+    error: {
+      title: 'Verification unsuccessful',
+      subtitle: 'The link may have expired or already been used.',
+    },
+  } as const;
+
+  const { title, subtitle } = titles[status];
+
   return (
-    <div className="min-h-screen flex items-center justify-center p-8 bg-slate-50">
-      <div className="max-w-md w-full">
-        {status === 'loading' && (
-          <div className="bg-white p-8 rounded-lg shadow-md text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-astralis-blue mx-auto"></div>
-            <p className="mt-4 text-slate-600">Verifying your email...</p>
+    <AuthLayout
+      title={title}
+      subtitle={subtitle}
+      badge="Email Verification"
+      footer={
+        status !== 'loading' ? (
+          <span>
+            Need assistance?{' '}
+            <Link href="/contact" className="font-semibold text-astralis-blue hover:text-astralis-blue/80">
+              Contact support
+            </Link>
+          </span>
+        ) : undefined
+      }
+    >
+      {status === 'loading' && (
+        <div className="flex flex-col items-center gap-4 py-6">
+          <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-astralis-blue" aria-hidden="true" />
+          <p className="text-sm text-slate-500">We&apos;re validating your link. This won&apos;t take long.</p>
+        </div>
+      )}
+
+      {status === 'success' && (
+        <Alert variant="success" showIcon>
+          <AlertTitle>Email verified</AlertTitle>
+          <AlertDescription>{message}</AlertDescription>
+          <div className="mt-4">
+            <Button asChild variant="primary">
+              <Link href="/auth/signin">Continue to sign in</Link>
+            </Button>
           </div>
-        )}
+        </Alert>
+      )}
 
-        {status === 'success' && (
-          <Alert variant="success" showIcon>
-            <AlertTitle>Email Verified!</AlertTitle>
-            <AlertDescription>{message}</AlertDescription>
-            <div className="mt-4">
-              <Link href="/auth/signin">
-                <Button variant="primary">Sign In</Button>
-              </Link>
-            </div>
-          </Alert>
-        )}
-
-        {status === 'error' && (
-          <Alert variant="error" showIcon>
-            <AlertTitle>Verification Failed</AlertTitle>
-            <AlertDescription>{message}</AlertDescription>
-            <div className="mt-4">
-              <Link href="/auth/signup">
-                <Button variant="outline">Sign Up Again</Button>
-              </Link>
-            </div>
-          </Alert>
-        )}
-      </div>
-    </div>
+      {status === 'error' && (
+        <Alert variant="error" showIcon>
+          <AlertTitle>Verification failed</AlertTitle>
+          <AlertDescription>{message}</AlertDescription>
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+            <Button asChild variant="outline">
+              <Link href="/auth/signup">Create a new account</Link>
+            </Button>
+            <Button asChild variant="ghost">
+              <Link href="/auth/forgot-password">Resend verification</Link>
+            </Button>
+          </div>
+        </Alert>
+      )}
+    </AuthLayout>
   );
 }

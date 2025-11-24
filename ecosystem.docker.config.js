@@ -1,8 +1,10 @@
+const { env } = require("node:process");
+
 module.exports = {
   apps: [
     {
       name: 'docker-compose-manager',
-      script: 'docker',
+      script: 'source .env.production.sh && docker',
       args: 'compose up --build',
       cwd: __dirname,
       autorestart: false, // Set to false to prevent unexpected restarts

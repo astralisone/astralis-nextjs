@@ -1,10 +1,10 @@
 # CLAUDE.md
 
-This file provides guidance to AI assistants when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
 
-**Astralis One** - Multi-Agent Engineering Platform built with Next.js 15, TypeScript, and Prisma. Enterprise-grade AI operations platform featuring booking systems, email notifications, analytics tracking, and a comprehensive UI component library.
+**Astralis One** - Multi-Agent Engineering Platform built with Next.js 15, TypeScript, and Prisma. Enterprise-grade AI operations platform featuring booking systems, email notifications, analytics tracking, queue processing with BullMQ, and a comprehensive UI component library.
 
 ## Essential Commands
 
@@ -14,13 +14,36 @@ npm run dev              # Start dev server on port 3001
 npm run build            # Production build
 npm run start            # Start production server on port 3001
 npm run lint             # Run ESLint
+npm run worker           # Start background worker (BullMQ/Redis)
+npm run worker:prod      # Start production worker
+```
+
+### Testing
+```bash
+npm run test:e2e         # Run Playwright E2E tests
+npm run test:e2e:ui      # Run tests with UI mode
+npm run test:e2e:headed  # Run tests in headed browser
+npm run test:e2e:debug   # Debug tests step by step
+npm run test:e2e:report  # Show HTML test report
 ```
 
 ### Database
 ```bash
-npx prisma generate      # Generate Prisma client (runs after npm install)
+npx prisma generate      # Generate Prisma client
 npx prisma migrate dev   # Create and apply migrations
+npx prisma migrate deploy # Apply migrations in production
 npx prisma studio        # Open database GUI
+npx prisma db seed       # Run database seed script
+```
+
+### Production Management (PM2)
+```bash
+npm run prod:start       # Start PM2 processes (app + worker)
+npm run prod:stop        # Stop all PM2 processes
+npm run prod:restart     # Restart all PM2 processes
+npm run prod:reload      # Zero-downtime reload
+npm run prod:logs        # View PM2 logs
+npm run prod:status      # Show PM2 process status
 ```
 
 ### Storybook
@@ -30,311 +53,274 @@ npm run build-storybook  # Build static Storybook
 ```
 
 ### Deployment
-- Server location: `/home/deploy/astralis-nextjs` on 137.184.31.207
-- SSH access: `ssh -i ~/.ssh/id_ed25519 root@137.184.31.207`
+```bash
+./scripts/deploy.sh      # Deploy to production server
+```
+- Server: `/home/deploy/astralis-nextjs` on 137.184.31.207
+- SSH: `ssh -i ~/.ssh/id_ed25519 root@137.184.31.207`
+- PM2 logs: `/var/log/pm2/astralis-*.log`
 
 ## Architecture Overview
 
 ### Tech Stack
 - **Framework**: Next.js 15 (App Router) on port 3001
 - **Language**: TypeScript 5 with strict mode
-- **Styling**: Tailwind CSS 3 with custom Astralis brand theme
+- **Styling**: Tailwind CSS 3 with Astralis brand theme
 - **Database**: PostgreSQL + Prisma ORM
-- **UI Components**: Radix UI primitives with custom branded styling
-- **Email**: Nodemailer with SMTP
-- **Calendar**: ICS generation for booking confirmations
-- **Analytics**: Google Analytics 4 + Google Ads tracking
-- **Font**: Inter (via next/font/google)
+- **Queue System**: BullMQ + Redis for background jobs
+- **UI Components**: Radix UI primitives + custom styling
+- **State Management**: Zustand + React Query
+- **Email**: Nodemailer SMTP
+- **Calendar**: ICS generation for bookings
+- **Analytics**: Google Analytics 4 + Google Ads
+- **Authentication**: NextAuth.js with Prisma adapter
+- **File Storage**: DigitalOcean Spaces (S3-compatible)
+- **AI/ML**: OpenAI API for embeddings + chat, Anthropic Claude API
+- **OCR**: Tesseract.js for document processing
+- **Process Manager**: PM2 for production
 
 ### Brand Design System
 
-**Astralis brand colors** (defined in `tailwind.config.ts`):
-- **Navy**: `#0A1B2B` - Used for headings and dark backgrounds
-- **Blue**: `#2B6CB0` - Primary action color for buttons and links
-- **Status colors**: Success (#38A169), Warning (#DD6B20), Error (#E53E3E), Info (#3182CE)
+**Astralis Colors** (in `tailwind.config.ts`):
+- **Navy**: `#0A1B2B` - Headings, dark backgrounds
+- **Blue**: `#2B6CB0` - Primary actions, links
+- **Status**: Success (#38A169), Warning (#DD6B20), Error (#E53E3E), Info (#3182CE)
 - **Neutrals**: Slate palette (50-950)
 
-**Design specifications**:
-- Border radius: 6px (md), 8px (lg), 4px (sm)
-- Transition duration: 150ms (fast), 200ms (normal), 250ms (slow)
-- Box shadows: `card` and `card-hover` variants
-- Spacing scale: 4px increments (4, 8, 12, 16, 20, 24, 32, 48, 64, 96)
+**Design Specs**:
+- Border radius: 4px (sm), 6px (md), 8px (lg)
+- Transitions: 150ms (fast), 200ms (normal), 250ms (slow)
+- Shadows: `card`, `card-hover` variants
+- Spacing: 4px increments (4, 8, 12, 16, 20, 24, 32, 48, 64, 96)
 
-### Directory Structure
+### Core Architecture Patterns
 
-```
-src/
-├── app/                          # Next.js App Router
-│   ├── (marketing)/             # Marketing pages group
-│   │   ├── about/
-│   │   ├── blog/
-│   │   ├── contact/
-│   │   ├── marketplace/
-│   │   └── services/
-│   ├── api/                     # API routes
-│   │   ├── booking/            # Booking submission endpoint
-│   │   ├── contact/            # Contact form endpoint
-│   │   └── [other endpoints]   # Users, orgs, pipelines, automations
-│   ├── astralisops/            # Product pages
-│   ├── solutions/              # Solutions page
-│   ├── layout.tsx              # Root layout with Navigation + Footer
-│   ├── page.tsx                # Homepage
-│   ├── globals.css             # Global styles + CSS variables
-│   ├── error.tsx               # Error boundary
-│   └── loading.tsx             # Loading state
-├── components/
-│   ├── analytics/              # GoogleAnalytics component
-│   ├── booking/                # BookingModal (multi-step booking form)
-│   ├── layout/                 # Navigation, header, footer
-│   ├── sections/               # Page sections (Hero, FeatureGrid, Stats, CTA)
-│   └── ui/                     # Radix UI-based components (Button, Input, Card, etc.)
-├── data/                       # Content definitions
-│   ├── homepage-content.ts
-│   ├── solutions-content.ts
-│   └── astralisops-content.ts
-├── hooks/                      # Custom React hooks
-│   ├── useAnalytics.ts        # Analytics tracking hook
-│   └── index.ts
-├── lib/                        # Utilities
-│   ├── analytics/             # Google Analytics utilities
-│   ├── calendar.ts            # ICS calendar generation
-│   ├── email.ts               # Email templates and sending
-│   ├── prisma.ts              # Prisma client singleton
-│   └── utils.ts               # cn() utility for className merging
-└── types/                      # TypeScript type definitions
+**1. Background Processing**:
+- BullMQ queues in `src/workers/` for async tasks
+- Document processing, email sending, OCR, embeddings
+- Redis-backed job persistence and retries
 
-prisma/
-└── schema.prisma               # Database schema with Organization, User, Pipeline, etc.
+**2. Multi-Step Wizards**:
+- Engagement creation wizard in `src/app/engagements/`
+- Uses React Hook Form + Zod validation
+- Step components: Company, Contacts, Engagement, Access, Environments, Review
 
-.storybook/                     # Storybook configuration
+**3. Authentication Flow**:
+- NextAuth.js with custom pages
+- Auth pages: `/auth/signin`, `/auth/signup`, `/auth/verify-email`, `/auth/reset-password`
+- Protected routes use middleware checks
+- Support for invite acceptance flow
+
+**4. Real-time Features**:
+- React Query for data fetching/caching
+- Optimistic updates for UI responsiveness
+- WebSocket support via n8n webhooks
+
+**5. Document Processing Pipeline**:
+```typescript
+Upload → Queue → OCR → Embeddings → Vector Storage → RAG Chat
 ```
 
 ### Key Architectural Patterns
 
-**1. Path Aliasing**: Use `@/` prefix for imports
+**Path Aliasing**: Use `@/` prefix for imports:
 ```typescript
 import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
 ```
 
-**2. Component Architecture**:
-- UI components in `src/components/ui/` are Radix UI-based primitives
-- Section components in `src/components/sections/` compose UI components for page layouts
-- All components have corresponding `.stories.tsx` files for Storybook
-- Components follow Astralis brand specification
+**API Routes**: RESTful endpoints with Zod validation:
+```typescript
+// src/app/api/[resource]/route.ts
+const schema = z.object({ /* validation */ });
+export async function POST(req: NextRequest) {
+  const parsed = schema.safeParse(await req.json());
+  // Process and return NextResponse
+}
+```
 
-**3. Route Groups**: Marketing pages use `(marketing)` route group for shared layout without URL prefix
+**Component Structure**:
+- UI primitives: `src/components/ui/`
+- Page sections: `src/components/sections/`
+- Auth components: `src/components/auth/`
+- All have `.stories.tsx` for Storybook
 
-**4. API Routes**: RESTful endpoints in `src/app/api/` return NextResponse with proper error handling
-
-**5. Email System**:
-- `src/lib/email.ts` provides email utilities
-- Templates: `generateCustomerConfirmationEmail()`, `generateInternalNotificationEmail()`
-- Uses Nodemailer with SMTP configuration from environment variables
-- Supports HTML/text versions and ICS attachments
-
-**6. Booking Flow**:
-- Multi-step modal: Info → Schedule → Details → Confirmation
-- POST to `/api/booking`
-- Generates unique booking IDs (`BK-{timestamp}-{random}`)
-- Sends customer confirmation + internal notification emails
-- Attaches ICS calendar files to both emails
-- Validates with Zod schema
-
-**7. Analytics Integration**:
-- Google Analytics 4 via `src/components/analytics/GoogleAnalytics.tsx`
-- Google Ads conversion tracking
-- Environment-based tracking IDs
-- Custom hook `useAnalytics()` for event tracking
+**Queue Processing**:
+```typescript
+// src/workers/queues/[queue-name].ts
+export const processQueue = async (job: Job) => {
+  // Process job with retries, logging
+};
+```
 
 ## Database Schema
 
 ### Core Models
-- **Organization**: Multi-tenant parent entity
-- **User**: Members with roles (ADMIN, OPERATOR, CLIENT)
-- **Pipeline**: Workflow management with stages
-- **IntakeRequest**: AI-powered request routing
-- **Document**: File processing with OCR
+- **Organization**: Multi-tenant root entity
+- **User**: Roles (ADMIN, OPERATOR, CLIENT, PM)
+- **Pipeline/PipelineStage**: Kanban workflow
+- **IntakeRequest**: AI-powered routing
+- **Document**: File storage + OCR + embeddings
 - **Automation**: n8n workflow integration
-- **SchedulingEvent**: Calendar integration with conflict detection
+- **SchedulingEvent**: Calendar with conflict detection
+- **Engagement/Company/Contact**: Client management
 
-### Status Enums
-- `DocumentStatus`: PENDING, PROCESSING, COMPLETED, FAILED
-- `IntakeSource`: FORM, EMAIL, CHAT, API
-- `IntakeStatus`: NEW, ROUTING, ASSIGNED, PROCESSING, COMPLETED, REJECTED
-- `EventStatus`: SCHEDULED, CONFIRMED, CANCELLED, COMPLETED, CONFLICT
+### Queue-Related Tables
+- **WorkflowExecution**: Automation run history
+- **WorkflowTrigger**: Event-based triggers
+- **SchedulingAgentTask**: AI scheduling tasks
+- **OrchestrationAgent**: LLM decision system
+- **AgentDecision**: AI action audit trail
 
 ## Environment Variables
 
-Required in `.env.local`:
+Critical variables in `.env.local`:
 ```bash
-# Database
-DATABASE_URL="postgresql://user:password@localhost:5432/astralis_one"
+# Database & Auth
+DATABASE_URL="postgresql://..."
+NEXTAUTH_SECRET="..."
+NEXTAUTH_URL="http://localhost:3001"
 
-# API
-NEXT_PUBLIC_API_BASE_URL="http://localhost:3001"
+# Redis (for BullMQ)
+REDIS_URL="redis://localhost:6379"
 
-# Email (Nodemailer SMTP)
-SMTP_HOST="smtp.example.com"
-SMTP_PORT="587"
-SMTP_SECURE="false"
-SMTP_USER="your-smtp-username"
-SMTP_PASSWORD="your-smtp-password"
-SMTP_FROM_NAME="Astralis"
-SMTP_FROM_EMAIL="support@astralisone.com"
+# Email (SMTP)
+SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD
 
-# Analytics (optional)
-NEXT_PUBLIC_GA_MEASUREMENT_ID="G-XXXXXXXXXX"
-NEXT_PUBLIC_GOOGLE_ADS_ID="AW-XXXXXXXXXX"
+# Storage (DigitalOcean Spaces)
+SPACES_ACCESS_KEY, SPACES_SECRET_KEY
+SPACES_ENDPOINT, SPACES_BUCKET
+
+# AI APIs
+OPENAI_API_KEY="sk-..."
+ANTHROPIC_API_KEY="sk-ant-..."
+
+# n8n Integration
+N8N_WEBHOOK_URL="https://automation.astralisone.com"
 ```
 
 See `.env.local.template` for complete reference.
 
-## Component Usage Patterns
+## Testing Strategy
 
-### Buttons
-```tsx
-import { Button } from "@/components/ui/button";
-
-<Button variant="primary" size="lg">Primary Action</Button>
-<Button variant="secondary" size="default">Secondary</Button>
-<Button variant="outline" size="sm">Outline</Button>
+### E2E Tests (Playwright)
+```
+tests/e2e/
+├── auth/          # Authentication flows
+├── booking/       # Booking system
+├── pipeline/      # Kanban pipeline
+└── fixtures/      # Test data & helpers
 ```
 
-**Variants**: primary, secondary, destructive, outline, ghost, link
-**Sizes**: sm, default, lg, icon
-
-### Cards
-```tsx
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-
-<Card variant="default" hover>
-  <CardHeader>
-    <CardTitle>Title</CardTitle>
-  </CardHeader>
-  <CardContent>Content</CardContent>
-</Card>
+Run specific test:
+```bash
+npx playwright test tests/e2e/auth/login.spec.ts
 ```
 
-**Variants**: default, bordered, elevated
+### Component Tests (Storybook)
+Every UI component has a `.stories.tsx` file for visual testing and documentation.
 
-### Forms
-```tsx
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+## Common Development Tasks
 
-<div className="space-y-2">
-  <Label htmlFor="email">Email</Label>
-  <Input id="email" type="email" placeholder="you@example.com" />
-</div>
-```
+### Add a New API Endpoint
+1. Create route file: `src/app/api/[resource]/route.ts`
+2. Define Zod schema for validation
+3. Implement GET/POST/PUT/DELETE handlers
+4. Add Prisma operations with error handling
+5. Update types in `src/types/`
 
-### Alerts
-```tsx
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+### Create a Background Job
+1. Define queue in `src/workers/queues/`
+2. Implement processor with retry logic
+3. Add job to queue from API/webhook
+4. Monitor via Redis/BullMQ dashboard
 
-<Alert variant="success" showIcon>
-  <AlertTitle>Success</AlertTitle>
-  <AlertDescription>Operation completed</AlertDescription>
-</Alert>
-```
+### Add a New Page
+1. Create folder in `src/app/`
+2. Add `page.tsx` with metadata export
+3. Use brand components from `src/components/ui/`
+4. Follow Astralis color scheme
+5. Add loading.tsx and error.tsx boundaries
 
-**Variants**: default, success, warning, error, info
+### Implement a Multi-Step Form
+1. Use React Hook Form for state
+2. Define Zod schemas per step
+3. Store draft in localStorage/session
+4. Validate on step transition
+5. Submit final data to API
 
-## API Route Patterns
+## Production Deployment
 
-### Standard Response Format
-```typescript
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
+### Pre-deployment Checklist
+- [ ] Run `npm run build` locally
+- [ ] Run `npm run test:e2e`
+- [ ] Check environment variables
+- [ ] Review database migrations
+- [ ] Test email sending
+- [ ] Verify Redis connection
 
-const schema = z.object({
-  // validation schema
-});
+### Deployment Process
+1. SSH to server: `ssh -i ~/.ssh/id_ed25519 root@137.184.31.207`
+2. Navigate: `cd /home/deploy/astralis-nextjs`
+3. Pull latest: `git pull origin main`
+4. Install deps: `npm install --legacy-peer-deps`
+5. Run migrations: `npx prisma migrate deploy`
+6. Build: `npm run build`
+7. Reload PM2: `npm run prod:reload`
 
-export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json();
-    const parsed = schema.safeParse(body);
-
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
-        { status: 400 }
-      );
-    }
-
-    // Process request
-
-    return NextResponse.json({ success: true, data }, { status: 200 });
-  } catch (error) {
-    console.error("Error:", error);
-    return NextResponse.json(
-      { error: "Internal error", details: error instanceof Error ? error.message : "Unknown" },
-      { status: 500 }
-    );
-  }
-}
-```
+### Monitoring
+- PM2 status: `pm2 list`
+- Logs: `pm2 logs astralis-nextjs`
+- Worker logs: `pm2 logs astralis-worker`
+- Error logs: `/var/log/pm2/astralis-error.log`
 
 ## Important Implementation Notes
 
-### Email Best Practices
-- Always provide both HTML and plain text versions
-- Include calendar attachments (ICS) for bookings
-- Log email sending attempts for debugging
-- Gracefully handle email failures (don't block booking confirmation)
-- Use branded email templates with Astralis colors
+### Security
+- Never expose sensitive keys in client code
+- Validate all inputs with Zod
+- Use parameterized queries (Prisma handles this)
+- Implement rate limiting on APIs
+- Sanitize file uploads
 
-### Analytics Tracking
-- Events are tracked via `useAnalytics()` hook
-- Google Analytics script is injected via `GoogleAnalytics` component in root layout
-- Track conversions: bookings, form submissions, button clicks
+### Performance
+- Use React Query for data caching
+- Implement pagination for lists
+- Optimize images with Next.js Image
+- Use dynamic imports for large components
+- Queue heavy operations (OCR, embeddings)
 
 ### Database Operations
-- **CRITICAL**: Never perform write operations to the database without triple verification from the user
-- Use Prisma client from `@/lib/prisma` for all database operations
-- Always handle errors with try/catch blocks
-- Include appropriate indexes for performance
+- **CRITICAL**: Always verify with user before writes
+- Use transactions for multi-table operations
+- Add indexes for frequently queried fields
+- Handle Prisma errors gracefully
+- Log all mutations for audit trail
 
-### Styling Conventions
-- Use Tailwind utility classes
-- Prefer Astralis brand colors (`astralis-navy`, `astralis-blue`)
-- Use `cn()` utility from `@/lib/utils` for conditional classes
-- Follow spacing scale (4, 8, 12, 16, 20, 24, 32, 48, 64, 96)
-- Transitions should be 150-250ms
-
-### Accessibility
-- All interactive elements must be keyboard accessible
-- Use semantic HTML
-- Include proper ARIA labels
-- Maintain focus management in modals/dialogs
-- Ensure sufficient color contrast
-
-## Testing with Storybook
-
-All UI components have Storybook stories for visual testing:
-```bash
-npm run storybook  # Access at http://localhost:6006
-```
-
-Stories are co-located with components: `ComponentName.stories.tsx`
+### Email System
+- Always provide HTML + text versions
+- Attach ICS files for calendar events
+- Handle SMTP failures gracefully
+- Queue emails for retry on failure
+- Log all email operations
 
 ## Common Pitfalls to Avoid
 
-1. **Database writes**: Never write to database without explicit user approval
-2. **Email errors**: Don't fail booking requests if emails fail to send
-3. **Environment variables**: Always check for required env vars before using
-4. **Imports**: Use `@/` path alias, not relative paths
-5. **Port conflicts**: Dev server runs on 3001, not 3000
-6. **Styling**: Don't override Astralis brand colors without justification
-7. **Error handling**: Always show errors to users, no silent failures
+1. **Port conflicts**: Dev runs on 3001, not 3000
+2. **Database writes**: Triple-verify with user first
+3. **Missing envs**: Check all required variables
+4. **Import paths**: Use `@/` alias, not relative
+5. **Brand colors**: Don't override without reason
+6. **Silent failures**: Always surface errors to user
+7. **PM2 in dev**: Don't use PM2 locally, use npm scripts
+8. **Redis required**: Worker processes need Redis running
 
 ## Related Documentation
 
-- `SETUP_GUIDE.md` - Complete setup and execution plan
-- `astralis-branded-refactor.md` - Master specification document
-- `docs/ASTRALISOPS-PRD.md` - Product requirements
-- `docs/BOOKING_SETUP.md` - Email and booking configuration guide
-- `README.md` - Quick start and project overview
+- `README.md` - Quick start guide
+- `SETUP_GUIDE.md` - Detailed setup instructions
+- `.env.local.template` - All environment variables
+- `docs/BOOKING_SETUP.md` - Email configuration
+- `prisma/schema.prisma` - Complete data model
+- `ecosystem.config.js` - PM2 configuration
+- `playwright.config.ts` - E2E test setup

@@ -21,18 +21,18 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 const Card = React.forwardRef<HTMLDivElement, CardProps>(
   ({ className, variant = 'default', hover = false, ...props }, ref) => {
     const variantStyles = {
-      default: "border border-slate-300 shadow-[0_2px_8px_rgba(0,0,0,0.06)]",
+      default: "border border-slate-200 shadow-[0_2px_8px_rgba(0,0,0,0.06)]",
       bordered: "border-2 border-slate-300",
-      elevated: "shadow-lg",
+      elevated: "shadow-[0_8px_24px_rgba(0,0,0,0.12)]",
     };
 
     return (
       <div
         ref={ref}
         className={cn(
-          "rounded-lg bg-white transition-shadow duration-200 dark:bg-slate-800 dark:border-slate-700",
+          "rounded-lg bg-white transition-all duration-200 dark:bg-slate-800 dark:border-slate-700",
           variantStyles[variant],
-          hover && "hover:shadow-[0_4px_16px_rgba(0,0,0,0.1)]",
+          hover && "hover:shadow-[0_8px_24px_rgba(0,0,0,0.12)] hover:border-slate-300",
           className
         )}
         {...props}
