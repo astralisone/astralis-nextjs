@@ -5,11 +5,12 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import Link from 'next/link';
+import { AuthLayout } from '@/components/auth/AuthLayout';
 
 // Schema for form validation (password only, token comes from URL)
 const resetPasswordFormSchema = z.object({
@@ -87,99 +88,107 @@ export default function ResetPasswordPage() {
     }
   };
 
+  const hasToken = Boolean(token);
+  const showForm = hasToken && !success;
+
   return (
-    <div className="min-h-screen flex items-center justify-center p-8 bg-slate-50">
-      <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-md">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-astralis-navy">Reset Password</h1>
-          <p className="text-slate-600 mt-2">Enter your new password</p>
-        </div>
+    <AuthLayout
+      title={success ? 'Password reset successful' : 'Create a new password'}
+      subtitle={success ? 'You can now sign in with your updated credentials' : 'Choose a secure password to protect your account'}
+      badge="Account Recovery"
+      footer={
+        <span>
+          Need help?{' '}
+          <Link href="/contact" className="font-semibold text-astralis-blue hover:text-astralis-blue/80">
+            Contact support
+          </Link>
+        </span>
+      }
+    >
+      {error && (
+        <Alert variant="error" showIcon>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
-        {error && (
-          <Alert variant="error" showIcon className="mb-6">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
+      {success && (
+        <Alert variant="success" showIcon>
+          <AlertDescription>
+            Password reset successful. We&apos;re redirecting you to sign in automatically, or you can return manually.
+          </AlertDescription>
+        </Alert>
+      )}
 
-        {success && (
-          <Alert variant="success" showIcon className="mb-6">
-            <AlertDescription>
-              Password reset successful! Redirecting to sign in...
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {!success && token && (
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="password">New Password</Label>
-              <Input
-                id="password"
-                type="password"
-                {...register('password')}
-                placeholder="Enter new password"
-                disabled={isSubmitting}
-              />
-              {errors.password && (
-                <p className="text-sm text-error">{errors.password.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                {...register('confirmPassword')}
-                placeholder="Confirm new password"
-                disabled={isSubmitting}
-              />
-              {errors.confirmPassword && (
-                <p className="text-sm text-error">{errors.confirmPassword.message}</p>
-              )}
-            </div>
-
-            <div className="bg-slate-50 p-4 rounded-md">
-              <p className="text-sm font-medium text-astralis-navy mb-2">
-                Password Requirements:
-              </p>
-              <ul className="text-sm text-slate-600 space-y-1">
-                <li>• At least 8 characters long</li>
-                <li>• Contains at least one uppercase letter</li>
-                <li>• Contains at least one lowercase letter</li>
-                <li>• Contains at least one number</li>
-              </ul>
-            </div>
-
-            <Button
-              type="submit"
-              variant="primary"
-              className="w-full"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Resetting Password...' : 'Reset Password'}
+      {!success && !hasToken && (
+        <Alert variant="warning" showIcon>
+          <AlertDescription>
+            This reset link is invalid or has expired. Request a new one below.
+          </AlertDescription>
+          <div className="mt-4">
+            <Button asChild variant="outline" size="sm">
+              <Link href="/auth/forgot-password">Request new link</Link>
             </Button>
-          </form>
-        )}
-
-        {!token && (
-          <div className="text-center">
-            <Link
-              href="/auth/forgot-password"
-              className="text-astralis-blue hover:underline"
-            >
-              Request a new reset link
-            </Link>
           </div>
-        )}
+        </Alert>
+      )}
 
-        <div className="mt-6 text-center text-sm text-slate-600">
+      {showForm && (
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <div className="grid gap-2">
+            <Label htmlFor="password">New password</Label>
+            <Input
+              id="password"
+              type="password"
+              autoComplete="new-password"
+              placeholder="Minimum 8 characters"
+              disabled={isSubmitting}
+              aria-invalid={Boolean(errors.password)}
+              {...register('password')}
+            />
+            {errors.password && (
+              <p className="text-sm text-error">{errors.password.message}</p>
+            )}
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="confirmPassword">Confirm password</Label>
+            <Input
+              id="confirmPassword"
+              type="password"
+              autoComplete="new-password"
+              placeholder="Re-enter your password"
+              disabled={isSubmitting}
+              aria-invalid={Boolean(errors.confirmPassword)}
+              {...register('confirmPassword')}
+            />
+            {errors.confirmPassword && (
+              <p className="text-sm text-error">{errors.confirmPassword.message}</p>
+            )}
+          </div>
+
+          <div className="rounded-xl bg-slate-50 p-4">
+            <p className="text-sm font-medium text-astralis-navy">Password requirements</p>
+            <ul className="mt-2 list-disc space-y-1 pl-4 text-sm text-slate-600">
+              <li>At least 8 characters in length</li>
+              <li>Contains uppercase and lowercase letters</li>
+              <li>Includes at least one number</li>
+            </ul>
+          </div>
+
+          <Button type="submit" variant="primary" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? 'Updating password…' : 'Reset password'}
+          </Button>
+        </form>
+      )}
+
+      {!success && (
+        <div className="text-center text-sm text-slate-500">
           Remember your password?{' '}
-          <Link href="/auth/signin" className="text-astralis-blue hover:underline">
-            Sign in
+          <Link href="/auth/signin" className="font-semibold text-astralis-blue hover:text-astralis-blue/80">
+            Sign in instead
           </Link>
         </div>
-      </div>
-    </div>
+      )}
+    </AuthLayout>
   );
 }
