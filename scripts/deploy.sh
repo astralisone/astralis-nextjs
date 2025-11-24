@@ -503,11 +503,11 @@ deploy_to_server() {
         echo -e "${GREEN}✓ Docker services started${NC}"
 
     echo "▶ Waiting for PostgreSQL to be ready..."
-    ifconfig
-    MAX_RETRIES=30
-    RETRY_COUNT=0
-    echo -e "${CYAN}▶ Waiting 10 seconds for PostgreSQL to start...${NC}"
-    sleep 10
+    echo -e "${CYAN}▶ Waiting 10 seconds ...${NC}"
+    sleep 5
+    echo -e "${CYAN}▶ Waiting 5 seconds ...${NC}"
+    sleep 4
+    echo -e "${CYAN}▶ Waiting 1 seconds ...${NC}"
     echo -e "${GREEN}✓ Proceeding with migrations${NC}"
 
     echo "▶ Running database migrations..."
@@ -515,7 +515,7 @@ deploy_to_server() {
     echo "✓ Migrations applied"
 
     echo "▶ Running database seeding..."
-    npm run seed 2>/dev/null || npx tsx prisma/seed.ts
+    node prisma/seed.js
     echo "✓ Database seeding completed"
 
     echo "▶ Waiting for services to be healthy..."
