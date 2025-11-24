@@ -537,7 +537,7 @@ deploy_to_server() {
 
     echo "▶ Reloading Caddy..."
     if systemctl is-active --quiet caddy; then
-      systemctl reload caddy
+      systemctl restart caddy
       echo "✓ Caddy reloaded"
     else
       echo "⚠ Caddy not running, starting..."
