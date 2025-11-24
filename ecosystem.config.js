@@ -4,7 +4,6 @@ module.exports = {
       name: 'astralis-nextjs',
       script: 'npm',
       args: 'run start',
-      cwd: '/home/deploy/astralis-nextjs',
       instances: 1,
       exec_mode: 'fork',
       autorestart: true,
