@@ -1,0 +1,41 @@
+# ---- BUILD STAGE ----
+FROM node:20-bullseye AS builder
+
+WORKDIR /app
+
+# Optional: install system deps for sharp etc
+RUN apt-get update && apt-get install -y python3 make g++
+
+COPY package*.json ./
+COPY yarn.lock ./
+COPY .npmrc ./
+
+RUN npm ci
+
+COPY . .
+
+RUN npm run build
+
+# ---- PRODUCTION RUNTIME ----
+FROM node:20-bullseye-slim
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV PORT=3001
+
+RUN apt-get update && apt-get install -y dumb-init && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/next.config.js ./
+COPY --from=builder /app/ecosystem.config.js ./
+COPY --from=builder /app/prisma ./prisma
+
+COPY .env.production .env
+
+EXPOSE 3001
+
+CMD ["dumb-init", "npx", "next", "start"]

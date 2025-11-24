@@ -280,8 +280,8 @@ sync_build_to_server() {
 
   print_step "Syncing .next build folder to server (excluding cache)..."
   rsync -avz --delete \
-    --exclude 'cache/' \
-    --exclude 'trace' \
+    # --exclude 'cache/' \
+    # --exclude 'trace' \
     -e "ssh -i $SSH_KEY" \
     .next/ \
     "$SERVER_USER@$SERVER_HOST:$SERVER_PATH/.next/"
