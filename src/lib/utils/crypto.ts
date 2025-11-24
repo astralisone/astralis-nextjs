@@ -1,4 +1,4 @@
-import bcrypt from 'bcryptjs';
+import * as bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 
 const SALT_ROUNDS = 12;
@@ -16,6 +16,9 @@ const KEY_LENGTH = 32;
  * @returns Hashed password
  */
 export async function hashPassword(password: string): Promise<string> {
+  if (!password || typeof password !== 'string') {
+    throw new TypeError('hashPassword: password must be a non-empty string');
+  }
   return bcrypt.hash(password, SALT_ROUNDS);
 }
 
