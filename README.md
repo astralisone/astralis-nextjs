@@ -1,6 +1,6 @@
 # Astralis One — Multi-Agent Engineering Platform
 
-Enterprise-grade AI operations platform built with Next.js 14, TypeScript, and Prisma.
+Enterprise-grade AI operations platform built with Next.js 15, TypeScript, and Prisma.
 
 ## 🚀 Quick Start
 
@@ -37,7 +37,7 @@ Visit `http://localhost:3001`
 
 ```
 src/
-├── app/                 # Next.js 14 App Router
+├── app/                 # Next.js 15 App Router
 │   ├── page.tsx        # Homepage
 │   ├── layout.tsx      # Root layout
 │   ├── globals.css     # Astralis brand theme
@@ -55,7 +55,7 @@ docs/                  # Documentation
 
 ## 🎨 Tech Stack
 
-- **Framework:** Next.js 14 (App Router)
+- **Framework:** Next.js 15 (App Router)
 - **Language:** TypeScript 5
 - **Styling:** Tailwind CSS 3 (Astralis brand design system)
 - **Database:** PostgreSQL + Prisma ORM
