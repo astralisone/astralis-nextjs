@@ -4,11 +4,12 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { resetPasswordRequestSchema, ResetPasswordRequestInput } from '@/lib/validators/auth.validators';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import Link from 'next/link';
+import { AuthLayout } from '@/components/auth/AuthLayout';
 
 export default function ForgotPasswordPage() {
   const [error, setError] = useState<string | null>(null);
@@ -49,62 +50,53 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-8 bg-slate-50">
-      <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-md">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-astralis-navy">Reset Password</h1>
-          <p className="text-slate-600 mt-2">
-            Enter your email and we'll send you reset instructions
-          </p>
-        </div>
-
-        {error && (
-          <Alert variant="error" showIcon className="mb-6">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        {success && (
-          <Alert variant="success" showIcon className="mb-6">
-            <AlertDescription>
-              If an account exists with that email, you'll receive password reset instructions shortly.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {!success && (
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                {...register('email')}
-                placeholder="you@example.com"
-              />
-              {errors.email && (
-                <p className="text-sm text-error">{errors.email.message}</p>
-              )}
-            </div>
-
-            <Button
-              type="submit"
-              variant="primary"
-              className="w-full"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Sending...' : 'Send Reset Instructions'}
-            </Button>
-          </form>
-        )}
-
-        <div className="mt-6 text-center text-sm text-slate-600">
-          Remember your password?{' '}
-          <Link href="/auth/signin" className="text-astralis-blue hover:underline">
-            Back to sign in
+    <AuthLayout
+      title="Reset your password"
+      subtitle="We'll send a secure link to regain access"
+      badge="Account Recovery"
+      footer={
+        <span>
+          Remembered it?{' '}
+          <Link href="/auth/signin" className="font-semibold text-astralis-blue hover:text-astralis-blue/80">
+            Return to sign in
           </Link>
-        </div>
-      </div>
-    </div>
+        </span>
+      }
+    >
+      {error && (
+        <Alert variant="error" showIcon>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {success ? (
+        <Alert variant="success" showIcon>
+          <AlertDescription>
+            If an account exists with that email, you&apos;ll receive reset instructions shortly. The link expires in 30 minutes for security.
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="email">Work email</Label>
+            <Input
+              id="email"
+              type="email"
+              autoComplete="email"
+              placeholder="you@company.com"
+              aria-invalid={Boolean(errors.email)}
+              {...register('email')}
+            />
+            {errors.email && (
+              <p className="text-sm text-error">{errors.email.message}</p>
+            )}
+          </div>
+
+          <Button type="submit" variant="primary" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? 'Sending reset link…' : 'Send reset link'}
+          </Button>
+        </form>
+      )}
+    </AuthLayout>
   );
 }

@@ -27,12 +27,12 @@ interface EmailOptions {
  */
 function createTransporter(): Transporter {
   const smtpConfig = {
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+   host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT),
+    secure: false, // port 587 = STARTTLS, so false
     auth: {
       user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASSWORD,
+      pass: process.env.SMTP_PASS,
     },
     // Add timeouts to prevent blocking when SMTP is unreachable
     connectionTimeout: 5000, // 5 seconds to establish connection
@@ -61,6 +61,100 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
   await transporter.sendMail(mailOptions);
 }
 
+interface EmailTemplateOptions {
+  preheader?: string;
+  heroTitle: string;
+  heroSubtitle?: string;
+  introHtml?: string;
+  bodyHtml: string;
+  cta?: {
+    label: string;
+    url: string;
+  };
+  footerNote?: string;
+}
+
+function buildEmailTemplate({
+  preheader = '',
+  heroTitle,
+  heroSubtitle,
+  introHtml,
+  bodyHtml,
+  cta,
+  footerNote,
+}: EmailTemplateOptions): string {
+  const ctaBlock = cta
+    ? `<tr>
+        <td align="center" style="padding: 32px 0 8px;">
+          <a href="${cta.url}" target="_blank" rel="noopener noreferrer"
+            style="display: inline-block; padding: 14px 28px; font-weight: 600; border-radius: 9999px; background: linear-gradient(135deg, #2B6CB0 0%, #2b8fdc 100%); color: #ffffff; text-decoration: none;">
+            ${cta.label}
+          </a>
+        </td>
+      </tr>`
+    : '';
+
+  const footer = footerNote
+    ? `<tr>
+        <td style="padding: 24px 0 0; font-size: 12px; line-height: 1.6; color: #94a3b8; text-align: center;">
+          ${footerNote}
+        </td>
+      </tr>`
+    : '';
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${heroTitle}</title>
+  <style>
+    @media (max-width: 600px) {
+      .container { width: 100% !important; margin: 0 !important; border-radius: 0 !important; }
+      .content { padding: 24px !important; }
+    }
+  </style>
+</head>
+<body style="margin:0; padding:0; background-color:#0a1829; font-family:'Inter', Arial, sans-serif;">
+  <span style="display:none; color:transparent; visibility:hidden; opacity:0; height:0; width:0;">${preheader}</span>
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="padding: 48px 16px;">
+    <tr>
+      <td align="center">
+        <table width="640" cellpadding="0" cellspacing="0" class="container" role="presentation" style="width:640px; max-width:640px; background-color:#ffffff; border-radius:28px; overflow:hidden; box-shadow:0 30px 90px rgba(3,15,35,0.35);">
+          <tr>
+            <td style="background: radial-gradient(circle at top, rgba(43,108,176,0.65), rgba(10,27,43,0.95)); padding: 40px 32px; text-align:center;">
+              <div style="display:inline-flex; align-items:center; gap:12px; padding:6px 16px; border-radius:9999px; background: rgba(255,255,255,0.12); color:#ffffff; font-size:12px; font-weight:600; letter-spacing:0.2em; text-transform:uppercase;">
+                Astralis One
+              </div>
+              <h1 style="margin:24px 0 12px; font-size:32px; line-height:1.25; color:#ffffff;">${heroTitle}</h1>
+              ${heroSubtitle ? `<p style="margin:0; font-size:16px; color:#dbeafe; line-height:1.7;">${heroSubtitle}</p>` : ''}
+            </td>
+          </tr>
+          <tr>
+            <td class="content" style="padding:32px 40px 40px; background-color:#ffffff;">
+              ${introHtml ? `<div style="font-size:16px; color:#334155; line-height:1.7; margin-bottom:24px;">${introHtml}</div>` : ''}
+              <div style="font-size:15px; color:#1e293b; line-height:1.75;">${bodyHtml}</div>
+            </td>
+          </tr>
+          ${ctaBlock}
+          <tr>
+            <td style="padding: 16px 40px 32px; background-color:#f8fafc; border-top:1px solid #e2e8f0;">
+              <p style="margin:0; font-size:13px; color:#475569; line-height:1.6; text-align:center;">
+                Astralis Operations Platform<br/>
+                <a href="mailto:support@astralisone.com" style="color:#2B6CB0; text-decoration:none;">support@astralisone.com</a> ·
+                <a href="tel:+13412234433" style="color:#2B6CB0; text-decoration:none;">+1 (341) 223-4433</a>
+              </p>
+            </td>
+          </tr>
+          ${footer}
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
 /**
  * Generate HTML email for customer booking confirmation
  */
@@ -81,126 +175,66 @@ export function generateCustomerConfirmationEmail(booking: {
     IN_PERSON: 'In-Person Meeting',
   }[booking.meetingType] || booking.meetingType;
 
-  return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Booking Confirmation</title>
-</head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f5f5f5;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 20px;">
-    <tr>
-      <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-          <!-- Header -->
-          <tr>
-            <td style="background: linear-gradient(135deg, #0A1B2B 0%, #1a3a52 100%); padding: 40px 30px; text-align: center;">
-              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold;">ASTRALIS</h1>
-              <p style="margin: 10px 0 0 0; color: #94a3b8; font-size: 16px;">Your consultation is confirmed!</p>
-            </td>
-          </tr>
-
-          <!-- Success Icon -->
-          <tr>
-            <td style="padding: 40px 30px 20px; text-align: center;">
-              <div style="width: 60px; height: 60px; background-color: #22c55e; border-radius: 50%; margin: 0 auto; display: flex; align-items: center; justify-content: center;">
-                <span style="color: white; font-size: 30px;">✓</span>
-              </div>
-            </td>
-          </tr>
-
-          <!-- Content -->
-          <tr>
-            <td style="padding: 0 30px 30px;">
-              <h2 style="margin: 0 0 20px; color: #0A1B2B; font-size: 22px; text-align: center;">Hi ${booking.name},</h2>
-              <p style="margin: 0 0 20px; color: #475569; font-size: 16px; line-height: 1.6;">
-                Thank you for scheduling a consultation with us! We're excited to discuss your automation needs and explore how Astralis can help transform your operations.
-              </p>
-
-              <!-- Booking Details Card -->
-              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; border-radius: 8px; margin: 20px 0;">
+  const detailsTable = `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 12px 0 24px; background-color:#f8fafc; border-radius:16px;">
+      <tbody>
+        <tr>
+          <td style="padding:22px 24px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tbody>
                 <tr>
-                  <td style="padding: 25px;">
-                    <h3 style="margin: 0 0 15px; color: #0A1B2B; font-size: 18px;">Meeting Details</h3>
-
-                    <table width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="padding: 8px 0; color: #64748b; font-size: 14px; font-weight: 600;">Booking ID:</td>
-                        <td style="padding: 8px 0; color: #1e293b; font-size: 14px; text-align: right;">${booking.bookingId}</td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 8px 0; color: #64748b; font-size: 14px; font-weight: 600;">Date:</td>
-                        <td style="padding: 8px 0; color: #1e293b; font-size: 14px; text-align: right;">${booking.date}</td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 8px 0; color: #64748b; font-size: 14px; font-weight: 600;">Time:</td>
-                        <td style="padding: 8px 0; color: #1e293b; font-size: 14px; text-align: right;">${booking.time}</td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 8px 0; color: #64748b; font-size: 14px; font-weight: 600;">Duration:</td>
-                        <td style="padding: 8px 0; color: #1e293b; font-size: 14px; text-align: right;">30 minutes</td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 8px 0; color: #64748b; font-size: 14px; font-weight: 600;">Meeting Type:</td>
-                        <td style="padding: 8px 0; color: #1e293b; font-size: 14px; text-align: right;">${meetingTypeLabel}</td>
-                      </tr>
-                    </table>
-                  </td>
+                  <td style="padding:6px 0; color:#64748b; font-size:13px; text-transform:uppercase; letter-spacing:0.08em;">Booking ID</td>
+                  <td style="padding:6px 0; color:#1e293b; font-size:14px; font-weight:600; text-align:right;">${booking.bookingId}</td>
                 </tr>
-              </table>
+                <tr>
+                  <td style="padding:6px 0; color:#64748b; font-size:13px; text-transform:uppercase; letter-spacing:0.08em;">Date</td>
+                  <td style="padding:6px 0; color:#1e293b; font-size:14px; font-weight:600; text-align:right;">${booking.date}</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0; color:#64748b; font-size:13px; text-transform:uppercase; letter-spacing:0.08em;">Time</td>
+                  <td style="padding:6px 0; color:#1e293b; font-size:14px; font-weight:600; text-align:right;">${booking.time}</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0; color:#64748b; font-size:13px; text-transform:uppercase; letter-spacing:0.08em;">Meeting type</td>
+                  <td style="padding:6px 0; color:#1e293b; font-size:14px; font-weight:600; text-align:right;">${meetingTypeLabel}</td>
+                </tr>
+              </tbody>
+            </table>
+          </td>
+        </tr>
+      </tbody>
+    </table>`;
 
-              <!-- What's Next -->
-              <div style="margin: 30px 0;">
-                <h3 style="margin: 0 0 15px; color: #0A1B2B; font-size: 18px;">What happens next?</h3>
-                <ul style="margin: 0; padding: 0 0 0 20px; color: #475569; font-size: 15px; line-height: 1.8;">
-                  <li>We'll send you a calendar invite (attached to this email)</li>
-                  <li>A confirmation email will be sent to your calendar</li>
-                  ${booking.meetingType === 'VIDEO_CALL' ? '<li>You\'ll receive a video call link 1 hour before the meeting</li>' : ''}
-                  ${booking.meetingType === 'PHONE_CALL' ? '<li>We\'ll call you at ' + booking.phone + ' at the scheduled time</li>' : ''}
-                  <li>Feel free to prepare any questions or materials you'd like to discuss</li>
-                </ul>
-              </div>
+  const preparationList = `
+    <div style="padding: 18px 24px; border-radius: 16px; background-color: #eff6ff;">
+      <p style="margin:0 0 12px; font-size:14px; font-weight:600; color:#0f172a;">Before we meet</p>
+      <ul style="margin:0; padding:0 0 0 18px; color:#1e293b; font-size:14px; line-height:1.8;">
+        <li>Review the attached calendar invite and add it to your schedule.</li>
+        ${booking.meetingType === 'VIDEO_CALL' ? '<li>We\'ll email a secure video link 1 hour before the session.</li>' : ''}
+        ${booking.meetingType === 'PHONE_CALL' ? `<li>We&#39;ll call you at <strong>${booking.phone}</strong> at the scheduled time.</li>` : ''}
+        <li>Bring any questions or workflows you want us to examine.</li>
+      </ul>
+    </div>`;
 
-              <!-- Need to Reschedule -->
-              <div style="margin: 30px 0; padding: 20px; background-color: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 4px;">
-                <p style="margin: 0; color: #92400e; font-size: 14px; line-height: 1.6;">
-                  <strong>Need to reschedule?</strong><br>
-                  Contact us at <a href="mailto:support@astralisone.com" style="color: #f59e0b; text-decoration: none;">support@astralisone.com</a>
-                  or call <a href="tel:+13412234433" style="color: #f59e0b; text-decoration: none;">+1 (341) 223-4433</a>
-                </p>
-              </div>
+  const supportBlock = `
+    <div style="margin-top:28px; padding: 18px 24px; border-radius: 16px; background-color:#fef9c3; border:1px solid #fde68a; color:#854d0e; font-size:13px; line-height:1.7;">
+      <strong>Need to make a change?</strong><br/>
+      Reply to this email, or contact <a href="mailto:support@astralisone.com" style="color:#b45309; text-decoration:none;">support@astralisone.com</a> ·
+      <a href="tel:+13412234433" style="color:#b45309; text-decoration:none;">+1 (341) 223-4433</a>
+    </div>`;
 
-              <p style="margin: 30px 0 0; color: #475569; font-size: 15px; line-height: 1.6;">
-                We look forward to speaking with you!
-              </p>
-              <p style="margin: 10px 0 0; color: #475569; font-size: 15px; line-height: 1.6;">
-                Best regards,<br>
-                <strong style="color: #0A1B2B;">The Astralis Team</strong>
-              </p>
-            </td>
-          </tr>
+  const introHtml = `Hi <strong>${booking.name}</strong>,<br/><br/>Thanks for scheduling time with Astralis. We&apos;re ready to dive into your automation roadmap and identify the fastest wins for your team.`;
 
-          <!-- Footer -->
-          <tr>
-            <td style="background-color: #f8fafc; padding: 30px; text-align: center; border-top: 1px solid #e2e8f0;">
-              <p style="margin: 0 0 10px; color: #64748b; font-size: 14px;">
-                <strong>ASTRALIS</strong>
-              </p>
-              <p style="margin: 0; color: #94a3b8; font-size: 12px;">
-                <a href="mailto:support@astralisone.com" style="color: #3b82f6; text-decoration: none;">support@astralisone.com</a> |
-                <a href="tel:+13412234433" style="color: #3b82f6; text-decoration: none;">+1 (341) 223-4433</a>
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-  `;
+  const bodyHtml = `${detailsTable}${preparationList}${supportBlock}`;
+
+  return buildEmailTemplate({
+    preheader: 'Your Astralis consultation is confirmed.',
+    heroTitle: 'Your consultation is booked',
+    heroSubtitle: `${booking.date} · ${booking.time} (${meetingTypeLabel})`,
+    introHtml,
+    bodyHtml,
+    footerNote: 'You are receiving this email because you requested a consultation with Astralis. If this wasn’t you, please ignore this message or contact support.'
+  });
 }
 
 /**
@@ -223,42 +257,31 @@ export function generateCustomerConfirmationText(booking: {
     IN_PERSON: 'In-Person Meeting',
   }[booking.meetingType] || booking.meetingType;
 
-  return `
-ASTRALIS - Your consultation is confirmed!
+  const lines = [
+    'ASTRALIS CONSULTATION CONFIRMED',
+    '',
+    `Hi ${booking.name},`,
+    '',
+    `Your consultation is scheduled for ${booking.date} at ${booking.time} (${meetingTypeLabel}).`,
+    '',
+    `Booking ID: ${booking.bookingId}`,
+    '',
+    'NEXT STEPS',
+    '- Calendar invite attached for quick add to your schedule',
+  ];
 
-Hi ${booking.name},
+  if (booking.meetingType === 'VIDEO_CALL') {
+    lines.push('- A secure video link will arrive 1 hour before we meet');
+  }
 
-Thank you for scheduling a consultation with us! We're excited to discuss your automation needs.
+  if (booking.meetingType === 'PHONE_CALL') {
+    lines.push(`- We will call you at ${booking.phone} at the scheduled time`);
+  }
 
-MEETING DETAILS
-----------------
-Booking ID: ${booking.bookingId}
-Date: ${booking.date}
-Time: ${booking.time}
-Duration: 30 minutes
-Meeting Type: ${meetingTypeLabel}
+  lines.push('- Bring any workflows or questions you would like to review together');
+  lines.push('', 'NEED TO RESCHEDULE?', 'Email support@astralisone.com or call +1 (341) 223-4433.', '', 'Looking forward to collaborating,', 'The Astralis Team');
 
-WHAT HAPPENS NEXT?
--------------------
-- We'll send you a calendar invite (attached to this email)
-- A confirmation will be sent to your calendar
-${booking.meetingType === 'VIDEO_CALL' ? '- You\'ll receive a video call link 1 hour before the meeting' : ''}
-${booking.meetingType === 'PHONE_CALL' ? '- We\'ll call you at ' + booking.phone + ' at the scheduled time' : ''}
-- Feel free to prepare any questions or materials you'd like to discuss
-
-NEED TO RESCHEDULE?
--------------------
-Contact us at support@astralisone.com or call +1 (341) 223-4433
-
-We look forward to speaking with you!
-
-Best regards,
-The Astralis Team
-
----
-ASTRALIS
-support@astralisone.com | +1 (341) 223-4433
-  `.trim();
+  return lines.join('\n');
 }
 
 /**
@@ -299,116 +322,81 @@ export function generateSchedulingConfirmationEmail(
     timeZone: booking.timezone,
   });
 
-  const timeStr = booking.startTime.toLocaleTimeString('en-US', {
+  const startTime = booking.startTime.toLocaleTimeString('en-US', {
     hour: 'numeric',
     minute: '2-digit',
     timeZone: booking.timezone,
   });
 
-  const endTimeStr = booking.endTime.toLocaleTimeString('en-US', {
+  const endTime = booking.endTime.toLocaleTimeString('en-US', {
     hour: 'numeric',
     minute: '2-digit',
     timeZone: booking.timezone,
   });
 
   const recipientName = isHost ? booking.hostName : booking.guestName;
-  const otherPartyName = isHost ? booking.guestName : booking.hostName;
+  const counterpartyName = isHost ? booking.guestName : booking.hostName;
+  const counterpartLabel = isHost ? 'Guest' : 'Host';
 
-  return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Booking Confirmation</title>
-</head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f5f5f5;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 20px;">
-    <tr>
-      <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-          <!-- Header -->
-          <tr>
-            <td style="background: linear-gradient(135deg, #0A1B2B 0%, #1a3a52 100%); padding: 40px 30px; text-align: center;">
-              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold;">ASTRALIS</h1>
-              <p style="margin: 10px 0 0 0; color: #94a3b8; font-size: 16px;">Booking Confirmed</p>
-            </td>
-          </tr>
+  const introHtml = isHost
+    ? `Hi <strong>${recipientName}</strong>,<br/><br/>Your meeting with ${counterpartyName} is confirmed. Everything is set for ${dateStr}.`
+    : `Hi <strong>${recipientName}</strong>,<br/><br/>Your meeting with ${counterpartyName} is booked. We&apos;ll be ready for you on ${dateStr}.`;
 
-          <!-- Success Icon -->
-          <tr>
-            <td style="padding: 40px 30px 20px; text-align: center;">
-              <div style="width: 60px; height: 60px; background-color: #22c55e; border-radius: 50%; margin: 0 auto; display: flex; align-items: center; justify-content: center;">
-                <span style="color: white; font-size: 30px;">&#10003;</span>
-              </div>
-            </td>
-          </tr>
-
-          <!-- Content -->
-          <tr>
-            <td style="padding: 0 30px 30px;">
-              <h2 style="margin: 0 0 20px; color: #0A1B2B; font-size: 22px; text-align: center;">Hi ${recipientName},</h2>
-              <p style="margin: 0 0 20px; color: #475569; font-size: 16px; line-height: 1.6;">
-                Your meeting with ${otherPartyName} has been confirmed.
-              </p>
-
-              <!-- Booking Details Card -->
-              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; border-radius: 8px; margin: 20px 0;">
+  const detailsTable = `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 12px 0 24px; background-color:#f8fafc; border-radius:16px;">
+      <tbody>
+        <tr>
+          <td style="padding:22px 24px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tbody>
                 <tr>
-                  <td style="padding: 25px;">
-                    <h3 style="margin: 0 0 15px; color: #0A1B2B; font-size: 18px;">Meeting Details</h3>
-
-                    <table width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="padding: 8px 0; color: #64748b; font-size: 14px; font-weight: 600;">Title:</td>
-                        <td style="padding: 8px 0; color: #1e293b; font-size: 14px; text-align: right;">${booking.title}</td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 8px 0; color: #64748b; font-size: 14px; font-weight: 600;">Date:</td>
-                        <td style="padding: 8px 0; color: #1e293b; font-size: 14px; text-align: right;">${dateStr}</td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 8px 0; color: #64748b; font-size: 14px; font-weight: 600;">Time:</td>
-                        <td style="padding: 8px 0; color: #1e293b; font-size: 14px; text-align: right;">${timeStr} - ${endTimeStr}</td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 8px 0; color: #64748b; font-size: 14px; font-weight: 600;">Timezone:</td>
-                        <td style="padding: 8px 0; color: #1e293b; font-size: 14px; text-align: right;">${booking.timezone}</td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 8px 0; color: #64748b; font-size: 14px; font-weight: 600;">Meeting Type:</td>
-                        <td style="padding: 8px 0; color: #1e293b; font-size: 14px; text-align: right;">${meetingTypeLabel}</td>
-                      </tr>
-                    </table>
-                  </td>
+                  <td style="padding:6px 0; color:#64748b; font-size:13px; text-transform:uppercase; letter-spacing:0.08em;">Title</td>
+                  <td style="padding:6px 0; color:#1e293b; font-size:14px; font-weight:600; text-align:right;">${booking.title}</td>
                 </tr>
-              </table>
+                <tr>
+                  <td style="padding:6px 0; color:#64748b; font-size:13px; text-transform:uppercase; letter-spacing:0.08em;">Date</td>
+                  <td style="padding:6px 0; color:#1e293b; font-size:14px; font-weight:600; text-align:right;">${dateStr}</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0; color:#64748b; font-size:13px; text-transform:uppercase; letter-spacing:0.08em;">Time</td>
+                  <td style="padding:6px 0; color:#1e293b; font-size:14px; font-weight:600; text-align:right;">${startTime} – ${endTime}</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0; color:#64748b; font-size:13px; text-transform:uppercase; letter-spacing:0.08em;">Timezone</td>
+                  <td style="padding:6px 0; color:#1e293b; font-size:14px; font-weight:600; text-align:right;">${booking.timezone}</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0; color:#64748b; font-size:13px; text-transform:uppercase; letter-spacing:0.08em;">Meeting type</td>
+                  <td style="padding:6px 0; color:#1e293b; font-size:14px; font-weight:600; text-align:right;">${meetingTypeLabel}</td>
+                </tr>
+              </tbody>
+            </table>
+          </td>
+        </tr>
+      </tbody>
+    </table>`;
 
-              <p style="margin: 30px 0 0; color: #475569; font-size: 15px; line-height: 1.6;">
-                Best regards,<br>
-                <strong style="color: #0A1B2B;">The Astralis Team</strong>
-              </p>
-            </td>
-          </tr>
+  const participantsBlock = `
+    <div style="padding: 18px 22px; border-radius: 16px; background-color:#eef2ff; display:flex; justify-content:space-between; font-size:13px; color:#312e81;">
+      <span style="font-weight:600;">${counterpartLabel}</span>
+      <span style="font-weight:600;">${counterpartyName} · ${isHost ? booking.guestEmail : booking.hostEmail}</span>
+    </div>`;
 
-          <!-- Footer -->
-          <tr>
-            <td style="background-color: #f8fafc; padding: 30px; text-align: center; border-top: 1px solid #e2e8f0;">
-              <p style="margin: 0 0 10px; color: #64748b; font-size: 14px;">
-                <strong>ASTRALIS</strong>
-              </p>
-              <p style="margin: 0; color: #94a3b8; font-size: 12px;">
-                <a href="mailto:support@astralisone.com" style="color: #3b82f6; text-decoration: none;">support@astralisone.com</a>
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-  `;
+  const supportBlock = `
+    <div style="margin-top:28px; padding: 18px 24px; border-radius: 16px; background-color:#f1f5f9; font-size:13px; color:#475569; line-height:1.7;">
+      Need to adjust anything? Reply to this email or contact <a href="mailto:support@astralisone.com" style="color:#2B6CB0; text-decoration:none;">support@astralisone.com</a>.
+    </div>`;
+
+  const bodyHtml = `${detailsTable}${participantsBlock}${supportBlock}`;
+
+  return buildEmailTemplate({
+    preheader: `Meeting confirmed with ${counterpartyName} on ${dateStr}.`,
+    heroTitle: `Meeting confirmed with ${counterpartyName}`,
+    heroSubtitle: `${dateStr} · ${startTime} ${booking.timezone}`,
+    introHtml,
+    bodyHtml,
+    footerNote: 'This scheduling update was generated by Astralis. If something looks off, please contact the meeting organizer.'
+  });
 }
 
 /**
@@ -432,44 +420,41 @@ export function generateSchedulingConfirmationText(
     timeZone: booking.timezone,
   });
 
-  const timeStr = booking.startTime.toLocaleTimeString('en-US', {
+  const startTime = booking.startTime.toLocaleTimeString('en-US', {
     hour: 'numeric',
     minute: '2-digit',
     timeZone: booking.timezone,
   });
 
-  const endTimeStr = booking.endTime.toLocaleTimeString('en-US', {
+  const endTime = booking.endTime.toLocaleTimeString('en-US', {
     hour: 'numeric',
     minute: '2-digit',
     timeZone: booking.timezone,
   });
 
   const recipientName = isHost ? booking.hostName : booking.guestName;
-  const otherPartyName = isHost ? booking.guestName : booking.hostName;
+  const counterpartyName = isHost ? booking.guestName : booking.hostName;
+  const counterpartLabel = isHost ? 'Guest' : 'Host';
 
-  return `
-ASTRALIS - Booking Confirmed
+  const lines = [
+    'ASTRALIS MEETING CONFIRMED',
+    '',
+    `Hi ${recipientName},`,
+    '',
+    `Your meeting with ${counterpartyName} is scheduled for ${dateStr} from ${startTime} to ${endTime} (${booking.timezone}).`,
+    '',
+    `Title: ${booking.title}`,
+    `Meeting type: ${meetingTypeLabel}`,
+    `${counterpartLabel}: ${counterpartyName} · ${isHost ? booking.guestEmail : booking.hostEmail}`,
+    '',
+    'Need to adjust anything? Reply to this email or contact support@astralisone.com.',
+    '',
+    'The Astralis Team',
+  ];
 
-Hi ${recipientName},
-
-Your meeting with ${otherPartyName} has been confirmed.
-
-MEETING DETAILS
-----------------
-Title: ${booking.title}
-Date: ${dateStr}
-Time: ${timeStr} - ${endTimeStr}
-Timezone: ${booking.timezone}
-Meeting Type: ${meetingTypeLabel}
-
-Best regards,
-The Astralis Team
-
----
-ASTRALIS
-support@astralisone.com
-  `.trim();
+  return lines.join('\n');
 }
+
 
 /**
  * Generate HTML email for host notification (new booking received)

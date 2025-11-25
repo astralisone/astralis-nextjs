@@ -4,11 +4,12 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { signUpSchema, SignUpInput } from '@/lib/validators/auth.validators';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import Link from 'next/link';
+import { AuthLayout } from '@/components/auth/AuthLayout';
 
 export default function SignUpPage() {
   const [error, setError] = useState<string | null>(null);
@@ -46,110 +47,124 @@ export default function SignUpPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-8 bg-slate-50">
-        <div className="max-w-md w-full">
-          <Alert variant="success" showIcon>
-            <AlertTitle>Account Created!</AlertTitle>
-            <AlertDescription>
-              Please check your email to verify your account before signing in.
-            </AlertDescription>
-          </Alert>
-          <div className="mt-6 text-center">
-            <Link href="/auth/signin">
-              <Button variant="outline">Go to Sign In</Button>
+      <AuthLayout
+        title="Check your inbox"
+        subtitle="We sent a verification link to confirm your account"
+        badge="Account Created"
+        footer={
+          <span>
+            Ready to continue?{' '}
+            <Link href="/auth/signin" className="font-semibold text-astralis-blue hover:text-astralis-blue/80">
+              Return to sign-in
             </Link>
-          </div>
-        </div>
-      </div>
+          </span>
+        }
+      >
+        <Alert variant="success" showIcon>
+          <AlertTitle>Account created</AlertTitle>
+          <AlertDescription>
+            Verify your email within the next 24 hours to activate AstralisOps. Once confirmed, you can sign in and invite your team.
+          </AlertDescription>
+        </Alert>
+        <Button asChild variant="primary" className="w-full">
+          <Link href="/auth/signin">Proceed to sign in</Link>
+        </Button>
+      </AuthLayout>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-8 bg-slate-50">
-      <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-md">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-astralis-navy">Create Account</h1>
-          <p className="text-slate-600 mt-2">Get started with AstralisOps</p>
-        </div>
-
-        {error && (
-          <Alert variant="error" showIcon className="mb-6">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
-            <Label htmlFor="name">Full Name</Label>
-            <Input
-              id="name"
-              {...register('name')}
-              placeholder="John Doe"
-              className={errors.name ? 'border-error' : ''}
-            />
-            {errors.name && (
-              <p className="text-error text-sm mt-1">{errors.name.message}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              {...register('email')}
-              placeholder="you@example.com"
-              className={errors.email ? 'border-error' : ''}
-            />
-            {errors.email && (
-              <p className="text-error text-sm mt-1">{errors.email.message}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              {...register('password')}
-              placeholder="Min 8 characters, 1 uppercase, 1 number"
-              className={errors.password ? 'border-error' : ''}
-            />
-            {errors.password && (
-              <p className="text-error text-sm mt-1">{errors.password.message}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="orgName">Organization Name</Label>
-            <Input
-              id="orgName"
-              {...register('orgName')}
-              placeholder="Acme Inc."
-              className={errors.orgName ? 'border-error' : ''}
-            />
-            {errors.orgName && (
-              <p className="text-error text-sm mt-1">{errors.orgName.message}</p>
-            )}
-          </div>
-
-          <Button
-            type="submit"
-            variant="primary"
-            className="w-full"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Creating Account...' : 'Create Account'}
-          </Button>
-        </form>
-
-        <div className="mt-6 text-center text-sm text-slate-600">
-          Already have an account?{' '}
-          <Link href="/auth/signin" className="text-astralis-blue hover:underline">
-            Sign in
+    <AuthLayout
+      title="Create your account"
+      subtitle="Launch automation in days, not months"
+      description="Provide a few details and we’ll tailor your workspace."
+      badge="New Workspace"
+      footer={
+        <span>
+          Already onboarded?{' '}
+          <Link href="/auth/signin" className="font-semibold text-astralis-blue hover:text-astralis-blue/80">
+            Sign in instead
           </Link>
+        </span>
+      }
+    >
+      {error && (
+        <Alert variant="error" showIcon>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        <div className="space-y-2">
+          <Label htmlFor="name">Full name</Label>
+          <Input
+            id="name"
+            placeholder="Jordan Rivers"
+            autoComplete="name"
+            aria-invalid={Boolean(errors.name)}
+            {...register('name')}
+          />
+          {errors.name && (
+            <p className="text-sm text-error">{errors.name.message}</p>
+          )}
         </div>
-      </div>
-    </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="email">Work email</Label>
+          <Input
+            id="email"
+            type="email"
+            autoComplete="email"
+            placeholder="you@company.com"
+            aria-invalid={Boolean(errors.email)}
+            {...register('email')}
+          />
+          {errors.email && (
+            <p className="text-sm text-error">{errors.email.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="password">Password</Label>
+          <Input
+            id="password"
+            type="password"
+            autoComplete="new-password"
+            placeholder="Minimum 8 characters with a number and capital letter"
+            aria-invalid={Boolean(errors.password)}
+            {...register('password')}
+          />
+          {errors.password && (
+            <p className="text-sm text-error">{errors.password.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="orgName">Organization</Label>
+          <Input
+            id="orgName"
+            placeholder="Astralis Labs"
+            aria-invalid={Boolean(errors.orgName)}
+            {...register('orgName')}
+          />
+          {errors.orgName && (
+            <p className="text-sm text-error">{errors.orgName.message}</p>
+          )}
+        </div>
+
+        <div className="rounded-xl bg-slate-50 p-4">
+          <p className="text-sm font-medium text-astralis-navy">Included with every workspace</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-600">
+            <li>Concierge onboarding with automation architects</li>
+            <li>Role-based access controls & multi-factor auth</li>
+            <li>Dedicated Slack channel with the Astralis support team</li>
+          </ul>
+        </div>
+
+        <Button type="submit" variant="primary" className="w-full" disabled={isSubmitting}>
+          {isSubmitting ? 'Creating your workspace…' : 'Create account'}
+        </Button>
+      </form>
+    </AuthLayout>
   );
 }
