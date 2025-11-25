@@ -470,6 +470,24 @@ export class DecisionEngine {
         }
         break;
 
+      case DecisionTypeEnum.CREATE_TASK:
+        if (typeof params.templateId !== 'string') {
+          errors.push(`${prefix} CREATE_TASK requires "templateId" string`);
+        }
+        if (typeof params.orgId !== 'string') {
+          errors.push(`${prefix} CREATE_TASK requires "orgId" string`);
+        }
+        if (typeof params.source !== 'string' || !['FORM', 'EMAIL', 'CHAT', 'API', 'CALL'].includes(params.source as string)) {
+          errors.push(`${prefix} CREATE_TASK requires "source" to be one of: FORM, EMAIL, CHAT, API, CALL`);
+        }
+        if (typeof params.title !== 'string') {
+          errors.push(`${prefix} CREATE_TASK requires "title" string`);
+        }
+        if (params.priority !== undefined && (typeof params.priority !== 'number' || params.priority < 1 || params.priority > 5)) {
+          errors.push(`${prefix} CREATE_TASK "priority" must be between 1 and 5`);
+        }
+        break;
+
       case DecisionTypeEnum.CREATE_EVENT:
         if (typeof params.title !== 'string') {
           errors.push(`${prefix} CREATE_EVENT requires "title" string`);

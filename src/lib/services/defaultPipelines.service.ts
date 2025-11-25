@@ -122,19 +122,35 @@ export async function ensureDefaultPipelines(orgId: string): Promise<PipelineWit
 
   // Create missing pipelines with their stages
   for (const pipelineDef of pipelinesToCreate) {
+    // Generate pipeline key (kebab-case)
+    const pipelineKey = pipelineDef.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+
     const pipeline = await prisma.pipeline.create({
       data: {
         name: pipelineDef.name,
+        key: pipelineKey,
         description: pipelineDef.description,
         isActive: true,
         orgId: orgId,
         stages: {
-          create: pipelineDef.stages.map((stage) => ({
-            name: stage.name,
-            description: stage.description,
-            order: stage.order,
-            color: stage.color,
-          })),
+          create: pipelineDef.stages.map((stage) => {
+            // Generate stage key (snake_case)
+            const stageKey = stage.name
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, '_')
+              .replace(/(^_|_$)/g, '');
+
+            return {
+              name: stage.name,
+              key: stageKey,
+              description: stage.description,
+              order: stage.order,
+              color: stage.color,
+            };
+          }),
         },
       },
       include: {
@@ -212,19 +228,35 @@ export async function getDefaultPipeline(orgId: string): Promise<PipelineWithSta
   }
 
   // Create the General Intake pipeline with stages
+  // Generate pipeline key (kebab-case)
+  const pipelineKey = generalIntakeDef.name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+
   const newPipeline = await prisma.pipeline.create({
     data: {
       name: generalIntakeDef.name,
+      key: pipelineKey,
       description: generalIntakeDef.description,
       isActive: true,
       orgId: orgId,
       stages: {
-        create: generalIntakeDef.stages.map((stage) => ({
-          name: stage.name,
-          description: stage.description,
-          order: stage.order,
-          color: stage.color,
-        })),
+        create: generalIntakeDef.stages.map((stage) => {
+          // Generate stage key (snake_case)
+          const stageKey = stage.name
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '_')
+            .replace(/(^_|_$)/g, '');
+
+          return {
+            name: stage.name,
+            key: stageKey,
+            description: stage.description,
+            order: stage.order,
+            color: stage.color,
+          };
+        }),
       },
     },
     include: {

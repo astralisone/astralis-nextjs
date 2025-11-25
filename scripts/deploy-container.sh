@@ -93,6 +93,10 @@ ssh -i "$SSH_KEY" "$SERVER_USER@$SERVER_HOST" <<-EOF
 
   echo "Cleaning up uploaded tarball..."
   rm -f "$REMOTE_TARBALL"
+
+  pm2 restart ecosystem.docker.config.js
+  sys
+
 EOF
 
 success "Deployment complete"

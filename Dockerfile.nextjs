@@ -17,34 +17,47 @@ COPY . .
 
 RUN yarn prisma:gen
 
-RUN find /app/src/components/ui
-
+# Build with optimized memory allocation
 ENV NODE_OPTIONS=--max-old-space-size=6096
 RUN yarn build
 
-# ---- RUNTIME STAGE ----
-FROM node:20-bullseye-slim
+# ---- RUNTIME STAGE (Standalone) ----
+FROM node:20-bullseye-slim AS runner
 
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=3001
-ENV NODE_OPTIONS=--max-old-space-size=6096
+ENV HOSTNAME="0.0.0.0"
 
-RUN apt-get update && apt-get install -y dumb-init && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y dumb-init curl && rm -rf /var/lib/apt/lists/*
 
+# Create non-root user for security
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Copy standalone build (much smaller than full node_modules)
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/yarn.lock ./
-COPY --from=builder /app/tsconfig.json ./
-COPY --from=builder /app/next.config.mjs ./
-COPY --from=builder /app/ecosystem.config.js ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Copy Prisma for migrations
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
+
+# Copy entrypoint script (before switching to non-root user)
+COPY docker-entrypoint.sh ./
+RUN chmod +x docker-entrypoint.sh && chown nextjs:nodejs docker-entrypoint.sh
+
+USER nextjs
 
 EXPOSE 3001
 
-# No .env.production here! Compose will inject at runtime
-# Use yarn commands for Prisma/seed/start, loaded with the environment from Compose
-CMD ["dumb-init", "sh", "-c", "yarn prisma:migrate && yarn prisma:seed && yarn start"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD curl -f http://localhost:3001/api/health || exit 1
+
+# Run with entrypoint (handles migrations + server start)
+ENTRYPOINT ["dumb-init", "./docker-entrypoint.sh"]

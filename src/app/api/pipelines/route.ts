@@ -98,9 +98,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Generate key from name (kebab-case)
+    const key = parsed.data.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+
     const pipeline = await prisma.pipeline.create({
       data: {
         name: parsed.data.name,
+        key,
         description: parsed.data.description,
         orgId: parsed.data.orgId,
       },

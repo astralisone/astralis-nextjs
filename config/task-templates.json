@@ -1,0 +1,1019 @@
+[
+  {
+    "id": "BOOKING_REQUEST_V1",
+    "label": "Booking Request",
+    "applicableSources": [
+      "FORM",
+      "EMAIL",
+      "CHAT",
+      "CALL"
+    ],
+    "category": "SALES_INQUIRY",
+    "department": "Sales",
+    "staffRole": "AGENT",
+    "typicalMinutes": 240,
+    "defaultPriority": 3,
+    "pipeline": {
+      "preferredPipelineKey": "sales-tasks",
+      "defaultStageKey": "new_intake"
+    },
+    "steps": [
+      {
+        "id": "capture-details",
+        "label": "Verify contact & request",
+        "order": 1
+      },
+      {
+        "id": "propose-slots",
+        "label": "Send available time slots",
+        "order": 2
+      },
+      {
+        "id": "confirm-booking",
+        "label": "Confirm appointment & send confirmation",
+        "order": 3
+      }
+    ],
+    "agentConfig": {
+      "systemPrompt": "You are a task agent handling booking requests for a small business. Your job is to make sure the client is contacted, suitable time slots are proposed, and an appointment is confirmed and recorded. You coordinate between the automation system and human agents, and only escalate when needed.",
+      "allowedActions": [
+        "SET_STATUS",
+        "SET_STAGE",
+        "ASSIGN_STAFF",
+        "PING_CUSTOMER",
+        "ADD_INTERNAL_NOTE"
+      ],
+      "completionCriteria": {
+        "status": "done",
+        "requiredStepsCompleted": [
+          "capture-details",
+          "confirm-booking"
+        ]
+      }
+    }
+  },
+  {
+    "id": "SUPPORT_REQUEST_V1",
+    "label": "Support Request",
+    "applicableSources": [
+      "FORM",
+      "EMAIL",
+      "CHAT",
+      "API"
+    ],
+    "category": "SUPPORT_REQUEST",
+    "department": "Support",
+    "staffRole": "AGENT",
+    "typicalMinutes": 120,
+    "defaultPriority": 3,
+    "pipeline": {
+      "preferredPipelineKey": "support-tasks",
+      "defaultStageKey": "new_intake"
+    },
+    "steps": [
+      {
+        "id": "triage",
+        "label": "Triage & categorize issue",
+        "order": 1
+      },
+      {
+        "id": "investigate",
+        "label": "Investigate / reproduce",
+        "order": 2
+      },
+      {
+        "id": "respond",
+        "label": "Respond with resolution or workaround",
+        "order": 3
+      }
+    ],
+    "agentConfig": {
+      "systemPrompt": "You are a task agent handling support requests. You triage issues, help route them to the correct person, track investigation progress, and ensure the customer receives a clear response. Escalate when the problem is severe or cannot be resolved quickly.",
+      "allowedActions": [
+        "SET_STATUS",
+        "SET_STAGE",
+        "ASSIGN_STAFF",
+        "TAG_TASK",
+        "PING_CUSTOMER",
+        "ESCALATE"
+      ],
+      "completionCriteria": {
+        "status": "done",
+        "requiredStepsCompleted": [
+          "triage",
+          "respond"
+        ]
+      }
+    }
+  },
+  {
+    "id": "BILLING_QUESTION_V1",
+    "label": "Billing Question",
+    "applicableSources": [
+      "FORM",
+      "EMAIL"
+    ],
+    "category": "BILLING_QUESTION",
+    "department": "Billing",
+    "staffRole": "BILLING_SPECIALIST",
+    "typicalMinutes": 180,
+    "defaultPriority": 3,
+    "pipeline": {
+      "preferredPipelineKey": "billing-tasks",
+      "defaultStageKey": "new_intake"
+    },
+    "steps": [
+      {
+        "id": "verify-account",
+        "label": "Verify customer account & invoice",
+        "order": 1
+      },
+      {
+        "id": "resolve-issue",
+        "label": "Resolve billing discrepancy or explain",
+        "order": 2
+      },
+      {
+        "id": "confirm-customer",
+        "label": "Confirm with customer",
+        "order": 3
+      }
+    ],
+    "agentConfig": {
+      "systemPrompt": "You are a task agent for billing questions. You make sure the issue is matched to the right billing specialist, that account and invoice details are verified, and that the customer receives a clear explanation or correction.",
+      "allowedActions": [
+        "SET_STATUS",
+        "SET_STAGE",
+        "ASSIGN_STAFF",
+        "TAG_TASK",
+        "ADD_INTERNAL_NOTE",
+        "PING_CUSTOMER"
+      ],
+      "completionCriteria": {
+        "status": "done",
+        "requiredStepsCompleted": [
+          "verify-account",
+          "resolve-issue"
+        ]
+      }
+    }
+  },
+  {
+    "id": "DOCUMENT_REVIEW_V1",
+    "label": "Document Review",
+    "applicableSources": [
+      "FORM",
+      "EMAIL",
+      "API"
+    ],
+    "category": "SUPPORT_REQUEST",
+    "department": "Operations",
+    "staffRole": "ADMIN",
+    "typicalMinutes": 720,
+    "defaultPriority": 3,
+    "pipeline": {
+      "preferredPipelineKey": "internal-tasks",
+      "defaultStageKey": "backlog"
+    },
+    "steps": [
+      {
+        "id": "check-completeness",
+        "label": "Check document completeness",
+        "order": 1
+      },
+      {
+        "id": "review-content",
+        "label": "Review and annotate content",
+        "order": 2
+      },
+      {
+        "id": "approve-or-change",
+        "label": "Approve or request changes",
+        "order": 3
+      }
+    ],
+    "agentConfig": {
+      "systemPrompt": "You are a task agent managing document review tasks. You ensure documents are complete, assigned to the correct internal owner, and either approved or sent back with requested changes. You track progress and deadlines.",
+      "allowedActions": [
+        "SET_STATUS",
+        "SET_STAGE",
+        "ASSIGN_STAFF",
+        "ADD_INTERNAL_NOTE",
+        "TAG_TASK"
+      ],
+      "completionCriteria": {
+        "status": "done",
+        "requiredStepsCompleted": [
+          "check-completeness",
+          "approve-or-change"
+        ]
+      }
+    }
+  },
+  {
+    "id": "REQUEST_MORE_INFO_V1",
+    "label": "Request More Information",
+    "applicableSources": [
+      "FORM",
+      "EMAIL",
+      "CHAT"
+    ],
+    "category": "GENERAL",
+    "department": "Sales",
+    "staffRole": "AGENT",
+    "typicalMinutes": 1440,
+    "defaultPriority": 2,
+    "pipeline": {
+      "preferredPipelineKey": "sales-tasks",
+      "defaultStageKey": "new_intake"
+    },
+    "steps": [
+      {
+        "id": "clarify-needs",
+        "label": "Clarify client needs",
+        "order": 1
+      },
+      {
+        "id": "send-materials",
+        "label": "Send materials or links",
+        "order": 2
+      }
+    ],
+    "agentConfig": {
+      "systemPrompt": "You are a task agent handling information requests. Your job is to clarify what the client needs, make sure the right information or links are sent, and ensure someone follows up if necessary.",
+      "allowedActions": [
+        "SET_STATUS",
+        "SET_STAGE",
+        "ASSIGN_STAFF",
+        "PING_CUSTOMER",
+        "ADD_INTERNAL_NOTE"
+      ],
+      "completionCriteria": {
+        "status": "done",
+        "requiredStepsCompleted": [
+          "clarify-needs",
+          "send-materials"
+        ]
+      }
+    }
+  },
+  {
+    "id": "INTERNAL_FOLLOWUP_V1",
+    "label": "Internal Follow-up",
+    "applicableSources": [
+      "FORM",
+      "API",
+      "EMAIL"
+    ],
+    "category": "INTERNAL",
+    "department": "Operations",
+    "staffRole": "AGENT",
+    "typicalMinutes": 1440,
+    "defaultPriority": 2,
+    "pipeline": {
+      "preferredPipelineKey": "internal-tasks",
+      "defaultStageKey": "backlog"
+    },
+    "steps": [
+      {
+        "id": "clarify-task",
+        "label": "Clarify requested internal work",
+        "order": 1
+      },
+      {
+        "id": "do-work",
+        "label": "Complete internal work",
+        "order": 2
+      },
+      {
+        "id": "report-back",
+        "label": "Report back or record outcome",
+        "order": 3
+      }
+    ],
+    "agentConfig": {
+      "systemPrompt": "You are a task agent for internal follow-up items. You ensure the task is clearly defined, assigned to the right internal person, and completed within a reasonable timeframe.",
+      "allowedActions": [
+        "SET_STATUS",
+        "SET_STAGE",
+        "ASSIGN_STAFF",
+        "ADD_INTERNAL_NOTE",
+        "TAG_TASK"
+      ],
+      "completionCriteria": {
+        "status": "done",
+        "requiredStepsCompleted": [
+          "do-work"
+        ]
+      }
+    }
+  },
+  {
+    "id": "GENERIC_TASK_V1",
+    "label": "Generic Task",
+    "applicableSources": [
+      "FORM",
+      "EMAIL",
+      "CHAT",
+      "API",
+      "CALL"
+    ],
+    "category": "GENERAL",
+    "department": "General",
+    "staffRole": "AGENT",
+    "typicalMinutes": 720,
+    "defaultPriority": 3,
+    "pipeline": {
+      "preferredPipelineKey": "generic-tasks",
+      "defaultStageKey": "new_intake"
+    },
+    "steps": [
+      {
+        "id": "understand",
+        "label": "Understand what is needed",
+        "order": 1
+      },
+      {
+        "id": "act",
+        "label": "Take appropriate action or assign",
+        "order": 2
+      },
+      {
+        "id": "confirm",
+        "label": "Confirm with requester if needed",
+        "order": 3
+      }
+    ],
+    "agentConfig": {
+      "systemPrompt": "You are a general-purpose task agent. When a task does not match a more specific template, you help clarify what is needed, route it appropriately, and ensure progress is made.",
+      "allowedActions": [
+        "SET_STATUS",
+        "SET_STAGE",
+        "ASSIGN_STAFF",
+        "TAG_TASK",
+        "PING_CUSTOMER",
+        "ADD_INTERNAL_NOTE"
+      ],
+      "completionCriteria": {
+        "status": "done"
+      }
+    }
+  },
+  {
+    "id": "CLIENT_ONBOARDING_V1",
+    "label": "Client Onboarding",
+    "applicableSources": [
+      "FORM",
+      "EMAIL",
+      "API"
+    ],
+    "category": "ONBOARDING",
+    "department": "Operations",
+    "staffRole": "ACCOUNT_MANAGER",
+    "typicalMinutes": 2880,
+    "defaultPriority": 2,
+    "pipeline": {
+      "preferredPipelineKey": "internal-tasks",
+      "defaultStageKey": "backlog"
+    },
+    "steps": [
+      {
+        "id": "collect-info",
+        "label": "Collect client information & requirements",
+        "order": 1
+      },
+      {
+        "id": "setup-accounts",
+        "label": "Set up client accounts & access",
+        "order": 2
+      },
+      {
+        "id": "kickoff-call",
+        "label": "Schedule & complete kickoff call",
+        "order": 3
+      },
+      {
+        "id": "training",
+        "label": "Provide training & documentation",
+        "order": 4
+      },
+      {
+        "id": "handoff",
+        "label": "Handoff to account team",
+        "order": 5
+      }
+    ],
+    "agentConfig": {
+      "systemPrompt": "You are a task agent managing client onboarding. You ensure new clients are properly set up with accounts, receive kickoff calls, get trained on the platform, and are handed off to their ongoing account team. Track all milestones and ensure nothing falls through the cracks.",
+      "allowedActions": [
+        "SET_STATUS",
+        "SET_STAGE",
+        "ASSIGN_STAFF",
+        "TAG_TASK",
+        "PING_CUSTOMER",
+        "ADD_INTERNAL_NOTE",
+        "ESCALATE"
+      ],
+      "completionCriteria": {
+        "status": "done",
+        "requiredStepsCompleted": [
+          "collect-info",
+          "setup-accounts",
+          "handoff"
+        ]
+      }
+    }
+  },
+  {
+    "id": "NEW_HIRE_ONBOARDING_V1",
+    "label": "New Hire Onboarding",
+    "applicableSources": [
+      "FORM",
+      "API"
+    ],
+    "category": "HR",
+    "department": "HR",
+    "staffRole": "HR_SPECIALIST",
+    "typicalMinutes": 4320,
+    "defaultPriority": 2,
+    "pipeline": {
+      "preferredPipelineKey": "internal-tasks",
+      "defaultStageKey": "backlog"
+    },
+    "steps": [
+      {
+        "id": "paperwork",
+        "label": "Complete hiring paperwork & documentation",
+        "order": 1
+      },
+      {
+        "id": "equipment",
+        "label": "Provision equipment & access",
+        "order": 2
+      },
+      {
+        "id": "orientation",
+        "label": "Schedule & complete orientation",
+        "order": 3
+      },
+      {
+        "id": "training-plan",
+        "label": "Create & track training plan",
+        "order": 4
+      },
+      {
+        "id": "check-in",
+        "label": "30-day check-in",
+        "order": 5
+      }
+    ],
+    "agentConfig": {
+      "systemPrompt": "You are a task agent managing new hire onboarding. You ensure all HR paperwork is completed, equipment and access are provisioned, orientation is scheduled, training plans are created, and check-ins are conducted. Coordinate with IT, HR, and the hiring manager to ensure a smooth onboarding experience.",
+      "allowedActions": [
+        "SET_STATUS",
+        "SET_STAGE",
+        "ASSIGN_STAFF",
+        "TAG_TASK",
+        "ADD_INTERNAL_NOTE",
+        "ESCALATE"
+      ],
+      "completionCriteria": {
+        "status": "done",
+        "requiredStepsCompleted": [
+          "paperwork",
+          "equipment",
+          "orientation"
+        ]
+      }
+    }
+  },
+  {
+    "id": "STAFF_REVIEW_V1",
+    "label": "Staff Review",
+    "applicableSources": [
+      "FORM",
+      "API"
+    ],
+    "category": "HR",
+    "department": "HR",
+    "staffRole": "HR_MANAGER",
+    "typicalMinutes": 1440,
+    "defaultPriority": 3,
+    "pipeline": {
+      "preferredPipelineKey": "internal-tasks",
+      "defaultStageKey": "backlog"
+    },
+    "steps": [
+      {
+        "id": "gather-feedback",
+        "label": "Gather performance feedback",
+        "order": 1
+      },
+      {
+        "id": "self-assessment",
+        "label": "Request self-assessment",
+        "order": 2
+      },
+      {
+        "id": "review-meeting",
+        "label": "Schedule & conduct review meeting",
+        "order": 3
+      },
+      {
+        "id": "document",
+        "label": "Document outcomes & action items",
+        "order": 4
+      }
+    ],
+    "agentConfig": {
+      "systemPrompt": "You are a task agent managing staff performance reviews. You ensure feedback is gathered, self-assessments are requested, review meetings are scheduled and conducted, and outcomes are properly documented. Track deadlines and ensure reviews are completed on time.",
+      "allowedActions": [
+        "SET_STATUS",
+        "SET_STAGE",
+        "ASSIGN_STAFF",
+        "TAG_TASK",
+        "ADD_INTERNAL_NOTE"
+      ],
+      "completionCriteria": {
+        "status": "done",
+        "requiredStepsCompleted": [
+          "gather-feedback",
+          "review-meeting",
+          "document"
+        ]
+      }
+    }
+  },
+  {
+    "id": "PAYROLL_MANAGEMENT_V1",
+    "label": "Payroll Management",
+    "applicableSources": [
+      "FORM",
+      "API"
+    ],
+    "category": "FINANCE",
+    "department": "Finance",
+    "staffRole": "PAYROLL_SPECIALIST",
+    "typicalMinutes": 480,
+    "defaultPriority": 1,
+    "pipeline": {
+      "preferredPipelineKey": "billing-tasks",
+      "defaultStageKey": "new_intake"
+    },
+    "steps": [
+      {
+        "id": "collect-hours",
+        "label": "Collect & verify time records",
+        "order": 1
+      },
+      {
+        "id": "calculate",
+        "label": "Calculate pay & deductions",
+        "order": 2
+      },
+      {
+        "id": "review-approve",
+        "label": "Review & approve payroll",
+        "order": 3
+      },
+      {
+        "id": "process",
+        "label": "Process payments",
+        "order": 4
+      },
+      {
+        "id": "distribute",
+        "label": "Distribute pay stubs",
+        "order": 5
+      }
+    ],
+    "agentConfig": {
+      "systemPrompt": "You are a task agent managing payroll processing. You ensure time records are collected and verified, pay is calculated correctly with proper deductions, payroll is reviewed and approved, payments are processed on time, and pay stubs are distributed. This is time-sensitive work requiring accuracy.",
+      "allowedActions": [
+        "SET_STATUS",
+        "SET_STAGE",
+        "ASSIGN_STAFF",
+        "TAG_TASK",
+        "ADD_INTERNAL_NOTE",
+        "ESCALATE"
+      ],
+      "completionCriteria": {
+        "status": "done",
+        "requiredStepsCompleted": [
+          "collect-hours",
+          "calculate",
+          "review-approve",
+          "process"
+        ]
+      }
+    }
+  },
+  {
+    "id": "ORDER_FULFILLMENT_V1",
+    "label": "Order Fulfillment",
+    "applicableSources": [
+      "API",
+      "FORM"
+    ],
+    "category": "OPERATIONS",
+    "department": "Operations",
+    "staffRole": "FULFILLMENT_SPECIALIST",
+    "typicalMinutes": 240,
+    "defaultPriority": 2,
+    "pipeline": {
+      "preferredPipelineKey": "internal-tasks",
+      "defaultStageKey": "ready"
+    },
+    "steps": [
+      {
+        "id": "verify-order",
+        "label": "Verify order details & inventory",
+        "order": 1
+      },
+      {
+        "id": "pick-pack",
+        "label": "Pick & pack items",
+        "order": 2
+      },
+      {
+        "id": "ship",
+        "label": "Ship & generate tracking",
+        "order": 3
+      },
+      {
+        "id": "notify",
+        "label": "Notify customer with tracking info",
+        "order": 4
+      }
+    ],
+    "agentConfig": {
+      "systemPrompt": "You are a task agent managing order fulfillment. You ensure orders are verified against inventory, items are picked and packed correctly, shipments are processed with tracking numbers, and customers are notified. Flag inventory issues or shipping delays immediately.",
+      "allowedActions": [
+        "SET_STATUS",
+        "SET_STAGE",
+        "ASSIGN_STAFF",
+        "TAG_TASK",
+        "PING_CUSTOMER",
+        "ADD_INTERNAL_NOTE",
+        "ESCALATE"
+      ],
+      "completionCriteria": {
+        "status": "done",
+        "requiredStepsCompleted": [
+          "verify-order",
+          "pick-pack",
+          "ship"
+        ]
+      }
+    }
+  },
+  {
+    "id": "ORDER_PLACEMENT_V1",
+    "label": "Order Placement",
+    "applicableSources": [
+      "FORM",
+      "EMAIL",
+      "CHAT",
+      "CALL"
+    ],
+    "category": "SALES",
+    "department": "Sales",
+    "staffRole": "SALES_REP",
+    "typicalMinutes": 120,
+    "defaultPriority": 2,
+    "pipeline": {
+      "preferredPipelineKey": "sales-tasks",
+      "defaultStageKey": "new_intake"
+    },
+    "steps": [
+      {
+        "id": "capture-order",
+        "label": "Capture order requirements",
+        "order": 1
+      },
+      {
+        "id": "check-availability",
+        "label": "Check product availability & pricing",
+        "order": 2
+      },
+      {
+        "id": "confirm-order",
+        "label": "Confirm order with customer",
+        "order": 3
+      },
+      {
+        "id": "submit-order",
+        "label": "Submit order to fulfillment",
+        "order": 4
+      }
+    ],
+    "agentConfig": {
+      "systemPrompt": "You are a task agent handling order placement. You capture customer requirements, verify product availability and pricing, confirm the order details with the customer, and submit the order for fulfillment. Ensure accuracy and communicate any issues promptly.",
+      "allowedActions": [
+        "SET_STATUS",
+        "SET_STAGE",
+        "ASSIGN_STAFF",
+        "TAG_TASK",
+        "PING_CUSTOMER",
+        "ADD_INTERNAL_NOTE"
+      ],
+      "completionCriteria": {
+        "status": "done",
+        "requiredStepsCompleted": [
+          "capture-order",
+          "confirm-order",
+          "submit-order"
+        ]
+      }
+    }
+  },
+  {
+    "id": "INVENTORY_MANAGEMENT_V1",
+    "label": "Inventory Management",
+    "applicableSources": [
+      "API",
+      "FORM"
+    ],
+    "category": "OPERATIONS",
+    "department": "Operations",
+    "staffRole": "INVENTORY_SPECIALIST",
+    "typicalMinutes": 480,
+    "defaultPriority": 3,
+    "pipeline": {
+      "preferredPipelineKey": "internal-tasks",
+      "defaultStageKey": "backlog"
+    },
+    "steps": [
+      {
+        "id": "audit",
+        "label": "Audit current inventory levels",
+        "order": 1
+      },
+      {
+        "id": "identify-reorder",
+        "label": "Identify items needing reorder",
+        "order": 2
+      },
+      {
+        "id": "place-orders",
+        "label": "Place purchase orders",
+        "order": 3
+      },
+      {
+        "id": "receive-update",
+        "label": "Receive & update inventory",
+        "order": 4
+      }
+    ],
+    "agentConfig": {
+      "systemPrompt": "You are a task agent managing inventory. You audit current stock levels, identify items that need reordering based on thresholds, place purchase orders with suppliers, and track receiving and inventory updates. Alert on critical low stock situations.",
+      "allowedActions": [
+        "SET_STATUS",
+        "SET_STAGE",
+        "ASSIGN_STAFF",
+        "TAG_TASK",
+        "ADD_INTERNAL_NOTE",
+        "ESCALATE"
+      ],
+      "completionCriteria": {
+        "status": "done",
+        "requiredStepsCompleted": [
+          "audit",
+          "identify-reorder"
+        ]
+      }
+    }
+  },
+  {
+    "id": "DOC_MANAGEMENT_V1",
+    "label": "Document Management",
+    "applicableSources": [
+      "FORM",
+      "EMAIL",
+      "API"
+    ],
+    "category": "OPERATIONS",
+    "department": "Operations",
+    "staffRole": "ADMIN",
+    "typicalMinutes": 360,
+    "defaultPriority": 3,
+    "pipeline": {
+      "preferredPipelineKey": "internal-tasks",
+      "defaultStageKey": "backlog"
+    },
+    "steps": [
+      {
+        "id": "receive-classify",
+        "label": "Receive & classify document",
+        "order": 1
+      },
+      {
+        "id": "extract-data",
+        "label": "Extract key data & metadata",
+        "order": 2
+      },
+      {
+        "id": "store-index",
+        "label": "Store & index document",
+        "order": 3
+      },
+      {
+        "id": "notify-stakeholders",
+        "label": "Notify relevant stakeholders",
+        "order": 4
+      }
+    ],
+    "agentConfig": {
+      "systemPrompt": "You are a task agent managing document workflows. You receive and classify incoming documents, extract key data and metadata, ensure proper storage and indexing, and notify relevant stakeholders. Maintain document organization and accessibility.",
+      "allowedActions": [
+        "SET_STATUS",
+        "SET_STAGE",
+        "ASSIGN_STAFF",
+        "TAG_TASK",
+        "ADD_INTERNAL_NOTE"
+      ],
+      "completionCriteria": {
+        "status": "done",
+        "requiredStepsCompleted": [
+          "receive-classify",
+          "store-index"
+        ]
+      }
+    }
+  },
+  {
+    "id": "FRONT_OFFICE_MANAGER_V1",
+    "label": "Front Office Management",
+    "applicableSources": [
+      "FORM",
+      "EMAIL",
+      "CHAT",
+      "CALL"
+    ],
+    "category": "OPERATIONS",
+    "department": "Operations",
+    "staffRole": "FRONT_OFFICE_MANAGER",
+    "typicalMinutes": 120,
+    "defaultPriority": 2,
+    "pipeline": {
+      "preferredPipelineKey": "generic-tasks",
+      "defaultStageKey": "new_intake"
+    },
+    "steps": [
+      {
+        "id": "receive-request",
+        "label": "Receive & log request",
+        "order": 1
+      },
+      {
+        "id": "triage-route",
+        "label": "Triage & route to appropriate team",
+        "order": 2
+      },
+      {
+        "id": "follow-up",
+        "label": "Follow up on resolution",
+        "order": 3
+      },
+      {
+        "id": "close-loop",
+        "label": "Close loop with requester",
+        "order": 4
+      }
+    ],
+    "agentConfig": {
+      "systemPrompt": "You are a task agent for front office management. You handle incoming requests from various channels, triage and route them to the appropriate teams, track resolution progress, and ensure requesters are kept informed. You are the first point of contact and maintain service quality.",
+      "allowedActions": [
+        "SET_STATUS",
+        "SET_STAGE",
+        "ASSIGN_STAFF",
+        "TAG_TASK",
+        "PING_CUSTOMER",
+        "ADD_INTERNAL_NOTE",
+        "ESCALATE"
+      ],
+      "completionCriteria": {
+        "status": "done",
+        "requiredStepsCompleted": [
+          "receive-request",
+          "triage-route"
+        ]
+      }
+    }
+  },
+  {
+    "id": "TIME_KEEPER_V1",
+    "label": "Time Tracking",
+    "applicableSources": [
+      "API",
+      "FORM"
+    ],
+    "category": "HR",
+    "department": "HR",
+    "staffRole": "HR_SPECIALIST",
+    "typicalMinutes": 240,
+    "defaultPriority": 3,
+    "pipeline": {
+      "preferredPipelineKey": "internal-tasks",
+      "defaultStageKey": "backlog"
+    },
+    "steps": [
+      {
+        "id": "collect-entries",
+        "label": "Collect time entries",
+        "order": 1
+      },
+      {
+        "id": "validate",
+        "label": "Validate entries & flag discrepancies",
+        "order": 2
+      },
+      {
+        "id": "approve",
+        "label": "Get manager approval",
+        "order": 3
+      },
+      {
+        "id": "export",
+        "label": "Export for payroll processing",
+        "order": 4
+      }
+    ],
+    "agentConfig": {
+      "systemPrompt": "You are a task agent managing time tracking. You collect time entries from staff, validate entries and flag discrepancies, coordinate manager approvals, and export approved time for payroll processing. Ensure accuracy and timely completion for pay periods.",
+      "allowedActions": [
+        "SET_STATUS",
+        "SET_STAGE",
+        "ASSIGN_STAFF",
+        "TAG_TASK",
+        "ADD_INTERNAL_NOTE"
+      ],
+      "completionCriteria": {
+        "status": "done",
+        "requiredStepsCompleted": [
+          "collect-entries",
+          "validate",
+          "approve"
+        ]
+      }
+    }
+  },
+  {
+    "id": "NOTE_TAKER_V1",
+    "label": "Meeting Notes",
+    "applicableSources": [
+      "FORM",
+      "API",
+      "CHAT"
+    ],
+    "category": "INTERNAL",
+    "department": "Operations",
+    "staffRole": "AGENT",
+    "typicalMinutes": 60,
+    "defaultPriority": 3,
+    "pipeline": {
+      "preferredPipelineKey": "internal-tasks",
+      "defaultStageKey": "ready"
+    },
+    "steps": [
+      {
+        "id": "capture",
+        "label": "Capture meeting notes & decisions",
+        "order": 1
+      },
+      {
+        "id": "extract-actions",
+        "label": "Extract action items & owners",
+        "order": 2
+      },
+      {
+        "id": "distribute",
+        "label": "Distribute notes to attendees",
+        "order": 3
+      },
+      {
+        "id": "track-actions",
+        "label": "Track action item completion",
+        "order": 4
+      }
+    ],
+    "agentConfig": {
+      "systemPrompt": "You are a task agent managing meeting notes. You capture meeting discussions and decisions, extract action items with assigned owners, distribute notes to attendees, and track action item completion. Ensure accountability and follow-through on commitments.",
+      "allowedActions": [
+        "SET_STATUS",
+        "SET_STAGE",
+        "ASSIGN_STAFF",
+        "TAG_TASK",
+        "ADD_INTERNAL_NOTE"
+      ],
+      "completionCriteria": {
+        "status": "done",
+        "requiredStepsCompleted": [
+          "capture",
+          "extract-actions",
+          "distribute"
+        ]
+      }
+    }
+  }
+]
