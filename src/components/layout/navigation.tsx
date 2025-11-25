@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
@@ -76,43 +77,48 @@ export function Navigation() {
 
   return (
     <header className="sticky top-0 z-50 w-full bg-astralis-navy border-b border-slate-700 shadow-lg">
-      <nav className="mx-auto max-w-[1400px] h-30 flex flex-row justify-start items-center p-5" aria-label="Main navigation">
-        <div className="flex items-center justify-between gap-8 w-full">
+      <nav className="mx-auto flex h-30 w-full max-w-[1400px] items-center p-5" aria-label="Main navigation">
+        <div className="flex w-full items-center justify-between gap-6">
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link
               href="/"
-              className="flex items-center text-2xl font-bold text-white transition-colors duration-200 hover:text-astralis-blue"
+              className="group flex items-center gap-3 transition-transform duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-astralis-navy focus-visible:ring-astralis-blue"
               aria-label="Astralis home"
             >
-              ASTRALIS
+              <Image
+                src="/images/user-logo.jpeg"
+                alt="Astralis logo"
+                width={64}
+                height={64}
+                priority
+                className="h-10 w-10 rounded-full border border-astralis-blue/60 object-cover drop-shadow-[0_14px_30px_rgba(43,108,176,0.35)] transition-transform duration-200 group-hover:scale-105 group-focus-visible:scale-105"
+              />
+              <span className="text-2xl font-semibold tracking-tight text-white transition-colors duration-200 group-hover:text-astralis-blue group-focus-visible:text-astralis-blue">
+                Astralis One
+              </span>
             </Link>
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden items-center gap-10 lg:flex flex-1 justify-end">
+          <div className="ml-auto hidden items-center gap-6 lg:flex">
             {/* Nav Links */}
-            <ul className="flex items-center gap-10" role="list">
+            <ul className="flex items-center gap-6" role="list">
               {navItems.map((item) => (
                 <li key={item.href}>
                   <Link
                     href={item.href}
                     className={cn(
                       'relative inline-block px-4 text-base font-medium transition-all duration-200',
+                      'after:absolute after:left-0 after:-bottom-1 after:h-0.5 after:w-full after:origin-left after:scale-x-0 after:rounded-full after:bg-astralis-blue after:opacity-0 after:content-[""] after:transition-transform after:duration-300 after:ease-out',
                       isActive(item.href)
-                        ? 'text-white'
-                        : 'text-slate-100 hover:text-white'
+                        ? 'text-white after:scale-x-100 after:opacity-100'
+                        : 'text-slate-100 hover:text-white hover:after:scale-x-100 hover:after:opacity-100 focus-visible:text-white focus-visible:after:scale-x-100 focus-visible:after:opacity-100'
                     )}
                   >
                     {item.label}
-                    {/* Active underline animation */}
-                    {isActive(item.href) && (
-                      <span
-                        className="absolute -bottom-1 left-0 h-0.5 w-full bg-astralis-blue"
-                        aria-hidden="true"
-                      />
-                    )}
                   </Link>
+
                 </li>
               ))}
             </ul>

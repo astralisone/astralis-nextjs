@@ -182,9 +182,88 @@
   .content-card:hover {
     @apply shadow-card-hover;
   }
-}
 
-/* Animation utilities (150-250ms per spec) */
+  .ui-card .light{
+    @apply bg-white border border-slate-200;
+  }
+
+  .ui-card .dark{
+    @apply border border-slate-200 bg-astralis-blue/10;
+    
+  }
+
+  /* Card theme utilities */
+  .feature-card {
+    @apply relative overflow-hidden rounded-2xl border transition-all duration-200 shadow-lg bg-white/90;
+  }
+
+  .feature-card__icon {
+    @apply inline-flex h-14 w-14 items-center justify-center rounded-xl;
+  }
+
+  .feature-card__title {
+    @apply text-xl font-semibold tracking-tight;
+  }
+
+  .feature-card__description {
+    @apply text-base leading-relaxed;
+  }
+
+  .card-theme-light,
+  .card-surface-light .feature-card {
+    @apply bg-white text-slate-900 border-slate-200 shadow-xl;
+    box-shadow: 0 24px 48px -28px rgba(10, 27, 43, 0.28);
+  }
+
+  .card-theme-light .feature-card__title,
+  .card-surface-light .feature-card__title {
+    @apply text-astralis-navy;
+  }
+
+  .card-theme-light .feature-card__description,
+  .card-surface-light .feature-card__description,
+  .card-theme-light p,
+  .card-surface-light .feature-card p,
+  .card-theme-light li,
+  .card-surface-light .feature-card li {
+    @apply text-slate-600;
+  }
+
+  .card-theme-light .feature-card__icon,
+  .card-surface-light .feature-card__icon {
+    @apply border border-astralis-blue/20 bg-astralis-blue/10 text-astralis-blue shadow-sm;
+    box-shadow: 0 12px 24px -16px rgba(43, 108, 176, 0.45);
+  }
+
+  .card-theme-dark,
+  .card-surface-dark .feature-card {
+    @apply bg-slate-900/85 text-slate-100 border-slate-700 backdrop-blur-sm shadow-xl;
+    box-shadow: 0 24px 60px -28px rgba(4, 12, 24, 0.7);
+  }
+
+  .card-theme-dark .feature-card__title,
+  .card-surface-dark .feature-card__title {
+    @apply text-white;
+  }
+
+  .card-theme-dark .feature-card__description,
+  .card-surface-dark .feature-card__description,
+  .card-theme-dark p,
+  .card-surface-dark .feature-card p,
+  .card-theme-dark li,
+  .card-surface-dark .feature-card li {
+    @apply text-slate-300;
+  }
+
+  .card-theme-dark .feature-card__icon,
+  .card-surface-dark .feature-card__icon {
+    @apply border border-white/20 bg-white/10 text-white shadow;
+    box-shadow: 0 14px 28px -18px rgba(0, 0, 0, 0.45);
+  }
+ }
+
+ /* Animation utilities (150-250ms per spec) */
+
 @layer utilities {
   .transition-fast {
     @apply transition-all duration-150 ease-out;

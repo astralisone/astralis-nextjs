@@ -1,9 +1,34 @@
-version: '3.8'
-
 services:
-  # ============================================================================
-  # PostgreSQL Database
-  # ============================================================================
+  app:
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+    build:
+      context: .
+      dockerfile: Dockerfile.nextjs  # Use your custom Dockerfile
+      args:
+        - NODE_ENV=production
+    container_name: astralis_app
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-3001}:3001"
+    env_file:
+      - .env.production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - astralis-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
   postgres:
     image: postgres:16-alpine
     container_name: astralis_postgres
@@ -26,9 +51,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # ============================================================================
-  # Redis Cache & Queue
-  # ============================================================================
   redis:
     image: redis:7-alpine
     container_name: astralis_redis
@@ -46,191 +68,32 @@ services:
       timeout: 5s
       retries: 5
 
-  # ============================================================================
-  # Next.js Application
-  # ============================================================================
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        - NODE_ENV=production
-    container_name: astralis_app
-    restart: unless-stopped
-    ports:
-      - "${APP_PORT:-3001}:3001"
-    environment:
-      # Database
-      - DATABASE_URL=postgresql://${DATABASE_USER:-astralis}:${DATABASE_PASSWORD}@postgres:5432/${DATABASE_NAME:-astralis_one}?schema=public
+  # worker:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.worker
+  #     args:
+  #       - NODE_ENV=production
+  #   container_name: astralis_worker
+  #   restart: unless-stopped
+  #   env_file:
+  #     - .env.production
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   networks:
+  #     - astralis-network
 
-      # Redis
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-
-      # NextAuth
-      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
-      - NEXTAUTH_URL=${NEXTAUTH_URL}
-
-      # API
-      - NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
-
-      # Email
-      - SMTP_HOST=${SMTP_HOST}
-      - SMTP_PORT=${SMTP_PORT}
-      - SMTP_SECURE=${SMTP_SECURE}
-      - SMTP_USER=${SMTP_USER}
-      - SMTP_PASSWORD=${SMTP_PASSWORD}
-      - SMTP_FROM_NAME=${SMTP_FROM_NAME}
-      - SMTP_FROM_EMAIL=${SMTP_FROM_EMAIL}
-
-      # DigitalOcean Spaces
-      - SPACES_ACCESS_KEY=${SPACES_ACCESS_KEY}
-      - SPACES_SECRET_KEY=${SPACES_SECRET_KEY}
-      - SPACES_ENDPOINT=${SPACES_ENDPOINT}
-      - SPACES_REGION=${SPACES_REGION}
-      - SPACES_BUCKET=${SPACES_BUCKET}
-      - SPACES_CDN_URL=${SPACES_CDN_URL}
-
-      # OpenAI
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-
-      # n8n Integration
-      - N8N_API_URL=http://n8n:5678/api/v1
-      - N8N_WEBHOOK_URL=${N8N_WEBHOOK_URL}
-      - ASTRALIS_API_KEY=${ASTRALIS_API_KEY}
-
-      # Google OAuth
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - astralis-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-
-  # ============================================================================
-  # Background Worker (BullMQ)
-  # ============================================================================
-  worker:
-    build:
-      context: .
-      dockerfile: Dockerfile.worker
-    container_name: astralis_worker
-    restart: unless-stopped
-    environment:
-      # Database
-      - DATABASE_URL=postgresql://${DATABASE_USER:-astralis}:${DATABASE_PASSWORD}@postgres:5432/${DATABASE_NAME:-astralis_one}?schema=public
-
-      # Redis
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-
-      # Email
-      - SMTP_HOST=${SMTP_HOST}
-      - SMTP_PORT=${SMTP_PORT}
-      - SMTP_SECURE=${SMTP_SECURE}
-      - SMTP_USER=${SMTP_USER}
-      - SMTP_PASSWORD=${SMTP_PASSWORD}
-      - SMTP_FROM_NAME=${SMTP_FROM_NAME}
-      - SMTP_FROM_EMAIL=${SMTP_FROM_EMAIL}
-
-      # DigitalOcean Spaces
-      - SPACES_ACCESS_KEY=${SPACES_ACCESS_KEY}
-      - SPACES_SECRET_KEY=${SPACES_SECRET_KEY}
-      - SPACES_ENDPOINT=${SPACES_ENDPOINT}
-      - SPACES_REGION=${SPACES_REGION}
-      - SPACES_BUCKET=${SPACES_BUCKET}
-
-      # OpenAI
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-
-      # Google Calendar
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-
-      # n8n Integration
-      - N8N_API_URL=http://n8n:5678/api/v1
-      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
-      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - astralis-network
-
-  # ============================================================================
-  # n8n Workflow Automation Engine (Phase 6)
-  # ============================================================================
   n8n:
     image: n8nio/n8n:latest
     container_name: astralis_n8n
     restart: unless-stopped
     ports:
       - "${N8N_PORT:-5678}:5678"
-    environment:
-      # Host Configuration
-      - N8N_HOST=${N8N_HOST:-localhost}
-      - N8N_PORT=5678
-      - N8N_PROTOCOL=${N8N_PROTOCOL:-http}
-
-      # Encryption Key (for credential storage)
-      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
-
-      # Database Configuration (shared PostgreSQL)
-      - DB_TYPE=postgresdb
-      - DB_POSTGRESDB_HOST=postgres
-      - DB_POSTGRESDB_PORT=5432
-      - DB_POSTGRESDB_DATABASE=${DATABASE_NAME:-astralis_one}
-      - DB_POSTGRESDB_USER=${DATABASE_USER:-astralis}
-      - DB_POSTGRESDB_PASSWORD=${DATABASE_PASSWORD}
-      - DB_POSTGRESDB_SCHEMA=n8n
-
-      # Webhook Configuration
-      - WEBHOOK_URL=${N8N_WEBHOOK_URL:-http://localhost:5678/}
-      - WEBHOOK_TUNNEL_URL=${N8N_WEBHOOK_TUNNEL_URL:-http://localhost:5678/}
-
-      # Execution Settings
-      - EXECUTIONS_PROCESS=main
-      - EXECUTIONS_DATA_SAVE_ON_ERROR=all
-      - EXECUTIONS_DATA_SAVE_ON_SUCCESS=all
-      - EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS=true
-      - EXECUTIONS_DATA_PRUNE=true
-      - EXECUTIONS_DATA_MAX_AGE=336
-
-      # Authentication
-      - N8N_BASIC_AUTH_ACTIVE=${N8N_BASIC_AUTH_ACTIVE:-true}
-      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER:-admin}
-      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
-
-      # Timezone
-      - GENERIC_TIMEZONE=America/New_York
-      - TZ=America/New_York
-
-      # Editor Settings
-      - N8N_EDITOR_BASE_URL=${N8N_EDITOR_BASE_URL:-http://localhost:5678}
-      - N8N_DISABLE_UI=false
-
-      # Security
-      - N8N_SECURE_COOKIE=false
-
-      # Logging
-      - N8N_LOG_LEVEL=${N8N_LOG_LEVEL:-info}
-      - N8N_LOG_OUTPUT=console
-
-      # Performance
-      - NODE_OPTIONS=--max-old-space-size=2048
+    env_file:
+      - .env.production
     volumes:
       - n8n-data:/home/node/.n8n
       - ./n8n-custom-nodes:/home/node/.n8n/custom
@@ -248,9 +111,6 @@ services:
       retries: 3
       start_period: 60s
 
-# ============================================================================
-# Volumes
-# ============================================================================
 volumes:
   postgres-data:
     driver: local
@@ -259,9 +119,6 @@ volumes:
   n8n-data:
     driver: local
 
-# ============================================================================
-# Networks
-# ============================================================================
 networks:
   astralis-network:
     driver: bridge

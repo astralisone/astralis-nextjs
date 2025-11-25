@@ -1,5 +1,10 @@
 import { PrismaClient } from "@prisma/client";
 
+// Extend global type to include our custom property
+declare global {
+  var agentSystemInitialized: boolean | undefined;
+}
+
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
 export const prisma =

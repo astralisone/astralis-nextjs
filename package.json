@@ -8,7 +8,6 @@
     "build": "next build",
     "start": "next start -p 3001",
     "lint": "next lint",
-    "postinstall": "prisma generate",
     "worker": "NODE_ENV=development tsx watch src/workers/index.ts",
     "worker:prod": "NODE_ENV=production tsx src/workers/index.ts",
     "prod:start": "pm2 start ecosystem.config.js && pm2 save",
@@ -23,9 +22,13 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
-    "test:e2e:report": "playwright show-report"
+    "test:e2e:report": "playwright show-report",
+    "prisma:gen": "prisma generate",
+    "prisma:migrate": "prisma migrate deploy",
+    "prisma:seed": "node prisma/seed.js"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.70.1",
     "@aws-sdk/client-s3": "^3.937.0",
     "@aws-sdk/s3-request-presigner": "^3.937.0",
     "@dnd-kit/core": "^6.3.1",
@@ -55,15 +58,20 @@
     "@tanstack/react-query": "^5.90.10",
     "@tanstack/react-query-devtools": "^5.90.2",
     "@tanstack/react-table": "^8.21.3",
+    "autoprefixer": "^10.4.20",
     "axios": "^1.13.2",
+    "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.3",
     "bullmq": "^5.64.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "crypto": "^1.0.1",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "dotenv": "^17.2.3",
+    "dotenv-cli": "^11.0.0",
     "file-type": "^21.1.1",
+    "fullcalendar": "^6.1.19",
     "googleapis": "^166.0.0",
     "ics": "^3.8.1",
     "ioredis": "^5.8.2",
@@ -73,6 +81,8 @@
     "nodemailer": "^7.0.10",
     "openai": "^6.9.1",
     "pdf-parse": "^1.1.1",
+    "pm2": "^6.0.13",
+    "postcss": "^8.4.49",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.66.1",
@@ -98,23 +108,18 @@
     "@types/nodemailer": "^7.0.4",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
-    "autoprefixer": "^10.4.20",
     "eslint": "^8.57.1",
     "eslint-config-next": "^14.2.18",
     "eslint-plugin-storybook": "^10.0.8",
-    "postcss": "^8.4.49",
-    "prisma": "^5.22.0",
+    "prisma": "5.22.0",
     "storybook": "^10.0.8",
     "tailwindcss": "^3.4.16",
     "tsx": "^4.20.6",
-    "typescript": "^5.7.2"
+    "typescript": "^5.9.3"
   },
   "eslintConfig": {
     "extends": [
       "plugin:storybook/recommended"
     ]
-  },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
   }
 }

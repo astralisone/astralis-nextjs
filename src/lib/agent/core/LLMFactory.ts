@@ -517,5 +517,3 @@ export {
   CLAUDE_MODELS,
   getEnvironmentConfig,
 };
-
-export type { LLMFactoryConfig, LLMEnvironmentConfig, ProviderHealthCheck };

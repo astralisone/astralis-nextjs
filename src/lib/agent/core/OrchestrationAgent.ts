@@ -1102,8 +1102,8 @@ export class OrchestrationAgent {
       ...config,
       // Required fields with defaults
       orgId: config.orgId,
-      llmProvider: config.llmProvider ?? LLMProvider.CLAUDE,
-      llmModel: config.llmModel ?? 'claude-sonnet-4-20250514',
+      llmProvider: config.llmProvider ?? LLMProvider.OPENAI,
+      llmModel: config.llmModel ?? 'gpt-4.1',
       // Decision thresholds
       temperature: config.temperature ?? DEFAULT_AGENT_CONFIG.temperature,
       autoExecuteThreshold: config.autoExecuteThreshold ?? DEFAULT_AGENT_CONFIG.autoExecuteThreshold,
