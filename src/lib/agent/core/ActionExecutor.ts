@@ -20,6 +20,7 @@ import type {
   DecisionStatus,
   Logger,
   AssignPipelineParams,
+  CreateTaskParams,
   CreateEventParams,
   UpdateEventParams,
   CancelEventParams,
@@ -32,6 +33,8 @@ import {
   DecisionStatus as DecisionStatusEnum,
 } from '../types/agent.types';
 import { AgentEventBus, type EmitResult } from '../inputs/EventBus';
+import { emitTaskCreated } from '@/lib/events/taskEvents';
+import { prisma } from '@/lib/prisma';
 
 // =============================================================================
 // Types
@@ -269,6 +272,99 @@ export class ActionExecutor {
             // Actual rollback would unassign the intake
           },
         };
+      }
+    );
+
+    // CREATE_TASK handler
+    this.registerHandler<CreateTaskParams>(
+      DecisionTypeEnum.CREATE_TASK,
+      async (params, ctx) => {
+        this.logger.info('Executing CREATE_TASK', { params, dryRun: ctx.dryRun });
+
+        if (ctx.dryRun) {
+          return { success: true, data: { dryRun: true, ...params } };
+        }
+
+        try {
+          // 1. Find TaskTemplate by templateId
+          const template = await prisma.taskTemplate.findUnique({
+            where: { id: params.templateId },
+          });
+
+          if (!template) {
+            return {
+              success: false,
+              error: `Task template not found: ${params.templateId}`,
+              rollbackable: false,
+            };
+          }
+
+          // Parse the template definition from JSON
+          const templateDef = template.definition as any;
+
+          // 2. Create Task in DB using Prisma
+          const task = await prisma.task.create({
+            data: {
+              templateId: params.templateId,
+              orgId: params.orgId,
+              source: params.source,
+              sourceId: params.intakeId,
+              title: params.title,
+              description: params.description,
+              type: templateDef.label || params.templateId,
+              category: templateDef.category || 'GENERAL',
+              department: templateDef.department,
+              staffRole: templateDef.staffRole,
+              priority: params.priority ?? templateDef.defaultPriority ?? 3,
+              status: 'NEW',
+              pipelineKey: templateDef.pipeline?.preferredPipelineKey,
+              stageKey: templateDef.pipeline?.defaultStageKey,
+              typicalMinutes: templateDef.typicalMinutes || 60,
+              steps: templateDef.steps?.map((s: any) => ({
+                id: s.id,
+                status: 'NEW'
+              })) || [],
+              timeline: {
+                startedAt: new Date().toISOString(),
+              },
+              overridden: false,
+              agentDecisionIds: [],
+            },
+          });
+
+          // 3. Emit task.created event
+          await emitTaskCreated({
+            id: task.id,
+            orgId: task.orgId,
+            source: task.source as any,
+            type: task.type,
+            category: task.category,
+            priority: task.priority,
+          }, { correlationId: ctx.correlationId });
+
+          this.logger.info('Task created successfully', {
+            taskId: task.id,
+            templateId: params.templateId
+          });
+
+          return {
+            success: true,
+            data: { taskId: task.id, templateId: params.templateId },
+            rollbackable: true,
+            rollback: async () => {
+              this.logger.info('Rolling back CREATE_TASK', { taskId: task.id });
+              // Rollback would delete the created task
+              await prisma.task.delete({ where: { id: task.id } });
+            },
+          };
+        } catch (error) {
+          this.logger.error('Failed to create task', error);
+          return {
+            success: false,
+            error: `Failed to create task: ${(error as Error).message}`,
+            rollbackable: false,
+          };
+        }
       }
     );
 
