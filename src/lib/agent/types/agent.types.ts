@@ -114,6 +114,8 @@ export enum AgentInputSource {
 export enum DecisionType {
   /** Assign an intake request to a pipeline and stage */
   ASSIGN_PIPELINE = 'ASSIGN_PIPELINE',
+  /** Create a new task from a task template */
+  CREATE_TASK = 'CREATE_TASK',
   /** Create a new calendar event */
   CREATE_EVENT = 'CREATE_EVENT',
   /** Update an existing calendar event */
@@ -900,6 +902,26 @@ export interface EscalateParams {
   priority: 'normal' | 'high' | 'urgent';
 }
 
+/**
+ * Parameters for creating a task from a template.
+ */
+export interface CreateTaskParams {
+  /** ID of the task template to use */
+  templateId: string;
+  /** Organization ID */
+  orgId: string;
+  /** Source channel (FORM, EMAIL, CHAT, API, CALL) */
+  source: 'FORM' | 'EMAIL' | 'CHAT' | 'API' | 'CALL';
+  /** Task title */
+  title: string;
+  /** Optional task description */
+  description?: string;
+  /** Optional intake ID that triggered this task */
+  intakeId?: string;
+  /** Optional priority override (1-5, where 5 is highest) */
+  priority?: 1 | 2 | 3 | 4 | 5;
+}
+
 // =============================================================================
 // EVENT TYPES
 // =============================================================================
@@ -913,6 +935,15 @@ export type AgentEventType =
   | 'intake:updated'
   | 'intake:assigned'
   | 'intake:escalated'
+  // Task events (Agentic Task System)
+  | 'task:created'
+  | 'task:status_changed'
+  | 'task:stage_changed'
+  | 'task:assignee_changed'
+  | 'task:override_set'
+  | 'task:reprocess_requested'
+  | 'task:sla_warning'
+  | 'task:sla_breached'
   // Form/webhook events
   | 'webhook:form_submitted'
   | 'webhook:booking_requested'
@@ -923,6 +954,11 @@ export type AgentEventType =
   // Pipeline events
   | 'pipeline:stage_changed'
   | 'pipeline:completed'
+  | 'pipeline:item_added'
+  | 'pipeline:item_moved'
+  | 'pipeline:item_assigned'
+  | 'pipeline:item_sla_breached'
+  | 'pipeline:item_completed'
   // Calendar events
   | 'calendar:event_created'
   | 'calendar:event_updated'
@@ -1663,19 +1699,21 @@ export type DeepPartial<T> = {
 export type ActionParamsFor<T extends DecisionType> =
   T extends DecisionType.ASSIGN_PIPELINE
     ? AssignPipelineParams
-    : T extends DecisionType.CREATE_EVENT
-      ? CreateEventParams
-      : T extends DecisionType.UPDATE_EVENT
-        ? UpdateEventParams
-        : T extends DecisionType.CANCEL_EVENT
-          ? CancelEventParams
-          : T extends DecisionType.SEND_NOTIFICATION
-            ? SendNotificationParams
-            : T extends DecisionType.TRIGGER_AUTOMATION
-              ? TriggerAutomationParams
-              : T extends DecisionType.ESCALATE
-                ? EscalateParams
-                : Record<string, unknown>;
+    : T extends DecisionType.CREATE_TASK
+      ? CreateTaskParams
+      : T extends DecisionType.CREATE_EVENT
+        ? CreateEventParams
+        : T extends DecisionType.UPDATE_EVENT
+          ? UpdateEventParams
+          : T extends DecisionType.CANCEL_EVENT
+            ? CancelEventParams
+            : T extends DecisionType.SEND_NOTIFICATION
+              ? SendNotificationParams
+              : T extends DecisionType.TRIGGER_AUTOMATION
+                ? TriggerAutomationParams
+                : T extends DecisionType.ESCALATE
+                  ? EscalateParams
+                  : Record<string, unknown>;
 
 /**
  * Strongly-typed action with correct parameter type.

@@ -9,4 +9,11 @@ docker-compose*
 .env.local
 dist
 coverage
+docs
+*.md
+*.zip
+*.pdf
+test-results
+playwright-report
+storybook-static
 

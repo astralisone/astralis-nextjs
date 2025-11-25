@@ -15,6 +15,8 @@ import { processDocumentEmbedding } from './processors/embedding.processor';
 import { processIntakeRouting } from './processors/intakeRouting.processor';
 import { processCalendarSync } from './processors/calendarSync.processor';
 import { processSchedulingReminder } from './processors/schedulingReminder.processor';
+import { processSLAMonitor } from './processors/slaMonitor.processor';
+import { initializeSLAMonitorJob } from './jobs/sla-monitor.job';
 
 /**
  * Worker Bootstrap
@@ -72,6 +74,12 @@ async function startWorkers() {
   const schedulingReminderWorker = new Worker('scheduling-reminders', processSchedulingReminder, {
     connection: redisConnection,
     concurrency: 5, // Higher concurrency for email sending
+  });
+
+  // SLA monitor worker (task SLA compliance monitoring)
+  const slaMonitorWorker = new Worker('sla-monitor', processSLAMonitor, {
+    connection: redisConnection,
+    concurrency: 2, // Lower concurrency for thorough checks
   });
 
   // Document worker event handlers
@@ -139,11 +147,32 @@ async function startWorkers() {
     console.error('[Worker:SchedulingReminder] Worker error:', err);
   });
 
+  // SLA monitor worker event handlers
+  slaMonitorWorker.on('completed', (job) => {
+    console.log(`[Worker:SLAMonitor] Job ${job.id} completed`);
+  });
+
+  slaMonitorWorker.on('failed', (job, err) => {
+    console.error(`[Worker:SLAMonitor] Job ${job?.id} failed:`, err.message);
+  });
+
+  slaMonitorWorker.on('error', (err) => {
+    console.error('[Worker:SLAMonitor] Worker error:', err);
+  });
+
   console.log('[Workers] Document processing worker started (concurrency: 3)');
   console.log('[Workers] Document embedding worker started (concurrency: 2)');
   console.log('[Workers] Intake routing worker started (concurrency: 5)');
   console.log('[Workers] Calendar sync worker started (concurrency: 2)');
   console.log('[Workers] Scheduling reminder worker started (concurrency: 5)');
+  console.log('[Workers] SLA monitor worker started (concurrency: 2)');
+
+  // Initialize SLA monitor cron job (runs every 15 minutes)
+  try {
+    await initializeSLAMonitorJob();
+  } catch (error) {
+    console.error('[Workers] Failed to initialize SLA monitor cron job:', error);
+  }
 
   // Graceful shutdown
   const shutdown = async () => {
@@ -156,6 +185,7 @@ async function startWorkers() {
       intakeRoutingWorker.close(),
       calendarSyncWorker.close(),
       schedulingReminderWorker.close(),
+      slaMonitorWorker.close(),
     ]);
 
     console.log('[Workers] All workers closed');

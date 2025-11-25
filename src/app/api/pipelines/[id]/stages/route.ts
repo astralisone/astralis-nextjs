@@ -72,9 +72,16 @@ export async function POST(
       );
     }
 
+    // Generate key from name (snake_case)
+    const key = parsed.data.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/(^_|_$)/g, '');
+
     const stage = await prisma.pipelineStage.create({
       data: {
         name: parsed.data.name,
+        key,
         description: parsed.data.description,
         color: parsed.data.color,
         order: parsed.data.order,
