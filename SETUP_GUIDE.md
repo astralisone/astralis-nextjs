@@ -5,8 +5,8 @@ This guide will help you complete the Astralis One platform setup and begin the 
 ## ✅ What's Already Done
 
 1. **Scaffold Extraction**: The `astralis-one-scaffold.zip` has been extracted and integrated
-2. **Project Structure**: Migrated to standard Next.js 14 structure (`src/app`, `src/lib`, etc.)
-3. **Dependencies Installed**: All npm packages installed (React, Next.js 14, Tailwind, Prisma, Radix UI)
+2. **Project Structure**: Migrated to standard Next.js 15 structure (`src/app`, `src/lib`, etc.)
+3. **Dependencies Installed**: All npm packages installed (React, Next.js 15, Tailwind, Prisma, Radix UI)
 4. **Brand System Foundation**: Tailwind configured with Astralis Navy (#0A1B2B) and Blue (#2B6CB0) colors
 5. **Development Server**: Verified working at `http://localhost:3001`
 6. **Backup Created**: `astralis-nextjs-backup-20251118_024432.zip` contains your previous codebase
@@ -16,7 +16,7 @@ This guide will help you complete the Astralis One platform setup and begin the 
 ```
 astralis-nextjs/
 ├── src/
-│   ├── app/                      # Next.js 14 App Router
+│   ├── app/                      # Next.js 15 App Router
 │   │   ├── page.tsx             # Homepage (dark theme, already styled)
 │   │   ├── layout.tsx           # Root layout with Inter font
 │   │   ├── globals.css          # Astralis brand theme + Tailwind
