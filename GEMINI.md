@@ -4,10 +4,10 @@ This document provides a comprehensive overview of the Astralis One project, des
 
 ## 🚀 Project Overview
 
-Astralis One is an enterprise-grade AI operations platform built with **Next.js 14**, **TypeScript**, and **Prisma**. It leverages a modern web stack to deliver a multi-agent engineering platform.
+Astralis One is an enterprise-grade AI operations platform built with **Next.js 15**, **TypeScript**, and **Prisma**. It leverages a modern web stack to deliver a multi-agent engineering platform.
 
 **Key Technologies:**
-- **Framework:** Next.js 14 (App Router)
+- **Framework:** Next.js 15 (App Router)
 - **Language:** TypeScript 5
 - **Styling:** Tailwind CSS 3 (with Astralis brand design system)
 - **Database:** PostgreSQL + Prisma ORM
@@ -103,7 +103,7 @@ The project is undergoing a significant "branded refactor" to implement the Astr
 
 ### Project Structure Highlights
 
--   `src/app/`: Next.js 14 App Router for pages and API routes.
+-   `src/app/`: Next.js 15 App Router for pages and API routes.
 -   `src/components/`: Reusable React components.
 -   `src/lib/`: Utility functions and helpers.
 -   `src/types/`: TypeScript type definitions.
