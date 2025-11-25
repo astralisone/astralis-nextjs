@@ -18,7 +18,7 @@ export function Footer() {
           {/* LEFT: MicroFaster Branding */}
           <div className="flex-shrink-0">
             <span className="text-xl font-bold text-astralis-navy">
-              MicroFaster
+              Astralis One
             </span>
           </div>
 
@@ -49,13 +49,19 @@ export function Footer() {
             </div>
           </div>
 
-          {/* RIGHT: Privacy Link and Social Icons */}
+          {/* RIGHT: Privacy Link, Terms of Service Link and Social Icons */}
           <div className="flex items-center gap-4">
             <Link
-              href="/privacy"
+              href="/privacy-policy"
               className="text-sm font-medium text-slate-600 hover:text-astralis-blue transition-colors duration-200"
             >
-              Privacy
+              Privacy Policy
+            </Link>
+            <Link
+              href="/terms-of-service"
+              className="text-sm font-medium text-slate-600 hover:text-astralis-blue transition-colors duration-200"
+            >
+              Terms of Service
             </Link>
 
             {/* Social Icons */}

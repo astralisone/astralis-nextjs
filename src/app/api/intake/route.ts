@@ -4,6 +4,12 @@ import { prisma } from "@/lib/prisma";
 import { IntakeSource, IntakeStatus } from "@prisma/client";
 import { quotaTrackingService, QuotaExceededError } from "@/lib/services/quotaTracking.service";
 import { AIRoutingService } from "@/lib/services/aiRouting.service";
+import { getEventBus, getAgentInstance } from "@/lib/agent";
+
+// Extend global type to include our custom property
+declare global {
+  var agentSystemInitialized: boolean | undefined;
+}
 
 const intakeRequestSchema = z.object({
   source: z.enum(["FORM", "EMAIL", "CHAT", "API"]),
@@ -141,6 +147,69 @@ export async function POST(req: NextRequest) {
 
         const routingMeta = updatedIntake.aiRoutingMeta as Record<string, unknown> | null;
 
+        // Emit intake:created event to trigger orchestration agent
+        const eventBus = getEventBus();
+        await eventBus.emit('intake:created', {
+          id: updatedIntake.id,
+          source: 'api',
+          timestamp: new Date(),
+          payload: {
+            intakeId: updatedIntake.id,
+            type: 'intake_request',
+            data: {
+              title: updatedIntake.title,
+              description: updatedIntake.description,
+              source: updatedIntake.source,
+              status: updatedIntake.status,
+              priority: updatedIntake.priority,
+              requestData: updatedIntake.requestData,
+            },
+            contactInfo: {
+              // Extract contact info from requestData if available
+              email: (updatedIntake.requestData as any)?.email,
+              name: (updatedIntake.requestData as any)?.name,
+              phone: (updatedIntake.requestData as any)?.phone,
+            },
+          },
+        });
+
+        // Ensure agent is running for this organization
+        try {
+          const agent = getAgentInstance(updatedIntake.orgId);
+          if (!agent.isActive()) {
+            agent.start();
+          }
+        } catch (agentError) {
+          console.log('Agent not available, attempting to initialize system...');
+          // Try to initialize the agent system if not already done
+          if (!globalThis.agentSystemInitialized) {
+            try {
+              const { initializeAgentSystem } = await import('@/lib/agent');
+              const hasClaudeKey = !!process.env.ANTHROPIC_API_KEY;
+              const hasOpenAIKey = !!process.env.OPENAI_API_KEY;
+
+              if (hasClaudeKey || hasOpenAIKey) {
+                await initializeAgentSystem({
+                  enableWebhooks: true,
+                  enableEmail: true,
+                  enableDBTriggers: true,
+                  enableWorkerEvents: true,
+                });
+                globalThis.agentSystemInitialized = true;
+                console.log('✅ Agent system initialized during intake processing');
+
+                // Now try to get the agent again
+                const agent = getAgentInstance(updatedIntake.orgId);
+                if (!agent.isActive()) {
+                  agent.start();
+                }
+              }
+            } catch (initError) {
+              console.log('Agent system initialization failed:', initError instanceof Error ? initError.message : String(initError));
+            }
+          }
+        }
+
         return NextResponse.json(
           {
             intakeRequest: updatedIntake,
@@ -175,21 +244,84 @@ export async function POST(req: NextRequest) {
           include: { pipeline: true },
         });
 
+        // Emit intake:created event even on AI failure
+        const eventBus = getEventBus();
+        await eventBus.emit('intake:created', {
+          id: finalIntake!.id,
+          source: 'api',
+          timestamp: new Date(),
+          payload: {
+            intakeId: finalIntake!.id,
+            type: 'intake_request',
+            data: {
+              title: finalIntake!.title,
+              description: finalIntake!.description,
+              source: finalIntake!.source,
+              status: finalIntake!.status,
+              priority: finalIntake!.priority,
+              requestData: finalIntake!.requestData,
+            },
+            contactInfo: {
+              email: (finalIntake!.requestData as any)?.email,
+              name: (finalIntake!.requestData as any)?.name,
+              phone: (finalIntake!.requestData as any)?.phone,
+            },
+          },
+        });
+
+        // Ensure agent is running for this organization
+        try {
+          const agent = getAgentInstance(finalIntake!.orgId);
+          if (!agent.isActive()) {
+            agent.start();
+          }
+        } catch (agentError) {
+          console.log('Agent not available, attempting to initialize system...');
+          // Try to initialize the agent system if not already done
+          if (!globalThis.agentSystemInitialized) {
+            try {
+              const { initializeAgentSystem } = await import('@/lib/agent');
+              const hasClaudeKey = !!process.env.ANTHROPIC_API_KEY;
+              const hasOpenAIKey = !!process.env.OPENAI_API_KEY;
+
+              if (hasClaudeKey || hasOpenAIKey) {
+                await initializeAgentSystem({
+                  enableWebhooks: true,
+                  enableEmail: true,
+                  enableDBTriggers: true,
+                  enableWorkerEvents: true,
+                });
+                globalThis.agentSystemInitialized = true;
+                console.log('✅ Agent system initialized during intake processing');
+
+                // Now try to get the agent again
+                const agent = getAgentInstance(finalIntake!.orgId);
+                if (!agent.isActive()) {
+                  agent.start();
+                }
+              }
+            } catch (initError) {
+              console.log('Agent system initialization failed:', initError instanceof Error ? initError.message : String(initError));
+            }
+          }
+          }
+        }
+
         return NextResponse.json(
           {
-            intakeRequest: finalIntake,
+            intakeRequest: intakeRequest,
             routing: {
               assigned: false,
               confidence: 0,
               reasoning: "AI routing failed - manual routing required",
               usedAIRouting: false,
-              error: aiError instanceof Error ? aiError.message : "Unknown error",
+              error: "AI routing failed",
             },
           },
           { status: 201 },
         );
       }
-    } else {
+    else {
       // Fallback to basic keyword routing (no OpenAI key configured)
       console.log(`[Intake API] Using fallback routing for intake request (org: ${orgId}) - OpenAI not configured`);
 
@@ -227,6 +359,68 @@ export async function POST(req: NextRequest) {
         },
       });
 
+      // Emit intake:created event to trigger orchestration agent
+      const eventBus = getEventBus();
+      await eventBus.emit('intake:created', {
+        id: intakeRequest.id,
+        source: 'api',
+        timestamp: new Date(),
+        payload: {
+          intakeId: intakeRequest.id,
+          type: 'intake_request',
+          data: {
+            title: intakeRequest.title,
+            description: intakeRequest.description,
+            source: intakeRequest.source,
+            status: intakeRequest.status,
+            priority: intakeRequest.priority,
+            requestData: intakeRequest.requestData,
+          },
+          contactInfo: {
+            email: (intakeRequest.requestData as any)?.email,
+            name: (intakeRequest.requestData as any)?.name,
+            phone: (intakeRequest.requestData as any)?.phone,
+          },
+        },
+      });
+
+      // Ensure agent is running for this organization
+      try {
+        const agent = getAgentInstance(intakeRequest.orgId);
+        if (!agent.isActive()) {
+          agent.start();
+        }
+      } catch (agentError) {
+        console.log('Agent not available, attempting to initialize system...');
+        // Try to initialize the agent system if not already done
+        if (!globalThis.agentSystemInitialized) {
+          try {
+            const { initializeAgentSystem } = await import('@/lib/agent');
+            const hasClaudeKey = !!process.env.ANTHROPIC_API_KEY;
+            const hasOpenAIKey = !!process.env.OPENAI_API_KEY;
+
+            if (hasClaudeKey || hasOpenAIKey) {
+              await initializeAgentSystem({
+                enableWebhooks: true,
+                enableEmail: true,
+                enableDBTriggers: true,
+                enableWorkerEvents: true,
+              });
+              globalThis.agentSystemInitialized = true;
+              console.log('✅ Agent system initialized during intake processing');
+
+              // Now try to get the agent again
+              const agent = getAgentInstance(intakeRequest.orgId);
+              if (!agent.isActive()) {
+                agent.start();
+              }
+            }
+          } catch (initError) {
+            console.log('Agent system initialization failed:', initError instanceof Error ? initError.message : String(initError));
+          }
+        }
+      }
+
       return NextResponse.json(
         {
           intakeRequest,
@@ -240,7 +434,8 @@ export async function POST(req: NextRequest) {
         { status: 201 },
       );
     }
-  } catch (error) {
+  }
+  catch (error) {
     console.error("Error processing intake request:", error);
     return NextResponse.json(
       {

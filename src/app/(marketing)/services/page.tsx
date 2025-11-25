@@ -18,6 +18,7 @@
 import Image from 'next/image';
 import { Hero, CTASection } from '@/components/sections';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import {
   FileText,
   Database,
@@ -40,6 +41,7 @@ interface ServicePackage {
   monthlyFee?: string;
   icon: React.ReactNode;
   features: string[];
+  imageUrl: string;
   recommended?: boolean;
 }
 
@@ -58,7 +60,8 @@ const servicePackages: ServicePackage[] = [
       'Connects to your client database',
       'Collect and organize client documents',
       'Client portal to check their status'
-    ]
+    ],
+    imageUrl: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=1280&q=80'
   },
   {
     name: 'Document Storage & Search',
@@ -74,6 +77,7 @@ const servicePackages: ServicePackage[] = [
       'Control who can see which documents',
       'Automatic daily backups for safety'
     ],
+    imageUrl: 'https://images.unsplash.com/photo-1454165205744-3b78555e5572?auto=format&fit=crop&w=1280&q=80',
     recommended: true
   },
   {
@@ -88,7 +92,8 @@ const servicePackages: ServicePackage[] = [
       'Process credit card and ACH payments',
       'Custom business reports and analytics',
       'Team messaging and task management'
-    ]
+    ],
+    imageUrl: 'https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=1280&q=80'
   },
   {
     name: 'Built Just for Your Business',
@@ -102,7 +107,8 @@ const servicePackages: ServicePackage[] = [
       'Advanced reporting and business analytics',
       'Dedicated support team for your account',
       'Training for your staff + user guides'
-    ]
+    ],
+    imageUrl: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1280&q=80'
   },
   {
     name: 'Monthly Support & Improvements',
@@ -117,7 +123,8 @@ const servicePackages: ServicePackage[] = [
       'Priority email and phone support',
       'Add new features as your business grows',
       'Monthly usage reports and recommendations'
-    ]
+    ],
+    imageUrl: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1280&q=80'
   }
 ];
 
@@ -190,7 +197,7 @@ export default function ServicesPage() {
       />
 
       {/* Service Packages Section - Dark Navy Background */}
-      <section id="packages" className="w-full px-6 py-20 md:px-12 md:py-24 lg:px-20 lg:py-32 bg-gradient-to-b from-astralis-navy to-slate-900">
+      <section id="packages" className="card-surface-light relative isolate overflow-hidden w-full px-6 py-20 md:px-12 md:py-24 lg:px-20 lg:py-32 bg-gradient-to-b from-astralis-navy to-slate-900">
         <div className="mx-auto max-w-[1280px]">
           {/* Section Header */}
           <div className="text-center mb-16 max-w-3xl mx-auto space-y-6">
@@ -207,70 +214,77 @@ export default function ServicesPage() {
             {servicePackages.map((pkg, index) => (
               <div
                 key={index}
-                className={`
-                  bg-slate-800/50 backdrop-blur-sm border rounded-lg p-6 md:p-8 transition-all duration-200
-                  hover:bg-slate-800/70 hover:shadow-2xl hover:scale-[1.02]
-                  ${pkg.recommended
-                    ? 'border-astralis-blue ring-2 ring-astralis-blue ring-opacity-50 shadow-lg shadow-astralis-blue/20'
-                    : 'border-slate-700 shadow-lg'
-                  }
-                `}
-              >
-                {/* Recommended Badge */}
-                {pkg.recommended && (
-                  <div className="inline-block bg-gradient-to-r from-astralis-blue to-blue-400 text-white text-xs font-semibold px-3 py-1 rounded-full mb-4 shadow-lg">
-                    Most Popular
-                  </div>
+                className={cn(
+                  'feature-card card-theme-light relative flex flex-col overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl',
+                  pkg.recommended
+                    ? 'border-astralis-blue/60 ring-2 ring-astralis-blue/40'
+                    : 'border-slate-200 hover:border-astralis-blue/40'
                 )}
-
-                {/* Icon */}
-                <div className="flex items-center justify-center w-14 h-14 bg-astralis-blue/10 border border-astralis-blue/30 rounded-lg text-astralis-blue mb-6">
-                  {pkg.icon}
-                </div>
-
-                {/* Package Name */}
-                <h3 className="text-xl md:text-2xl font-semibold text-white mb-3">
-                  {pkg.name}
-                </h3>
-
-                {/* Description */}
-                <p className="text-base text-slate-300 mb-6 min-h-[80px] leading-relaxed">
-                  {pkg.description}
-                </p>
-
-                {/* Pricing */}
-                <div className="mb-6 pb-6 border-b border-slate-700">
-                  <div className="flex items-baseline gap-2 mb-1">
-                    <span className="text-3xl font-bold text-white">
-                      {pkg.setupFee}
-                    </span>
-                    <span className="text-slate-400 text-sm">setup</span>
-                  </div>
-                  {pkg.monthlyFee && (
-                    <div className="text-slate-300 font-medium">
-                      + {pkg.monthlyFee}
+              >
+                <div className="relative h-40 w-full">
+                  <Image
+                    src={pkg.imageUrl}
+                    alt={`${pkg.name} background visual`}
+                    fill
+                    className="object-cover"
+                    sizes="(min-width: 1280px) 380px, (min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                    priority={index < 2}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-b from-slate-900/35 via-slate-900/10 to-transparent" />
+                  {pkg.recommended && (
+                    <div className="absolute top-4 left-4 bg-gradient-to-r from-astralis-blue to-blue-400 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-lg">
+                      Most Popular
                     </div>
                   )}
                 </div>
 
-                {/* Features List */}
-                <ul className="space-y-4 mb-8">
-                  {pkg.features.map((feature, idx) => (
-                    <li key={idx} className="flex items-start gap-3 text-base">
-                      <CheckCircle className="w-5 h-5 text-astralis-blue flex-shrink-0 mt-0.5" />
-                      <span className="text-slate-300">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
+                <div className="flex flex-1 flex-col p-6 pt-12 md:p-8 md:pt-14">
+                  <div className="feature-card__icon -mt-16 mx-auto mb-6 border border-astralis-blue/20 bg-astralis-blue/10 text-astralis-blue shadow-sm">
+                    {pkg.icon}
+                  </div>
 
-                {/* CTA Button */}
-                <Button
-                  variant={pkg.recommended ? 'primary' : 'secondary'}
-                  className={`w-full ${pkg.recommended ? '' : 'bg-slate-700 border-slate-600 text-white hover:bg-slate-600'}`}
-                  asChild
-                >
-                  <a href="/contact">Get Started</a>
-                </Button>
+                  <h3 className="feature-card__title text-center text-xl md:text-2xl">
+                    {pkg.name}
+                  </h3>
+
+                  <p className="feature-card__description mb-6 min-h-[80px] text-center">
+                    {pkg.description}
+                  </p>
+
+                  <div className="mb-6 border-b border-slate-200 pb-6 text-center">
+                    <div className="mb-1 flex items-baseline justify-center gap-2">
+                      <span className="text-3xl font-bold text-astralis-navy">
+                        {pkg.setupFee}
+                      </span>
+                      <span className="text-slate-500 text-sm">setup</span>
+                    </div>
+                    {pkg.monthlyFee && (
+                      <div className="font-medium text-slate-600">
+                        + {pkg.monthlyFee}
+                      </div>
+                    )}
+                  </div>
+
+                  <ul className="mb-8 space-y-4 text-left">
+                    {pkg.features.map((feature, idx) => (
+                      <li key={idx} className="flex items-start gap-3 text-base">
+                        <CheckCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-astralis-blue" />
+                        <span className="feature-card__description leading-relaxed">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Button
+                    variant={pkg.recommended ? 'primary' : 'secondary'}
+                    className={cn(
+                      'mt-auto w-full',
+                      !pkg.recommended && 'border border-slate-200 bg-slate-100 text-astralis-navy hover:bg-slate-200'
+                    )}
+                    asChild
+                  >
+                    <a href="/contact">Get Started</a>
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
@@ -307,29 +321,25 @@ export default function ServicesPage() {
           </div>
 
           {/* Examples Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+          <div className="card-surface-light grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
             {automationExamples.map((example, index) => (
               <div
                 key={index}
-                className="bg-white border border-slate-200 rounded-lg p-6 md:p-8 hover:shadow-xl hover:border-astralis-blue/30 transition-all duration-200 shadow-md"
+                className="feature-card card-theme-light p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl md:p-8"
               >
-                {/* Icon */}
-                <div className="mb-6">
+                <div className="feature-card__icon mb-6 border border-astralis-blue/20 bg-astralis-blue/10 text-astralis-blue shadow-sm">
                   {example.icon}
                 </div>
 
-                {/* Title */}
-                <h3 className="text-xl md:text-2xl font-semibold text-astralis-navy mb-4">
+                <h3 className="feature-card__title mb-4 text-xl md:text-2xl">
                   {example.title}
                 </h3>
 
-                {/* Description */}
-                <p className="text-base text-slate-700 mb-6 leading-relaxed">
+                <p className="feature-card__description mb-6">
                   {example.description}
                 </p>
 
-                {/* Metrics */}
-                <div className="inline-block bg-gradient-to-r from-astralis-blue/10 to-blue-50 border border-astralis-blue/20 text-astralis-blue text-sm font-semibold px-4 py-2 rounded-md">
+                <div className="inline-block rounded-md border border-astralis-blue/20 bg-gradient-to-r from-astralis-blue/10 to-blue-50 px-4 py-2 text-sm font-semibold text-astralis-blue">
                   {example.metrics}
                 </div>
               </div>
@@ -352,26 +362,21 @@ export default function ServicesPage() {
           </div>
 
           {/* Value Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10 mb-16">
+          <div className="card-surface-light grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-10 mb-16">
             {valueStatements.map((value, index) => (
               <div
                 key={index}
-                className="text-center p-6 md:p-8 bg-slate-800/30 backdrop-blur-sm border border-slate-700 rounded-lg hover:bg-slate-800/50 transition-all duration-200"
+                className="feature-card card-theme-light text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl p-6 md:p-8"
               >
-                {/* Icon */}
-                <div className="flex items-center justify-center mb-6">
-                  <div className="p-3 bg-astralis-blue/10 border border-astralis-blue/30 rounded-lg">
-                    {value.icon}
-                  </div>
+                <div className="feature-card__icon mx-auto mb-6 border border-astralis-blue/20 bg-astralis-blue/10 text-astralis-blue shadow-sm">
+                  {value.icon}
                 </div>
 
-                {/* Title */}
-                <h3 className="text-xl md:text-2xl font-semibold text-white mb-4">
+                <h3 className="feature-card__title mb-4 text-center text-xl md:text-2xl">
                   {value.title}
                 </h3>
 
-                {/* Description */}
-                <p className="text-base text-slate-300 leading-relaxed">
+                <p className="feature-card__description text-center">
                   {value.description}
                 </p>
               </div>

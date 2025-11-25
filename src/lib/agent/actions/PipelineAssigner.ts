@@ -482,11 +482,12 @@ export class PipelineAssigner {
           status: 'NOT_STARTED',
           tags: [],
           progress: 0,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           data: {
             intakeRequestId: intakeId,
             source: intake.source,
             requestData: intake.requestData,
-          },
+          } as any,
         },
       });
 
@@ -1322,11 +1323,12 @@ export class PipelineAssigner {
           action: params.action,
           entity: params.entityType,
           entityId: params.entityId,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           changes: {
             previousState: params.previousState,
             newState: params.newState,
             reason: params.reason,
-          },
+          } as any,
           metadata: {
             ...(params.metadata ?? {}),
             performedByType: this.isAgentAction ? 'agent' : 'human',

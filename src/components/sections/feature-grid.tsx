@@ -84,6 +84,11 @@ export interface FeatureGridProps {
   className?: string;
 
   /**
+   * Additional classes applied to each card
+   */
+  cardClassName?: string;
+
+  /**
    * Center align header text
    * @default false
    */
@@ -99,6 +104,7 @@ const FeatureGrid = React.forwardRef<HTMLElement, FeatureGridProps>(
       columns = 3,
       enableHover = true,
       className,
+      cardClassName,
       centerHeader = false,
       ...props
     },
@@ -156,31 +162,21 @@ const FeatureGrid = React.forwardRef<HTMLElement, FeatureGridProps>(
               const IconComponent = feature.icon;
               const cardContent = (
                 <>
-                  {/* Icon */}
                   {(IconComponent || feature.iconElement) && (
-                    <div className="mb-6">
+                    <div className="feature-card__icon mb-6">
                       {IconComponent ? (
-                        <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br from-astralis-blue/10 to-astralis-blue/5 dark:from-astralis-blue/20 dark:to-astralis-blue/10 ring-1 ring-astralis-blue/20">
-                          <IconComponent
-                            className="w-7 h-7 text-astralis-blue"
-                            strokeWidth={2}
-                          />
-                        </div>
+                        <IconComponent className="h-7 w-7" strokeWidth={2} />
                       ) : (
-                        <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br from-astralis-blue/10 to-astralis-blue/5 dark:from-astralis-blue/20 dark:to-astralis-blue/10 ring-1 ring-astralis-blue/20">
-                          {feature.iconElement}
-                        </div>
+                        feature.iconElement
                       )}
                     </div>
                   )}
 
-                  {/* Title - 20px per typography spec */}
-                  <h3 className="text-xl font-semibold text-astralis-navy dark:text-white mb-3 tracking-tight">
+                  <h3 className="feature-card__title mb-3">
                     {feature.title}
                   </h3>
 
-                  {/* Description - 16px base size */}
-                  <p className="text-base text-slate-700 dark:text-slate-400 leading-relaxed">
+                  <p className="feature-card__description">
                     {feature.description}
                   </p>
                 </>
@@ -193,14 +189,16 @@ const FeatureGrid = React.forwardRef<HTMLElement, FeatureGridProps>(
                     key={index}
                     href={feature.href}
                     className={cn(
-                      // Card base styles with enhanced styling
-                      'block p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm',
-                      // Hover effects (150-250ms per spec)
+                      'feature-card group block p-8',
+                      'before:pointer-events-none before:absolute before:-inset-x-12 before:-inset-y-14 before:bg-[radial-gradient(circle_at_top,_rgba(43,108,176,0.18),_transparent_65%)] before:opacity-0 before:transition-opacity before:duration-300',
+                      'group-hover:before:opacity-100',
                       enableHover &&
-                        'transition-all duration-200 ease-out hover:shadow-lg hover:border-astralis-blue dark:hover:border-astralis-blue hover:-translate-y-1 cursor-pointer',
-                      // Animation
-                      'animate-fade-in'
+                        'cursor-pointer transition-transform duration-200 ease-out hover:-translate-y-1 hover:shadow-2xl',
+                      'animate-fade-in',
+                      'card-theme-light',
+                      cardClassName
                     )}
+
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
                     {cardContent}
@@ -213,13 +211,13 @@ const FeatureGrid = React.forwardRef<HTMLElement, FeatureGridProps>(
                 <div
                   key={index}
                   className={cn(
-                    // Card base styles with enhanced styling
-                    'p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm',
-                    // Hover effects
-                    enableHover &&
-                      'transition-all duration-200 ease-out hover:shadow-lg hover:border-slate-300 dark:hover:border-slate-600 hover:-translate-y-1',
-                    // Animation
-                    'animate-fade-in'
+                    'feature-card relative p-8',
+                    'before:pointer-events-none before:absolute before:-inset-x-12 before:-inset-y-14 before:bg-[radial-gradient(circle_at_top,_rgba(43,108,176,0.16),_transparent_65%)] before:opacity-0 before:transition-opacity before:duration-300',
+                    enableHover && 'hover:before:opacity-100',
+                    enableHover && 'transition-transform duration-200 ease-out hover:-translate-y-1 hover:shadow-2xl',
+                    'animate-fade-in',
+                    'card-theme-light',
+                    cardClassName
                   )}
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
