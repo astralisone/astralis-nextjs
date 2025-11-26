@@ -16,6 +16,8 @@ import {
 } from '../queues/schedulingAgent.queue';
 import * as conflictService from '@/lib/services/conflict.service';
 import * as schedulingService from '@/lib/services/scheduling.service';
+import { webhookService, WebhookEventType } from '@/lib/services/webhook.service';
+import { sendSchedulingAgentEmail, type SchedulingAgentEmailOptions } from '@/lib/email';
 import OpenAI from 'openai';
 
 // Initialize OpenAI for task classification
@@ -403,6 +405,138 @@ async function scheduleMeeting(
 }
 
 /**
+ * Send email response to user
+ */
+async function sendEmailResponse(
+  task: {
+    id: string;
+    userId: string;
+    orgId: string | null;
+    user: { email: string; name: string | null } | null;
+    schedulingEventId: string | null;
+    proposedSlots: unknown;
+    selectedSlot: unknown;
+    entities: unknown;
+    title: string | null;
+    intent: string | null;
+  },
+  responseType: 'confirmation' | 'alternatives' | 'clarification' | 'error',
+  userId: string
+): Promise<void> {
+  if (!task.user?.email) {
+    throw new Error('User email not found for task');
+  }
+
+  // Map error response type to clarification for email (error doesn't have a dedicated email template)
+  const emailResponseType: 'confirmation' | 'alternatives' | 'clarification' | 'cancellation' =
+    responseType === 'error' ? 'clarification' : responseType;
+
+  // Build email options
+  const emailOptions: SchedulingAgentEmailOptions = {
+    recipientEmail: task.user.email,
+    recipientName: task.user.name || 'there',
+    taskId: task.id,
+    responseType: emailResponseType,
+  };
+
+  // Fetch scheduling event details if available
+  if (task.schedulingEventId) {
+    const event = await prisma.schedulingEvent.findUnique({
+      where: { id: task.schedulingEventId },
+      select: {
+        title: true,
+        startTime: true,
+        endTime: true,
+        timezone: true,
+        location: true,
+        participantEmails: true,
+      },
+    });
+
+    if (event) {
+      emailOptions.meetingDetails = {
+        title: event.title,
+        startTime: event.startTime,
+        endTime: event.endTime,
+        timezone: event.timezone,
+        location: event.location || undefined,
+        participants: event.participantEmails,
+      };
+    }
+  } else if (task.selectedSlot) {
+    // Use selectedSlot data if no event yet
+    const slot = task.selectedSlot as Record<string, unknown>;
+    if (slot.startTime && slot.endTime) {
+      emailOptions.meetingDetails = {
+        title: (slot.title as string) || task.title || 'Meeting',
+        startTime: new Date(slot.startTime as string),
+        endTime: new Date(slot.endTime as string),
+        timezone: (slot.timezone as string) || 'UTC',
+        location: slot.location as string | undefined,
+        participants: slot.participants as string[] | undefined,
+      };
+    }
+  } else if (task.entities) {
+    // Try to build meeting details from entities
+    const entities = task.entities as Record<string, unknown>;
+    if (entities.date && entities.time) {
+      const startTime = new Date(`${entities.date}T${entities.time}:00`);
+      const duration = (entities.duration as number) || 60;
+      const endTime = new Date(startTime.getTime() + duration * 60 * 1000);
+
+      emailOptions.meetingDetails = {
+        title: (entities.subject as string) || task.title || 'Meeting',
+        startTime,
+        endTime,
+        timezone: (entities.timezone as string) || 'UTC',
+        location: entities.location as string | undefined,
+        participants: entities.participants as string[] | undefined,
+      };
+    }
+  }
+
+  // Add alternative slots if present
+  if (responseType === 'alternatives' && task.proposedSlots) {
+    const slots = task.proposedSlots as Array<{ startTime: string; endTime: string; confidence?: number }>;
+    emailOptions.alternativeSlots = slots;
+  }
+
+  // Add clarification message if needed
+  if (responseType === 'clarification' || responseType === 'error') {
+    const entities = task.entities as Record<string, unknown> | null;
+    const missingFields: string[] = [];
+
+    if (!entities?.date) missingFields.push('date');
+    if (!entities?.time) missingFields.push('time');
+    if (!entities?.subject && !task.title) missingFields.push('meeting title/subject');
+
+    if (responseType === 'error') {
+      emailOptions.clarificationNeeded =
+        task.intent ||
+        'We encountered an issue processing your scheduling request. Please reply with more details or try rephrasing your request.';
+    } else if (missingFields.length > 0) {
+      emailOptions.clarificationNeeded =
+        `To schedule your meeting, we need the following information:\n\n` +
+        missingFields.map((field) => `- ${field.charAt(0).toUpperCase() + field.slice(1)}`).join('\n') +
+        `\n\nPlease reply to this email with these details.`;
+    } else {
+      emailOptions.clarificationNeeded =
+        task.intent ||
+        'We need more information to complete your scheduling request. Please reply with additional details.';
+    }
+  }
+
+  // Send the email with retry logic
+  try {
+    await sendSchedulingAgentEmail(emailOptions);
+    console.log(`[SchedulingAgent:SendEmail] Email sent successfully to ${task.user.email} (${responseType})`);
+  } catch (error) {
+    console.error(`[SchedulingAgent:SendEmail] Failed to send email to ${task.user.email}:`, error);
+    throw new Error(`Email delivery failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+/**
  * Send Response Handler
  *
  * Generates and sends response to user via specified channel.
@@ -432,12 +566,10 @@ async function sendResponse(
 
     await job.updateProgress(30);
 
-    // TODO: Implement actual response generation and sending
-    // This is a stub for now
+    // Send response via the specified channel
     switch (channel) {
       case 'email':
-        console.log(`[SchedulingAgent:SendResponse] Would send email to ${task.user?.email}`);
-        // TODO: Use email service to send response
+        await sendEmailResponse(task, responseType, data.userId);
         break;
       case 'sms':
         console.log(`[SchedulingAgent:SendResponse] Would send SMS to ${data.recipientPhone}`);
@@ -448,8 +580,78 @@ async function sendResponse(
         // TODO: Use chat service to send response
         break;
       case 'webhook':
-        console.log(`[SchedulingAgent:SendResponse] Would send webhook to ${data.webhookUrl}`);
-        // TODO: Send webhook notification
+        // Send webhook notification with retry logic
+        if (!data.webhookUrl) {
+          console.error(`[SchedulingAgent:SendResponse] No webhook URL provided for task ${taskId}`);
+          throw new Error('Webhook URL is required for webhook channel');
+        }
+
+        // Map responseType to webhook event type
+        const eventType = mapResponseTypeToWebhookEvent(responseType, task.status);
+
+        // Build event details from task
+        const eventDetails: Record<string, unknown> = {
+          taskType: task.taskType,
+          status: task.status,
+          intent: task.intent,
+          entities: task.entities || {},
+        };
+
+        // Add scheduling-specific details if available
+        if (task.schedulingEventId) {
+          eventDetails.eventId = task.schedulingEventId;
+        }
+
+        if (task.selectedSlot) {
+          eventDetails.selectedSlot = task.selectedSlot;
+        }
+
+        if (task.proposedSlots) {
+          eventDetails.proposedSlots = task.proposedSlots;
+        }
+
+        if (task.resolution) {
+          eventDetails.resolution = task.resolution;
+        }
+
+        // Merge with any additional metadata
+        if (data.metadata) {
+          Object.assign(eventDetails, data.metadata);
+        }
+
+        console.log(`[SchedulingAgent:SendResponse] Sending webhook to ${data.webhookUrl} (event: ${eventType})`);
+
+        // Send webhook with retry logic
+        const webhookResult = await webhookService.sendWebhook(
+          {
+            event: eventType,
+            data: {
+              taskId,
+              eventDetails,
+              timestamp: new Date().toISOString(),
+              userId: data.userId,
+              orgId: task.orgId || undefined,
+            },
+          },
+          {
+            url: data.webhookUrl,
+            secret: process.env.WEBHOOK_SECRET,
+            maxRetries: 3,
+            timeout: 30000, // 30 seconds
+          }
+        );
+
+        if (!webhookResult.success) {
+          console.error(
+            `[SchedulingAgent:SendResponse] Webhook delivery failed after ${webhookResult.attempts} attempts: ${webhookResult.error}`
+          );
+          throw new Error(`Webhook delivery failed: ${webhookResult.error}`);
+        }
+
+        console.log(
+          `[SchedulingAgent:SendResponse] Webhook delivered successfully in ${webhookResult.duration}ms ` +
+          `(${webhookResult.attempts} attempt${webhookResult.attempts > 1 ? 's' : ''})`
+        );
         break;
     }
 
@@ -737,5 +939,49 @@ async function updateTaskOnError(taskId: string, error: unknown): Promise<void> 
     });
   } catch (updateError) {
     console.error(`[SchedulingAgent] Failed to update task status on error:`, updateError);
+  }
+}
+
+/**
+ * Map response type and task status to webhook event type
+ *
+ * @param responseType - The type of response being sent
+ * @param taskStatus - Current status of the task
+ * @returns Appropriate webhook event type
+ */
+function mapResponseTypeToWebhookEvent(
+  responseType: 'confirmation' | 'alternatives' | 'error' | 'clarification',
+  taskStatus: string
+): WebhookEventType {
+  // Map based on responseType first
+  switch (responseType) {
+    case 'confirmation':
+      // Check task status to determine if it's a confirmation, cancellation, or reschedule
+      if (taskStatus === 'SCHEDULED') {
+        return 'scheduling.confirmed';
+      } else if (taskStatus === 'CANCELLED') {
+        return 'scheduling.cancelled';
+      } else if (taskStatus === 'RESCHEDULED') {
+        return 'scheduling.rescheduled';
+      }
+      return 'scheduling.confirmed'; // Default confirmation
+
+    case 'alternatives':
+      // When alternatives are provided, there was a conflict
+      return 'scheduling.conflict_detected';
+
+    case 'clarification':
+      // When clarification is needed, awaiting user input
+      return 'scheduling.awaiting_input';
+
+    case 'error':
+      // Map error responses based on status
+      if (taskStatus === 'AWAITING_INPUT') {
+        return 'scheduling.awaiting_input';
+      }
+      return 'scheduling.conflict_detected'; // Default for errors
+
+    default:
+      return 'scheduling.confirmed';
   }
 }
