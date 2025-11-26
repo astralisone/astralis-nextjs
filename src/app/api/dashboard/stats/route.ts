@@ -22,6 +22,12 @@ export async function GET(req: NextRequest) {
       intakeTotal,
       intakePending,
       intakeLast30Days,
+      documentsTotal,
+      documentsProcessing,
+      documentsLast30Days,
+      eventsTotal,
+      eventsUpcoming,
+      eventsLast30Days,
       recentPipelines,
       activityLogs,
     ] = await Promise.all([
@@ -38,6 +44,27 @@ export async function GET(req: NextRequest) {
         where: { status: { in: ["NEW", "ASSIGNED"] } },
       }),
       prisma.intakeRequest.count({
+        where: { createdAt: { gte: thirtyDaysAgo } },
+      }),
+
+      // Document stats
+      prisma.document.count(),
+      prisma.document.count({
+        where: { status: "PROCESSING" },
+      }),
+      prisma.document.count({
+        where: { createdAt: { gte: thirtyDaysAgo } },
+      }),
+
+      // Event stats
+      prisma.schedulingEvent.count(),
+      prisma.schedulingEvent.count({
+        where: {
+          startTime: { gte: new Date() },
+          status: { not: "CANCELLED" },
+        },
+      }),
+      prisma.schedulingEvent.count({
         where: { createdAt: { gte: thirtyDaysAgo } },
       }),
 
@@ -169,14 +196,14 @@ export async function GET(req: NextRequest) {
           change: calculateChange(intakeTotal, intakeLast30Days),
         },
         documents: {
-          total: 0, // TODO: Add document model queries when available
-          processing: 0,
-          change: 0,
+          total: documentsTotal,
+          processing: documentsProcessing,
+          change: calculateChange(documentsTotal, documentsLast30Days),
         },
         events: {
-          total: 0, // TODO: Add event model queries when available
-          upcoming: 0,
-          change: 0,
+          total: eventsTotal,
+          upcoming: eventsUpcoming,
+          change: calculateChange(eventsTotal, eventsLast30Days),
         },
       },
       recentActivity: mappedActivity,

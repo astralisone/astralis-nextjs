@@ -2105,3 +2105,33 @@ model AgentDecision {
   @@index([inputSource])
   @@map("agent_decisions")
 }
+
+// ============================================================================
+// CHAT MESSAGE MODELS (Real-time chat for scheduling agent)
+// ============================================================================
+
+enum ChatMessageType {
+  SCHEDULING_UPDATE
+  CONFIRMATION
+  CLARIFICATION
+  CANCELLATION
+  ERROR
+  INFO
+}
+
+model ChatMessage {
+  id        String          @id @default(cuid())
+  userId    String
+  orgId     String?
+  taskId    String?         // Related SchedulingAgentTask ID
+  type      ChatMessageType
+  content   String          @db.Text
+  data      Json?           // Additional structured data
+  read      Boolean         @default(false)
+  createdAt DateTime        @default(now())
+
+  @@index([userId, createdAt])
+  @@index([taskId])
+  @@index([read])
+  @@map("chat_messages")
+}
