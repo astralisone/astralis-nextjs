@@ -35,7 +35,9 @@ import {
   UserPlus,
   Mail,
   Trash2,
+  Globe,
 } from 'lucide-react';
+import { TimezoneSelector } from '@/components/settings/TimezoneSelector';
 
 interface NotificationSettings {
   emailNotifications: boolean;
@@ -118,6 +120,7 @@ export default function SettingsPage() {
     slug: '',
     website: '',
   });
+  const [userTimezone, setUserTimezone] = useState<string>('UTC');
 
   // Team management state
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
@@ -188,14 +191,33 @@ export default function SettingsPage() {
     }
   }, [session?.user?.orgId, session?.user?.id]);
 
+  // Fetch user timezone preference
+  const fetchTimezonePreference = useCallback(async () => {
+    if (!session?.user?.id) return;
+
+    try {
+      const response = await fetch('/api/user/preferences');
+      if (!response.ok) {
+        throw new Error('Failed to fetch timezone preference');
+      }
+
+      const data = await response.json();
+      setUserTimezone(data.timezone || 'UTC');
+    } catch (err) {
+      console.error('Error fetching timezone preference:', err);
+      // Don't show error - use default UTC
+    }
+  }, [session?.user?.id]);
+
   useEffect(() => {
     if (session?.user) {
       fetchSettings();
       fetchOrgSettings();
+      fetchTimezonePreference();
     } else {
       setLoading(false);
     }
-  }, [session, fetchSettings, fetchOrgSettings]);
+  }, [session, fetchSettings, fetchOrgSettings, fetchTimezonePreference]);
 
   // Clear success message after 3 seconds
   useEffect(() => {
@@ -509,6 +531,7 @@ export default function SettingsPage() {
       <Tabs defaultValue="general" className="space-y-6">
         <TabsList>
           <TabsTrigger value="general">General</TabsTrigger>
+          <TabsTrigger value="preferences">Preferences</TabsTrigger>
           <TabsTrigger value="organization">Organization</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
@@ -584,6 +607,56 @@ export default function SettingsPage() {
                 {savingGeneral && <Loader2 className="h-5 w-5 animate-spin" />}
                 {savingGeneral ? 'Saving...' : 'Save Changes'}
               </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Preferences Settings */}
+        <TabsContent value="preferences">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-astralis-blue/10 text-astralis-blue">
+                  <Globe className="h-6 w-6" />
+                </div>
+                <div>
+                  <CardTitle>Timezone Preferences</CardTitle>
+                  <CardDescription>Configure your timezone settings</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <TimezoneSelector
+                currentTimezone={userTimezone}
+                onSuccess={(newTimezone) => {
+                  setUserTimezone(newTimezone);
+                  setSuccess('Timezone preference updated successfully');
+                  setError(null);
+                }}
+                onError={(errorMessage) => {
+                  setError(errorMessage);
+                }}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Info Card */}
+          <Card className="mt-6">
+            <CardContent className="pt-6">
+              <Alert variant="info" showIcon>
+                <AlertTitle>How Timezone Settings Work</AlertTitle>
+                <AlertDescription>
+                  <ul className="mt-2 space-y-1 list-disc list-inside text-sm">
+                    <li>All times in the application will be displayed in your selected timezone</li>
+                    <li>Scheduling and calendar events will respect your timezone preference</li>
+                    <li>
+                      Use the "Detect" button to automatically set your timezone based on your
+                      browser
+                    </li>
+                    <li>Changes take effect immediately after saving</li>
+                  </ul>
+                </AlertDescription>
+              </Alert>
             </CardContent>
           </Card>
         </TabsContent>
