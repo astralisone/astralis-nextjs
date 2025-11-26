@@ -153,34 +153,35 @@ export function logError(error: ApiError, context?: string) {
   }
 
   // In production, send to Sentry (Phase 3: Task 3.4)
+  // TODO: Enable Sentry when @sentry/nextjs is installed and configured
   // Import is dynamic to avoid errors if @sentry/nextjs is not installed
-  if (process.env.NODE_ENV === 'production') {
-    try {
-      // Dynamic import to avoid build errors if Sentry is not installed
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { captureException } = require('@/lib/monitoring/sentry');
-
-      // Capture the error with context
-      captureException(
-        error instanceof Error ? error : new Error(error.message),
-        {
-          operation: context || 'api_request',
-          metadata: {
-            status: error.status,
-            code: error.code,
-            details: error.details,
-            timestamp: logData.timestamp,
-          },
-          tags: {
-            error_type: error.code || 'unknown',
-            http_status: error.status?.toString() || 'unknown',
-          },
-        }
-      );
-    } catch (sentryError) {
-      // Silently fail if Sentry is not available
-      // This allows the app to work without Sentry installed
-      console.error('[Sentry Error]', sentryError);
-    }
-  }
+  // if (process.env.NODE_ENV === 'production') {
+  //   try {
+  //     // Dynamic import to avoid build errors if Sentry is not installed
+  //     // eslint-disable-next-line @typescript-eslint/no-var-requires
+  //     const { captureException } = require('@/lib/monitoring/sentry');
+  //
+  //     // Capture the error with context
+  //     captureException(
+  //       error instanceof Error ? error : new Error(error.message),
+  //       {
+  //         operation: context || 'api_request',
+  //         metadata: {
+  //           status: error.status,
+  //           code: error.code,
+  //           details: error.details,
+  //           timestamp: logData.timestamp,
+  //         },
+  //         tags: {
+  //           error_type: error.code || 'unknown',
+  //           http_status: error.status?.toString() || 'unknown',
+  //         },
+  //       }
+  //     );
+  //   } catch (sentryError) {
+  //     // Silently fail if Sentry is not available
+  //     // This allows the app to work without Sentry installed
+  //     console.error('[Sentry Error]', sentryError);
+  //   }
+  // }
 }

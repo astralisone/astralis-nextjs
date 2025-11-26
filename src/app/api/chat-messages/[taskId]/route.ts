@@ -16,7 +16,7 @@ import * as chatResponseService from '@/lib/services/chat-response.service';
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { taskId: string } }
+  { params }: { params: Promise<{ taskId: string }> }
 ) {
   try {
     // Authenticate user
@@ -25,7 +25,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { taskId } = params;
+    const { taskId } = await params;
 
     if (!taskId) {
       return NextResponse.json(

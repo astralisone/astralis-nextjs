@@ -757,10 +757,21 @@ async function sendResponse(
             break;
         }
 
+        // Map responseType to valid ChatMessage type
+        const chatMessageType = (() => {
+          switch (responseType) {
+            case 'confirmation': return 'confirmation';
+            case 'clarification': return 'clarification';
+            case 'error': return 'error';
+            case 'alternatives': return 'scheduling_update';
+            default: return 'info';
+          }
+        })() as 'scheduling_update' | 'confirmation' | 'clarification' | 'cancellation' | 'error' | 'info';
+
         // Send chat message using chat response service
         const chatResult = await chatResponseService.sendChatMessage(
           {
-            type: responseType === 'error' ? 'error' : responseType,
+            type: chatMessageType,
             taskId,
             userId: data.userId,
             content: chatContent,

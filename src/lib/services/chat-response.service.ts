@@ -11,7 +11,7 @@
  */
 
 import { prisma } from '@/lib/prisma';
-import { ChatMessageType } from '@prisma/client';
+import { ChatMessageType, Prisma } from '@prisma/client';
 
 /**
  * Chat Message Interface
@@ -174,11 +174,11 @@ async function storeInDatabase(
     const chatMessage = await prisma.chatMessage.create({
       data: {
         userId: message.userId,
-        orgId: orgId || null,
+        orgId: orgId || undefined,
         taskId: message.taskId,
         type: mapMessageTypeToPrisma(message.type),
         content: message.content,
-        data: message.data || null,
+        data: message.data ? (message.data as Prisma.InputJsonValue) : undefined,
         read: false,
       },
     });

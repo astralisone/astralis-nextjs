@@ -81,21 +81,30 @@ async function sendVerificationEmailWithRetry(
 
       // Log successful send in activity log if userId provided
       if (userId) {
-        await prisma.activityLog.create({
-          data: {
-            userId,
-            action: 'EMAIL_SENT',
-            entity: 'USER',
-            entityId: userId,
-            metadata: {
-              type: 'VERIFICATION_EMAIL',
-              attempts: attempt + 1,
-              email,
-            }
-          }
-        }).catch(err => {
-          console.error('[Auth] Failed to log email send activity:', err);
+        // Get user's orgId for activity log
+        const user = await prisma.users.findUnique({
+          where: { id: userId },
+          select: { orgId: true }
         });
+
+        if (user?.orgId) {
+          await prisma.activityLog.create({
+            data: {
+              userId,
+              orgId: user.orgId,
+              action: 'EMAIL_SENT',
+              entity: 'USER',
+              entityId: userId,
+              metadata: {
+                type: 'VERIFICATION_EMAIL',
+                attempts: attempt + 1,
+                email,
+              }
+            }
+          }).catch(err => {
+            console.error('[Auth] Failed to log email send activity:', err);
+          });
+        }
       }
 
       return { success: true, attempts: attempt + 1 };
@@ -115,22 +124,31 @@ async function sendVerificationEmailWithRetry(
 
   // Log failed send in activity log if userId provided
   if (userId) {
-    await prisma.activityLog.create({
-      data: {
-        userId,
-        action: 'EMAIL_FAILED',
-        entity: 'USER',
-        entityId: userId,
-        metadata: {
-          type: 'VERIFICATION_EMAIL',
-          attempts: delays.length,
-          email,
-          error: lastError?.message || 'Unknown error',
-        }
-      }
-    }).catch(err => {
-      console.error('[Auth] Failed to log email failure activity:', err);
+    // Get user's orgId for activity log
+    const user = await prisma.users.findUnique({
+      where: { id: userId },
+      select: { orgId: true }
     });
+
+    if (user?.orgId) {
+      await prisma.activityLog.create({
+        data: {
+          userId,
+          orgId: user.orgId,
+          action: 'EMAIL_FAILED',
+          entity: 'USER',
+          entityId: userId,
+          metadata: {
+            type: 'VERIFICATION_EMAIL',
+            attempts: delays.length,
+            email,
+            error: lastError?.message || 'Unknown error',
+          }
+        }
+      }).catch(err => {
+        console.error('[Auth] Failed to log email failure activity:', err);
+      });
+    }
   }
 
   return {
@@ -254,20 +272,22 @@ export class AuthService {
       data: { emailVerified: new Date() }
     });
 
-    // Log email verification
-    await prisma.activityLog.create({
-      data: {
-        userId: user.id,
-        orgId: user.orgId,
-        action: 'UPDATE',
-        entity: 'USER',
-        entityId: user.id,
-        metadata: {
-          action: 'EMAIL_VERIFIED',
-          email: user.email,
+    // Log email verification (only if user has an org)
+    if (user.orgId) {
+      await prisma.activityLog.create({
+        data: {
+          userId: user.id,
+          orgId: user.orgId,
+          action: 'UPDATE',
+          entity: 'USER',
+          entityId: user.id,
+          metadata: {
+            action: 'EMAIL_VERIFIED',
+            email: user.email,
+          }
         }
-      }
-    });
+      });
+    }
 
     // Delete used token
     await prisma.verificationToken.delete({
@@ -335,22 +355,24 @@ export class AuthService {
     // Send email with retry
     const result = await sendVerificationEmailWithRetry(email, token, user.id);
 
-    // Log resend attempt
-    await prisma.activityLog.create({
-      data: {
-        userId: user.id,
-        orgId: user.orgId,
-        action: 'UPDATE',
-        entity: 'USER',
-        entityId: user.id,
-        metadata: {
-          action: 'VERIFICATION_EMAIL_RESENT',
-          email,
-          success: result.success,
-          attempts: result.attempts,
+    // Log resend attempt (only if user has an org)
+    if (user.orgId) {
+      await prisma.activityLog.create({
+        data: {
+          userId: user.id,
+          orgId: user.orgId,
+          action: 'UPDATE',
+          entity: 'USER',
+          entityId: user.id,
+          metadata: {
+            action: 'VERIFICATION_EMAIL_RESENT',
+            email,
+            success: result.success,
+            attempts: result.attempts,
+          }
         }
-      }
-    });
+      });
+    }
 
     if (result.success) {
       return {
