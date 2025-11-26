@@ -1,75 +1,125 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { DashboardData, ActivityItem, ActivityType } from "@/types/dashboard";
+import { auth } from "@/lib/auth/config";
 
 /**
  * GET /api/dashboard/stats
  *
  * Fetches dashboard statistics and recent activity
  * Returns aggregated data for metrics cards, activity feed, and recent pipelines
+ *
+ * @requires Authentication
+ * @returns DashboardData with org-scoped stats
  */
 export async function GET(req: NextRequest) {
   try {
-    // Get date 30 days ago for comparison
-    const thirtyDaysAgo = new Date();
+    // Authentication check
+    const session = await auth();
+    if (!session?.user?.email) {
+      return NextResponse.json(
+        { error: "Unauthorized - Please sign in" },
+        { status: 401 }
+      );
+    }
+
+    // Get user with org context
+    const user = await prisma.users.findUnique({
+      where: { email: session.user.email },
+      select: { id: true, orgId: true },
+    });
+
+    if (!user || !user.orgId) {
+      return NextResponse.json(
+        { error: "User not found or not associated with an organization" },
+        { status: 404 }
+      );
+    }
+
+    const orgId = user.orgId;
+
+    // Calculate date ranges for comparison
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now);
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    // Parallel queries for better performance
+    const sixtyDaysAgo = new Date(now);
+    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+
+    // Parallel queries for better performance (all scoped to orgId)
     const [
       pipelinesTotal,
       pipelinesActive,
       pipelinesLast30Days,
+      pipelinesPrev30Days,
       intakeTotal,
       intakePending,
       intakeLast30Days,
+      intakePrev30Days,
       documentsTotal,
       documentsProcessing,
       documentsLast30Days,
+      documentsPrev30Days,
       eventsTotal,
       eventsUpcoming,
       eventsLast30Days,
+      eventsPrev30Days,
       recentPipelines,
       activityLogs,
     ] = await Promise.all([
       // Pipeline stats
-      prisma.pipeline.count(),
-      prisma.pipeline.count({ where: { isActive: true } }),
+      prisma.pipeline.count({ where: { orgId } }),
+      prisma.pipeline.count({ where: { orgId, isActive: true } }),
       prisma.pipeline.count({
-        where: { createdAt: { gte: thirtyDaysAgo } },
+        where: { orgId, createdAt: { gte: thirtyDaysAgo } },
+      }),
+      prisma.pipeline.count({
+        where: { orgId, createdAt: { gte: sixtyDaysAgo, lt: thirtyDaysAgo } },
       }),
 
       // Intake stats
-      prisma.intakeRequest.count(),
+      prisma.intakeRequest.count({ where: { orgId } }),
       prisma.intakeRequest.count({
-        where: { status: { in: ["NEW", "ASSIGNED"] } },
+        where: { orgId, status: { in: ["NEW", "ASSIGNED"] } },
       }),
       prisma.intakeRequest.count({
-        where: { createdAt: { gte: thirtyDaysAgo } },
+        where: { orgId, createdAt: { gte: thirtyDaysAgo } },
+      }),
+      prisma.intakeRequest.count({
+        where: { orgId, createdAt: { gte: sixtyDaysAgo, lt: thirtyDaysAgo } },
       }),
 
       // Document stats
-      prisma.document.count(),
+      prisma.document.count({ where: { orgId } }),
       prisma.document.count({
-        where: { status: "PROCESSING" },
+        where: { orgId, status: "PROCESSING" },
       }),
       prisma.document.count({
-        where: { createdAt: { gte: thirtyDaysAgo } },
+        where: { orgId, createdAt: { gte: thirtyDaysAgo } },
+      }),
+      prisma.document.count({
+        where: { orgId, createdAt: { gte: sixtyDaysAgo, lt: thirtyDaysAgo } },
       }),
 
       // Event stats
-      prisma.schedulingEvent.count(),
+      prisma.schedulingEvent.count({ where: { orgId } }),
       prisma.schedulingEvent.count({
         where: {
-          startTime: { gte: new Date() },
+          orgId,
+          startTime: { gte: now },
           status: { not: "CANCELLED" },
         },
       }),
       prisma.schedulingEvent.count({
-        where: { createdAt: { gte: thirtyDaysAgo } },
+        where: { orgId, createdAt: { gte: thirtyDaysAgo } },
+      }),
+      prisma.schedulingEvent.count({
+        where: { orgId, createdAt: { gte: sixtyDaysAgo, lt: thirtyDaysAgo } },
       }),
 
       // Recent pipelines with stage and item counts
       prisma.pipeline.findMany({
+        where: { orgId },
         take: 5,
         orderBy: { createdAt: "desc" },
         include: {
@@ -85,6 +135,7 @@ export async function GET(req: NextRequest) {
 
       // Recent activity from ActivityLog
       prisma.activityLog.findMany({
+        where: { orgId },
         take: 20,
         orderBy: { createdAt: "desc" },
         include: {
@@ -99,12 +150,14 @@ export async function GET(req: NextRequest) {
       }),
     ]);
 
-    // Calculate percentage changes
-    const calculateChange = (current: number, last30Days: number): number => {
-      if (current === 0) return 0;
-      const previous = current - last30Days;
-      if (previous === 0) return 100;
-      return Math.round(((last30Days / previous) * 100) - 100);
+    // Calculate percentage changes (last 30 days vs previous 30 days)
+    const calculateChange = (last30Days: number, prev30Days: number): number => {
+      // If no previous data, return 100% if we have new data, else 0%
+      if (prev30Days === 0) {
+        return last30Days > 0 ? 100 : 0;
+      }
+      // Calculate percentage change: ((new - old) / old) * 100
+      return Math.round(((last30Days - prev30Days) / prev30Days) * 100);
     };
 
     // Map recent pipelines to response format
@@ -188,29 +241,34 @@ export async function GET(req: NextRequest) {
         pipelines: {
           total: pipelinesTotal,
           active: pipelinesActive,
-          change: calculateChange(pipelinesTotal, pipelinesLast30Days),
+          change: calculateChange(pipelinesLast30Days, pipelinesPrev30Days),
         },
         intake: {
           total: intakeTotal,
           pending: intakePending,
-          change: calculateChange(intakeTotal, intakeLast30Days),
+          change: calculateChange(intakeLast30Days, intakePrev30Days),
         },
         documents: {
           total: documentsTotal,
           processing: documentsProcessing,
-          change: calculateChange(documentsTotal, documentsLast30Days),
+          change: calculateChange(documentsLast30Days, documentsPrev30Days),
         },
         events: {
           total: eventsTotal,
           upcoming: eventsUpcoming,
-          change: calculateChange(eventsTotal, eventsLast30Days),
+          change: calculateChange(eventsLast30Days, eventsPrev30Days),
         },
       },
       recentActivity: mappedActivity,
       recentPipelines: mappedPipelines,
     };
 
-    return NextResponse.json(dashboardData, { status: 200 });
+    return NextResponse.json(dashboardData, {
+      status: 200,
+      headers: {
+        "Cache-Control": "private, max-age=300", // Cache for 5 minutes
+      },
+    });
   } catch (error) {
     console.error("Dashboard stats error:", error);
     return NextResponse.json(
