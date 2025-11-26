@@ -2,7 +2,7 @@
 
 **Astralis One - Multi-Agent Engineering Platform**
 **Last Updated:** 2025-11-26
-**Current Phase:** Phase 2 - Core Agent Infrastructure
+**Current Phase:** Critical Bugs → Phase 1 Blocking
 
 ---
 
@@ -32,6 +32,53 @@ npm run test:e2e         # Run E2E tests
 - **AI/LLM:** OpenAI GPT-4 + Anthropic Claude
 - **File Storage:** DigitalOcean Spaces (S3-compatible)
 - **No AWS:** Use DigitalOcean alternatives for all cloud services
+
+---
+
+## 🐛 CRITICAL BUGS (Fix Immediately)
+
+These bugs are blocking users from using core functionality. Fix before feature work.
+
+### BUG-1: Dashboard Crashes on Load → Missing orgId Validation
+- **Status:** [ ] Not Started
+- **Priority:** CRITICAL BUG
+- **Size:** S (1-2 hours)
+- **Error:** "Something went wrong - We encountered an unexpected error"
+- **Files:**
+  - `src/app/(app)/dashboard/page.tsx:10-27`
+  - `src/lib/auth/config.ts:111` (sets session.user.orgId)
+  - `src/app/error.tsx` (error boundary catching this)
+- **Root Cause:**
+  - `session.user.orgId` can be undefined if user has no organization
+  - No try-catch around `Promise.all()` database queries
+  - Prisma queries with undefined `orgId` cause errors
+- **Acceptance Criteria:**
+  - [ ] Add validation: `if (!orgId) return <ErrorState />`
+  - [ ] Wrap database queries in try-catch block
+  - [ ] Create user-friendly error UI for missing org
+  - [ ] Add loading state while fetching data
+  - [ ] Log error details for debugging
+  - [ ] Test with user that has no orgId assigned
+- **Implementation Notes:**
+  ```typescript
+  // Add at line 10
+  if (!orgId) {
+    return (
+      <div className="p-8">
+        <h2>Organization Required</h2>
+        <p>Please contact support to be assigned to an organization.</p>
+      </div>
+    );
+  }
+
+  // Wrap queries in try-catch
+  try {
+    const [intakeStats, pipelineStats] = await Promise.all([...]);
+  } catch (error) {
+    console.error('Dashboard load error:', error);
+    return <ErrorState message="Failed to load dashboard data" />;
+  }
+  ```
 
 ---
 
@@ -740,6 +787,7 @@ These features add polish but aren't essential for launch.
 ## 📊 PROGRESS TRACKING
 
 ### Overall Completion
+- **Critical Bugs:** 0/1 fixed (0%) ⚠️ FIX FIRST
 - **Phase 1 (BLOCKING):** 0/7 tasks (0%)
 - **Phase 2 (CRITICAL):** 0/4 tasks (0%)
 - **Phase 3 (IMPORTANT):** 0/6 tasks (0%)
@@ -747,11 +795,11 @@ These features add polish but aren't essential for launch.
 
 ### Current Sprint Focus
 **Recommended order for next 2 weeks:**
-1. Task 1.1 - Email Response Sending (M)
-2. Task 1.5 - Task Action Executor Wiring (M)
-3. Task 1.7 - Webhook Signature Verification (S)
-4. Task 1.6 - Credential Storage (L)
-5. Task 2.3 - Notification Dispatch System (L)
+1. **BUG-1 - Dashboard Crash Fix (S)** ⚠️ PRIORITY
+2. Task 1.7 - Webhook Signature Verification (S)
+3. Task 1.5 - Task Action Executor Wiring (M)
+4. Task 1.1 - Email Response Sending (M)
+5. Task 1.6 - Credential Storage (L)
 
 **Estimated Time:** ~35 hours (1.5 sprints)
 
