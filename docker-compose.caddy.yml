@@ -1,0 +1,194 @@
+# Docker Compose with Caddy Reverse Proxy
+# Usage: docker-compose -f docker-compose.caddy.yml up -d
+#
+# This extends docker-compose.prod.yml with Caddy service
+# Use this if you prefer to run Caddy in Docker instead of as a system service
+
+services:
+  # ==========================================
+  # Caddy Reverse Proxy
+  # ==========================================
+  caddy:
+    image: caddy:2.7-alpine
+    container_name: astralis_caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"       # HTTP (redirects to HTTPS)
+      - "443:443"     # HTTPS
+      - "443:443/udp" # HTTP/3 (QUIC)
+    volumes:
+      # Caddyfile configuration
+      - ./Caddyfile.docker:/etc/caddy/Caddyfile:ro
+
+      # Persistent data (SSL certificates, etc.)
+      - caddy-data:/data
+      - caddy-config:/config
+
+      # Access logs (optional: can also use Docker logs)
+      - /var/log/caddy:/var/log/caddy
+    networks:
+      - astralis-network
+    depends_on:
+      app:
+        condition: service_healthy
+      n8n:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:2019/config/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    environment:
+      # Caddy admin API (localhost only for security)
+      - CADDY_ADMIN=localhost:2019
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ==========================================
+  # Next.js Application
+  # ==========================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.nextjs
+    image: astralis-nextjs-app:latest
+    container_name: astralis_app
+    restart: unless-stopped
+    # No port mapping to host - accessed via Caddy
+    expose:
+      - "3001"
+    environment:
+      - NODE_ENV=production
+      # Updated URLs to use HTTPS via Caddy
+      - NEXTAUTH_URL=https://astralisone.com
+      - NEXT_PUBLIC_APP_URL=https://astralisone.com
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - astralis-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ==========================================
+  # PostgreSQL Database
+  # ==========================================
+  postgres:
+    image: postgres:16
+    container_name: astralis_postgres
+    restart: unless-stopped
+    ports:
+      - "5433:5432"  # Map to 5433 to avoid conflicts
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME:-astralis}
+      POSTGRES_USER: ${DATABASE_USER:-astralis}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - astralis-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-astralis} -d ${DATABASE_NAME:-astralis}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==========================================
+  # Redis Cache
+  # ==========================================
+  redis:
+    image: redis:7-alpine
+    container_name: astralis_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis-data:/data
+    networks:
+      - astralis-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==========================================
+  # n8n Workflow Automation
+  # ==========================================
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: astralis_n8n
+    restart: unless-stopped
+    # No port mapping to host - accessed via Caddy
+    expose:
+      - "5678"
+    environment:
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - N8N_HOST=automation.astralisone.com
+      - WEBHOOK_URL=https://automation.astralisone.com
+      - N8N_EDITOR_BASE_URL=https://automation.astralisone.com
+      - N8N_BASIC_AUTH_ACTIVE=${N8N_BASIC_AUTH_ACTIVE:-true}
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=${DATABASE_NAME:-astralis}
+      - DB_POSTGRESDB_USER=${DATABASE_USER:-astralis}
+      - DB_POSTGRESDB_PASSWORD=${DATABASE_PASSWORD}
+      - DB_POSTGRESDB_SCHEMA=n8n
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - n8n-data:/home/node/.n8n
+    networks:
+      - astralis-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:5678/healthz || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+# ==========================================
+# Volumes
+# ==========================================
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  n8n-data:
+    driver: local
+  caddy-data:
+    driver: local
+    # SSL certificates and other persistent data
+  caddy-config:
+    driver: local
+    # Caddy configuration cache
+
+# ==========================================
+# Networks
+# ==========================================
+networks:
+  astralis-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
