@@ -10,9 +10,13 @@ import { AuthLayout } from '@/components/auth/AuthLayout';
 export default function VerifyEmailPage() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
+  const email = searchParams.get('email'); // Optional email for resend
 
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
+  const [resendStatus, setResendStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [resendMessage, setResendMessage] = useState('');
+  const [resendEmail, setResendEmail] = useState(email || '');
 
   useEffect(() => {
     if (!token) {
@@ -43,6 +47,37 @@ export default function VerifyEmailPage() {
     } catch (err) {
       setStatus('error');
       setMessage(err instanceof Error ? err.message : 'Verification failed');
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!resendEmail || !resendEmail.includes('@')) {
+      setResendStatus('error');
+      setResendMessage('Please enter a valid email address');
+      return;
+    }
+
+    setResendStatus('sending');
+    setResendMessage('');
+
+    try {
+      const response = await fetch('/api/auth/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: resendEmail }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to resend verification email');
+      }
+
+      setResendStatus('sent');
+      setResendMessage(result.message || 'Verification email sent successfully');
+    } catch (err) {
+      setResendStatus('error');
+      setResendMessage(err instanceof Error ? err.message : 'Failed to resend email');
     }
   };
 
@@ -99,18 +134,66 @@ export default function VerifyEmailPage() {
       )}
 
       {status === 'error' && (
-        <Alert variant="error" showIcon>
-          <AlertTitle>Verification failed</AlertTitle>
-          <AlertDescription>{message}</AlertDescription>
-          <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-            <Button asChild variant="outline">
+        <div className="space-y-4">
+          <Alert variant="error" showIcon>
+            <AlertTitle>Verification failed</AlertTitle>
+            <AlertDescription>{message}</AlertDescription>
+          </Alert>
+
+          {/* Resend Verification Section */}
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <h3 className="text-sm font-semibold text-slate-900 mb-3">
+              Resend Verification Email
+            </h3>
+
+            {resendStatus === 'sent' ? (
+              <Alert variant="success" showIcon>
+                <AlertDescription>{resendMessage}</AlertDescription>
+              </Alert>
+            ) : (
+              <div className="space-y-3">
+                <div>
+                  <label htmlFor="resend-email" className="block text-sm font-medium text-slate-700 mb-1">
+                    Email address
+                  </label>
+                  <input
+                    id="resend-email"
+                    type="email"
+                    placeholder="your.email@example.com"
+                    value={resendEmail}
+                    onChange={(e) => setResendEmail(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-astralis-blue focus:border-astralis-blue text-sm"
+                    disabled={resendStatus === 'sending'}
+                  />
+                </div>
+
+                {resendStatus === 'error' && resendMessage && (
+                  <Alert variant="error">
+                    <AlertDescription>{resendMessage}</AlertDescription>
+                  </Alert>
+                )}
+
+                <Button
+                  onClick={handleResendVerification}
+                  disabled={resendStatus === 'sending' || !resendEmail}
+                  variant="primary"
+                  className="w-full"
+                >
+                  {resendStatus === 'sending' ? 'Sending...' : 'Resend Verification Email'}
+                </Button>
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button asChild variant="outline" className="flex-1">
               <Link href="/auth/signup">Create a new account</Link>
             </Button>
-            <Button asChild variant="ghost">
-              <Link href="/auth/forgot-password">Resend verification</Link>
+            <Button asChild variant="ghost" className="flex-1">
+              <Link href="/auth/signin">Back to sign in</Link>
             </Button>
           </div>
-        </Alert>
+        </div>
       )}
     </AuthLayout>
   );

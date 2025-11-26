@@ -1032,6 +1032,7 @@ model users {
   onboardingCompleted                               Boolean                 @default(false)
   teamSize                                          String?
   timeline                                          String?
+  timezone                                          String                  @default("UTC")
   orgId                                             String?
   accounts                                          Account[]
   activityLogs                                      ActivityLog[]
@@ -1082,6 +1083,8 @@ model organization {
   name                   String
   slug                   String?                 @unique
   website                String?
+  plan                   PlanType                @default(FREE)
+  quotaResetAt           DateTime                @default(now())
   createdAt              DateTime                @default(now())
   updatedAt              DateTime                @default(now()) @updatedAt
   documents              Document[]
@@ -1099,6 +1102,7 @@ model organization {
 
   @@index([name])
   @@index([slug])
+  @@index([plan])
 }
 
 model Account {
@@ -1185,16 +1189,16 @@ model intakeRequest {
 model pipeline {
   id             String          @id @default(cuid())
   orgId          String
-  key            String          @unique  // NEW: Unique key for TaskTemplate references
+  key            String          @unique // NEW: Unique key for TaskTemplate references
   name           String
   description    String?
-  type           PipelineType    @default(GENERIC)  // NEW: Pipeline type
+  type           PipelineType    @default(GENERIC) // NEW: Pipeline type
   isActive       Boolean         @default(true)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @default(now()) @updatedAt
   intakeRequests intakeRequest[]
   stages         pipelineStage[]
-  tasks          Task[]          // NEW: Direct task relation
+  tasks          Task[] // NEW: Direct task relation
 
   @@index([orgId])
   @@index([isActive])
@@ -1205,19 +1209,19 @@ model pipeline {
 model pipelineStage {
   id          String         @id @default(cuid())
   pipelineId  String
-  key         String         // NEW: Unique key within pipeline
+  key         String // NEW: Unique key within pipeline
   name        String
   description String?
   order       Int
-  isTerminal  Boolean        @default(false)  // NEW: Terminal stage flag
+  isTerminal  Boolean        @default(false) // NEW: Terminal stage flag
   color       String?
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @default(now()) @updatedAt
   items       pipelineItem[]
-  tasks       Task[]         // NEW: Direct task relation
+  tasks       Task[] // NEW: Direct task relation
   pipeline    pipeline       @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
 
-  @@unique([pipelineId, key])  // NEW: Unique constraint
+  @@unique([pipelineId, key]) // NEW: Unique constraint
   @@index([pipelineId])
   @@index([pipelineId, order])
 }
@@ -1250,7 +1254,7 @@ model pipelineItem {
 // ============================================================================
 
 model TaskTemplate {
-  id                   String   @id  // e.g., BOOKING_REQUEST_V1
+  id                   String        @id // e.g., BOOKING_REQUEST_V1
   label                String
   category             String
   department           String?
@@ -1260,27 +1264,27 @@ model TaskTemplate {
   applicableSources    String[]
   preferredPipelineKey String
   defaultStageKey      String
-  definition           Json     // Full JSON template including steps + agentConfig
+  definition           Json // Full JSON template including steps + agentConfig
   tasks                Task[]
   decisionLogs         DecisionLog[]
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
 
   @@index([category])
   @@index([preferredPipelineKey])
 }
 
 model Task {
-  id         String      @id @default(cuid())
-  orgId      String
+  id    String @id @default(cuid())
+  orgId String
 
   // Linkage to template
   templateId String
   template   TaskTemplate @relation(fields: [templateId], references: [id])
 
   // Source tracking
-  source     TaskSource
-  sourceId   String?  // Reference to original source (e.g., intakeRequest.id)
+  source   TaskSource
+  sourceId String? // Reference to original source (e.g., intakeRequest.id)
 
   // Pipeline relations
   pipelineId String?
@@ -1293,37 +1297,37 @@ model Task {
   stageKey    String?
 
   // Task metadata
-  type        String
-  category    String
-  department  String?
-  staffRole   String?
+  type       String
+  category   String
+  department String?
+  staffRole  String?
 
   // Content
   title       String
   description String?
 
   // Status and priority
-  priority    Int
-  status      TaskStatus
+  priority Int
+  status   TaskStatus
 
   // SLA / timeline
   typicalMinutes Int?
-  timeline       Json?  // { startedAt, dueAt, breachedAt }
+  timeline       Json? // { startedAt, dueAt, breachedAt }
 
   // Task steps and data
-  steps       Json?      // TaskStep[]
+  steps       Json? // TaskStep[]
   attachments Json?
   data        Json?
-  tags        String[]   @default([])
+  tags        String[] @default([])
 
   // Assignment
   assignedToUserId String?
 
   // Human override
-  overridden        Boolean   @default(false)
-  overrideReason    String?
-  overrideByUserId  String?
-  overrideAt        DateTime?
+  overridden       Boolean   @default(false)
+  overrideReason   String?
+  overrideByUserId String?
+  overrideAt       DateTime?
 
   // Agent state (decision tracking)
   agentLastDecisionId String?
@@ -1345,26 +1349,26 @@ model Task {
 }
 
 model DecisionLog {
-  id             String   @id @default(cuid())
-  taskId         String
-  task           Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  orgId          String
-  templateId     String
-  template       TaskTemplate @relation(fields: [templateId], references: [id])
+  id         String       @id @default(cuid())
+  taskId     String
+  task       Task         @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  orgId      String
+  templateId String
+  template   TaskTemplate @relation(fields: [templateId], references: [id])
 
   // Event context
-  eventName      String   // e.g. task.created, task.status_changed
-  eventId        String?
+  eventName       String // e.g. task.created, task.status_changed
+  eventId         String?
   agentConfigHash String?
 
   // Decision data
-  inputSnapshot  Json     // Partial snapshot of task relevant to decision
-  llmCall        Json?    // { model, tokensIn, tokensOut, promptType }
-  decision       Json     // AgentDecision { reasoning, actions[] }
+  inputSnapshot Json // Partial snapshot of task relevant to decision
+  llmCall       Json? // { model, tokensIn, tokensOut, promptType }
+  decision      Json // AgentDecision { reasoning, actions[] }
 
   // Timestamps
-  appliedAt      DateTime @default(now())
-  createdAt      DateTime @default(now())
+  appliedAt DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([taskId])
   @@index([orgId])
@@ -1797,6 +1801,13 @@ enum IntakeStatus {
   REJECTED
 }
 
+enum PlanType {
+  FREE
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
 enum DayOfWeek {
   MONDAY
   TUESDAY
@@ -2123,10 +2134,10 @@ model ChatMessage {
   id        String          @id @default(cuid())
   userId    String
   orgId     String?
-  taskId    String?         // Related SchedulingAgentTask ID
+  taskId    String? // Related SchedulingAgentTask ID
   type      ChatMessageType
   content   String          @db.Text
-  data      Json?           // Additional structured data
+  data      Json? // Additional structured data
   read      Boolean         @default(false)
   createdAt DateTime        @default(now())
 
