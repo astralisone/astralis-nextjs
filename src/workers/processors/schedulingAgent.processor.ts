@@ -19,6 +19,7 @@ import * as schedulingService from '@/lib/services/scheduling.service';
 import { webhookService, WebhookEventType } from '@/lib/services/webhook.service';
 import { smsService, type MeetingDetails } from '@/lib/services/sms.service';
 import { sendSchedulingAgentEmail, type SchedulingAgentEmailOptions } from '@/lib/email';
+import * as chatResponseService from '@/lib/services/chat-response.service';
 import OpenAI from 'openai';
 
 // Initialize OpenAI for task classification
@@ -713,8 +714,74 @@ async function sendResponse(
         await sendSmsResponse(task, responseType, data.recipientPhone);
         break;
       case 'chat':
-        console.log(`[SchedulingAgent:SendResponse] Would send chat message`);
-        // TODO: Use chat service to send response
+        console.log(`[SchedulingAgent:SendResponse] Sending chat message for task ${taskId}`);
+
+        // Build chat message content based on response type
+        let chatContent = '';
+        let chatData: Record<string, unknown> = {
+          taskId,
+          responseType,
+        };
+
+        switch (responseType) {
+          case 'confirmation':
+            chatContent = task.resolution || 'Your meeting has been scheduled successfully.';
+            if (task.schedulingEventId) {
+              chatData.eventId = task.schedulingEventId;
+            }
+            if (task.selectedSlot) {
+              chatData.selectedSlot = task.selectedSlot;
+            }
+            break;
+
+          case 'alternatives':
+            chatContent = 'We found conflicts with your requested time. Here are some alternative slots:';
+            if (task.proposedSlots) {
+              chatData.proposedSlots = task.proposedSlots;
+            }
+            break;
+
+          case 'clarification':
+            chatContent =
+              task.intent ||
+              'We need more information to complete your scheduling request. Please provide additional details.';
+            if (task.entities) {
+              chatData.entities = task.entities;
+            }
+            break;
+
+          case 'error':
+            chatContent =
+              task.errorMessage ||
+              'We encountered an issue processing your request. Please try again or contact support.';
+            break;
+        }
+
+        // Send chat message using chat response service
+        const chatResult = await chatResponseService.sendChatMessage(
+          {
+            type: responseType === 'error' ? 'error' : responseType,
+            taskId,
+            userId: data.userId,
+            content: chatContent,
+            data: chatData,
+            timestamp: new Date().toISOString(),
+          },
+          task.orgId || undefined
+        );
+
+        if (!chatResult.success) {
+          console.error(
+            `[SchedulingAgent:SendResponse] Chat message delivery failed: ${chatResult.error}`
+          );
+          throw new Error(`Chat message delivery failed: ${chatResult.error}`);
+        }
+
+        console.log(
+          `[SchedulingAgent:SendResponse] Chat message sent successfully ` +
+          `(Pusher: ${chatResult.pusherSent}, Database: ${chatResult.databaseStored}, ` +
+          `MessageId: ${chatResult.messageId || 'N/A'})`
+        );
         break;
       case 'webhook':
         // Send webhook notification with retry logic
