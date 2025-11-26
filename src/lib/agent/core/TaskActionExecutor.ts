@@ -23,6 +23,7 @@ import type {
   AgentActionNoOp,
   TaskStatus,
 } from '../../types/tasks';
+import type { Logger } from '../types/agent.types';
 import {
   emitTaskEvent,
   emitPipelineEvent,
@@ -62,16 +63,6 @@ export interface TaskActionContext {
   correlationId?: string;
   /** Whether this is a dry run */
   dryRun?: boolean;
-}
-
-/**
- * Logger interface
- */
-interface Logger {
-  debug: (msg: string, data?: unknown) => void;
-  info: (msg: string, data?: unknown) => void;
-  warn: (msg: string, data?: unknown) => void;
-  error: (msg: string, err?: unknown, data?: unknown) => void;
 }
 
 // =============================================================================
