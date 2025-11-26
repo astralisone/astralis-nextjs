@@ -80,7 +80,7 @@ export function DashboardSidebar({ user, isMobile = false, onClose }: DashboardS
   return (
     <div
       className={cn(
-        'bg-astralis-navy text-white flex flex-col h-full',
+        'bg-gradient-to-b from-astralis-navy via-astralis-navy to-slate-900 text-white flex flex-col h-full border-r border-cyan-400/10',
         !isMobile && 'transition-all duration-300',
         !isMobile && (sidebarCollapsed ? 'w-20' : 'w-60')
       )}
