@@ -701,12 +701,11 @@ export class BaseTaskAgent {
       };
 
       // Update the decision log with execution results
-      // Note: This assumes the DecisionLog table has a 'data' JSONB field
-      // If the field doesn't exist, this update will be skipped
+      // Store execution summary in the decision JSON field
       await this.prisma.decisionLog.update({
         where: { id: decisionLogId },
         data: {
-          data: executionSummary as any,
+          decision: executionSummary as any,
         },
       });
 
