@@ -815,6 +815,448 @@ export function generateInviteToken(): string {
   return crypto.randomBytes(32).toString('hex');
 }
 
+/**
+ * Scheduling Agent Email Options
+ */
+export interface SchedulingAgentEmailOptions {
+  recipientEmail: string;
+  recipientName: string;
+  taskId: string;
+  responseType: 'confirmation' | 'alternatives' | 'clarification' | 'cancellation';
+  meetingDetails?: {
+    title: string;
+    startTime: Date;
+    endTime: Date;
+    timezone: string;
+    location?: string;
+    participants?: string[];
+  };
+  alternativeSlots?: Array<{
+    startTime: string;
+    endTime: string;
+    confidence?: number;
+  }>;
+  clarificationNeeded?: string;
+  cancellationReason?: string;
+}
+
+/**
+ * Generate HTML email for scheduling agent confirmation
+ */
+export function generateSchedulingAgentConfirmationEmail(options: SchedulingAgentEmailOptions): string {
+  const { recipientName, meetingDetails } = options;
+
+  if (!meetingDetails) {
+    throw new Error('Meeting details required for confirmation email');
+  }
+
+  const dateStr = meetingDetails.startTime.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: meetingDetails.timezone,
+  });
+
+  const startTime = meetingDetails.startTime.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: meetingDetails.timezone,
+  });
+
+  const endTime = meetingDetails.endTime.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: meetingDetails.timezone,
+  });
+
+  const detailsTable = `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 12px 0 24px; background-color:#f8fafc; border-radius:16px;">
+      <tbody>
+        <tr>
+          <td style="padding:22px 24px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tbody>
+                <tr>
+                  <td style="padding:6px 0; color:#64748b; font-size:13px; text-transform:uppercase; letter-spacing:0.08em;">Title</td>
+                  <td style="padding:6px 0; color:#1e293b; font-size:14px; font-weight:600; text-align:right;">${meetingDetails.title}</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0; color:#64748b; font-size:13px; text-transform:uppercase; letter-spacing:0.08em;">Date</td>
+                  <td style="padding:6px 0; color:#1e293b; font-size:14px; font-weight:600; text-align:right;">${dateStr}</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0; color:#64748b; font-size:13px; text-transform:uppercase; letter-spacing:0.08em;">Time</td>
+                  <td style="padding:6px 0; color:#1e293b; font-size:14px; font-weight:600; text-align:right;">${startTime} – ${endTime}</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0; color:#64748b; font-size:13px; text-transform:uppercase; letter-spacing:0.08em;">Timezone</td>
+                  <td style="padding:6px 0; color:#1e293b; font-size:14px; font-weight:600; text-align:right;">${meetingDetails.timezone}</td>
+                </tr>
+                ${meetingDetails.location ? `
+                <tr>
+                  <td style="padding:6px 0; color:#64748b; font-size:13px; text-transform:uppercase; letter-spacing:0.08em;">Location</td>
+                  <td style="padding:6px 0; color:#1e293b; font-size:14px; font-weight:600; text-align:right;">${meetingDetails.location}</td>
+                </tr>
+                ` : ''}
+              </tbody>
+            </table>
+          </td>
+        </tr>
+      </tbody>
+    </table>`;
+
+  const introHtml = `Hi <strong>${recipientName}</strong>,<br/><br/>Great news! Your meeting has been successfully scheduled.`;
+
+  const bodyHtml = `${detailsTable}
+    <div style="padding: 18px 24px; border-radius: 16px; background-color: #f0fdf4; border-left: 4px solid #22c55e;">
+      <p style="margin:0; font-size:14px; color:#166534; line-height:1.7;">
+        Your scheduling request has been confirmed. You should receive a calendar invite shortly.
+      </p>
+    </div>`;
+
+  return buildEmailTemplate({
+    preheader: 'Your meeting has been scheduled successfully.',
+    heroTitle: 'Meeting Scheduled',
+    heroSubtitle: `${dateStr} · ${startTime} ${meetingDetails.timezone}`,
+    introHtml,
+    bodyHtml,
+    footerNote: 'This is an automated confirmation from the Astralis scheduling system.'
+  });
+}
+
+/**
+ * Generate HTML email for scheduling agent alternatives
+ */
+export function generateSchedulingAgentAlternativesEmail(options: SchedulingAgentEmailOptions): string {
+  const { recipientName, alternativeSlots, meetingDetails } = options;
+
+  if (!alternativeSlots || alternativeSlots.length === 0) {
+    throw new Error('Alternative slots required for alternatives email');
+  }
+
+  const slotsHtml = alternativeSlots.slice(0, 5).map((slot, index) => {
+    const start = new Date(slot.startTime);
+    const end = new Date(slot.endTime);
+    const timezone = meetingDetails?.timezone || 'UTC';
+
+    const dateStr = start.toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      timeZone: timezone,
+    });
+
+    const timeStr = `${start.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZone: timezone,
+    })} - ${end.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZone: timezone,
+    })}`;
+
+    return `
+      <tr>
+        <td style="padding: 12px 20px; border-bottom: 1px solid #e2e8f0;">
+          <div style="font-weight: 600; color: #1e293b; margin-bottom: 4px;">Option ${index + 1}</div>
+          <div style="font-size: 14px; color: #64748b;">${dateStr}</div>
+          <div style="font-size: 14px; color: #2B6CB0; font-weight: 600; margin-top: 4px;">${timeStr}</div>
+        </td>
+      </tr>`;
+  }).join('');
+
+  const introHtml = `Hi <strong>${recipientName}</strong>,<br/><br/>We found a scheduling conflict with your requested time. Here are some alternative times that work for all participants:`;
+
+  const bodyHtml = `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 12px 0 24px; background-color:#f8fafc; border-radius:16px; overflow: hidden;">
+      <tbody>
+        ${slotsHtml}
+      </tbody>
+    </table>
+    <div style="padding: 18px 24px; border-radius: 16px; background-color: #fef3c7; border-left: 4px solid #f59e0b;">
+      <p style="margin:0; font-size:14px; color: #92400e; line-height:1.7;">
+        <strong>Action needed:</strong> Please reply to this email with your preferred time slot, or contact us to discuss other options.
+      </p>
+    </div>`;
+
+  return buildEmailTemplate({
+    preheader: 'Alternative meeting times available.',
+    heroTitle: 'Alternative Times Available',
+    heroSubtitle: meetingDetails?.title || 'Your Meeting',
+    introHtml,
+    bodyHtml,
+    footerNote: 'Reply to this email to select your preferred time slot.'
+  });
+}
+
+/**
+ * Generate HTML email for scheduling agent clarification request
+ */
+export function generateSchedulingAgentClarificationEmail(options: SchedulingAgentEmailOptions): string {
+  const { recipientName, clarificationNeeded, meetingDetails } = options;
+
+  const introHtml = `Hi <strong>${recipientName}</strong>,<br/><br/>We need a bit more information to schedule your meeting.`;
+
+  const clarificationText = clarificationNeeded ||
+    'We need more details about your meeting request. Please provide the date, time, and any other relevant information.';
+
+  const bodyHtml = `
+    <div style="padding: 20px 24px; border-radius: 16px; background-color: #eff6ff; border-left: 4px solid #2B6CB0; margin: 12px 0 24px;">
+      <p style="margin:0; font-size:14px; color: #1e40af; line-height:1.7; white-space: pre-wrap;">${clarificationText}</p>
+    </div>
+    ${meetingDetails ? `
+    <div style="margin-top: 20px;">
+      <p style="font-size:14px; color:#64748b; margin-bottom: 8px;">What we have so far:</p>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f8fafc; border-radius:12px; padding: 16px;">
+        <tbody>
+          ${meetingDetails.title ? `<tr><td style="padding:4px 0; color:#475569; font-size:13px;"><strong>Title:</strong> ${meetingDetails.title}</td></tr>` : ''}
+          ${meetingDetails.location ? `<tr><td style="padding:4px 0; color:#475569; font-size:13px;"><strong>Location:</strong> ${meetingDetails.location}</td></tr>` : ''}
+        </tbody>
+      </table>
+    </div>
+    ` : ''}
+    <div style="margin-top: 24px; padding: 18px 24px; border-radius: 16px; background-color: #f0fdf4;">
+      <p style="margin:0; font-size:14px; color:#166534; line-height:1.7;">
+        Simply reply to this email with the missing information and we'll get your meeting scheduled right away.
+      </p>
+    </div>`;
+
+  return buildEmailTemplate({
+    preheader: 'We need more information to schedule your meeting.',
+    heroTitle: 'More Information Needed',
+    heroSubtitle: meetingDetails?.title || 'Your Meeting Request',
+    introHtml,
+    bodyHtml,
+    footerNote: 'Reply to this email with the requested information.'
+  });
+}
+
+/**
+ * Generate HTML email for scheduling agent cancellation
+ */
+export function generateSchedulingAgentCancellationEmail(options: SchedulingAgentEmailOptions): string {
+  const { recipientName, cancellationReason, meetingDetails } = options;
+
+  const introHtml = `Hi <strong>${recipientName}</strong>,<br/><br/>Your meeting has been cancelled as requested.`;
+
+  const detailsHtml = meetingDetails ? `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 12px 0 24px; background-color:#fef2f2; border-radius:16px; border: 2px solid #fecaca;">
+      <tbody>
+        <tr>
+          <td style="padding:22px 24px;">
+            <div style="font-size:14px; color:#991b1b; margin-bottom: 12px;"><strong>Cancelled Meeting:</strong></div>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tbody>
+                <tr>
+                  <td style="padding:4px 0; color:#7f1d1d; font-size:13px;">${meetingDetails.title}</td>
+                </tr>
+                <tr>
+                  <td style="padding:4px 0; color:#991b1b; font-size:13px;">
+                    ${meetingDetails.startTime.toLocaleDateString('en-US', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      timeZone: meetingDetails.timezone,
+                    })} at ${meetingDetails.startTime.toLocaleTimeString('en-US', {
+                      hour: 'numeric',
+                      minute: '2-digit',
+                      timeZone: meetingDetails.timezone,
+                    })}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </td>
+        </tr>
+      </tbody>
+    </table>` : '';
+
+  const reasonHtml = cancellationReason ? `
+    <div style="padding: 18px 24px; border-radius: 16px; background-color: #f8fafc; margin-bottom: 24px;">
+      <p style="margin:0; font-size:14px; color:#475569; line-height:1.7;">
+        <strong>Reason:</strong> ${cancellationReason}
+      </p>
+    </div>` : '';
+
+  const bodyHtml = `${detailsHtml}${reasonHtml}
+    <div style="padding: 18px 24px; border-radius: 16px; background-color: #eff6ff;">
+      <p style="margin:0; font-size:14px; color:#1e40af; line-height:1.7;">
+        Need to reschedule? Just reply to this email and we'll help you find a new time.
+      </p>
+    </div>`;
+
+  return buildEmailTemplate({
+    preheader: 'Your meeting has been cancelled.',
+    heroTitle: 'Meeting Cancelled',
+    heroSubtitle: meetingDetails?.title || 'Meeting Cancellation',
+    introHtml,
+    bodyHtml,
+    footerNote: 'Reply to this email if you need assistance.'
+  });
+}
+
+/**
+ * Generate plain text versions for scheduling agent emails
+ */
+export function generateSchedulingAgentEmailText(options: SchedulingAgentEmailOptions): string {
+  const { recipientName, responseType, meetingDetails, alternativeSlots, clarificationNeeded, cancellationReason } = options;
+
+  const lines: string[] = [
+    'ASTRALIS SCHEDULING ASSISTANT',
+    '',
+    `Hi ${recipientName},`,
+    '',
+  ];
+
+  switch (responseType) {
+    case 'confirmation':
+      if (meetingDetails) {
+        const dateStr = meetingDetails.startTime.toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          timeZone: meetingDetails.timezone,
+        });
+        const timeStr = meetingDetails.startTime.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          timeZone: meetingDetails.timezone,
+        });
+        const endTimeStr = meetingDetails.endTime.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          timeZone: meetingDetails.timezone,
+        });
+
+        lines.push(
+          'Your meeting has been successfully scheduled!',
+          '',
+          'MEETING DETAILS',
+          `Title: ${meetingDetails.title}`,
+          `Date: ${dateStr}`,
+          `Time: ${timeStr} - ${endTimeStr} (${meetingDetails.timezone})`,
+        );
+        if (meetingDetails.location) {
+          lines.push(`Location: ${meetingDetails.location}`);
+        }
+        lines.push('', 'You should receive a calendar invite shortly.');
+      }
+      break;
+
+    case 'alternatives':
+      lines.push(
+        'We found a scheduling conflict. Here are alternative times:',
+        '',
+      );
+      if (alternativeSlots) {
+        alternativeSlots.slice(0, 5).forEach((slot, index) => {
+          const start = new Date(slot.startTime);
+          const end = new Date(slot.endTime);
+          const timezone = meetingDetails?.timezone || 'UTC';
+          const dateStr = start.toLocaleDateString('en-US', {
+            weekday: 'long',
+            month: 'long',
+            day: 'numeric',
+            timeZone: timezone,
+          });
+          const timeStr = `${start.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            timeZone: timezone,
+          })} - ${end.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            timeZone: timezone,
+          })}`;
+          lines.push(`Option ${index + 1}: ${dateStr}, ${timeStr}`);
+        });
+      }
+      lines.push('', 'Reply with your preferred time slot.');
+      break;
+
+    case 'clarification':
+      lines.push(
+        'We need more information to schedule your meeting.',
+        '',
+        clarificationNeeded || 'Please provide the date, time, and any other relevant information.',
+        '',
+        'Reply to this email with the missing details.',
+      );
+      break;
+
+    case 'cancellation':
+      lines.push('Your meeting has been cancelled as requested.');
+      if (meetingDetails) {
+        const dateStr = meetingDetails.startTime.toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          timeZone: meetingDetails.timezone,
+        });
+        const timeStr = meetingDetails.startTime.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          timeZone: meetingDetails.timezone,
+        });
+        lines.push('', `Cancelled: ${meetingDetails.title}`, `${dateStr} at ${timeStr}`);
+      }
+      if (cancellationReason) {
+        lines.push('', `Reason: ${cancellationReason}`);
+      }
+      lines.push('', 'Need to reschedule? Just reply to this email.');
+      break;
+  }
+
+  lines.push('', 'Best regards,', 'The Astralis Scheduling Team');
+
+  return lines.join('\n');
+}
+
+/**
+ * Send scheduling agent email
+ */
+export async function sendSchedulingAgentEmail(options: SchedulingAgentEmailOptions): Promise<void> {
+  let html: string;
+  let subject: string;
+
+  switch (options.responseType) {
+    case 'confirmation':
+      html = generateSchedulingAgentConfirmationEmail(options);
+      subject = 'Meeting Scheduled Successfully';
+      break;
+    case 'alternatives':
+      html = generateSchedulingAgentAlternativesEmail(options);
+      subject = 'Alternative Meeting Times Available';
+      break;
+    case 'clarification':
+      html = generateSchedulingAgentClarificationEmail(options);
+      subject = 'More Information Needed for Your Meeting';
+      break;
+    case 'cancellation':
+      html = generateSchedulingAgentCancellationEmail(options);
+      subject = 'Meeting Cancelled';
+      break;
+    default:
+      throw new Error(`Unknown response type: ${options.responseType}`);
+  }
+
+  const text = generateSchedulingAgentEmailText(options);
+
+  await sendEmail({
+    to: options.recipientEmail,
+    subject,
+    html,
+    text,
+  });
+
+  console.log(`[Email] Scheduling agent ${options.responseType} email sent to ${options.recipientEmail}`);
+}
+
 export function generateInternalNotificationEmail(booking: {
   bookingId: string;
   name: string;

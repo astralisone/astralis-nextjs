@@ -11,15 +11,15 @@ import type { IntegrationProvider } from '@/types/automation';
  * Features:
  * - Save encrypted credentials (OAuth tokens, API keys)
  * - Retrieve and decrypt credentials for use
- * - Manage credential lifecycle
+ * - Manage credential lifecycle (soft delete)
  * - Handle OAuth token refresh
  *
  * Security:
- * - All credentials are encrypted using AES-256-GCM
+ * - All credentials are encrypted using AES-256-GCM encryption
  * - Encryption key derived from N8N_ENCRYPTION_KEY or NEXTAUTH_SECRET
  * - Credentials never returned unencrypted in API responses
- *
- * Note: Requires Phase 6 migration for IntegrationCredential table
+ * - All operations are logged in ActivityLog for audit trail
+ * - Soft delete preserves audit trail while removing access
  */
 
 export interface SaveCredentialData {
@@ -68,25 +68,6 @@ export class IntegrationService {
       const encryptedData = encrypt(JSON.stringify(data.credentialData));
 
       // 2. Save to database
-      // Note: This is a placeholder - requires Phase 6 migration
-      // After migration, this will use IntegrationCredential model
-      console.log('[Integration Service] Credential encrypted and ready for storage');
-      console.log('[Integration Service] Requires Phase 6 migration to save to database');
-
-      // Placeholder return
-      return {
-        id: 'temp-id',
-        provider: data.provider,
-        credentialName: data.credentialName,
-        scope: data.scope || null,
-        expiresAt: data.expiresAt || null,
-        isActive: true,
-        lastUsedAt: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      /* After Phase 6 migration:
       const credential = await prisma.integrationCredential.create({
         data: {
           userId,
@@ -100,7 +81,7 @@ export class IntegrationService {
         },
       });
 
-      // Log activity
+      // 3. Log activity
       await prisma.activityLog.create({
         data: {
           userId,
@@ -115,9 +96,11 @@ export class IntegrationService {
         },
       });
 
+      console.log('[Integration Service] Credential saved successfully:', credential.id);
+
       return {
         id: credential.id,
-        provider: credential.provider,
+        provider: credential.provider as IntegrationProvider,
         credentialName: credential.credentialName,
         scope: credential.scope,
         expiresAt: credential.expiresAt,
@@ -126,7 +109,6 @@ export class IntegrationService {
         createdAt: credential.createdAt,
         updatedAt: credential.updatedAt,
       };
-      */
     } catch (error) {
       console.error('[Integration Service] Failed to save credential:', error);
       throw new Error(
@@ -147,13 +129,8 @@ export class IntegrationService {
   ): Promise<CredentialData[]> {
     try {
       console.log('[Integration Service] Listing credentials for user:', userId);
-      console.log('[Integration Service] Requires Phase 6 migration');
 
-      // Placeholder return
-      return [];
-
-      /* After Phase 6 migration:
-      const where: any = { userId, orgId };
+      const where: any = { userId, orgId, isActive: true };
 
       if (provider) {
         where.provider = provider;
@@ -172,12 +149,14 @@ export class IntegrationService {
           lastUsedAt: true,
           createdAt: true,
           updatedAt: true,
-          // Explicitly exclude credentialData
+          // Explicitly exclude credentialData for security
         },
       });
 
-      return credentials;
-      */
+      return credentials.map((cred) => ({
+        ...cred,
+        provider: cred.provider as IntegrationProvider,
+      }));
     } catch (error) {
       console.error('[Integration Service] Failed to list credentials:', error);
       throw new Error(
@@ -199,20 +178,18 @@ export class IntegrationService {
   ): Promise<CredentialWithData | null> {
     try {
       console.log('[Integration Service] Getting credential with data:', credentialId);
-      console.log('[Integration Service] Requires Phase 6 migration');
 
-      return null;
-
-      /* After Phase 6 migration:
       const credential = await prisma.integrationCredential.findFirst({
         where: {
           id: credentialId,
           userId,
           orgId,
+          isActive: true,
         },
       });
 
       if (!credential) {
+        console.log('[Integration Service] Credential not found or inactive');
         return null;
       }
 
@@ -225,9 +202,11 @@ export class IntegrationService {
         data: { lastUsedAt: new Date() },
       });
 
+      console.log('[Integration Service] Credential retrieved and decrypted');
+
       return {
         id: credential.id,
-        provider: credential.provider,
+        provider: credential.provider as IntegrationProvider,
         credentialName: credential.credentialName,
         scope: credential.scope,
         expiresAt: credential.expiresAt,
@@ -237,7 +216,6 @@ export class IntegrationService {
         updatedAt: credential.updatedAt,
         credentialData: decryptedData,
       };
-      */
     } catch (error) {
       console.error('[Integration Service] Failed to get credential:', error);
       throw new Error(
@@ -261,15 +239,13 @@ export class IntegrationService {
   ): Promise<void> {
     try {
       console.log('[Integration Service] Refreshing token for credential:', credentialId);
-      console.log('[Integration Service] Requires Phase 6 migration');
 
-      /* After Phase 6 migration:
       const credential = await prisma.integrationCredential.findFirst({
-        where: { id: credentialId, userId, orgId },
+        where: { id: credentialId, userId, orgId, isActive: true },
       });
 
       if (!credential) {
-        throw new Error('Credential not found');
+        throw new Error('Credential not found or inactive');
       }
 
       // Decrypt existing data
@@ -281,7 +257,7 @@ export class IntegrationService {
         credentialData.refreshToken = newRefreshToken;
       }
 
-      // Re-encrypt
+      // Re-encrypt with updated tokens
       const encryptedData = encrypt(JSON.stringify(credentialData));
 
       // Update database
@@ -294,8 +270,22 @@ export class IntegrationService {
         },
       });
 
+      // Log activity
+      await prisma.activityLog.create({
+        data: {
+          userId,
+          orgId,
+          action: 'UPDATE',
+          entity: 'INTEGRATION_CREDENTIAL',
+          entityId: credentialId,
+          metadata: {
+            action: 'TOKEN_REFRESH',
+            provider: credential.provider,
+          },
+        },
+      });
+
       console.log('[Integration Service] Token refreshed successfully');
-      */
     } catch (error) {
       console.error('[Integration Service] Failed to refresh token:', error);
       throw new Error(
@@ -305,7 +295,7 @@ export class IntegrationService {
   }
 
   /**
-   * Delete credential
+   * Delete credential (soft delete by marking inactive)
    */
   async deleteCredential(
     credentialId: string,
@@ -314,9 +304,7 @@ export class IntegrationService {
   ): Promise<void> {
     try {
       console.log('[Integration Service] Deleting credential:', credentialId);
-      console.log('[Integration Service] Requires Phase 6 migration');
 
-      /* After Phase 6 migration:
       const credential = await prisma.integrationCredential.findFirst({
         where: { id: credentialId, userId, orgId },
       });
@@ -325,9 +313,11 @@ export class IntegrationService {
         throw new Error('Credential not found');
       }
 
-      // Delete from database
-      await prisma.integrationCredential.delete({
+      // Soft delete: mark as inactive instead of hard delete
+      // This preserves audit trail and allows for potential recovery
+      await prisma.integrationCredential.update({
         where: { id: credentialId },
+        data: { isActive: false },
       });
 
       // Log deletion
@@ -345,8 +335,7 @@ export class IntegrationService {
         },
       });
 
-      console.log('[Integration Service] Credential deleted');
-      */
+      console.log('[Integration Service] Credential deleted (soft delete)');
     } catch (error) {
       console.error('[Integration Service] Failed to delete credential:', error);
       throw new Error(
