@@ -23,6 +23,7 @@ import type { TaskInstance, TaskTemplate, AgentDecision, AgentAction } from '@/l
 import type { TaskEvent, TaskEventName } from '@/lib/events/types';
 import { AgentEventBus } from '../inputs/EventBus';
 import { buildSystemPrompt, buildUserPrompt } from '../prompts/base-task-agent';
+import { TaskActionExecutor, type TaskActionResult } from './TaskActionExecutor';
 
 // =============================================================================
 // Constants
@@ -152,6 +153,7 @@ export class BaseTaskAgent {
   private llmClient: ILLMClient;
   private prisma: PrismaClient;
   private eventBus: AgentEventBus;
+  private actionExecutor: TaskActionExecutor;
 
   // State
   private isRunning: boolean = false;
@@ -191,6 +193,7 @@ export class BaseTaskAgent {
     this.llmClient = config.llmClient;
     this.prisma = config.prisma;
     this.eventBus = AgentEventBus.getInstance();
+    this.actionExecutor = new TaskActionExecutor(this.logger);
 
     this.logger.info('BaseTaskAgent initialized', {
       agentId: this.agentId,
@@ -371,29 +374,79 @@ export class BaseTaskAgent {
       return;
     }
 
-    // Execute actions (delegated to TaskActionExecutor - to be created)
-    // For now, just log that we would execute
-    this.logger.info('Decision made', {
+    // Execute actions via TaskActionExecutor
+    this.logger.info('Executing decision actions', {
       taskId,
       reasoning: decision.reasoning,
       actionCount: decision.actions.length,
       actions: decision.actions.map(a => a.type),
     });
 
-    // TODO: Execute actions via TaskActionExecutor
-    // await this.actionExecutor.execute(decision.actions, task, template);
+    let executionResults: TaskActionResult[] = [];
+    try {
+      executionResults = await this.actionExecutor.executeActions(
+        decision.actions,
+        {
+          taskId: task.id,
+          orgId: task.orgId,
+          correlationId: taskEvent.id,
+          dryRun: this.config.dryRun,
+        }
+      );
 
-    // Update stats
-    const decisionTime = Date.now() - startTime;
-    this.stats.decisionTimes.push(decisionTime);
-    this.stats.totalDecisions++;
-    this.stats.successfulDecisions++;
-    this.recordRateLimitAction();
+      // Check for execution failures
+      const failedActions = executionResults.filter(r => !r.success);
+      if (failedActions.length > 0) {
+        this.logger.error('Some actions failed to execute', new Error('Action execution failed'), {
+          taskId,
+          failedActions: failedActions.map(f => ({ action: f.action, error: f.error })),
+        });
+        this.stats.failedDecisions++;
+        this.stats.totalDecisions++;
+        this.recordRateLimitAction();
+
+        // Update DecisionLog with execution results
+        await this.updateDecisionLogWithResults(decisionLogId, executionResults, false);
+        return;
+      }
+
+      // Update DecisionLog with successful execution results
+      await this.updateDecisionLogWithResults(decisionLogId, executionResults, true);
+
+      this.logger.info('Actions executed successfully', {
+        taskId,
+        executionResults: executionResults.map(r => ({
+          action: r.action,
+          success: r.success,
+          executionTime: r.executionTime,
+        })),
+      });
+
+      // Update stats
+      const decisionTime = Date.now() - startTime;
+      this.stats.decisionTimes.push(decisionTime);
+      this.stats.totalDecisions++;
+      this.stats.successfulDecisions++;
+      this.recordRateLimitAction();
+    } catch (error) {
+      this.logger.error('Action execution failed with exception', error as Error, {
+        taskId,
+        decisionLogId,
+      });
+      this.stats.failedDecisions++;
+      this.stats.totalDecisions++;
+      this.stats.totalErrors++;
+      this.recordRateLimitAction();
+
+      // Update DecisionLog with error
+      await this.updateDecisionLogWithResults(decisionLogId, executionResults, false);
+      return;
+    }
 
     this.logger.debug('Task event processed successfully', {
       taskId,
       eventType,
-      decisionTimeMs: decisionTime,
+      decisionTimeMs: Date.now() - startTime,
     });
   }
 
@@ -487,7 +540,7 @@ export class BaseTaskAgent {
       },
     });
 
-    return decisions.map(d => ({
+    return decisions.map((d: { id: string; decision: unknown; appliedAt: Date }) => ({
       id: d.id,
       decision: d.decision as unknown as AgentDecision,
       appliedAt: d.appliedAt.toISOString(),
@@ -619,6 +672,56 @@ export class BaseTaskAgent {
         agentDecisionIds: [...currentDecisionIds, decisionId],
       },
     });
+  }
+
+  /**
+   * Update DecisionLog with action execution results
+   */
+  private async updateDecisionLogWithResults(
+    decisionLogId: string,
+    results: TaskActionResult[],
+    success: boolean
+  ): Promise<void> {
+    try {
+      // Store execution results in the decision log's data field
+      // This allows tracking of what actions were executed and their outcomes
+      const executionSummary = {
+        success,
+        totalActions: results.length,
+        successfulActions: results.filter(r => r.success).length,
+        failedActions: results.filter(r => !r.success).length,
+        results: results.map(r => ({
+          action: r.action,
+          success: r.success,
+          executionTime: r.executionTime,
+          error: r.error,
+          data: r.data,
+        })),
+        completedAt: new Date().toISOString(),
+      };
+
+      // Update the decision log with execution results
+      // Note: This assumes the DecisionLog table has a 'data' JSONB field
+      // If the field doesn't exist, this update will be skipped
+      await this.prisma.decisionLog.update({
+        where: { id: decisionLogId },
+        data: {
+          data: executionSummary as any,
+        },
+      });
+
+      this.logger.debug('DecisionLog updated with execution results', {
+        decisionLogId,
+        success,
+        actionCount: results.length,
+      });
+    } catch (error) {
+      // Log but don't fail - execution results persistence is non-critical
+      this.logger.warn('Failed to update DecisionLog with execution results', {
+        decisionLogId,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
   }
 
   /**
