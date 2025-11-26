@@ -179,17 +179,24 @@ export async function createEvent(data: CreateEventInput) {
     // Sync to Google Calendar if enabled
     if (validated.syncToGoogle) {
       try {
+        // Fetch user timezone preference
+        const user = await prisma.users.findUnique({
+          where: { id: validated.userId },
+          select: { timezone: true },
+        });
+        const userTimezone = user?.timezone || 'UTC';
+
         const googleEventData = {
           summary: event.title,
           description: event.description || undefined,
           location: event.location || undefined,
           start: {
             dateTime: event.startTime.toISOString(),
-            timeZone: 'America/New_York', // TODO: Make configurable per user
+            timeZone: userTimezone,
           },
           end: {
             dateTime: event.endTime.toISOString(),
-            timeZone: 'America/New_York',
+            timeZone: userTimezone,
           },
           attendees: validated.participantEmails?.map(email => ({ email })),
           reminders: {
@@ -286,17 +293,24 @@ export async function updateEvent(id: string, data: UpdateEventInput) {
     const googleEventId = calendarData?.googleEventId;
     if (validated.syncToGoogle && googleEventId) {
       try {
+        // Fetch user timezone preference
+        const user = await prisma.users.findUnique({
+          where: { id: existing.userId },
+          select: { timezone: true },
+        });
+        const userTimezone = user?.timezone || 'UTC';
+
         const googleEventData = {
           summary: event.title,
           description: event.description || undefined,
           location: event.location || undefined,
           start: {
             dateTime: event.startTime.toISOString(),
-            timeZone: 'America/New_York',
+            timeZone: userTimezone,
           },
           end: {
             dateTime: event.endTime.toISOString(),
-            timeZone: 'America/New_York',
+            timeZone: userTimezone,
           },
         };
 
