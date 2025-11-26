@@ -17,6 +17,7 @@ import {
 import * as conflictService from '@/lib/services/conflict.service';
 import * as schedulingService from '@/lib/services/scheduling.service';
 import { webhookService, WebhookEventType } from '@/lib/services/webhook.service';
+import { smsService, type MeetingDetails } from '@/lib/services/sms.service';
 import { sendSchedulingAgentEmail, type SchedulingAgentEmailOptions } from '@/lib/email';
 import OpenAI from 'openai';
 
@@ -537,6 +538,143 @@ async function sendEmailResponse(
 }
 
 /**
+ * Send SMS response to user
+ */
+async function sendSmsResponse(
+  task: {
+    id: string;
+    userId: string;
+    orgId: string | null;
+    user: { email: string; name: string | null } | null;
+    schedulingEventId: string | null;
+    proposedSlots: unknown;
+    selectedSlot: unknown;
+    entities: unknown;
+    title: string | null;
+    intent: string | null;
+  },
+  responseType: 'confirmation' | 'alternatives' | 'clarification' | 'error',
+  recipientPhone?: string
+): Promise<void> {
+  // Validate phone number
+  if (!recipientPhone) {
+    throw new Error('Recipient phone number is required for SMS channel');
+  }
+
+  console.log(`[SchedulingAgent:SendSms] Sending ${responseType} SMS to ${recipientPhone}`);
+
+  // Build meeting details from task
+  let meetingDetails: MeetingDetails | null = null;
+
+  // Try to extract meeting details from schedulingEvent
+  if (task.schedulingEventId) {
+    const event = await prisma.schedulingEvent.findUnique({
+      where: { id: task.schedulingEventId },
+      select: {
+        title: true,
+        startTime: true,
+        endTime: true,
+        location: true,
+      },
+    });
+
+    if (event) {
+      const duration = Math.round(
+        (event.endTime.getTime() - event.startTime.getTime()) / (1000 * 60)
+      );
+      meetingDetails = {
+        meetingTitle: event.title,
+        startTime: event.startTime,
+        location: event.location || undefined,
+        duration,
+      };
+    }
+  }
+
+  // Fallback to selectedSlot if no event
+  if (!meetingDetails && task.selectedSlot) {
+    const slot = task.selectedSlot as Record<string, unknown>;
+    if (slot.startTime && slot.endTime) {
+      const startTime = new Date(slot.startTime as string);
+      const endTime = new Date(slot.endTime as string);
+      const duration = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
+
+      meetingDetails = {
+        meetingTitle: (slot.title as string) || task.title || 'Meeting',
+        startTime,
+        location: slot.location as string | undefined,
+        duration,
+      };
+    }
+  }
+
+  // Fallback to entities if still no details
+  if (!meetingDetails && task.entities) {
+    const entities = task.entities as Record<string, unknown>;
+    if (entities.date && entities.time) {
+      const startTime = new Date(`${entities.date}T${entities.time}:00`);
+      const duration = (entities.duration as number) || 60;
+
+      meetingDetails = {
+        meetingTitle: (entities.subject as string) || task.title || 'Meeting',
+        startTime,
+        location: entities.location as string | undefined,
+        duration,
+      };
+    }
+  }
+
+  // Send SMS based on response type
+  try {
+    let result;
+
+    switch (responseType) {
+      case 'confirmation':
+        if (!meetingDetails) {
+          throw new Error('Meeting details required for confirmation SMS');
+        }
+        result = await smsService.sendConfirmation(recipientPhone, meetingDetails);
+        break;
+
+      case 'alternatives':
+        // For alternatives, send a simple message directing to email
+        result = await smsService.sendSms(
+          recipientPhone,
+          'We found scheduling conflicts. Please check your email for alternative time slots.'
+        );
+        break;
+
+      case 'clarification':
+      case 'error':
+        // For clarification/error, send a simple message directing to email
+        result = await smsService.sendSms(
+          recipientPhone,
+          'We need more information to schedule your meeting. Please check your email for details.'
+        );
+        break;
+
+      default:
+        throw new Error(`Unsupported SMS response type: ${responseType}`);
+    }
+
+    if (result.skipped) {
+      console.log(
+        `[SchedulingAgent:SendSms] SMS sending skipped (Twilio not configured): ${result.error}`
+      );
+    } else if (!result.success) {
+      throw new Error(`SMS delivery failed: ${result.error}`);
+    } else {
+      console.log(
+        `[SchedulingAgent:SendSms] SMS sent successfully to ${recipientPhone} (${responseType})`
+      );
+    }
+  } catch (error) {
+    console.error(`[SchedulingAgent:SendSms] Failed to send SMS to ${recipientPhone}:`, error);
+    throw new Error(`SMS delivery failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+/**
  * Send Response Handler
  *
  * Generates and sends response to user via specified channel.
@@ -572,8 +710,7 @@ async function sendResponse(
         await sendEmailResponse(task, responseType, data.userId);
         break;
       case 'sms':
-        console.log(`[SchedulingAgent:SendResponse] Would send SMS to ${data.recipientPhone}`);
-        // TODO: Use SMS service (Twilio) to send response
+        await sendSmsResponse(task, responseType, data.recipientPhone);
         break;
       case 'chat':
         console.log(`[SchedulingAgent:SendResponse] Would send chat message`);
