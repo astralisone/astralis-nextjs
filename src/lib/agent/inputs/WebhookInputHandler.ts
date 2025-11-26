@@ -506,28 +506,63 @@ export class WebhookInputHandler extends BaseInputHandler {
   }
 
   /**
-   * Verify webhook signature
+   * Verify webhook signature using HMAC-SHA256
+   *
+   * Uses timing-safe comparison to prevent timing attacks.
+   * Supports both prefixed (sha256=...) and unprefixed signatures.
    */
   private async verifySignature(payload: WebhookPayload): Promise<boolean> {
     if (!this.webhookSecret || !payload.signature) {
-      return true; // Skip verification if no secret or signature
-    }
-
-    // Simple HMAC verification placeholder
-    // In production, implement proper signature verification using crypto
-    try {
-      // Example: const crypto = await import('crypto');
-      // const expectedSignature = crypto.createHmac('sha256', this.webhookSecret)
-      //   .update(JSON.stringify(payload.data))
-      //   .digest('hex');
-      // return expectedSignature === payload.signature;
-
-      this.logger.debug('Signature verification would be performed', {
+      // Skip verification if no secret configured or no signature provided
+      this.logger.debug('Skipping signature verification', {
         hasSignature: !!payload.signature,
         hasSecret: !!this.webhookSecret,
       });
       return true;
-    } catch {
+    }
+
+    try {
+      // Import verification utility
+      const { verifyWebhookSignature } = await import('@/lib/utils/webhook-verification');
+
+      // Serialize the payload data for verification
+      // This should match how the sender computed the signature
+      const payloadString = JSON.stringify(payload.data);
+
+      // Verify the signature
+      const result = verifyWebhookSignature({
+        secret: this.webhookSecret,
+        signature: payload.signature,
+        payload: payloadString,
+        algorithm: 'sha256',
+        allowUnprefixed: true,
+      });
+
+      if (!result.isValid) {
+        // Log verification failure with details
+        this.logger.warn('Webhook signature verification failed', {
+          error: result.error,
+          algorithm: result.algorithm,
+          source: payload.source,
+          hasHeaders: !!payload.headers,
+          signaturePrefix: payload.signature.substring(0, 10) + '...',
+        });
+        return false;
+      }
+
+      // Log successful verification
+      this.logger.debug('Webhook signature verified successfully', {
+        algorithm: result.algorithm,
+        source: payload.source,
+      });
+
+      return true;
+    } catch (error) {
+      // Log unexpected errors during verification
+      this.logger.error('Unexpected error during signature verification', {
+        error: error instanceof Error ? error.message : String(error),
+        source: payload.source,
+      });
       return false;
     }
   }
