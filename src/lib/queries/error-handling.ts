@@ -131,6 +131,9 @@ export function isRetryableError(error: ApiError): boolean {
 
 /**
  * Log error for debugging and monitoring
+ *
+ * Logs to console in development and sends to Sentry in production.
+ * Includes structured context for better debugging.
  */
 export function logError(error: ApiError, context?: string) {
   const logData = {
@@ -149,10 +152,35 @@ export function logError(error: ApiError, context?: string) {
     console.error('[API Error]', logData);
   }
 
-  // In production, send to monitoring service
-  // TODO: Integrate with Sentry, LogRocket, or similar
-  // Example:
-  // if (process.env.NODE_ENV === 'production') {
-  //   Sentry.captureException(error, { extra: logData });
-  // }
+  // In production, send to Sentry (Phase 3: Task 3.4)
+  // Import is dynamic to avoid errors if @sentry/nextjs is not installed
+  if (process.env.NODE_ENV === 'production') {
+    try {
+      // Dynamic import to avoid build errors if Sentry is not installed
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { captureException } = require('@/lib/monitoring/sentry');
+
+      // Capture the error with context
+      captureException(
+        error instanceof Error ? error : new Error(error.message),
+        {
+          operation: context || 'api_request',
+          metadata: {
+            status: error.status,
+            code: error.code,
+            details: error.details,
+            timestamp: logData.timestamp,
+          },
+          tags: {
+            error_type: error.code || 'unknown',
+            http_status: error.status?.toString() || 'unknown',
+          },
+        }
+      );
+    } catch (sentryError) {
+      // Silently fail if Sentry is not available
+      // This allows the app to work without Sentry installed
+      console.error('[Sentry Error]', sentryError);
+    }
+  }
 }

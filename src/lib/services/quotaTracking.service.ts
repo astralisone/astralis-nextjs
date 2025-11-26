@@ -30,6 +30,12 @@ export interface QuotaLimits {
  * Plan-based quota limits configuration
  */
 const PLAN_LIMITS: Record<string, QuotaLimits> = {
+  free: {
+    intake: 10,
+    documents: 50,
+    teamMembers: 2,
+    pipelines: 2,
+  },
   starter: {
     intake: 500,
     documents: 100,
@@ -120,25 +126,22 @@ export class QuotaTrackingService {
 
   /**
    * Get the organization's subscription plan
-   * Defaults to 'starter' since plan field doesn't exist in schema yet
    *
    * @param orgId - Organization ID
-   * @returns Plan name (starter, professional, or enterprise)
+   * @returns Plan name (free, starter, professional, or enterprise)
    */
   private async getOrgPlan(orgId: string): Promise<string> {
     const org = await prisma.organization.findUnique({
       where: { id: orgId },
-      select: { id: true, name: true },
+      select: { plan: true },
     });
 
     if (!org) {
       throw new Error(`Organization not found: ${orgId}`);
     }
 
-    // TODO: When plan field is added to organization model, retrieve it here
-    // For now, default to 'starter' plan
-    // const plan = org.plan || 'starter';
-    return 'starter';
+    // Convert PlanType enum to lowercase string for consistency
+    return org.plan.toLowerCase();
   }
 
   /**

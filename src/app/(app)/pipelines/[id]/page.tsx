@@ -1,6 +1,7 @@
 'use client';
 
 import { use, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { usePipeline, usePipelines } from '@/hooks/usePipelines';
 import { useUnclassifiedIntake, useAssignIntake } from '@/hooks/useIntakeRequests';
 import { KanbanBoard } from '@/components/dashboard/KanbanBoard';
@@ -24,6 +25,7 @@ import { IntakeRequest, IntakeStatus } from '@/types/pipelines';
 
 export default function PipelinePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const router = useRouter();
   const { data: pipeline, isLoading, error, refetch } = usePipeline(id);
   const { data: allPipelines } = usePipelines();
   const { data: unclassifiedData, isLoading: isLoadingUnclassified, refetch: refetchUnclassified } = useUnclassifiedIntake();
@@ -53,8 +55,8 @@ export default function PipelinePage({ params }: { params: Promise<{ id: string 
   };
 
   const handleIntakeClick = (intake: IntakeRequest) => {
-    // TODO: Open intake detail modal or navigate to intake detail page
-    console.log('Intake clicked:', intake);
+    // Navigate to intake detail page
+    router.push(`/intakes/${intake.id}`);
   };
 
   const handleAssignToPipeline = async (intakeId: string, pipelineId: string) => {
