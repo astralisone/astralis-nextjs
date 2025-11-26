@@ -165,7 +165,7 @@ const FeatureGrid = React.forwardRef<HTMLElement, FeatureGridProps>(
                   {(IconComponent || feature.iconElement) && (
                     <div className="feature-card__icon mb-6">
                       {IconComponent ? (
-                        <IconComponent className="h-7 w-7" strokeWidth={2} />
+                        <IconComponent className="h-8 w-8" strokeWidth={2} />
                       ) : (
                         feature.iconElement
                       )}

@@ -34,7 +34,7 @@ interface DashboardHeaderProps {
  */
 export function DashboardHeader({ breadcrumbs, onMobileMenuOpen }: DashboardHeaderProps) {
   return (
-    <header className="bg-white border-b border-slate-200 flex items-center gap-4 px-4 lg:px-6 py-3">
+    <header className="bg-gradient-to-r from-white via-cyan-50/20 to-slate-50 border-b border-cyan-100/50 flex items-center gap-4 px-4 lg:px-6 py-3">
       {/* Mobile Menu Toggle */}
       <button
         onClick={onMobileMenuOpen}

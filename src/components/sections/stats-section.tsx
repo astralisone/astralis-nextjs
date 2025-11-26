@@ -133,15 +133,15 @@ const StatsSection = React.forwardRef<HTMLElement, StatsSectionProps>(
 
     // Trend icon component
     const getTrendIcon = (trend: TrendDirection) => {
-      const iconProps = { className: 'w-5 h-5', strokeWidth: 2 };
+      const iconProps = { className: 'w-6 h-6', strokeWidth: 2 };
 
       switch (trend) {
         case 'up':
-          return <TrendingUp {...iconProps} className="w-5 h-5 text-success" />;
+          return <TrendingUp {...iconProps} className="w-6 h-6 text-success" />;
         case 'down':
-          return <TrendingDown {...iconProps} className="w-5 h-5 text-error" />;
+          return <TrendingDown {...iconProps} className="w-6 h-6 text-error" />;
         case 'neutral':
-          return <Minus {...iconProps} className="w-5 h-5 text-slate-500" />;
+          return <Minus {...iconProps} className="w-6 h-6 text-slate-500" />;
         default:
           return null;
       }

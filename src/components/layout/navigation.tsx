@@ -214,6 +214,15 @@ export function Navigation() {
                   ))}
                 </ul>
 
+                {/* Sign In Link */}
+                <Link
+                  href="/auth/signin"
+                  className="block py-4 px-5 mt-6 min-h-[44px] text-lg font-medium text-slate-100 hover:text-white hover:bg-slate-800 rounded-lg transition-all duration-200 flex items-center justify-center border border-slate-600 hover:border-slate-500"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Sign In
+                </Link>
+
                 {/* Mobile CTA */}
                 <div className="mt-10 pt-10 border-t border-slate-700">
                   <Button
