@@ -1,0 +1,58 @@
+# ---- BUILD STAGE ----
+FROM node:20-bullseye AS builder
+
+WORKDIR /app
+ENV NODE_ENV=production
+
+RUN apt-get update && apt-get install -y python3 make g++
+
+COPY package.json yarn.lock ./
+COPY tsconfig.json ./
+
+RUN yarn install --frozen-lockfile
+
+COPY . .
+
+RUN yarn prisma:gen
+
+# Compile TypeScript worker files
+RUN npx tsc --project tsconfig.json --outDir dist || true
+
+# ---- RUNTIME STAGE ----
+FROM node:20-bullseye-slim AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+RUN apt-get update && apt-get install -y dumb-init && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user for security
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 worker
+
+# Copy dependencies
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./
+
+# Copy source files for worker
+COPY --from=builder /app/src ./src
+COPY --from=builder /app/tsconfig.json ./
+
+# Copy Prisma
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+
+# Copy worker entrypoint
+COPY docker-entrypoint-worker.sh ./
+RUN chmod +x docker-entrypoint-worker.sh && chown worker:nodejs docker-entrypoint-worker.sh
+
+USER worker
+
+# Health check via Redis connection (worker doesn't expose HTTP)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD node -e "require('ioredis').default && console.log('ok')" || exit 1
+
+# Run worker
+ENTRYPOINT ["dumb-init", "./docker-entrypoint-worker.sh"]

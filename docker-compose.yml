@@ -68,23 +68,23 @@ services:
       timeout: 5s
       retries: 5
 
-  # worker:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile.worker
-  #     args:
-  #       - NODE_ENV=production
-  #   container_name: astralis_worker
-  #   restart: unless-stopped
-  #   env_file:
-  #     - .env.production
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #   networks:
-  #     - astralis-network
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+      args:
+        - NODE_ENV=production
+    container_name: astralis_worker
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - astralis-network
 
   n8n:
     image: n8nio/n8n:latest
