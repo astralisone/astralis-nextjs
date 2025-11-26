@@ -33,7 +33,7 @@ export function TrustBadges() {
             key={index}
             className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200"
           >
-            <Icon className="w-5 h-5 text-astralis-blue" />
+            <Icon className="w-6 h-6 text-astralis-blue" />
             <span className="text-sm font-semibold text-slate-700">
               {badge.label}
             </span>
