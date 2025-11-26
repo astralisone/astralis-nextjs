@@ -111,8 +111,8 @@ export function AuthLayout({
           </div>
         </aside>
 
-        <main className="flex w-full items-center justify-center px-6 py-12 sm:px-10 lg:w-[54%] lg:px-16">
-          <div className="w-full max-w-[480px]">
+        <main className="flex w-full items-center justify-center px-6 py-12 sm:px-10 lg:w-[54%] lg:pl-20 lg:pr-16">
+          <div className="mx-auto w-full max-w-[480px]">
             <div className="rounded-2xl border border-white/20 bg-white/95 p-8 shadow-[0_20px_60px_-12px_rgba(9,24,45,0.25)] backdrop-blur-xl transition-all duration-300 hover:shadow-[0_24px_72px_-12px_rgba(9,24,45,0.35)] md:p-10">
               {illustration && (
                 <div className="mb-6 flex justify-center">{illustration}</div>
