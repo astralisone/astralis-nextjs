@@ -244,21 +244,21 @@ export function withErrorTrackingSync<T>(
 }
 
 /**
- * Create a transaction for performance monitoring
+ * Create a span for performance monitoring
  *
  * Use this to track the performance of critical operations.
  *
- * @param name - Transaction name
+ * @param name - Span name
  * @param op - Operation type (e.g., 'http.server', 'db.query')
- * @param callback - Function to execute within the transaction
+ * @param callback - Function to execute within the span
  * @returns Result of the callback
  *
  * @example
  * const result = await withTransaction(
  *   'createEngagement',
  *   'service.create',
- *   async (transaction) => {
- *     transaction.setTag('userId', user.id);
+ *   async (span) => {
+ *     span?.setTag('userId', user.id);
  *     return await engagementService.create(data);
  *   }
  * );
@@ -266,20 +266,24 @@ export function withErrorTrackingSync<T>(
 export async function withTransaction<T>(
   name: string,
   op: string,
-  callback: (transaction: Sentry.Transaction) => Promise<T>
+  callback: (span: Sentry.Span | undefined) => Promise<T>
 ): Promise<T> {
-  const transaction = Sentry.startTransaction({ name, op });
-
-  try {
-    const result = await callback(transaction);
-    transaction.setStatus('ok');
-    return result;
-  } catch (error) {
-    transaction.setStatus('internal_error');
-    throw error;
-  } finally {
-    transaction.finish();
-  }
+  return await Sentry.startSpan(
+    {
+      name,
+      op,
+    },
+    async (span) => {
+      try {
+        const result = await callback(span);
+        span?.setStatus('ok');
+        return result;
+      } catch (error) {
+        span?.setStatus('internal_error');
+        throw error;
+      }
+    }
+  );
 }
 
 /**
