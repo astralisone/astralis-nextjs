@@ -3,10 +3,10 @@ import type { Transporter } from 'nodemailer';
 import crypto from 'crypto';
 
 /**
- * Email Service using Nodemailer
+ * Email Service using Brevo HTTP API (primary) or Nodemailer SMTP (fallback)
  *
  * Sends booking confirmation emails to customers and notifications to support team.
- * Supports SMTP configuration via environment variables.
+ * Supports both Brevo HTTP API and SMTP configuration via environment variables.
  */
 
 interface EmailOptions {
@@ -22,7 +22,59 @@ interface EmailOptions {
 }
 
 /**
- * Create nodemailer transporter
+ * Send email via Brevo HTTP API
+ * This bypasses SMTP ports which may be blocked by cloud providers
+ */
+async function sendViaBrevoAPI(options: EmailOptions): Promise<void> {
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) {
+    throw new Error('BREVO_API_KEY not configured');
+  }
+
+  const fromEmail = process.env.SMTP_FROM_EMAIL || 'no-reply@astralisone.com';
+  const fromName = process.env.SMTP_FROM_NAME || 'Astralis One';
+
+  const payload: Record<string, unknown> = {
+    sender: { email: fromEmail, name: fromName },
+    to: [{ email: options.to }],
+    subject: options.subject,
+    htmlContent: options.html,
+  };
+
+  if (options.text) {
+    payload.textContent = options.text;
+  }
+
+  // Handle attachments if present
+  if (options.attachments && options.attachments.length > 0) {
+    payload.attachment = options.attachments.map(att => ({
+      name: att.filename,
+      content: Buffer.isBuffer(att.content)
+        ? att.content.toString('base64')
+        : Buffer.from(att.content).toString('base64'),
+    }));
+  }
+
+  const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'accept': 'application/json',
+      'api-key': apiKey,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.text();
+    throw new Error(`Brevo API error: ${response.status} - ${errorData}`);
+  }
+
+  console.log(`[Email] Sent via Brevo API to ${options.to}`);
+}
+
+/**
+ * Create nodemailer transporter (SMTP fallback)
  * Configure SMTP settings in environment variables
  */
 function createTransporter(): Transporter {
@@ -32,7 +84,7 @@ function createTransporter(): Transporter {
     secure: false, // port 587 = STARTTLS, so false
     auth: {
       user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
+      pass: process.env.SMTP_PASSWORD || process.env.SMTP_PASS,
     },
     // Add timeouts to prevent blocking when SMTP is unreachable
     connectionTimeout: 5000, // 5 seconds to establish connection
@@ -44,9 +96,9 @@ function createTransporter(): Transporter {
 }
 
 /**
- * Send an email
+ * Send email via SMTP (fallback method)
  */
-export async function sendEmail(options: EmailOptions): Promise<void> {
+async function sendViaSMTP(options: EmailOptions): Promise<void> {
   const transporter = createTransporter();
 
   const mailOptions = {
@@ -59,6 +111,25 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
   };
 
   await transporter.sendMail(mailOptions);
+  console.log(`[Email] Sent via SMTP to ${options.to}`);
+}
+
+/**
+ * Send an email - tries Brevo API first, falls back to SMTP
+ */
+export async function sendEmail(options: EmailOptions): Promise<void> {
+  // Try Brevo API first (bypasses SMTP port blocks)
+  if (process.env.BREVO_API_KEY) {
+    try {
+      await sendViaBrevoAPI(options);
+      return;
+    } catch (error) {
+      console.error('[Email] Brevo API failed, trying SMTP fallback:', error);
+    }
+  }
+
+  // Fall back to SMTP
+  await sendViaSMTP(options);
 }
 
 interface EmailTemplateOptions {
