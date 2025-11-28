@@ -61,6 +61,40 @@ function DecorativeLogo({ className }: { className?: string }) {
   );
 }
 
+/**
+ * Solutions Hero Visual - Technology Network Graphic
+ * Displays the branded solutions mockup with proper optimization
+ */
+function SolutionsHeroVisual() {
+  return (
+    <div className="relative w-full">
+      {/* Main Product Mockup */}
+      <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden border border-slate-700 shadow-2xl">
+        <Image
+          src="/images/solutions-info-mockup.png"
+          alt="Astralis Solutions interface - intelligent automation platform for enterprise operations"
+          fill
+          className="object-cover object-top"
+          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 600px"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-astralis-navy/30 to-transparent" />
+      </div>
+
+      {/* Floating Stats Badge */}
+      <div className="absolute -bottom-4 -right-4 md:bottom-4 md:right-4 bg-slate-900/90 backdrop-blur-sm border border-slate-700 rounded-lg px-4 py-3 shadow-xl">
+        <div className="flex items-center gap-3">
+          <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+          <div>
+            <div className="text-xs text-slate-400">Active Automations</div>
+            <div className="text-lg font-bold text-white">2,847</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function SolutionsPage() {
   // Convert icon components to elements for client component compatibility
   const aiFeatures = aiAutomationSystems.features.map((f) => ({
@@ -100,6 +134,7 @@ export default function SolutionsPage() {
           secondaryButton={heroContent.secondaryButton}
           variant="dark"
           className="relative z-10 bg-astralis-navy"
+          rightContent={<SolutionsHeroVisual />}
         />
       </div>
 
