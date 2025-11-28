@@ -22,6 +22,26 @@ import { Hero } from '@/components/sections/hero';
 import { CTASection } from '@/components/sections/cta-section';
 import { CheckCircle2, TrendingUp, Users, Zap } from 'lucide-react';
 
+/**
+ * Hero Image Component - AI Technology Visual
+ * Displays the branded AI hub graphic with proper optimization
+ */
+function HeroVisual() {
+  return (
+    <div className="relative w-full aspect-square max-w-md mx-auto lg:max-w-none">
+      <div className="absolute inset-0 bg-gradient-to-br from-astralis-blue/20 to-transparent rounded-2xl" />
+      <Image
+        src="/images/Gemini_Generated_Image_ykpbjiykpbjiykpb.png"
+        alt="AI-powered automation hub - intelligent systems orchestrating business operations"
+        fill
+        className="object-contain rounded-2xl"
+        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 500px"
+        priority
+      />
+    </div>
+  );
+}
+
 export default function AboutPage() {
   return (
     <main className="min-h-screen">
@@ -31,7 +51,7 @@ export default function AboutPage() {
         description="Astralis specializes in intelligent automation and process optimization. We transform complex operations into efficient, scalable systems that deliver measurable results."
         variant="dark"
         textAlign="left"
-        textColumnWidth="two-thirds"
+        textColumnWidth="half"
         primaryButton={{
           text: 'Get Started',
           href: '/contact',
@@ -40,20 +60,14 @@ export default function AboutPage() {
           text: 'View Our Process',
           href: '/process',
         }}
+        rightContent={<HeroVisual />}
       />
 
       {/* Mission Statement Section */}
       <section className="w-full px-6 py-20 md:px-12 md:py-24 lg:px-20 lg:py-32 bg-gradient-to-b from-white to-slate-50 relative overflow-hidden">
-        {/* Subtle Tech Pattern Background */}
-        <div className="absolute inset-0 opacity-[0.03]">
-          <Image
-            src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1920&q=60"
-            alt="Digital technology pattern"
-            fill
-            className="object-cover"
-            loading="lazy"
-            sizes="100vw"
-          />
+        {/* Subtle geometric pattern background */}
+        <div className="absolute inset-0 opacity-[0.02]">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,_rgb(43,108,176)_1px,_transparent_0)] bg-[size:40px_40px]" />
         </div>
         <div className="mx-auto max-w-[1280px] relative z-10">
           <div className="max-w-3xl mx-auto text-center space-y-6 md:space-y-8">
@@ -131,16 +145,9 @@ export default function AboutPage() {
 
       {/* Experience/Credibility Section */}
       <section className="w-full px-6 py-20 md:px-12 md:py-24 lg:px-20 lg:py-32 bg-slate-50 relative overflow-hidden">
-        {/* Subtle Tech Grid Background */}
-        <div className="absolute inset-0 opacity-[0.02]">
-          <Image
-            src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1920&q=60"
-            alt="Technology infrastructure"
-            fill
-            className="object-cover"
-            loading="lazy"
-            sizes="100vw"
-          />
+        {/* Subtle grid pattern background */}
+        <div className="absolute inset-0 opacity-[0.03]">
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,_rgb(43,108,176)_1px,_transparent_1px),_linear-gradient(to_bottom,_rgb(43,108,176)_1px,_transparent_1px)] bg-[size:60px_60px]" />
         </div>
         <div className="mx-auto max-w-[1280px] relative z-10">
           <div className="text-center space-y-6 mb-16">
@@ -254,16 +261,9 @@ export default function AboutPage() {
 
       {/* Approach Section */}
       <section className="w-full px-6 py-20 md:px-12 md:py-24 lg:px-20 lg:py-32 bg-white relative overflow-hidden">
-        {/* Tech circuit pattern */}
-        <div className="absolute inset-0 opacity-[0.02]">
-          <Image
-            src="https://images.unsplash.com/photo-1518432031352-d6fc5c10da5a?w=1920&q=60"
-            alt="Circuit board pattern"
-            fill
-            className="object-cover"
-            loading="lazy"
-            sizes="100vw"
-          />
+        {/* Subtle diagonal lines pattern */}
+        <div className="absolute inset-0 opacity-[0.015]">
+          <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,_rgb(43,108,176)_0,_rgb(43,108,176)_1px,_transparent_0,_transparent_50%)] bg-[size:20px_20px]" />
         </div>
         <div className="mx-auto max-w-[1280px] relative z-10">
           <div className="text-center space-y-6 mb-16">
