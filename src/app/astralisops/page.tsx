@@ -10,6 +10,7 @@ import {
   ArrowRight,
   Check,
   LucideIcon,
+  TrendingUp,
 } from 'lucide-react';
 import { Hero } from '@/components/sections/hero';
 import { FeatureGrid, Feature } from '@/components/sections/feature-grid';
@@ -108,7 +109,7 @@ export default function AstralisOpsPage() {
 
 /**
  * Product Hero Visual - AstralisOps Dashboard Preview
- * Combines product mockup with live pipeline stats
+ * Displays dashboard mockup with Unsplash image and live stats
  */
 function ProductHeroVisual() {
   const stages = [
@@ -122,14 +123,22 @@ function ProductHeroVisual() {
       {/* Product Mockup Image */}
       <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden border border-slate-700 shadow-2xl">
         <Image
-          src="/images/home-page-mockup.png"
-          alt="AstralisOps dashboard interface - AI-powered operations console showing automation workflows and analytics"
+          src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80"
+          alt="Analytics dashboard showing workflow automation metrics"
           fill
-          className="object-cover object-top"
+          className="object-cover"
           sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 600px"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-astralis-navy/60 to-transparent" />
+
+        {/* Floating Badge */}
+        <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm border border-slate-200 rounded-lg px-4 py-2 shadow-lg">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-astralis-blue" />
+            <span className="text-sm font-medium text-astralis-navy">43 Tasks Completed Today</span>
+          </div>
+        </div>
       </div>
 
       {/* Pipeline Stats Card */}
@@ -159,8 +168,19 @@ function WorkflowDiagramSection() {
   const { title, description, stages } = astralisOpsContent.workflowDiagram;
 
   return (
-    <section className="w-full px-8 py-24 md:px-20 md:py-32 lg:px-24 bg-white dark:bg-slate-900">
-      <div className="mx-auto max-w-[1280px]">
+    <section className="w-full px-8 py-24 md:px-20 md:py-32 lg:px-24 bg-white dark:bg-slate-900 relative overflow-hidden">
+      {/* Background Image */}
+      <div className="absolute inset-0 opacity-[0.03]">
+        <Image
+          src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1920&q=60"
+          alt="Technology infrastructure"
+          fill
+          className="object-cover"
+          loading="lazy"
+          sizes="100vw"
+        />
+      </div>
+      <div className="mx-auto max-w-[1280px] relative z-10">
         {/* Section Header */}
         <div className="text-center mb-16 space-y-4">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-astralis-navy dark:text-white tracking-tight">
@@ -218,8 +238,19 @@ function PricingSection() {
   const { headline, description, tiers } = astralisOpsContent.pricing;
 
   return (
-    <section className="w-full px-8 py-24 md:px-20 md:py-32 lg:px-24 bg-slate-50 dark:bg-slate-800">
-      <div className="mx-auto max-w-[1280px]">
+    <section className="w-full px-8 py-24 md:px-20 md:py-32 lg:px-24 bg-slate-50 dark:bg-slate-800 relative overflow-hidden">
+      {/* Background Image */}
+      <div className="absolute inset-0 opacity-[0.02]">
+        <Image
+          src="https://images.unsplash.com/photo-1551434678-e076c223a692?w=1920&q=60"
+          alt="Modern office workspace"
+          fill
+          className="object-cover"
+          loading="lazy"
+          sizes="100vw"
+        />
+      </div>
+      <div className="mx-auto max-w-[1280px] relative z-10">
         {/* Section Header */}
         <div className="text-center mb-16 space-y-4">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-astralis-navy dark:text-white tracking-tight">

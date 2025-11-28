@@ -2,6 +2,7 @@ import Image from 'next/image';
 import type { Metadata } from 'next';
 import { Hero, FeatureGrid, CTASection } from '@/components/sections';
 import { cn } from '@/lib/utils';
+import { Zap } from 'lucide-react';
 import {
   heroContent,
   aiAutomationSystems,
@@ -62,33 +63,28 @@ function DecorativeLogo({ className }: { className?: string }) {
 }
 
 /**
- * Solutions Hero Visual - Technology Network Graphic
- * Displays the branded solutions mockup with proper optimization
+ * Solutions Hero Visual - AI & Technology
+ * Displays an AI/tech-themed Unsplash image
  */
 function SolutionsHeroVisual() {
   return (
     <div className="relative w-full">
-      {/* Main Product Mockup */}
       <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden border border-slate-700 shadow-2xl">
         <Image
-          src="/images/solutions-info-mockup.png"
-          alt="Astralis Solutions interface - intelligent automation platform for enterprise operations"
+          src="https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&q=80"
+          alt="AI and robotics technology powering intelligent automation solutions"
           fill
-          className="object-cover object-top"
+          className="object-cover"
           sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 600px"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-astralis-navy/30 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-astralis-navy/50 to-transparent" />
       </div>
-
-      {/* Floating Stats Badge */}
-      <div className="absolute -bottom-4 -right-4 md:bottom-4 md:right-4 bg-slate-900/90 backdrop-blur-sm border border-slate-700 rounded-lg px-4 py-3 shadow-xl">
-        <div className="flex items-center gap-3">
-          <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-          <div>
-            <div className="text-xs text-slate-400">Active Automations</div>
-            <div className="text-lg font-bold text-white">2,847</div>
-          </div>
+      {/* Solutions Badge */}
+      <div className="absolute -bottom-3 left-4 md:left-6 bg-white border border-slate-200 rounded-lg px-4 py-2 shadow-lg">
+        <div className="flex items-center gap-2">
+          <Zap className="w-4 h-4 text-astralis-blue" />
+          <span className="text-sm font-medium text-astralis-navy">Enterprise-Ready Solutions</span>
         </div>
       </div>
     </div>
@@ -133,21 +129,34 @@ export default function SolutionsPage() {
           primaryButton={heroContent.primaryButton}
           secondaryButton={heroContent.secondaryButton}
           variant="dark"
+          textAlign="left"
+          textColumnWidth="half"
           className="relative z-10 bg-astralis-navy"
           rightContent={<SolutionsHeroVisual />}
         />
       </div>
 
-      <div className="relative isolate">
+      <div className="relative isolate overflow-hidden">
         {/* 2. AI Automation Systems - Light Background */}
         <DecorativeLogo className="-left-6 top-24 w-36 -rotate-6 opacity-15" />
+        {/* Background Image */}
+        <div className="absolute inset-0 opacity-[0.02]">
+          <Image
+            src="https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1920&q=60"
+            alt="AI neural network"
+            fill
+            className="object-cover"
+            loading="lazy"
+            sizes="100vw"
+          />
+        </div>
         <FeatureGrid
           headline={aiAutomationSystems.headline}
           subheadline={aiAutomationSystems.description}
           features={aiFeatures}
           columns={3}
           centerHeader
-          className="card-surface-light relative z-10 bg-white border-b border-slate-200"
+          className="card-surface-light relative z-10 bg-white/95 border-b border-slate-200"
         />
       </div>
 
@@ -165,16 +174,27 @@ export default function SolutionsPage() {
         <DecorativeLogo className="right-20 bottom-10 w-32 rotate-12 opacity-10" />
       </div>
 
-      <div className="relative isolate">
+      <div className="relative isolate overflow-hidden">
         {/* 4. Platform Engineering - Light Background */}
         <DecorativeLogo className="left-16 -top-10 w-32 rotate-3 opacity-15" />
+        {/* Background Image */}
+        <div className="absolute inset-0 opacity-[0.02]">
+          <Image
+            src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1920&q=60"
+            alt="Server infrastructure"
+            fill
+            className="object-cover"
+            loading="lazy"
+            sizes="100vw"
+          />
+        </div>
         <FeatureGrid
           headline={platformEngineering.headline}
           subheadline={platformEngineering.description}
           features={platformFeatures}
           columns={3}
           centerHeader
-          className="card-surface-light relative z-10 bg-slate-50 border-y border-slate-200"
+          className="card-surface-light relative z-10 bg-slate-50/95 border-y border-slate-200"
         />
       </div>
 

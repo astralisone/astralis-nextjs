@@ -23,21 +23,28 @@ import { CTASection } from '@/components/sections/cta-section';
 import { CheckCircle2, TrendingUp, Users, Zap } from 'lucide-react';
 
 /**
- * Hero Image Component - AI Technology Visual
- * Displays the branded AI hub graphic with proper optimization
+ * Hero Visual Component - Technology Abstract
+ * Displays a tech-themed hero image for the About page
  */
 function HeroVisual() {
   return (
-    <div className="relative w-full aspect-square max-w-md mx-auto lg:max-w-none">
-      <div className="absolute inset-0 bg-gradient-to-br from-astralis-blue/20 to-transparent rounded-2xl" />
+    <div className="relative w-full aspect-[4/3] max-w-lg mx-auto lg:max-w-none">
+      <div className="absolute inset-0 bg-gradient-to-br from-astralis-blue/20 to-transparent rounded-2xl z-10" />
       <Image
-        src="/images/Gemini_Generated_Image_ykpbjiykpbjiykpb.png"
-        alt="AI-powered automation hub - intelligent systems orchestrating business operations"
+        src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&q=80"
+        alt="Global digital network visualization representing intelligent automation"
         fill
-        className="object-contain rounded-2xl"
+        className="object-cover rounded-2xl"
         sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 500px"
         priority
       />
+      {/* Stats Badge */}
+      <div className="absolute -bottom-3 left-4 md:left-6 bg-white border border-slate-200 rounded-lg px-4 py-2 shadow-lg z-20">
+        <div className="flex items-center gap-2">
+          <TrendingUp className="w-4 h-4 text-astralis-blue" />
+          <span className="text-sm font-medium text-astralis-navy">85% Time Saved</span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -65,9 +72,16 @@ export default function AboutPage() {
 
       {/* Mission Statement Section */}
       <section className="w-full px-6 py-20 md:px-12 md:py-24 lg:px-20 lg:py-32 bg-gradient-to-b from-white to-slate-50 relative overflow-hidden">
-        {/* Subtle geometric pattern background */}
-        <div className="absolute inset-0 opacity-[0.02]">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,_rgb(43,108,176)_1px,_transparent_0)] bg-[size:40px_40px]" />
+        {/* Subtle Tech Pattern Background */}
+        <div className="absolute inset-0 opacity-[0.03]">
+          <Image
+            src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1920&q=60"
+            alt="Digital technology pattern"
+            fill
+            className="object-cover"
+            loading="lazy"
+            sizes="100vw"
+          />
         </div>
         <div className="mx-auto max-w-[1280px] relative z-10">
           <div className="max-w-3xl mx-auto text-center space-y-6 md:space-y-8">
@@ -145,9 +159,16 @@ export default function AboutPage() {
 
       {/* Experience/Credibility Section */}
       <section className="w-full px-6 py-20 md:px-12 md:py-24 lg:px-20 lg:py-32 bg-slate-50 relative overflow-hidden">
-        {/* Subtle grid pattern background */}
-        <div className="absolute inset-0 opacity-[0.03]">
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,_rgb(43,108,176)_1px,_transparent_1px),_linear-gradient(to_bottom,_rgb(43,108,176)_1px,_transparent_1px)] bg-[size:60px_60px]" />
+        {/* Subtle Tech Grid Background */}
+        <div className="absolute inset-0 opacity-[0.02]">
+          <Image
+            src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1920&q=60"
+            alt="Technology infrastructure"
+            fill
+            className="object-cover"
+            loading="lazy"
+            sizes="100vw"
+          />
         </div>
         <div className="mx-auto max-w-[1280px] relative z-10">
           <div className="text-center space-y-6 mb-16">
@@ -261,9 +282,16 @@ export default function AboutPage() {
 
       {/* Approach Section */}
       <section className="w-full px-6 py-20 md:px-12 md:py-24 lg:px-20 lg:py-32 bg-white relative overflow-hidden">
-        {/* Subtle diagonal lines pattern */}
-        <div className="absolute inset-0 opacity-[0.015]">
-          <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,_rgb(43,108,176)_0,_rgb(43,108,176)_1px,_transparent_0,_transparent_50%)] bg-[size:20px_20px]" />
+        {/* Tech circuit pattern */}
+        <div className="absolute inset-0 opacity-[0.02]">
+          <Image
+            src="https://images.unsplash.com/photo-1518432031352-d6fc5c10da5a?w=1920&q=60"
+            alt="Circuit board pattern"
+            fill
+            className="object-cover"
+            loading="lazy"
+            sizes="100vw"
+          />
         </div>
         <div className="mx-auto max-w-[1280px] relative z-10">
           <div className="text-center space-y-6 mb-16">
@@ -374,8 +402,19 @@ export default function AboutPage() {
       </section>
 
       {/* Leadership Section (Optional) */}
-      <section className="w-full px-6 py-20 md:px-12 md:py-24 lg:px-20 lg:py-32 bg-slate-50">
-        <div className="mx-auto max-w-[1280px]">
+      <section className="w-full px-6 py-20 md:px-12 md:py-24 lg:px-20 lg:py-32 bg-slate-50 relative overflow-hidden">
+        {/* Team collaboration background */}
+        <div className="absolute inset-0 opacity-[0.03]">
+          <Image
+            src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1920&q=60"
+            alt="Team collaboration"
+            fill
+            className="object-cover"
+            loading="lazy"
+            sizes="100vw"
+          />
+        </div>
+        <div className="mx-auto max-w-[1280px] relative z-10">
           <div className="text-center space-y-6 mb-16">
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-semibold text-astralis-navy tracking-tight">
               Led by Automation Experts
@@ -386,22 +425,38 @@ export default function AboutPage() {
             </p>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-lg p-6 md:p-10 lg:p-12 shadow-md">
-            <div className="space-y-6">
-              <p className="text-base md:text-lg text-slate-700 leading-relaxed">
-                Astralis was founded by engineers and strategists who've spent years building
-                automation systems for Fortune 500 companies, high-growth startups, and
-                everything in between.
-              </p>
-              <p className="text-lg text-slate-700 leading-relaxed">
-                We've seen what works—and what doesn't—when it comes to scaling operations
-                through automation. That experience informs every project we take on, from
-                initial discovery to post-deployment optimization.
-              </p>
-              <p className="text-lg text-slate-700 leading-relaxed">
-                Our commitment is simple: deliver automation solutions that create measurable
-                value for your business, backed by transparent communication and expert execution.
-              </p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+            {/* Team Image */}
+            <div className="relative aspect-[4/3] rounded-xl overflow-hidden shadow-xl">
+              <Image
+                src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=800&q=80"
+                alt="Professional team collaborating on automation solutions"
+                fill
+                className="object-cover"
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-astralis-navy/30 to-transparent" />
+            </div>
+
+            {/* Content */}
+            <div className="bg-white border border-slate-200 rounded-lg p-6 md:p-10 lg:p-12 shadow-md">
+              <div className="space-y-6">
+                <p className="text-base md:text-lg text-slate-700 leading-relaxed">
+                  Astralis was founded by engineers and strategists who've spent years building
+                  automation systems for Fortune 500 companies, high-growth startups, and
+                  everything in between.
+                </p>
+                <p className="text-lg text-slate-700 leading-relaxed">
+                  We've seen what works—and what doesn't—when it comes to scaling operations
+                  through automation. That experience informs every project we take on, from
+                  initial discovery to post-deployment optimization.
+                </p>
+                <p className="text-lg text-slate-700 leading-relaxed">
+                  Our commitment is simple: deliver automation solutions that create measurable
+                  value for your business, backed by transparent communication and expert execution.
+                </p>
+              </div>
             </div>
           </div>
         </div>

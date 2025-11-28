@@ -45,15 +45,6 @@ interface ServicePackage {
   recommended?: boolean;
 }
 
-// Local branded images for service packages
-const serviceImages = {
-  onboarding: '/images/booking-mockup.png',
-  documents: '/images/solutions-info-mockup.png',
-  automation: '/images/home-page-mockup.png',
-  custom: '/images/Gemini_Generated_Image_45a75t45a75t45a7.png',
-  support: '/images/marketplace-mockup.png',
-};
-
 // Service packages data (per spec Section 7 SMB Pricing)
 const servicePackages: ServicePackage[] = [
   {
@@ -70,7 +61,7 @@ const servicePackages: ServicePackage[] = [
       'Collect and organize client documents',
       'Client portal to check their status'
     ],
-    imageUrl: serviceImages.onboarding
+    imageUrl: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=1280&q=80'
   },
   {
     name: 'Document Storage & Search',
@@ -86,7 +77,7 @@ const servicePackages: ServicePackage[] = [
       'Control who can see which documents',
       'Automatic daily backups for safety'
     ],
-    imageUrl: serviceImages.documents,
+    imageUrl: 'https://images.unsplash.com/photo-1454165205744-3b78555e5572?auto=format&fit=crop&w=1280&q=80',
     recommended: true
   },
   {
@@ -102,7 +93,7 @@ const servicePackages: ServicePackage[] = [
       'Custom business reports and analytics',
       'Team messaging and task management'
     ],
-    imageUrl: serviceImages.automation
+    imageUrl: 'https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=1280&q=80'
   },
   {
     name: 'Built Just for Your Business',
@@ -117,7 +108,7 @@ const servicePackages: ServicePackage[] = [
       'Dedicated support team for your account',
       'Training for your staff + user guides'
     ],
-    imageUrl: serviceImages.custom
+    imageUrl: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1280&q=80'
   },
   {
     name: 'Monthly Support & Improvements',
@@ -133,7 +124,7 @@ const servicePackages: ServicePackage[] = [
       'Add new features as your business grows',
       'Monthly usage reports and recommendations'
     ],
-    imageUrl: serviceImages.support
+    imageUrl: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1280&q=80'
   }
 ];
 
@@ -185,29 +176,28 @@ const valueStatements = [
 ];
 
 /**
- * Services Hero Visual - Automation Platform Preview
- * Displays branded service visualization
+ * Services Hero Visual - Workflow Automation
+ * Displays a modern automation-themed visual
  */
 function ServicesHeroVisual() {
   return (
     <div className="relative w-full">
       <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden border border-slate-700 shadow-2xl">
         <Image
-          src="/images/Gemini_Generated_Image_45a75t45a75t45a7.png"
-          alt="Astralis automation services - AI-driven sales and workflow automation platform"
+          src="https://images.unsplash.com/photo-1551434678-e076c223a692?w=800&q=80"
+          alt="Modern workspace with automation tools and technology"
           fill
-          className="object-cover object-top"
+          className="object-cover"
           sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 600px"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-astralis-navy/40 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-astralis-navy/50 to-transparent" />
       </div>
-
       {/* Service Badge */}
       <div className="absolute -bottom-3 left-4 md:left-6 bg-white border border-slate-200 rounded-lg px-4 py-2 shadow-lg">
         <div className="flex items-center gap-2">
           <Zap className="w-4 h-4 text-astralis-blue" />
-          <span className="text-sm font-medium text-astralis-navy">278% Average ROI</span>
+          <span className="text-sm font-medium text-astralis-navy">300% Average ROI</span>
         </div>
       </div>
     </div>
@@ -340,9 +330,14 @@ export default function ServicesPage() {
 
       {/* Automation Examples Section - White Background */}
       <section className="w-full px-6 py-20 md:px-12 md:py-24 lg:px-20 lg:py-32 bg-white relative overflow-hidden border-y border-slate-200">
-        {/* Subtle dot pattern background */}
-        <div className="absolute inset-0 opacity-[0.03]">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,_rgb(43,108,176)_1px,_transparent_0)] bg-[size:32px_32px]" />
+        {/* Background Image with Overlay */}
+        <div className="absolute inset-0 opacity-3">
+          <Image
+            src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1920&q=80"
+            alt="Automation and analytics"
+            fill
+            className="object-cover"
+          />
         </div>
         <div className="mx-auto max-w-[1280px] relative z-10">
           {/* Section Header */}
