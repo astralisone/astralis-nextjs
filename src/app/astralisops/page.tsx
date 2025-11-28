@@ -1,4 +1,5 @@
 import * as React from 'react';
+import Image from 'next/image';
 import {
   Workflow,
   CalendarCheck,
@@ -65,9 +66,7 @@ export default function AstralisOpsPage() {
         primaryButton={astralisOpsContent.hero.primaryButton}
         secondaryButton={astralisOpsContent.hero.secondaryButton}
         variant="dark"
-        rightContent={
-          <PipelineOverviewCard />
-        }
+        rightContent={<ProductHeroVisual />}
       />
 
       {/* 2. Feature List - 2x3 Grid */}
@@ -108,10 +107,10 @@ export default function AstralisOpsPage() {
 }
 
 /**
- * Pipeline Overview Card - Hero Right Content
- * Displays sample pipeline stats in a card format
+ * Product Hero Visual - AstralisOps Dashboard Preview
+ * Combines product mockup with live pipeline stats
  */
-function PipelineOverviewCard() {
+function ProductHeroVisual() {
   const stages = [
     { name: 'Intake', count: 8 },
     { name: 'In Progress', count: 12 },
@@ -119,18 +118,34 @@ function PipelineOverviewCard() {
   ];
 
   return (
-    <div className="rounded-xl border border-slate-700 bg-slate-900/60 backdrop-blur-sm p-6 shadow-xl">
-      <div className="mb-4 text-sm font-medium text-slate-400">Pipeline Overview</div>
-      <div className="grid gap-4 md:grid-cols-3">
-        {stages.map((stage, idx) => (
-          <div
-            key={stage.name}
-            className="rounded-lg border border-slate-700 bg-slate-950/60 p-4 transition-all duration-200 hover:border-astralis-blue"
-          >
-            <div className="text-xs font-medium text-slate-400 uppercase tracking-wide">{stage.name}</div>
-            <div className="mt-2 text-3xl font-bold text-white">{stage.count}</div>
-          </div>
-        ))}
+    <div className="space-y-6">
+      {/* Product Mockup Image */}
+      <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden border border-slate-700 shadow-2xl">
+        <Image
+          src="/images/home-page-mockup.png"
+          alt="AstralisOps dashboard interface - AI-powered operations console showing automation workflows and analytics"
+          fill
+          className="object-cover object-top"
+          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 600px"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 to-transparent" />
+      </div>
+
+      {/* Pipeline Stats Card */}
+      <div className="rounded-xl border border-slate-700 bg-slate-900/60 backdrop-blur-sm p-6 shadow-xl">
+        <div className="mb-4 text-sm font-medium text-slate-400">Pipeline Overview</div>
+        <div className="grid gap-4 md:grid-cols-3">
+          {stages.map((stage) => (
+            <div
+              key={stage.name}
+              className="rounded-lg border border-slate-700 bg-slate-950/60 p-4 transition-all duration-200 hover:border-astralis-blue"
+            >
+              <div className="text-xs font-medium text-slate-400 uppercase tracking-wide">{stage.name}</div>
+              <div className="mt-2 text-3xl font-bold text-white">{stage.count}</div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
