@@ -40,6 +40,21 @@ const config: Config = {
           900: "#002633",
         },
 
+        // Tech-focused accent colors - GREEN PALETTE
+        "astralis-green": {
+          DEFAULT: "#00E676",
+          50: "#E5FFF0",
+          100: "#CCFFE1",
+          200: "#99FFC3",
+          300: "#66FFA5",
+          400: "#33FF87",
+          500: "#00E676", // Main vibrant green
+          600: "#00B85E",
+          700: "#008A47",
+          800: "#005C2F",
+          900: "#002E18",
+        },
+
         // Legacy support (alias to astralis-cyan)
         "cyber-cyan": {
           DEFAULT: "#00D4FF",
@@ -60,6 +75,7 @@ const config: Config = {
           cyan: "#00D4FF",
           blue: "#0099FF",
           purple: "#6B5BFF",
+          green: "#00E676",
           white: "#FFFFFF",
         },
 
@@ -172,13 +188,20 @@ const config: Config = {
         // Purple accent glow
         "glow-purple": "0 0 20px rgba(168, 85, 247, 0.5), 0 0 40px rgba(168, 85, 247, 0.3)",
 
+        // Green accent glow effects
+        "glow-green": "0 0 20px rgba(0, 230, 118, 0.5), 0 0 40px rgba(0, 230, 118, 0.3)",
+        "glow-green-lg": "0 0 30px rgba(0, 230, 118, 0.6), 0 0 60px rgba(0, 230, 118, 0.4)",
+        "glow-green-xl": "0 0 40px rgba(0, 230, 118, 0.7), 0 0 80px rgba(0, 230, 118, 0.5), 0 0 120px rgba(0, 230, 118, 0.3)",
+
         // Inner glows for depth
         "inner-glow-cyan": "inset 0 0 20px rgba(0, 212, 255, 0.2)",
         "inner-glow-blue": "inset 0 0 20px rgba(43, 108, 176, 0.2)",
+        "inner-glow-green": "inset 0 0 20px rgba(0, 230, 118, 0.2)",
 
         // Neon/ring effects (Image 1 central ring)
         "neon-cyan": "0 0 5px #00D4FF, 0 0 10px #00D4FF, 0 0 20px #00D4FF, 0 0 40px #00D4FF",
         "neon-blue": "0 0 5px #2B6CB0, 0 0 10px #2B6CB0, 0 0 20px #2B6CB0",
+        "neon-green": "0 0 5px #00E676, 0 0 10px #00E676, 0 0 20px #00E676, 0 0 40px #00E676",
 
         // Glass card shadow (Image 3, 4 glass elements)
         "card-glass": "0 8px 32px 0 rgba(0, 0, 0, 0.37)",
@@ -280,6 +303,16 @@ const config: Config = {
           },
           "50%": {
             boxShadow: "0 0 30px rgba(43, 108, 176, 0.6), 0 0 60px rgba(43, 108, 176, 0.3)",
+            opacity: "0.9",
+          },
+        },
+        "glow-pulse-green": {
+          "0%, 100%": {
+            boxShadow: "0 0 20px rgba(0, 230, 118, 0.4), 0 0 40px rgba(0, 230, 118, 0.2)",
+            opacity: "1",
+          },
+          "50%": {
+            boxShadow: "0 0 30px rgba(0, 230, 118, 0.6), 0 0 60px rgba(0, 230, 118, 0.3)",
             opacity: "0.9",
           },
         },
@@ -433,6 +466,7 @@ const config: Config = {
         // Glow animations (Images 1, 2, 3, 4)
         "glow-pulse": "glow-pulse 2s ease-in-out infinite",
         "glow-pulse-blue": "glow-pulse-blue 2s ease-in-out infinite",
+        "glow-pulse-green": "glow-pulse-green 2s ease-in-out infinite",
 
         // Float animations (Image 1 - floating icons)
         "float": "float 3s ease-in-out infinite",
