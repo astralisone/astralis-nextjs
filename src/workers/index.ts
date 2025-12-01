@@ -16,7 +16,9 @@ import { processIntakeRouting } from './processors/intakeRouting.processor';
 import { processCalendarSync } from './processors/calendarSync.processor';
 import { processSchedulingReminder } from './processors/schedulingReminder.processor';
 import { processSLAMonitor } from './processors/slaMonitor.processor';
+import { processSchedulingAgent } from './processors/schedulingAgent.processor';
 import { initializeSLAMonitorJob } from './jobs/sla-monitor.job';
+import { initializeReminderSchedulerJob } from './jobs/reminder-scheduler.job';
 
 /**
  * Worker Bootstrap
@@ -80,6 +82,12 @@ async function startWorkers() {
   const slaMonitorWorker = new Worker('sla-monitor', processSLAMonitor, {
     connection: redisConnection,
     concurrency: 2, // Lower concurrency for thorough checks
+  });
+
+  // Scheduling agent worker (AI-powered scheduling and task classification)
+  const schedulingAgentWorker = new Worker('scheduling-agent', processSchedulingAgent, {
+    connection: redisConnection,
+    concurrency: 3, // Medium concurrency for AI classification + scheduling
   });
 
   // Document worker event handlers
@@ -160,18 +168,39 @@ async function startWorkers() {
     console.error('[Worker:SLAMonitor] Worker error:', err);
   });
 
+  // Scheduling agent worker event handlers
+  schedulingAgentWorker.on('completed', (job) => {
+    console.log(`[Worker:SchedulingAgent] Job ${job.id} completed`);
+  });
+
+  schedulingAgentWorker.on('failed', (job, err) => {
+    console.error(`[Worker:SchedulingAgent] Job ${job?.id} failed:`, err.message);
+  });
+
+  schedulingAgentWorker.on('error', (err) => {
+    console.error('[Worker:SchedulingAgent] Worker error:', err);
+  });
+
   console.log('[Workers] Document processing worker started (concurrency: 3)');
   console.log('[Workers] Document embedding worker started (concurrency: 2)');
   console.log('[Workers] Intake routing worker started (concurrency: 5)');
   console.log('[Workers] Calendar sync worker started (concurrency: 2)');
   console.log('[Workers] Scheduling reminder worker started (concurrency: 5)');
   console.log('[Workers] SLA monitor worker started (concurrency: 2)');
+  console.log('[Workers] Scheduling agent worker started (concurrency: 3)');
 
   // Initialize SLA monitor cron job (runs every 15 minutes)
   try {
     await initializeSLAMonitorJob();
   } catch (error) {
     console.error('[Workers] Failed to initialize SLA monitor cron job:', error);
+  }
+
+  // Initialize reminder scheduler cron job (runs every 5 minutes)
+  try {
+    await initializeReminderSchedulerJob();
+  } catch (error) {
+    console.error('[Workers] Failed to initialize reminder scheduler cron job:', error);
   }
 
   // Graceful shutdown
@@ -186,6 +215,7 @@ async function startWorkers() {
       calendarSyncWorker.close(),
       schedulingReminderWorker.close(),
       slaMonitorWorker.close(),
+      schedulingAgentWorker.close(),
     ]);
 
     console.log('[Workers] All workers closed');

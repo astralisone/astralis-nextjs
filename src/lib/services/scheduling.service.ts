@@ -13,6 +13,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { addHours, addDays, format, parseISO, startOfDay, endOfDay } from 'date-fns';
 import * as googleCalendar from './googleCalendar.service';
+import { addReminderJob } from '@/workers/queues/schedulingReminders.queue';
 
 /**
  * Validation schemas
@@ -157,23 +158,45 @@ export async function createEvent(data: CreateEventInput) {
     const now = new Date();
 
     if (reminder24h > now) {
-      await prisma.eventReminder.create({
+      const reminder = await prisma.eventReminder.create({
         data: {
           eventId: event.id,
           reminderTime: reminder24h,
           status: 'PENDING',
         },
       });
+
+      // Queue the reminder for processing
+      try {
+        await addReminderJob({
+          reminderId: reminder.id,
+          eventId: reminder.eventId,
+        });
+      } catch (queueError) {
+        console.error(`Failed to queue reminder ${reminder.id}:`, queueError);
+        // Don't fail event creation if queueing fails
+      }
     }
 
     if (reminder1h > now) {
-      await prisma.eventReminder.create({
+      const reminder = await prisma.eventReminder.create({
         data: {
           eventId: event.id,
           reminderTime: reminder1h,
           status: 'PENDING',
         },
       });
+
+      // Queue the reminder for processing
+      try {
+        await addReminderJob({
+          reminderId: reminder.id,
+          eventId: reminder.eventId,
+        });
+      } catch (queueError) {
+        console.error(`Failed to queue reminder ${reminder.id}:`, queueError);
+        // Don't fail event creation if queueing fails
+      }
     }
 
     // Sync to Google Calendar if enabled

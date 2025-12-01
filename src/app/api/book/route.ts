@@ -23,6 +23,7 @@ import {
   generateSchedulingConfirmationText,
   generateHostNotificationEmail,
 } from '@/lib/email';
+import { addReminderJob } from '@/workers/queues/schedulingReminders.queue';
 
 /**
  * Booking request validation schema
@@ -223,7 +224,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    await Promise.all(reminders);
+    const createdReminders = await Promise.all(reminders);
+
+    // Queue each reminder for processing
+    for (const reminder of createdReminders) {
+      try {
+        await addReminderJob({
+          reminderId: reminder.id,
+          eventId: reminder.eventId,
+        });
+      } catch (queueError) {
+        console.error(`Failed to queue reminder ${reminder.id}:`, queueError);
+        // Don't fail the booking if queueing fails
+      }
+    }
 
     console.log(
       `Created booking event ${event.id} for user ${userId} with ${reminders.length} reminders`

@@ -147,33 +147,7 @@ export async function POST(req: NextRequest) {
 
         const routingMeta = updatedIntake.aiRoutingMeta as Record<string, unknown> | null;
 
-        // Emit intake:created event to trigger orchestration agent
-        const eventBus = getEventBus();
-        await eventBus.emit('intake:created', {
-          id: updatedIntake.id,
-          source: 'api',
-          timestamp: new Date(),
-          payload: {
-            intakeId: updatedIntake.id,
-            type: 'intake_request',
-            data: {
-              title: updatedIntake.title,
-              description: updatedIntake.description,
-              source: updatedIntake.source,
-              status: updatedIntake.status,
-              priority: updatedIntake.priority,
-              requestData: updatedIntake.requestData,
-            },
-            contactInfo: {
-              // Extract contact info from requestData if available
-              email: (updatedIntake.requestData as any)?.email,
-              name: (updatedIntake.requestData as any)?.name,
-              phone: (updatedIntake.requestData as any)?.phone,
-            },
-          },
-        });
-
-        // Ensure agent is running for this organization
+        // Ensure agent is running for this organization BEFORE emitting event
         try {
           const agent = getAgentInstance(updatedIntake.orgId);
           if (!agent.isActive()) {
@@ -210,6 +184,32 @@ export async function POST(req: NextRequest) {
           }
         }
 
+        // Emit intake:created event to trigger orchestration agent
+        const eventBus = getEventBus();
+        await eventBus.emit('intake:created', {
+          id: updatedIntake.id,
+          source: 'api',
+          timestamp: new Date(),
+          payload: {
+            intakeId: updatedIntake.id,
+            type: 'intake_request',
+            data: {
+              title: updatedIntake.title,
+              description: updatedIntake.description,
+              source: updatedIntake.source,
+              status: updatedIntake.status,
+              priority: updatedIntake.priority,
+              requestData: updatedIntake.requestData,
+            },
+            contactInfo: {
+              // Extract contact info from requestData if available
+              email: (updatedIntake.requestData as any)?.email,
+              name: (updatedIntake.requestData as any)?.name,
+              phone: (updatedIntake.requestData as any)?.phone,
+            },
+          },
+        });
+
         return NextResponse.json(
           {
             intakeRequest: updatedIntake,
@@ -244,32 +244,7 @@ export async function POST(req: NextRequest) {
           include: { pipeline: true },
         });
 
-        // Emit intake:created event even on AI failure
-        const eventBus = getEventBus();
-        await eventBus.emit('intake:created', {
-          id: finalIntake!.id,
-          source: 'api',
-          timestamp: new Date(),
-          payload: {
-            intakeId: finalIntake!.id,
-            type: 'intake_request',
-            data: {
-              title: finalIntake!.title,
-              description: finalIntake!.description,
-              source: finalIntake!.source,
-              status: finalIntake!.status,
-              priority: finalIntake!.priority,
-              requestData: finalIntake!.requestData,
-            },
-            contactInfo: {
-              email: (finalIntake!.requestData as any)?.email,
-              name: (finalIntake!.requestData as any)?.name,
-              phone: (finalIntake!.requestData as any)?.phone,
-            },
-          },
-        });
-
-        // Ensure agent is running for this organization
+        // Ensure agent is running for this organization BEFORE emitting event
         try {
           const agent = getAgentInstance(finalIntake!.orgId);
           if (!agent.isActive()) {
@@ -304,8 +279,32 @@ export async function POST(req: NextRequest) {
               console.log('Agent system initialization failed:', initError instanceof Error ? initError.message : String(initError));
             }
           }
-          }
         }
+
+        // Emit intake:created event even on AI failure
+        const eventBus = getEventBus();
+        await eventBus.emit('intake:created', {
+          id: finalIntake!.id,
+          source: 'api',
+          timestamp: new Date(),
+          payload: {
+            intakeId: finalIntake!.id,
+            type: 'intake_request',
+            data: {
+              title: finalIntake!.title,
+              description: finalIntake!.description,
+              source: finalIntake!.source,
+              status: finalIntake!.status,
+              priority: finalIntake!.priority,
+              requestData: finalIntake!.requestData,
+            },
+            contactInfo: {
+              email: (finalIntake!.requestData as any)?.email,
+              name: (finalIntake!.requestData as any)?.name,
+              phone: (finalIntake!.requestData as any)?.phone,
+            },
+          },
+        });
 
         return NextResponse.json(
           {
@@ -321,7 +320,7 @@ export async function POST(req: NextRequest) {
           { status: 201 },
         );
       }
-    else {
+    } else {
       // Fallback to basic keyword routing (no OpenAI key configured)
       console.log(`[Intake API] Using fallback routing for intake request (org: ${orgId}) - OpenAI not configured`);
 
@@ -359,32 +358,7 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      // Emit intake:created event to trigger orchestration agent
-      const eventBus = getEventBus();
-      await eventBus.emit('intake:created', {
-        id: intakeRequest.id,
-        source: 'api',
-        timestamp: new Date(),
-        payload: {
-          intakeId: intakeRequest.id,
-          type: 'intake_request',
-          data: {
-            title: intakeRequest.title,
-            description: intakeRequest.description,
-            source: intakeRequest.source,
-            status: intakeRequest.status,
-            priority: intakeRequest.priority,
-            requestData: intakeRequest.requestData,
-          },
-          contactInfo: {
-            email: (intakeRequest.requestData as any)?.email,
-            name: (intakeRequest.requestData as any)?.name,
-            phone: (intakeRequest.requestData as any)?.phone,
-          },
-        },
-      });
-
-      // Ensure agent is running for this organization
+      // Ensure agent is running for this organization BEFORE emitting event
       try {
         const agent = getAgentInstance(intakeRequest.orgId);
         if (!agent.isActive()) {
@@ -420,6 +394,31 @@ export async function POST(req: NextRequest) {
           }
         }
       }
+
+      // Emit intake:created event to trigger orchestration agent
+      const eventBus = getEventBus();
+      await eventBus.emit('intake:created', {
+        id: intakeRequest.id,
+        source: 'api',
+        timestamp: new Date(),
+        payload: {
+          intakeId: intakeRequest.id,
+          type: 'intake_request',
+          data: {
+            title: intakeRequest.title,
+            description: intakeRequest.description,
+            source: intakeRequest.source,
+            status: intakeRequest.status,
+            priority: intakeRequest.priority,
+            requestData: intakeRequest.requestData,
+          },
+          contactInfo: {
+            email: (intakeRequest.requestData as any)?.email,
+            name: (intakeRequest.requestData as any)?.name,
+            phone: (intakeRequest.requestData as any)?.phone,
+          },
+        },
+      });
 
       return NextResponse.json(
         {
