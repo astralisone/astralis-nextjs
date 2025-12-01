@@ -31,6 +31,7 @@ import {
   isDuringLunch,
   getRecommendedReminders,
 } from '../prompts/scheduling';
+import { addReminderJob } from '@/workers/queues/schedulingReminders.queue';
 
 // =============================================================================
 // TYPE DEFINITIONS
@@ -759,16 +760,31 @@ export class CalendarManager {
 
     // Create reminders
     if (reminders.length > 0) {
+      const reminderData = reminders.map((r) => ({
+        id: this.generateReminderId(),
+        eventId,
+        reminderTime: new Date(eventData.startTime.getTime() - r.minutesBefore * 60 * 1000),
+        status: 'PENDING',
+        createdAt: now,
+        updatedAt: now,
+      }));
+
       await this.prisma.eventReminder.createMany({
-        data: reminders.map((r) => ({
-          id: this.generateReminderId(),
-          eventId,
-          reminderTime: new Date(eventData.startTime.getTime() - r.minutesBefore * 60 * 1000),
-          status: 'PENDING',
-          createdAt: now,
-          updatedAt: now,
-        })),
+        data: reminderData,
       });
+
+      // Queue each reminder for processing
+      for (const reminder of reminderData) {
+        try {
+          await addReminderJob({
+            reminderId: reminder.id,
+            eventId: reminder.eventId,
+          });
+        } catch (queueError) {
+          this.logger.error(`Failed to queue reminder ${reminder.id}`, queueError);
+          // Don't fail event creation if queueing fails
+        }
+      }
     }
 
     // Build response
@@ -898,16 +914,31 @@ export class CalendarManager {
 
       // Create new reminders
       const eventStartTime = updates.startTime || new Date(existingEvent.startTime as string);
+      const reminderData = updates.reminders.map((r) => ({
+        id: this.generateReminderId(),
+        eventId,
+        reminderTime: new Date(eventStartTime.getTime() - r.minutesBefore * 60 * 1000),
+        status: 'PENDING',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }));
+
       await this.prisma.eventReminder.createMany({
-        data: updates.reminders.map((r) => ({
-          id: this.generateReminderId(),
-          eventId,
-          reminderTime: new Date(eventStartTime.getTime() - r.minutesBefore * 60 * 1000),
-          status: 'PENDING',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        })),
+        data: reminderData,
       });
+
+      // Queue each reminder for processing
+      for (const reminder of reminderData) {
+        try {
+          await addReminderJob({
+            reminderId: reminder.id,
+            eventId: reminder.eventId,
+          });
+        } catch (queueError) {
+          this.logger.error(`Failed to queue reminder ${reminder.id}`, queueError);
+          // Don't fail update if queueing fails
+        }
+      }
     }
 
     // Build response
@@ -1034,21 +1065,36 @@ export class CalendarManager {
     });
 
     if (existingReminders.length > 0) {
-      await this.prisma.eventReminder.createMany({
-        data: existingReminders.map((r) => {
-          const minutesBefore = Math.round(
-            (originalStart.getTime() - new Date(r.reminderTime).getTime()) / 60000
-          );
-          return {
-            id: this.generateReminderId(),
-            eventId,
-            reminderTime: new Date(newStart.getTime() - minutesBefore * 60 * 1000),
-            status: 'PENDING',
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          };
-        }),
+      const reminderData = existingReminders.map((r) => {
+        const minutesBefore = Math.round(
+          (originalStart.getTime() - new Date(r.reminderTime).getTime()) / 60000
+        );
+        return {
+          id: this.generateReminderId(),
+          eventId,
+          reminderTime: new Date(newStart.getTime() - minutesBefore * 60 * 1000),
+          status: 'PENDING',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
       });
+
+      await this.prisma.eventReminder.createMany({
+        data: reminderData,
+      });
+
+      // Queue each reminder for processing
+      for (const reminder of reminderData) {
+        try {
+          await addReminderJob({
+            reminderId: reminder.id,
+            eventId: reminder.eventId,
+          });
+        } catch (queueError) {
+          this.logger.error(`Failed to queue reminder ${reminder.id}`, queueError);
+          // Don't fail reschedule if queueing fails
+        }
+      }
     }
 
     this.logger.info(`[${requestId}] Event rescheduled successfully`, {
@@ -1368,6 +1414,19 @@ export class CalendarManager {
       await this.prisma.eventReminder.createMany({
         data: remindersToCreate,
       });
+
+      // Queue each reminder for processing
+      for (const reminder of remindersToCreate) {
+        try {
+          await addReminderJob({
+            reminderId: reminder.id,
+            eventId: reminder.eventId,
+          });
+        } catch (queueError) {
+          this.logger.error(`Failed to queue reminder ${reminder.id}`, queueError);
+          // Don't fail reminder creation if queueing fails
+        }
+      }
     }
 
     this.logger.info(`[${requestId}] Created ${remindersToCreate.length} reminders`);

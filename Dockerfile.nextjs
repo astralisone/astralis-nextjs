@@ -2,24 +2,35 @@
 FROM node:20-bullseye AS builder
 
 WORKDIR /app
-ENV NODE_ENV=production
 
-RUN apt-get update && apt-get install -y python3 make g++
+# Install build dependencies (cached layer)
+RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
 
-COPY package.json yarn.lock ./
-COPY tsconfig.json ./
-COPY next.config.mjs ./
-COPY .env.production ./
+# Copy dependency files first (for better cache)
+COPY package.json package-lock.json ./
 
-RUN yarn install --frozen-lockfile
+# Install ALL dependencies (including devDeps for prisma CLI and build tools)
+RUN npm ci --legacy-peer-deps
 
-COPY . .
+# Copy config files (including Tailwind/PostCSS for CSS processing)
+COPY tsconfig.json next.config.mjs .env.production postcss.config.mjs tailwind.config.ts ./
 
-RUN yarn prisma:gen
+# Copy prisma schema and generate client
+COPY prisma ./prisma
+RUN npx prisma generate
+
+# Copy source code LAST (most frequently changing)
+COPY src ./src
+COPY public ./public
 
 # Build with optimized memory allocation
-ENV NODE_OPTIONS=--max-old-space-size=6096
-RUN yarn build
+ENV NODE_OPTIONS=--max-old-space-size=4096
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV DOCKER_BUILD=true
+RUN npm run build
+
+# Bundle worker to standalone JS file
+RUN npx esbuild src/workers/index.ts --bundle --platform=node --target=node20 --outfile=worker.js --external:@prisma/client --external:prisma
 
 # ---- RUNTIME STAGE (Standalone) ----
 FROM node:20-bullseye-slim AS runner
@@ -47,9 +58,12 @@ COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 
-# Copy entrypoint script (before switching to non-root user)
-COPY docker-entrypoint.sh ./
-RUN chmod +x docker-entrypoint.sh && chown nextjs:nodejs docker-entrypoint.sh
+# Copy bundled worker
+COPY --from=builder --chown=nextjs:nodejs /app/worker.js ./worker.js
+
+# Create entrypoint script inline
+RUN printf '#!/bin/sh\nset -e\necho "Starting BullMQ worker..."\nnode worker.js &\necho "Starting Next.js server..."\nexec node server.js\n' > docker-entrypoint.sh && \
+    chmod +x docker-entrypoint.sh && chown nextjs:nodejs docker-entrypoint.sh
 
 USER nextjs
 
@@ -59,5 +73,5 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD curl -f http://localhost:3001/api/health || exit 1
 
-# Run with entrypoint (handles migrations + server start)
+# Run with entrypoint (starts worker + server)
 ENTRYPOINT ["dumb-init", "./docker-entrypoint.sh"]

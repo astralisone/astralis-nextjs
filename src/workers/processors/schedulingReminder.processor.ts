@@ -2,15 +2,27 @@ import { Job } from 'bullmq';
 import { prisma } from '@/lib/prisma';
 import { sendEmail } from '@/lib/email';
 import { generateBookingCalendarEvent } from '@/lib/calendar';
-import type { ReminderJobData } from '../queues/schedulingReminders.queue';
+import type { ReminderJobData, ScanRemindersJobData } from '../queues/schedulingReminders.queue';
+import { scanAndQueuePendingReminders } from '../jobs/reminder-scheduler.job';
 
 /**
  * Scheduling Reminder Processor
  *
- * Sends email reminders for scheduled events with calendar attachments
+ * Handles two types of jobs:
+ * 1. 'send-reminder': Sends email reminders for scheduled events
+ * 2. 'scan-pending-reminders': Cron job that scans and queues pending reminders
  */
-export async function processSchedulingReminder(job: Job<ReminderJobData>) {
-  const { reminderId, eventId } = job.data;
+export async function processSchedulingReminder(
+  job: Job<ReminderJobData | ScanRemindersJobData>
+) {
+  // Handle cron job - scan for pending reminders
+  if (job.name === 'scan-pending-reminders') {
+    console.log('[Worker:Reminder] Processing scheduled reminder scan');
+    return await scanAndQueuePendingReminders();
+  }
+
+  // Handle individual reminder - send email
+  const { reminderId, eventId } = job.data as ReminderJobData;
 
   console.log(`[Worker:Reminder] Processing reminder ${reminderId} for event ${eventId}`);
 

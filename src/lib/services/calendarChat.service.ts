@@ -2,6 +2,7 @@ import OpenAI from 'openai';
 import { randomUUID } from 'crypto';
 import { prisma } from '@/lib/prisma';
 import { addDays, addWeeks, addMonths, startOfDay, endOfDay, parseISO, format, addHours, addMinutes } from 'date-fns';
+import { addReminderJob } from '@/workers/queues/schedulingReminders.queue';
 
 /**
  * Calendar Chat Service
@@ -693,7 +694,7 @@ Guidelines:
 
       // Create default reminder 15 minutes before the event
       const reminderTime = addMinutes(startTime, -15);
-      await prisma.eventReminder.create({
+      const reminder = await prisma.eventReminder.create({
         data: {
           id: randomUUID(),
           eventId: schedulingEvent.id,
@@ -701,6 +702,17 @@ Guidelines:
           status: 'PENDING',
         },
       });
+
+      // Queue the reminder for processing
+      try {
+        await addReminderJob({
+          reminderId: reminder.id,
+          eventId: reminder.eventId,
+        });
+      } catch (queueError) {
+        console.error(`[CalendarChat] Failed to queue reminder ${reminder.id}:`, queueError);
+        // Don't fail event creation if queueing fails
+      }
 
       return {
         success: true,
@@ -947,6 +959,17 @@ Guidelines:
           retryCount: 0,
         },
       });
+
+      // Queue the reminder for processing
+      try {
+        await addReminderJob({
+          reminderId: reminder.id,
+          eventId: reminder.eventId,
+        });
+      } catch (queueError) {
+        console.error(`[CalendarChat] Failed to queue reminder ${reminder.id}:`, queueError);
+        // Don't fail the operation if queueing fails
+      }
 
       const formattedTime = format(actualReminderTime, 'EEEE, MMMM d, yyyy \'at\' h:mm a');
 

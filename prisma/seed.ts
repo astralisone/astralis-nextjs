@@ -1,24 +1,46 @@
-import  {PrismaClient}  from '@prisma/client';
-import { hashPassword } from '../src/lib/utils/crypto';
+import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
+
+async function hashPassword(password: string): Promise<string> {
+  return bcrypt.hash(password, 12);
+}
 
 async function main() {
   console.log('🌱 Starting database seed...');
 
-  // Check if test user exists
-  const existingUser = await prisma.users.findUnique({
+  // Step 1: Create or find the test user first
+  let user = await prisma.users.findUnique({
     where: { email: 'test@astralisone.com' },
   });
 
-  if (!existingUser) {
-    console.log('❌ Test user not found. Skipping seed.');
-    return;
+  if (!user) {
+    console.log('👤 Creating test user...');
+    const hashedPassword = await hashPassword('Test123!');
+    user = await prisma.users.create({
+      data: {
+        email: 'test@astralisone.com',
+        name: 'Test Admin',
+        password: hashedPassword,
+        role: 'ADMIN',
+        emailVerified: new Date(),
+      },
+    });
+    console.log(`✅ Created user: ${user.email} (${user.id})`);
+  } else {
+    console.log(`✅ Found existing user: ${user.email} (${user.id})`);
+    // Ensure user has ADMIN role
+    if (user.role !== 'ADMIN') {
+      user = await prisma.users.update({
+        where: { id: user.id },
+        data: { role: 'ADMIN' },
+      });
+      console.log(`   Updated role to ADMIN`);
+    }
   }
 
-  console.log(`✅ Found test user: ${existingUser.email}`);
-
-  // Create or find organization
+  // Step 2: Create or find organization, using user's ID as the org ID for consistency
   let organization = await prisma.organization.findFirst({
     where: { name: 'Test Organization' },
   });
@@ -35,31 +57,30 @@ async function main() {
     console.log(`✅ Found existing organization: ${organization.name} (${organization.id})`);
   }
 
-  // Update test user with organization and admin role
-  if (!existingUser.orgId || existingUser.role !== 'ADMIN') {
-    console.log('🔧 Updating test user with organization and admin role...');
-    const updatedUser = await prisma.users.update({
-      where: { id: existingUser.id },
-      data: {
-        orgId: organization.id,
-        role: 'ADMIN',
-      },
+  // Step 3: Link user to organization if not already linked
+  if (user.orgId !== organization.id) {
+    console.log('🔗 Linking user to organization...');
+    user = await prisma.users.update({
+      where: { id: user.id },
+      data: { orgId: organization.id },
     });
-    console.log(`✅ Updated user: ${updatedUser.email}`);
-    console.log(`   - Organization: ${organization.name}`);
-    console.log(`   - Role: ${updatedUser.role}`);
-  } else {
-    console.log('✅ Test user already configured correctly');
+    console.log(`✅ User linked to organization`);
   }
 
   console.log('');
   console.log('🎉 Seed completed successfully!');
   console.log('');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('Test credentials:');
   console.log('  Email: test@astralisone.com');
   console.log('  Password: Test123!');
   console.log('  Role: ADMIN');
   console.log(`  Organization: ${organization.name}`);
+  console.log('');
+  console.log('Add to your .env / .env.production:');
+  console.log(`  DEFAULT_USER_ID=${user.id}`);
+  console.log(`  DEFAULT_ORG_ID=${organization.id}`);
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 }
 
 main()

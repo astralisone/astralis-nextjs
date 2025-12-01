@@ -33,6 +33,13 @@ export interface ReminderJobData {
 }
 
 /**
+ * Job data interface for reminder scanning (cron job)
+ */
+export interface ScanRemindersJobData {
+  // Empty - the cron job doesn't need any data
+}
+
+/**
  * Add reminder job to queue
  */
 export async function addReminderJob(data: ReminderJobData): Promise<void> {
@@ -44,14 +51,50 @@ export async function addReminderJob(data: ReminderJobData): Promise<void> {
 }
 
 /**
+ * Queue a reminder (alias for addReminderJob)
+ */
+export async function queueReminder(data: ReminderJobData): Promise<void> {
+  return addReminderJob(data);
+}
+
+/**
+ * Setup recurring reminder scheduler job (runs every 5 minutes)
+ */
+export async function setupReminderSchedulerCron(): Promise<void> {
+  // Remove any existing cron jobs
+  const existingJobs = await schedulingRemindersQueue.getRepeatableJobs();
+  for (const job of existingJobs) {
+    if (job.name === 'scan-pending-reminders') {
+      await schedulingRemindersQueue.removeRepeatableByKey(job.key);
+      console.log(`[Queue] Removed existing reminder scheduler cron job: ${job.key}`);
+    }
+  }
+
+  // Add new repeatable job (every 5 minutes)
+  await schedulingRemindersQueue.add(
+    'scan-pending-reminders',
+    {}, // No data needed for cron job
+    {
+      repeat: {
+        pattern: '*/5 * * * *', // Every 5 minutes
+      },
+      jobId: 'reminder-scheduler-cron',
+    }
+  );
+
+  console.log('[Queue] Reminder scheduler cron job scheduled (every 5 minutes)');
+}
+
+/**
  * Get queue statistics
  */
 export async function getQueueStats() {
-  const [waiting, active, completed, failed] = await Promise.all([
+  const [waiting, active, completed, failed, delayed] = await Promise.all([
     schedulingRemindersQueue.getWaitingCount(),
     schedulingRemindersQueue.getActiveCount(),
     schedulingRemindersQueue.getCompletedCount(),
     schedulingRemindersQueue.getFailedCount(),
+    schedulingRemindersQueue.getDelayedCount(),
   ]);
 
   return {
@@ -59,6 +102,7 @@ export async function getQueueStats() {
     active,
     completed,
     failed,
-    total: waiting + active + completed + failed,
+    delayed,
+    total: waiting + active + completed + failed + delayed,
   };
 }
