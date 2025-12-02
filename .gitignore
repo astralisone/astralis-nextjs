@@ -8,7 +8,6 @@ storybook-static
 /playwright-report/
 /playwright/.cache/
 # Build outputs
-.next/
 out/
 tsconfig.tsbuildinfo
 

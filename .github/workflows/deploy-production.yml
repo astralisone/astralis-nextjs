@@ -1,0 +1,187 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+      - prod
+  workflow_dispatch:  # Allow manual triggering
+
+env:
+  REGISTRY: registry.digitalocean.com
+  IMAGE_PREFIX: astralis
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run linter
+        run: pnpm turbo lint
+
+      - name: Run type check
+        run: pnpm turbo type-check
+
+      # Uncomment when E2E tests are ready
+      # - name: Run E2E tests
+      #   run: pnpm test:e2e
+
+  build:
+    name: Build Docker Images
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app: [platform, marketing]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to DigitalOcean Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DIGITALOCEAN_TOKEN }}
+          password: ${{ secrets.DIGITALOCEAN_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-${{ matrix.app }}
+          tags: |
+            type=sha,prefix={{branch}}-
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            latest
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/${{ matrix.app }}/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-${{ matrix.app }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-${{ matrix.app }}:buildcache,mode=max
+
+  deploy:
+    name: Deploy to DigitalOcean
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://app.astralisone.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add server to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to server
+        env:
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_PATH: /home/deploy/astralis-nextjs
+        run: |
+          ssh ${SERVER_USER}@${SERVER_HOST} << 'EOF'
+            set -e
+            cd ${SERVER_PATH}
+
+            # Backup database
+            echo "Creating database backup..."
+            mkdir -p /home/deploy/backups
+            BACKUP_FILE="/home/deploy/backups/astralis_backup_$(date +%Y%m%d_%H%M%S).sql"
+            docker exec astralis_postgres pg_dump -U astralis astralis_one > ${BACKUP_FILE}
+            gzip ${BACKUP_FILE}
+
+            # Pull latest code
+            echo "Pulling latest code..."
+            git fetch origin
+            git checkout ${{ github.ref_name }}
+            git pull origin ${{ github.ref_name }}
+
+            # Login to container registry
+            echo "Logging into container registry..."
+            echo "${{ secrets.DIGITALOCEAN_TOKEN }}" | docker login registry.digitalocean.com -u ${{ secrets.DIGITALOCEAN_TOKEN }} --password-stdin
+
+            # Pull latest images
+            echo "Pulling latest images..."
+            docker compose -f docker-compose.prod.yml pull
+
+            # Run database migrations
+            echo "Running database migrations..."
+            docker compose -f docker-compose.prod.yml run --rm platform sh -c "npx prisma migrate deploy"
+
+            # Restart services with zero-downtime
+            echo "Restarting services..."
+            docker compose -f docker-compose.prod.yml up -d --force-recreate --no-deps platform marketing worker
+
+            # Health check
+            echo "Waiting for services to be healthy..."
+            sleep 10
+            docker compose -f docker-compose.prod.yml ps
+
+            # Cleanup
+            echo "Cleaning up old images..."
+            docker image prune -f
+
+            echo "Deployment completed successfully!"
+          EOF
+
+      - name: Verify deployment
+        env:
+          HEALTH_CHECK_URL: https://app.astralisone.com/api/health
+        run: |
+          echo "Checking application health..."
+          for i in {1..10}; do
+            if curl -f -s ${HEALTH_CHECK_URL} > /dev/null; then
+              echo "Application is healthy!"
+              exit 0
+            fi
+            echo "Attempt $i/10 failed, waiting..."
+            sleep 5
+          done
+          echo "Health check failed after 10 attempts"
+          exit 1
+
+      - name: Notify on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 Production Deployment Failed',
+              body: `Deployment failed for commit ${context.sha}.\n\nWorkflow: ${context.workflow}\nRun: ${context.runNumber}\n\nPlease check the logs and rollback if necessary.`,
+              labels: ['deployment', 'critical']
+            })

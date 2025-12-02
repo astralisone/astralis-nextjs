@@ -1,0 +1,2149 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// AGENTIC TASK SYSTEM ENUMS
+// ============================================================================
+
+enum PipelineType {
+  SALES
+  SUPPORT
+  BILLING
+  INTERNAL
+  GENERIC
+  CUSTOM
+}
+
+enum TaskSource {
+  FORM
+  EMAIL
+  CHAT
+  API
+  CALL
+}
+
+enum TaskStatus {
+  NEW
+  IN_PROGRESS
+  NEEDS_REVIEW
+  BLOCKED
+  DONE
+  CANCELLED
+}
+
+// ============================================================================
+// END AGENTIC TASK SYSTEM ENUMS
+// ============================================================================
+
+model Automation {
+  id               String              @id @default(cuid())
+  name             String
+  description      String?
+  n8nWorkflowId    String?
+  webhookUrl       String?
+  isActive         Boolean             @default(true)
+  triggerType      AutomationTrigger
+  triggerConfig    Json
+  lastExecutedAt   DateTime?
+  executionCount   Int                 @default(0)
+  successCount     Int                 @default(0)
+  failureCount     Int                 @default(0)
+  avgExecutionTime Float?
+  orgId            String
+  createdById      String
+  tags             String[]            @default([])
+  metadata         Json?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  createdBy        users               @relation("AutomationCreatedBy", fields: [createdById], references: [id])
+  organization     organization        @relation(fields: [orgId], references: [id])
+  executions       WorkflowExecution[]
+  triggers         WorkflowTrigger[]
+
+  @@index([orgId, isActive])
+  @@index([triggerType])
+  @@index([createdById])
+  @@index([createdAt])
+  @@map("automations")
+}
+
+model WorkflowExecution {
+  id             String          @id @default(cuid())
+  automationId   String
+  orgId          String
+  n8nExecutionId String?
+  status         ExecutionStatus @default(RUNNING)
+  startedAt      DateTime        @default(now())
+  completedAt    DateTime?
+  executionTime  Int?
+  triggerData    Json
+  outputData     Json?
+  errorMessage   String?
+  errorStack     String?
+  retryCount     Int             @default(0)
+  metadata       Json?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  automation     Automation      @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  organization   organization    @relation(fields: [orgId], references: [id])
+
+  @@index([automationId, status])
+  @@index([orgId, startedAt])
+  @@index([status])
+  @@index([createdAt])
+  @@map("workflow_executions")
+}
+
+model WorkflowTrigger {
+  id              String       @id @default(cuid())
+  automationId    String
+  orgId           String
+  triggerType     TriggerType
+  triggerEvent    String
+  webhookUrl      String?
+  cronSchedule    String?
+  eventFilters    Json?
+  isActive        Boolean      @default(true)
+  lastTriggeredAt DateTime?
+  triggerCount    Int          @default(0)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  automation      Automation   @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  organization    organization @relation(fields: [orgId], references: [id])
+
+  @@index([automationId, isActive])
+  @@index([orgId])
+  @@index([triggerType])
+  @@map("workflow_triggers")
+}
+
+model AutomationTemplate {
+  id                   String           @id @default(cuid())
+  name                 String
+  description          String
+  category             TemplateCategory
+  difficulty           String           @default("beginner")
+  n8nWorkflowJson      String
+  thumbnailUrl         String?
+  demoVideoUrl         String?
+  requiredIntegrations String[]         @default([])
+  useCount             Int              @default(0)
+  rating               Float            @default(0.0)
+  tags                 String[]         @default([])
+  isOfficial           Boolean          @default(false)
+  publishedById        String?
+  publishedAt          DateTime?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+
+  @@index([category])
+  @@index([useCount])
+  @@index([rating])
+  @@index([isOfficial])
+  @@map("automation_templates")
+}
+
+model IntegrationCredential {
+  id             String              @id @default(cuid())
+  userId         String
+  orgId          String
+  provider       IntegrationProvider
+  credentialName String
+  credentialData String
+  scope          String?
+  expiresAt      DateTime?
+  isActive       Boolean             @default(true)
+  lastUsedAt     DateTime?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  organization   organization        @relation(fields: [orgId], references: [id])
+  user           users               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider, credentialName])
+  @@index([orgId])
+  @@index([userId, isActive])
+  @@map("integration_credentials")
+}
+
+model AccessRequest {
+  id           String       @id
+  engagementId String
+  type         AccessType
+  details      String       @db.VarChar(500)
+  requestedFor String       @db.VarChar(100)
+  status       AccessStatus @default(PENDING)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime
+  Engagement   Engagement   @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+
+  @@index([engagementId])
+  @@index([engagementId, status])
+  @@index([status])
+  @@index([type])
+}
+
+model AuditLog {
+  id          String   @id
+  actorUserId String?
+  action      String   @db.VarChar(50)
+  entityType  String   @db.VarChar(50)
+  entityId    String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([action])
+  @@index([actorUserId, createdAt])
+  @@index([actorUserId])
+  @@index([createdAt])
+  @@index([entityId])
+  @@index([entityType, entityId])
+  @@index([entityType])
+}
+
+model ClientCall {
+  id          String   @id
+  userId      String
+  userEmail   String
+  scheduledAt DateTime
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+  phone       String?
+}
+
+model Company {
+  id             String       @id
+  name           String       @db.VarChar(100)
+  website        String       @db.VarChar(255)
+  industry       String       @db.VarChar(50)
+  size           String       @db.VarChar(20)
+  billingEmail   String       @db.VarChar(255)
+  billingAddress String       @db.VarChar(500)
+  notes          String       @db.VarChar(1000)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime
+  Contact        Contact[]
+  Engagement     Engagement[]
+
+  @@index([billingEmail])
+  @@index([createdAt])
+  @@index([name])
+}
+
+model Contact {
+  id                    String                  @id
+  companyId             String
+  firstName             String                  @db.VarChar(50)
+  lastName              String                  @db.VarChar(50)
+  email                 String                  @unique @db.VarChar(255)
+  phone                 String                  @db.VarChar(20)
+  role                  String                  @db.VarChar(50)
+  isPrimary             Boolean                 @default(false)
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime
+  Company               Company                 @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  EngagementStakeholder EngagementStakeholder[]
+
+  @@index([companyId])
+  @@index([companyId, isPrimary])
+  @@index([createdAt])
+  @@index([email])
+}
+
+model Engagement {
+  id                    String                  @id
+  companyId             String
+  name                  String                  @db.VarChar(100)
+  status                EngagementStatus        @default(DRAFT)
+  startDate             DateTime?
+  targetEndDate         DateTime?
+  budgetCurrency        String                  @db.VarChar(3)
+  budgetAmount          Decimal                 @db.Decimal(12, 2)
+  billingModel          BillingModel
+  scopeSummary          String                  @db.VarChar(2000)
+  acceptanceCriteria    String                  @db.VarChar(2000)
+  repoStrategy          String                  @db.VarChar(1000)
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime
+  AccessRequest         AccessRequest[]
+  Company               Company                 @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  EngagementStakeholder EngagementStakeholder[]
+  Environment           Environment[]
+  Milestone             Milestone[]
+
+  @@index([companyId])
+  @@index([companyId, status])
+  @@index([createdAt])
+  @@index([startDate])
+  @@index([status])
+}
+
+model EngagementStakeholder {
+  id           String     @id
+  engagementId String
+  contactId    String
+  role         String     @db.VarChar(50)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime
+  Contact      Contact    @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  Engagement   Engagement @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+
+  @@unique([engagementId, contactId])
+  @@index([contactId])
+  @@index([engagementId])
+}
+
+model Environment {
+  id           String     @id
+  engagementId String
+  name         String     @db.VarChar(50)
+  url          String     @db.VarChar(255)
+  notes        String     @db.VarChar(500)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime
+  Engagement   Engagement @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+
+  @@unique([engagementId, name])
+  @@index([engagementId])
+  @@index([name])
+}
+
+model Milestone {
+  id           String          @id
+  engagementId String
+  title        String          @db.VarChar(100)
+  description  String          @db.VarChar(500)
+  dueDate      DateTime?
+  amount       Decimal         @db.Decimal(12, 2)
+  status       MilestoneStatus @default(PLANNED)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime
+  Engagement   Engagement      @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+
+  @@index([dueDate])
+  @@index([engagementId])
+  @@index([engagementId, status])
+  @@index([status])
+}
+
+model MarketplaceItemToTag {
+  A                 String
+  B                 String
+  marketplace_items marketplace_items @relation(fields: [A], references: [id], onDelete: Cascade)
+  tags              tags              @relation(fields: [B], references: [id], onDelete: Cascade)
+
+  @@id([A, B], map: "_MarketplaceItemToTag_AB_pkey")
+  @@index([B], map: "_MarketplaceItemToTag_B_index")
+  @@map("_MarketplaceItemToTag")
+}
+
+model PostToTag {
+  A     String
+  B     String
+  posts posts  @relation(fields: [A], references: [id], onDelete: Cascade)
+  tags  tags   @relation(fields: [B], references: [id], onDelete: Cascade)
+
+  @@id([A, B], map: "_PostToTag_AB_pkey")
+  @@index([B], map: "_PostToTag_B_index")
+  @@map("_PostToTag")
+}
+
+model ai_optimization_reports {
+  id           String    @id
+  email        String
+  company      String?
+  industry     String?
+  businessSize String?
+  currentTools String[]  @default([])
+  painPoints   String[]  @default([])
+  reportSent   Boolean   @default(false)
+  reportData   Json?
+  sentAt       DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime
+
+  @@index([createdAt])
+  @@index([email])
+  @@index([industry])
+  @@index([reportSent])
+}
+
+model audit_availability {
+  id            String    @id
+  dayOfWeek     Int
+  startTime     String
+  endTime       String
+  timezone      String    @default("America/New_York")
+  isAvailable   Boolean   @default(true)
+  maxBookings   Int       @default(1)
+  bufferMinutes Int       @default(15)
+  effectiveFrom DateTime?
+  effectiveTo   DateTime?
+  assignedToId  String?
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime
+  users         users?    @relation(fields: [assignedToId], references: [id])
+
+  @@index([assignedToId])
+  @@index([dayOfWeek])
+  @@index([effectiveFrom, effectiveTo])
+  @@index([isAvailable])
+}
+
+model audit_blocked_dates {
+  id           String   @id
+  blockedDate  DateTime
+  startTime    String?
+  endTime      String?
+  timezone     String   @default("America/New_York")
+  reason       String
+  notes        String?
+  assignedToId String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime
+  users        users?   @relation(fields: [assignedToId], references: [id])
+
+  @@index([assignedToId])
+  @@index([blockedDate])
+}
+
+model audit_bookings {
+  id                                       String                @id
+  scheduledDate                            DateTime
+  scheduledTime                            String
+  duration                                 Int                   @default(60)
+  timezone                                 String                @default("America/New_York")
+  clientName                               String
+  clientEmail                              String
+  clientPhone                              String?
+  companyName                              String?
+  companySize                              String?
+  industry                                 String?
+  auditType                                AuditType             @default(GENERAL)
+  currentRevenue                           String?
+  painPoints                               String[]
+  goals                                    String[]
+  additionalNotes                          String?
+  confirmationSent                         Boolean               @default(false)
+  reminderSent                             Boolean               @default(false)
+  meetingLink                              String?
+  calendarEventId                          String?
+  adminNotes                               String?
+  preparationNotes                         String?
+  followUpActions                          String[]
+  assignedToId                             String?
+  userId                                   String?
+  auditCompleted                           Boolean               @default(false)
+  auditResults                             Json?
+  recommendedActions                       String[]
+  followUpScheduled                        DateTime?
+  createdAt                                DateTime              @default(now())
+  updatedAt                                DateTime
+  status                                   AuditBookingStatus    @default(SCHEDULED)
+  users_audit_bookings_assignedToIdTousers users?                @relation("audit_bookings_assignedToIdTousers", fields: [assignedToId], references: [id])
+  users_audit_bookings_userIdTousers       users?                @relation("audit_bookings_userIdTousers", fields: [userId], references: [id])
+  audit_notifications                      audit_notifications[]
+
+  @@index([assignedToId])
+  @@index([auditType])
+  @@index([clientEmail])
+  @@index([createdAt])
+  @@index([scheduledDate])
+  @@index([status])
+}
+
+model audit_notifications {
+  id             String           @id
+  bookingId      String
+  type           NotificationType
+  scheduledFor   DateTime
+  sent           Boolean          @default(false)
+  sentAt         DateTime?
+  recipientEmail String
+  subject        String
+  content        String
+  attempts       Int              @default(0)
+  lastAttempt    DateTime?
+  errorMessage   String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime
+  audit_bookings audit_bookings   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@index([scheduledFor])
+  @@index([sent])
+  @@index([type])
+}
+
+model audit_templates {
+  id                String    @id
+  name              String
+  description       String?
+  auditType         AuditType
+  sections          Json
+  questions         Json
+  checklists        Json
+  estimatedDuration Int       @default(60)
+  followUpRequired  Boolean   @default(true)
+  isActive          Boolean   @default(true)
+  sortOrder         Int?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime
+
+  @@index([auditType])
+  @@index([isActive])
+}
+
+model calendar_integrations {
+  id                String           @id
+  userId            String
+  provider          CalendarProvider
+  providerAccountId String
+  accessToken       String?
+  refreshToken      String?
+  tokenExpiresAt    DateTime?
+  defaultCalendarId String?
+  isActive          Boolean          @default(true)
+  metadata          Json?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime
+  users             users            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider])
+  @@index([provider])
+  @@index([userId])
+}
+
+model categories {
+  id                String              @id
+  name              String
+  slug              String              @unique
+  description       String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime
+  marketplace_items marketplace_items[]
+  posts             posts[]
+}
+
+model comments {
+  id        String   @id
+  content   String
+  postId    String
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  users     users    @relation(fields: [authorId], references: [id])
+  posts     posts    @relation(fields: [postId], references: [id])
+}
+
+model consultations {
+  id                                      String           @id
+  title                                   String
+  description                             String?
+  consultationType                        ConsultationType
+  status                                  BookingStatus    @default(PENDING)
+  scheduledAt                             DateTime?
+  completedAt                             DateTime?
+  duration                                Int              @default(30)
+  timeZone                                String           @default("UTC")
+  clientName                              String
+  clientEmail                             String
+  clientPhone                             String?
+  company                                 String?
+  teamSize                                Int?
+  industry                                String?
+  meetingType                             MeetingType      @default(VIDEO_CALL)
+  meetingUrl                              String?
+  meetingId                               String?
+  meetingPassword                         String?
+  objectives                              String?
+  currentSituation                        String?
+  desiredOutcome                          String?
+  budget                                  String?
+  timeline                                String?
+  specificQuestions                       String?
+  consultationNotes                       String?
+  actionItems                             Json?
+  proposalGenerated                       Boolean          @default(false)
+  proposalUrl                             String?
+  internalNotes                           String?
+  assignedToId                            String?
+  userId                                  String?
+  createdAt                               DateTime         @default(now())
+  updatedAt                               DateTime
+  users_consultations_assignedToIdTousers users?           @relation("consultations_assignedToIdTousers", fields: [assignedToId], references: [id])
+  users_consultations_userIdTousers       users?           @relation("consultations_userIdTousers", fields: [userId], references: [id])
+  follow_ups                              follow_ups[]
+
+  @@index([assignedToId])
+  @@index([clientEmail])
+  @@index([consultationType])
+  @@index([createdAt])
+  @@index([scheduledAt])
+  @@index([status])
+}
+
+model contact_forms {
+  id        String        @id
+  name      String
+  email     String
+  subject   String
+  message   String
+  company   String?
+  phone     String?
+  status    ContactStatus @default(PENDING)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime
+}
+
+model follow_ups {
+  id             String          @id
+  type           FollowUpType
+  status         FollowUpStatus  @default(PENDING)
+  scheduledAt    DateTime
+  completedAt    DateTime?
+  subject        String
+  message        String
+  emailSent      Boolean         @default(false)
+  emailSentAt    DateTime?
+  revenueAuditId String?
+  consultationId String?
+  metadata       Json?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime
+  consultations  consultations?  @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  revenue_audits revenue_audits? @relation(fields: [revenueAuditId], references: [id], onDelete: Cascade)
+
+  @@index([consultationId])
+  @@index([revenueAuditId])
+  @@index([scheduledAt])
+  @@index([status])
+  @@index([type])
+}
+
+model likes {
+  id        String   @id
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+  posts     posts    @relation(fields: [postId], references: [id])
+  users     users    @relation(fields: [userId], references: [id])
+
+  @@unique([postId, userId])
+}
+
+model marketplace_items {
+  id                    String                 @id
+  title                 String
+  slug                  String                 @unique
+  description           String
+  price                 Decimal                @db.Decimal(10, 2)
+  imageUrl              String
+  status                ItemStatus             @default(AVAILABLE)
+  categoryId            String
+  sellerId              String
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime
+  specifications        Json?
+  features              String[]
+  stock                 Int                    @default(0)
+  weight                Decimal                @db.Decimal(10, 2)
+  dimensions            Json?
+  featured              Boolean                @default(false)
+  published             Boolean                @default(true)
+  sortOrder             Int?
+  compatibility         String[]
+  complexity_level      String?
+  consultation_required Boolean                @default(false)
+  custom_pricing        Boolean                @default(false)
+  deliverables          String[]
+  delivery_method       DeliveryMethod?
+  demo_url              String?
+  digital_download_url  String?
+  discount_price        Decimal                @db.Decimal(10, 2)
+  documentation_url     String?
+  duration_type         DurationType?
+  duration_unit         String?
+  estimated_duration    Int?
+  faq                   Json?
+  gallery_images        String[]
+  industry_focus        String[]
+  is_recurring          Boolean                @default(false)
+  item_type             ItemType               @default(SERVICE)
+  license_type          String?
+  max_order_quantity    Int?
+  min_order_quantity    Int                    @default(1)
+  prerequisites         String[]
+  price_range_max       Decimal                @db.Decimal(10, 2)
+  price_range_min       Decimal                @db.Decimal(10, 2)
+  rating_average        Decimal                @default(0.00) @db.Decimal(3, 2)
+  rating_count          Int                    @default(0)
+  recurring_interval    String?
+  revision_limit        Int?
+  service_excludes      String[]
+  service_includes      String[]
+  setup_fee             Decimal                @db.Decimal(10, 2)
+  support_duration      Int?
+  support_duration_unit String?
+  system_requirements   Json?
+  target_audience       String[]
+  technology_stack      String[]
+  testimonials          Json?
+  video_url             String?
+  paypalProductId       String                 @unique
+  MarketplaceItemToTag  MarketplaceItemToTag[]
+  categories            categories             @relation(fields: [categoryId], references: [id])
+  users                 users                  @relation(fields: [sellerId], references: [id])
+  order_items           order_items[]
+  wishlists             wishlists[]
+}
+
+model newsletter_campaigns {
+  id                   String                @id
+  name                 String
+  subject              String
+  preheader            String?
+  content              String
+  htmlContent          String
+  status               CampaignStatus        @default(DRAFT)
+  scheduledAt          DateTime?
+  sentAt               DateTime?
+  segmentCriteria      Json?
+  templateId           String?
+  totalRecipients      Int                   @default(0)
+  totalSent            Int                   @default(0)
+  totalDelivered       Int                   @default(0)
+  totalOpened          Int                   @default(0)
+  totalClicked         Int                   @default(0)
+  totalUnsubscribed    Int                   @default(0)
+  totalBounced         Int                   @default(0)
+  totalComplained      Int                   @default(0)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime
+  newsletter_templates newsletter_templates? @relation(fields: [templateId], references: [id])
+  newsletter_emails    newsletter_emails[]
+
+  @@index([createdAt])
+  @@index([scheduledAt])
+  @@index([sentAt])
+  @@index([status])
+}
+
+model newsletter_emails {
+  id                     String                 @id
+  campaignId             String
+  subscriberId           String
+  subject                String
+  content                String
+  htmlContent            String
+  status                 EmailStatus            @default(PENDING)
+  sentAt                 DateTime?
+  deliveredAt            DateTime?
+  openedAt               DateTime?
+  clickedAt              DateTime?
+  bouncedAt              DateTime?
+  complainedAt           DateTime?
+  openCount              Int                    @default(0)
+  clickCount             Int                    @default(0)
+  errorMessage           String?
+  retryCount             Int                    @default(0)
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime
+  newsletter_campaigns   newsletter_campaigns   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  newsletter_subscribers newsletter_subscribers @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, subscriberId])
+  @@index([campaignId])
+  @@index([openedAt])
+  @@index([sentAt])
+  @@index([status])
+  @@index([subscriberId])
+}
+
+model newsletter_subscribers {
+  id                     String                  @id
+  email                  String                  @unique
+  firstName              String?
+  lastName               String?
+  status                 SubscriptionStatus      @default(PENDING)
+  consentGiven           Boolean                 @default(false)
+  consentDate            DateTime?
+  ipAddress              String?
+  userAgent              String?
+  source                 String?
+  confirmationToken      String                  @unique
+  confirmedAt            DateTime?
+  lastEmailSent          DateTime?
+  lastOpenedEmail        DateTime?
+  lastClickedEmail       DateTime?
+  totalEmailsSent        Int                     @default(0)
+  totalEmailsOpened      Int                     @default(0)
+  totalEmailsClicked     Int                     @default(0)
+  unsubscribeToken       String                  @unique
+  unsubscribeReason      String?
+  unsubscribedAt         DateTime?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime
+  newsletter_emails      newsletter_emails[]
+  subscriber_preferences subscriber_preferences?
+
+  @@index([confirmationToken])
+  @@index([createdAt])
+  @@index([email])
+  @@index([status, confirmedAt])
+  @@index([status])
+  @@index([unsubscribeToken])
+}
+
+model newsletter_templates {
+  id                   String                 @id
+  name                 String
+  description          String?
+  content              String
+  htmlContent          String
+  variables            Json?
+  isDefault            Boolean                @default(false)
+  isActive             Boolean                @default(true)
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime
+  newsletter_campaigns newsletter_campaigns[]
+
+  @@index([isActive])
+  @@index([isDefault])
+}
+
+model order_items {
+  id                 String                @id
+  orderId            String
+  marketplaceItemId  String?
+  name               String
+  description        String?
+  price              Decimal               @db.Decimal(10, 2)
+  quantity           Int                   @default(1)
+  subtotal           Decimal               @db.Decimal(10, 2)
+  itemType           ItemType?
+  digitalDownloadUrl String?
+  licenseKey         String?
+  customizations     Json?
+  fulfillmentStatus  ItemFulfillmentStatus @default(PENDING)
+  marketplace_items  marketplace_items?    @relation(fields: [marketplaceItemId], references: [id])
+  orders             orders                @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([marketplaceItemId])
+  @@index([orderId])
+}
+
+model orders {
+  id                String            @id
+  orderNumber       String            @unique
+  status            OrderStatus       @default(PENDING)
+  total             Decimal           @db.Decimal(10, 2)
+  subtotal          Decimal           @db.Decimal(10, 2)
+  taxAmount         Decimal           @db.Decimal(10, 2)
+  shippingAmount    Decimal           @db.Decimal(10, 2)
+  discountAmount    Decimal           @db.Decimal(10, 2)
+  currency          String            @default("USD")
+  customerEmail     String
+  customerName      String?
+  billingAddress    Json?
+  shippingAddress   Json?
+  paymentMethod     PaymentMethod
+  paymentStatus     PaymentStatus     @default(PENDING)
+  paymentId         String?
+  paymentData       Json?
+  userId            String?
+  fulfillmentStatus FulfillmentStatus @default(PENDING)
+  shippedAt         DateTime?
+  deliveredAt       DateTime?
+  trackingNumber    String?
+  notes             String?
+  internalNotes     String?
+  metadata          Json?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime
+  order_items       order_items[]
+  users             users?            @relation(fields: [userId], references: [id])
+
+  @@index([createdAt])
+  @@index([customerEmail])
+  @@index([orderNumber])
+  @@index([paymentStatus])
+  @@index([status])
+  @@index([userId])
+}
+
+model password_reset_tokens {
+  id        String   @id
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  users     users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+  @@index([token])
+  @@index([userId])
+}
+
+model posts {
+  id              String      @id
+  title           String
+  slug            String      @unique
+  content         String
+  excerpt         String?
+  featuredImage   String?
+  status          PostStatus  @default(DRAFT)
+  publishedAt     DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime
+  authorId        String
+  categoryId      String
+  metaTitle       String?
+  metaDescription String?
+  keywords        String[]
+  viewCount       Int         @default(0)
+  featured        Boolean     @default(false)
+  pinned          Boolean     @default(false)
+  sortOrder       Int?
+  locale          String      @default("en")
+  PostToTag       PostToTag[]
+  comments        comments[]
+  likes           likes[]
+  users           users       @relation(fields: [authorId], references: [id])
+  categories      categories  @relation(fields: [categoryId], references: [id])
+}
+
+model revenue_audits {
+  id                                       String        @id
+  title                                    String        @default("Revenue Operations Audit")
+  description                              String?
+  status                                   BookingStatus @default(PENDING)
+  scheduledAt                              DateTime?
+  completedAt                              DateTime?
+  duration                                 Int           @default(60)
+  timeZone                                 String        @default("UTC")
+  clientName                               String
+  clientEmail                              String
+  clientPhone                              String?
+  company                                  String?
+  teamSize                                 Int?
+  industry                                 String?
+  currentChallenges                        String?
+  specificAreas                            String[]
+  meetingType                              MeetingType   @default(VIDEO_CALL)
+  meetingUrl                               String?
+  meetingId                                String?
+  meetingPassword                          String?
+  revenueGoals                             String?
+  currentSystems                           String[]
+  painPoints                               String?
+  expectedOutcomes                         String?
+  auditResults                             String?
+  recommendations                          Json?
+  followUpScheduled                        Boolean       @default(false)
+  nextSteps                                String?
+  internalNotes                            String?
+  assignedToId                             String?
+  userId                                   String?
+  createdAt                                DateTime      @default(now())
+  updatedAt                                DateTime
+  follow_ups                               follow_ups[]
+  users_revenue_audits_assignedToIdTousers users?        @relation("revenue_audits_assignedToIdTousers", fields: [assignedToId], references: [id])
+  users_revenue_audits_userIdTousers       users?        @relation("revenue_audits_userIdTousers", fields: [userId], references: [id])
+
+  @@index([assignedToId])
+  @@index([clientEmail])
+  @@index([createdAt])
+  @@index([scheduledAt])
+  @@index([status])
+}
+
+model subscriber_preferences {
+  id                     String                 @id
+  subscriberId           String                 @unique
+  blogUpdates            Boolean                @default(true)
+  productUpdates         Boolean                @default(true)
+  marketplaceUpdates     Boolean                @default(true)
+  eventNotifications     Boolean                @default(false)
+  specialOffers          Boolean                @default(false)
+  frequency              EmailFrequency         @default(WEEKLY)
+  categoryInterests      String[]               @default([])
+  tagInterests           String[]               @default([])
+  preferredTime          String?
+  timezone               String?
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime
+  newsletter_subscribers newsletter_subscribers @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+}
+
+model tags {
+  id                   String                 @id
+  name                 String                 @unique
+  slug                 String                 @unique
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime
+  MarketplaceItemToTag MarketplaceItemToTag[]
+  PostToTag            PostToTag[]
+}
+
+model testimonials {
+  id        String   @id
+  content   String
+  rating    Int      @default(5)
+  authorId  String
+  role      String?
+  company   String?
+  avatar    String?
+  featured  Boolean  @default(false)
+  published Boolean  @default(true)
+  sortOrder Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  users     users    @relation(fields: [authorId], references: [id])
+}
+
+model users {
+  id                                                String                  @id @default(cuid())
+  email                                             String                  @unique
+  emailVerified                                     DateTime?
+  name                                              String?
+  password                                          String
+  avatar                                            String?
+  bio                                               String?
+  role                                              UserRole                @default(USER)
+  isActive                                          Boolean                 @default(true)
+  lastLoginAt                                       DateTime?
+  createdAt                                         DateTime                @default(now())
+  updatedAt                                         DateTime                @updatedAt
+  additionalInfo                                    String?
+  budget                                            String?
+  businessGoals                                     String?
+  company                                           String?
+  interestArea                                      String?
+  onboardingCompleted                               Boolean                 @default(false)
+  teamSize                                          String?
+  timeline                                          String?
+  timezone                                          String                  @default("UTC")
+  orgId                                             String?
+  accounts                                          Account[]
+  activityLogs                                      ActivityLog[]
+  documentChats                                     DocumentChat[]
+  sessions                                          Session[]
+  audit_availability                                audit_availability[]
+  audit_blocked_dates                               audit_blocked_dates[]
+  audit_bookings_audit_bookings_assignedToIdTousers audit_bookings[]        @relation("audit_bookings_assignedToIdTousers")
+  audit_bookings_audit_bookings_userIdTousers       audit_bookings[]        @relation("audit_bookings_userIdTousers")
+  automationsCreated                                Automation[]            @relation("AutomationCreatedBy")
+  availabilityRules                                 AvailabilityRule[]
+  calendarConnections                               CalendarConnection[]
+  calendar_integrations                             calendar_integrations[]
+  comments                                          comments[]
+  consultations_consultations_assignedToIdTousers   consultations[]         @relation("consultations_assignedToIdTousers")
+  consultations_consultations_userIdTousers         consultations[]         @relation("consultations_userIdTousers")
+  integrationCredentials                            IntegrationCredential[]
+  likes                                             likes[]
+  marketplace_items                                 marketplace_items[]
+  orders                                            orders[]
+  password_reset_tokens                             password_reset_tokens[]
+  posts                                             posts[]
+  revenue_audits_revenue_audits_assignedToIdTousers revenue_audits[]        @relation("revenue_audits_assignedToIdTousers")
+  revenue_audits_revenue_audits_userIdTousers       revenue_audits[]        @relation("revenue_audits_userIdTousers")
+  schedulingEvents                                  SchedulingEvent[]
+  schedulingAgentTasks                              SchedulingAgentTask[]
+  testimonials                                      testimonials[]
+  organization                                      organization?           @relation(fields: [orgId], references: [id])
+  wishlists                                         wishlists[]
+
+  @@index([isActive])
+  @@index([orgId])
+}
+
+model wishlists {
+  id                String            @id
+  userId            String
+  itemId            String
+  createdAt         DateTime          @default(now())
+  marketplace_items marketplace_items @relation(fields: [itemId], references: [id])
+  users             users             @relation(fields: [userId], references: [id])
+
+  @@unique([userId, itemId])
+}
+
+model organization {
+  id                     String                  @id @default(cuid())
+  name                   String
+  slug                   String?                 @unique
+  website                String?
+  plan                   PlanType                @default(FREE)
+  quotaResetAt           DateTime                @default(now())
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @default(now()) @updatedAt
+  documents              Document[]
+  documentChats          DocumentChat[]
+  automations            Automation[]
+  intakeRequests         intakeRequest[]
+  integrationCredentials IntegrationCredential[]
+  schedulingEvents       SchedulingEvent[]
+  schedulingAgentTasks   SchedulingAgentTask[]
+  users                  users[]
+  workflowExecutions     WorkflowExecution[]
+  workflowTriggers       WorkflowTrigger[]
+  orchestrationAgents    OrchestrationAgent[]
+  agentDecisions         AgentDecision[]
+
+  @@index([name])
+  @@index([slug])
+  @@index([plan])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              users   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([sessionToken])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@index([token])
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  orgId     String
+  action    String
+  entity    String
+  entityId  String?
+  changes   Json?
+  metadata  Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  user      users?   @relation(fields: [userId], references: [id])
+
+  @@index([orgId])
+  @@index([userId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+}
+
+model intakeRequest {
+  id               String       @id @default(cuid())
+  source           IntakeSource
+  status           IntakeStatus @default(NEW)
+  title            String
+  description      String?
+  requestData      Json
+  priority         Int          @default(0)
+  orgId            String
+  assignedPipeline String?
+  aiRoutingMeta    Json?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @default(now()) @updatedAt
+  pipeline         pipeline?    @relation(fields: [assignedPipeline], references: [id])
+  organization     organization @relation(fields: [orgId], references: [id])
+
+  @@index([orgId])
+  @@index([status])
+  @@index([source])
+  @@index([createdAt])
+}
+
+model pipeline {
+  id             String          @id @default(cuid())
+  orgId          String
+  key            String          @unique // NEW: Unique key for TaskTemplate references
+  name           String
+  description    String?
+  type           PipelineType    @default(GENERIC) // NEW: Pipeline type
+  isActive       Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @default(now()) @updatedAt
+  intakeRequests intakeRequest[]
+  stages         pipelineStage[]
+  tasks          Task[] // NEW: Direct task relation
+
+  @@index([orgId])
+  @@index([isActive])
+  @@index([key])
+  @@index([type])
+}
+
+model pipelineStage {
+  id          String         @id @default(cuid())
+  pipelineId  String
+  key         String // NEW: Unique key within pipeline
+  name        String
+  description String?
+  order       Int
+  isTerminal  Boolean        @default(false) // NEW: Terminal stage flag
+  color       String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @default(now()) @updatedAt
+  items       pipelineItem[]
+  tasks       Task[] // NEW: Direct task relation
+  pipeline    pipeline       @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+
+  @@unique([pipelineId, key]) // NEW: Unique constraint
+  @@index([pipelineId])
+  @@index([pipelineId, order])
+}
+
+model pipelineItem {
+  id           String        @id @default(cuid())
+  title        String
+  data         Json?
+  stageId      String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @default(now()) @updatedAt
+  assignedToId String?
+  description  String?
+  dueDate      DateTime?
+  priority     Int           @default(0)
+  progress     Int           @default(0)
+  status       String        @default("NOT_STARTED")
+  tags         String[]      @default([])
+  stage        pipelineStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
+
+  @@index([stageId])
+  @@index([createdAt])
+  @@index([assignedToId])
+  @@index([priority])
+  @@index([status])
+}
+
+// ============================================================================
+// AGENTIC TASK SYSTEM MODELS
+// ============================================================================
+
+model TaskTemplate {
+  id                   String        @id // e.g., BOOKING_REQUEST_V1
+  label                String
+  category             String
+  department           String?
+  staffRole            String?
+  typicalMinutes       Int
+  defaultPriority      Int
+  applicableSources    String[]
+  preferredPipelineKey String
+  defaultStageKey      String
+  definition           Json // Full JSON template including steps + agentConfig
+  tasks                Task[]
+  decisionLogs         DecisionLog[]
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  @@index([category])
+  @@index([preferredPipelineKey])
+}
+
+model Task {
+  id    String @id @default(cuid())
+  orgId String
+
+  // Linkage to template
+  templateId String
+  template   TaskTemplate @relation(fields: [templateId], references: [id])
+
+  // Source tracking
+  source   TaskSource
+  sourceId String? // Reference to original source (e.g., intakeRequest.id)
+
+  // Pipeline relations
+  pipelineId String?
+  pipeline   pipeline?      @relation(fields: [pipelineId], references: [id])
+  stageId    String?
+  stage      pipelineStage? @relation(fields: [stageId], references: [id])
+
+  // Denormalized convenience fields for querying
+  pipelineKey String?
+  stageKey    String?
+
+  // Task metadata
+  type       String
+  category   String
+  department String?
+  staffRole  String?
+
+  // Content
+  title       String
+  description String?
+
+  // Status and priority
+  priority Int
+  status   TaskStatus
+
+  // SLA / timeline
+  typicalMinutes Int?
+  timeline       Json? // { startedAt, dueAt, breachedAt }
+
+  // Task steps and data
+  steps       Json? // TaskStep[]
+  attachments Json?
+  data        Json?
+  tags        String[] @default([])
+
+  // Assignment
+  assignedToUserId String?
+
+  // Human override
+  overridden       Boolean   @default(false)
+  overrideReason   String?
+  overrideByUserId String?
+  overrideAt       DateTime?
+
+  // Agent state (decision tracking)
+  agentLastDecisionId String?
+  agentDecisionIds    String[] @default([])
+
+  // Relations
+  decisionLogs DecisionLog[]
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orgId, pipelineId, stageId])
+  @@index([assignedToUserId])
+  @@index([templateId])
+  @@index([status])
+  @@index([pipelineKey, stageKey])
+  @@index([source])
+}
+
+model DecisionLog {
+  id         String       @id @default(cuid())
+  taskId     String
+  task       Task         @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  orgId      String
+  templateId String
+  template   TaskTemplate @relation(fields: [templateId], references: [id])
+
+  // Event context
+  eventName       String // e.g. task.created, task.status_changed
+  eventId         String?
+  agentConfigHash String?
+
+  // Decision data
+  inputSnapshot Json // Partial snapshot of task relevant to decision
+  llmCall       Json? // { model, tokensIn, tokensOut, promptType }
+  decision      Json // AgentDecision { reasoning, actions[] }
+
+  // Timestamps
+  appliedAt DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@index([taskId])
+  @@index([orgId])
+  @@index([templateId])
+  @@index([eventName])
+  @@index([appliedAt])
+}
+
+// ============================================================================
+// END AGENTIC TASK SYSTEM MODELS
+// ============================================================================
+
+model Document {
+  id              String              @id @default(cuid())
+  fileName        String
+  filePath        String
+  fileSize        Int
+  mimeType        String
+  thumbnailUrl    String?
+  cdnUrl          String?
+  status          DocumentStatus      @default(PENDING)
+  uploadedById    String
+  orgId           String
+  ocrText         String?
+  ocrConfidence   Float?
+  extractedData   Json?
+  processingError String?
+  metadata        Json?
+  processedAt     DateTime?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  originalName    String
+  organization    organization        @relation(fields: [orgId], references: [id])
+  chats           DocumentChat[]
+  embeddings      DocumentEmbedding[]
+
+  @@index([orgId])
+  @@index([uploadedById])
+  @@index([status])
+  @@index([createdAt])
+  @@index([mimeType])
+}
+
+model DocumentEmbedding {
+  id         String   @id @default(cuid())
+  documentId String
+  orgId      String
+  chunkIndex Int
+  content    String
+  embedding  String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, chunkIndex])
+  @@index([documentId])
+  @@index([orgId])
+}
+
+model DocumentChat {
+  id            String       @id @default(cuid())
+  documentId    String?
+  userId        String
+  orgId         String
+  title         String?
+  messages      Json
+  lastMessageAt DateTime     @default(now())
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  document      Document?    @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  organization  organization @relation(fields: [orgId], references: [id])
+  user          users        @relation(fields: [userId], references: [id])
+
+  @@index([documentId])
+  @@index([userId])
+  @@index([orgId])
+  @@index([lastMessageAt])
+}
+
+model CalendarConnection {
+  id                String           @id @default(uuid())
+  userId            String
+  provider          CalendarProvider
+  providerAccountId String
+  accessToken       String
+  refreshToken      String?
+  expiresAt         DateTime?
+  scope             String
+  isActive          Boolean          @default(true)
+  lastSyncAt        DateTime?
+  syncErrorCount    Int              @default(0)
+  metadata          Json?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  user              users            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider, providerAccountId])
+  @@index([userId, isActive])
+  @@map("calendar_connections")
+}
+
+model AvailabilityRule {
+  id        String    @id @default(uuid())
+  userId    String
+  dayOfWeek DayOfWeek
+  startTime String
+  endTime   String
+  timezone  String    @default("UTC")
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  user      users     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isActive, dayOfWeek])
+  @@map("availability_rules")
+}
+
+model SchedulingEvent {
+  id                      String                @id @default(uuid())
+  userId                  String
+  orgId                   String?
+  title                   String
+  description             String?
+  startTime               DateTime
+  endTime                 DateTime
+  timezone                String                @default("UTC")
+  location                String?
+  meetingLink             String?
+  participantEmails       String[]
+  status                  EventStatus           @default(SCHEDULED)
+  aiSuggestionMeta        Json?
+  calendarIntegrationData Json?
+  createdAt               DateTime              @default(now())
+  updatedAt               DateTime              @updatedAt
+  reminders               EventReminder[]
+  schedulingAgentTasks    SchedulingAgentTask[]
+  organization            organization?         @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user                    users                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, startTime])
+  @@index([orgId, startTime])
+  @@index([status])
+  @@map("scheduling_events")
+}
+
+model EventReminder {
+  id           String          @id @default(uuid())
+  eventId      String
+  reminderTime DateTime
+  status       ReminderStatus  @default(PENDING)
+  sentAt       DateTime?
+  errorMessage String?
+  retryCount   Int             @default(0)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  event        SchedulingEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([status, reminderTime])
+  @@index([eventId])
+  @@map("event_reminders")
+}
+
+enum DocumentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum AccessStatus {
+  PENDING
+  GRANTED
+  DENIED
+}
+
+enum AccessType {
+  GITHUB
+  CLOUD
+  DATABASE
+  ANALYTICS
+  PM_TOOL
+  OTHER
+}
+
+enum AuditBookingStatus {
+  SCHEDULED
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+  RESCHEDULED
+}
+
+enum AuditType {
+  GENERAL
+  SALES_PROCESS
+  MARKETING_FUNNEL
+  PRICING_STRATEGY
+  CUSTOMER_RETENTION
+  DIGITAL_TRANSFORMATION
+  OPERATIONAL_EFFICIENCY
+}
+
+enum BillingModel {
+  TIME_AND_MATERIALS
+  FIXED_FEE
+  RETAINER
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+  RESCHEDULED
+}
+
+enum CalendarProvider {
+  GOOGLE
+  OUTLOOK
+  APPLE
+  ZOOM
+  CALENDLY
+  MICROSOFT
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  SENDING
+  SENT
+  PAUSED
+  CANCELLED
+}
+
+enum ConsultationType {
+  STRATEGY
+  TECHNICAL
+  IMPLEMENTATION
+  OPTIMIZATION
+  TRAINING
+  GENERAL
+}
+
+enum ContactStatus {
+  PENDING
+  REVIEWED
+  RESPONDED
+  CLOSED
+  EMAIL_FAILED
+}
+
+enum DeliveryMethod {
+  DIGITAL
+  CONSULTATION
+  DEVELOPMENT
+  DESIGN
+  MAINTENANCE
+  TRAINING
+}
+
+enum DurationType {
+  ONE_TIME
+  HOURLY
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+  PROJECT_BASED
+}
+
+enum EmailFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+}
+
+enum EmailStatus {
+  PENDING
+  SENT
+  DELIVERED
+  OPENED
+  CLICKED
+  BOUNCED
+  COMPLAINED
+  FAILED
+}
+
+enum EngagementStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  CLOSED
+}
+
+enum FollowUpStatus {
+  PENDING
+  SENT
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum FollowUpType {
+  EMAIL_REMINDER
+  EMAIL_THANK_YOU
+  EMAIL_FOLLOW_UP
+  EMAIL_PROPOSAL
+  INTERNAL_REMINDER
+  CALENDAR_EVENT
+}
+
+enum FulfillmentStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum ItemFulfillmentStatus {
+  PENDING
+  PROCESSING
+  FULFILLED
+  CANCELLED
+}
+
+enum ItemStatus {
+  AVAILABLE
+  SOLD_OUT
+  COMING_SOON
+}
+
+enum ItemType {
+  PRODUCT
+  SERVICE
+}
+
+enum MeetingType {
+  VIDEO_CALL
+  PHONE_CALL
+  IN_PERSON
+  HYBRID
+}
+
+enum MilestoneStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETE
+  INVOICED
+}
+
+enum NotificationType {
+  CONFIRMATION
+  REMINDER_24H
+  REMINDER_2H
+  FOLLOW_UP
+  CANCELLATION
+  RESCHEDULE
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  PAYPAL
+  STRIPE
+  BANK_TRANSFER
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum SubscriptionStatus {
+  PENDING
+  ACTIVE
+  UNSUBSCRIBED
+  BOUNCED
+  COMPLAINED
+}
+
+enum UserRole {
+  USER
+  AUTHOR
+  EDITOR
+  ADMIN
+  PM
+  OPERATOR
+  CLIENT
+}
+
+enum IntakeSource {
+  FORM
+  EMAIL
+  CHAT
+  API
+}
+
+enum IntakeStatus {
+  NEW
+  ROUTING
+  ASSIGNED
+  PROCESSING
+  COMPLETED
+  REJECTED
+}
+
+enum PlanType {
+  FREE
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+enum ReminderStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+enum EventStatus {
+  SCHEDULED
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  CONFLICT
+}
+
+enum AutomationTrigger {
+  WEBHOOK
+  SCHEDULE
+  EVENT
+  MANUAL
+  API
+}
+
+enum ExecutionStatus {
+  QUEUED
+  RUNNING
+  SUCCESS
+  FAILED
+  TIMEOUT
+  CANCELLED
+}
+
+enum TriggerType {
+  WEBHOOK
+  SCHEDULE
+  INTAKE_CREATED
+  INTAKE_ASSIGNED
+  DOCUMENT_UPLOADED
+  DOCUMENT_PROCESSED
+  PIPELINE_STAGE_CHANGED
+  FORM_SUBMITTED
+  EMAIL_RECEIVED
+  API_CALL
+}
+
+enum TemplateCategory {
+  LEAD_MANAGEMENT
+  CUSTOMER_ONBOARDING
+  REPORTING
+  NOTIFICATIONS
+  DATA_SYNC
+  CONTENT_PUBLISHING
+  INVOICING
+  SUPPORT_AUTOMATION
+  SALES_PIPELINE
+  MARKETING
+  HR_OPERATIONS
+  OTHER
+}
+
+enum IntegrationProvider {
+  GMAIL
+  GOOGLE_SHEETS
+  GOOGLE_DRIVE
+  GOOGLE_CALENDAR
+  SLACK
+  MICROSOFT_TEAMS
+  OUTLOOK
+  HUBSPOT
+  SALESFORCE
+  STRIPE
+  PAYPAL
+  MAILCHIMP
+  SENDGRID
+  TWILIO
+  ZOOM
+  DROPBOX
+  TRELLO
+  ASANA
+  NOTION
+  AIRTABLE
+  WEBHOOK
+  HTTP_REQUEST
+  DATABASE
+  OPENAI
+  ANTHROPIC
+  OTHER
+}
+
+// ============================================================================
+// SCHEDULING AGENT MODELS
+// ============================================================================
+
+enum AgentTaskSource {
+  FORM
+  EMAIL
+  SMS
+  API
+  CHAT
+  VOICE
+}
+
+enum AgentTaskType {
+  SCHEDULE_MEETING
+  RESCHEDULE_MEETING
+  CANCEL_MEETING
+  CHECK_AVAILABILITY
+  CREATE_TASK
+  UPDATE_TASK
+  INQUIRY
+  REMINDER
+  UNKNOWN
+}
+
+enum AgentTaskStatus {
+  PENDING
+  PROCESSING
+  AWAITING_INPUT
+  SCHEDULED
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model SchedulingAgentTask {
+  id     String  @id @default(uuid())
+  userId String
+  orgId  String?
+
+  // Source tracking
+  source     AgentTaskSource
+  sourceId   String? // Reference to original message/form/email
+  rawContent String          @db.Text // Original input text
+
+  // AI Classification
+  taskType   AgentTaskType @default(UNKNOWN)
+  intent     String? // Extracted intent description
+  entities   Json? // { date, time, duration, participants, subject, location }
+  priority   Int           @default(3) // 1-5 (5 = highest)
+  confidence Float         @default(0) // AI confidence 0-1
+
+  // Task Details (when taskType = CREATE_TASK or UPDATE_TASK)
+  title       String?
+  description String?   @db.Text
+  dueDate     DateTime?
+  assignedTo  String?
+
+  // Scheduling Details (when taskType = SCHEDULE_*, RESCHEDULE_*, CANCEL_*)
+  schedulingEventId String?
+  proposedSlots     Json? // Array of AI-suggested alternative slots
+  selectedSlot      Json? // The slot that was finally selected
+
+  // Status tracking
+  status       AgentTaskStatus @default(PENDING)
+  resolution   String? // How the task was resolved
+  errorMessage String? // Error details if status = FAILED
+
+  // Metadata
+  aiMetadata     Json? // Full AI response for audit/debugging
+  processingTime Int? // Processing time in milliseconds
+  retryCount     Int   @default(0)
+
+  // Timestamps
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  processedAt DateTime? // When AI classification completed
+  completedAt DateTime? // When task was fully resolved
+
+  // Relations
+  user            users            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization    organization?    @relation(fields: [orgId], references: [id], onDelete: SetNull)
+  schedulingEvent SchedulingEvent? @relation(fields: [schedulingEventId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([orgId])
+  @@index([status])
+  @@index([taskType])
+  @@index([priority])
+  @@index([createdAt])
+  @@index([source])
+  @@map("scheduling_agent_tasks")
+}
+
+// ============================================================================
+// ORCHESTRATION AGENT MODELS (LLM-Powered Decision System)
+// ============================================================================
+
+enum LLMProvider {
+  OPENAI
+  CLAUDE
+}
+
+enum AgentInputSource {
+  EMAIL
+  WEBHOOK
+  DB_TRIGGER
+  WORKER
+  API
+  SCHEDULE
+}
+
+enum DecisionType {
+  ASSIGN_PIPELINE
+  CREATE_EVENT
+  UPDATE_EVENT
+  CANCEL_EVENT
+  SEND_NOTIFICATION
+  TRIGGER_AUTOMATION
+  ESCALATE
+  NO_ACTION
+}
+
+enum DecisionStatus {
+  PENDING
+  EXECUTED
+  FAILED
+  REJECTED
+  REQUIRES_APPROVAL
+}
+
+model OrchestrationAgent {
+  id    String @id @default(cuid())
+  orgId String
+  name  String
+
+  // LLM Configuration
+  llmProvider  LLMProvider
+  llmModel     String // e.g., "gpt-4-turbo", "claude-sonnet-4-20250514"
+  systemPrompt String      @db.Text
+  temperature  Float       @default(0.3)
+  maxTokens    Int         @default(2000)
+
+  // Agent Status
+  isActive Boolean @default(true)
+
+  // Capability Flags
+  canAssignPipelines    Boolean @default(true)
+  canCreateEvents       Boolean @default(true)
+  canSendNotifications  Boolean @default(true)
+  canTriggerAutomations Boolean @default(true)
+
+  // Rate Limits
+  maxActionsPerMinute Int @default(60)
+  maxActionsPerHour   Int @default(500)
+
+  // Audit Counters
+  totalDecisions      Int @default(0)
+  successfulDecisions Int @default(0)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  organization organization    @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  decisions    AgentDecision[]
+
+  @@index([orgId, isActive])
+  @@map("orchestration_agents")
+}
+
+model AgentDecision {
+  id      String @id @default(cuid())
+  agentId String
+  orgId   String
+
+  // Input Details
+  inputSource AgentInputSource
+  inputType   String // e.g., "intake_created", "form_submitted", "email_received"
+  inputData   Json
+
+  // LLM Processing
+  llmPrompt   String  @db.Text
+  llmResponse String  @db.Text
+  confidence  Float // 0.0 - 1.0
+  reasoning   String? // Human-readable explanation
+
+  // Decision Output
+  decisionType DecisionType
+  actions      Json // Array of actions taken
+
+  // Outcome Tracking
+  status        DecisionStatus @default(PENDING)
+  executionTime Int? // Time in milliseconds
+  errorMessage  String?
+
+  // Timestamps
+  createdAt  DateTime  @default(now())
+  executedAt DateTime?
+
+  // Relations
+  agent        OrchestrationAgent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  organization organization       @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, createdAt])
+  @@index([agentId, status])
+  @@index([inputSource])
+  @@map("agent_decisions")
+}
+
+// ============================================================================
+// CHAT MESSAGE MODELS (Real-time chat for scheduling agent)
+// ============================================================================
+
+enum ChatMessageType {
+  SCHEDULING_UPDATE
+  CONFIRMATION
+  CLARIFICATION
+  CANCELLATION
+  ERROR
+  INFO
+}
+
+model ChatMessage {
+  id        String          @id @default(cuid())
+  userId    String
+  orgId     String?
+  taskId    String? // Related SchedulingAgentTask ID
+  type      ChatMessageType
+  content   String          @db.Text
+  data      Json? // Additional structured data
+  read      Boolean         @default(false)
+  createdAt DateTime        @default(now())
+
+  @@index([userId, createdAt])
+  @@index([taskId])
+  @@index([read])
+  @@map("chat_messages")
+}
