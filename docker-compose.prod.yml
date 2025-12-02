@@ -1,66 +1,108 @@
-# Production docker-compose - Full stack with Docker containers
-
+# Production docker-compose - Turborepo monorepo with multi-container deployment
 services:
   # PostgreSQL Database
   postgres:
-    image: postgres:16
+    image: postgres:16-alpine
     container_name: astralis_postgres
     restart: unless-stopped
     ports:
-      - "${POSTGRES_PORT:-5433}:5432"  # Map to 5433 to avoid conflicts
+      - "${POSTGRES_PORT:-5432}:5432"
     environment:
-      POSTGRES_DB: ${DATABASE_NAME:-astralis}
-      POSTGRES_USER: ${DATABASE_USER:-gregorystarr}
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-astralis_one}
+      POSTGRES_USER: ${POSTGRES_USER:-astralis}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-gregorystarr} -d ${DATABASE_NAME:-astralis}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-astralis} -d ${POSTGRES_DB:-astralis_one}"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - astralis-network
 
-  # Redis Cache
+  # Redis Cache & Queue
   redis:
     image: redis:7-alpine
     container_name: astralis_redis
     restart: unless-stopped
     ports:
       - "${REDIS_PORT:-6379}:6379"
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    command: redis-server --appendonly yes
     volumes:
-      - redis-data:/data
+      - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - astralis-network
 
-  # Next.js Application
-  app:
+  # Platform App (Next.js SSR - app.astralisone.com)
+  platform:
     build:
       context: .
-      dockerfile: Dockerfile.nextjs
-    image: astralis-nextjs-app:latest
-    container_name: astralis_app
+      dockerfile: apps/platform/Dockerfile
+    image: astralis-platform:latest
+    container_name: astralis_platform
     restart: unless-stopped
     ports:
       - "3001:3001"
     environment:
       - NODE_ENV=production
-    env_file:
-      - .env.production
+      - DATABASE_URL=${DATABASE_URL}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-https://app.astralisone.com}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+    networks:
+      - astralis-network
+
+  # Marketing Site (Static - www.astralisone.com)
+  marketing:
+    build:
+      context: .
+      dockerfile: apps/marketing/Dockerfile
+    image: astralis-marketing:latest
+    container_name: astralis_marketing
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    networks:
+      - astralis-network
+
+  # Background Worker (BullMQ)
+  worker:
+    build:
+      context: .
+      dockerfile: apps/platform/Dockerfile
+    image: astralis-platform:latest
+    container_name: astralis_worker
+    restart: unless-stopped
+    command: ["node", "-r", "dotenv/config", "apps/platform/worker.js"]
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - astralis-network
 
   # n8n Workflow Automation
   n8n:
@@ -71,34 +113,39 @@ services:
       - "5678:5678"
     environment:
       - N8N_PORT=5678
-      - N8N_PROTOCOL=http
-      - N8N_HOST=localhost
-      - WEBHOOK_URL=http://localhost:5678
-      - N8N_BASIC_AUTH_ACTIVE=false
-      - N8N_ENCRYPTION_KEY=your-64-character-hex-encryption-key-change-this-badassSecret
+      - N8N_PROTOCOL=https
+      - N8N_HOST=${N8N_HOST:-automation.astralisone.com}
+      - WEBHOOK_URL=https://${N8N_HOST:-automation.astralisone.com}
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
       - DB_POSTGRESDB_PORT=5432
-      - DB_POSTGRESDB_DATABASE=${DATABASE_NAME:-astralis}
-      - DB_POSTGRESDB_USER=${DATABASE_USER:-gregorystarr}
-      - DB_POSTGRESDB_PASSWORD=${DATABASE_PASSWORD}
+      - DB_POSTGRESDB_DATABASE=${POSTGRES_DB:-astralis_one}
+      - DB_POSTGRESDB_USER=${POSTGRES_USER:-astralis}
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
       - DB_POSTGRESDB_SCHEMA=n8n
     depends_on:
       postgres:
         condition: service_healthy
     volumes:
-      - n8n-data:/home/node/.n8n
+      - n8n_data:/home/node/.n8n
     healthcheck:
       test: ["CMD-SHELL", "wget --spider -q http://localhost:5678/healthz || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
+    networks:
+      - astralis-network
 
 volumes:
-  postgres-data:
+  postgres_data:
     driver: local
-  redis-data:
+  redis_data:
     driver: local
-  n8n-data:
+  n8n_data:
     driver: local
+
+networks:
+  astralis-network:
+    driver: bridge
