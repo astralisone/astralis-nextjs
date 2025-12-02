@@ -3,7 +3,6 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { IntakeSource, IntakeStatus } from "@prisma/client";
 import { quotaTrackingService, QuotaExceededError } from "@/lib/services/quotaTracking.service";
-import { AIRoutingService } from "@/lib/services/aiRouting.service";
 import { getEventBus, getAgentInstance } from "@/lib/agent";
 
 // Extend global type to include our custom property
@@ -30,22 +29,15 @@ const intakeFiltersSchema = z.object({
 });
 
 /**
- * Check if OpenAI API key is configured
- */
-function isOpenAIConfigured(): boolean {
-  return Boolean(process.env.OPENAI_API_KEY);
-}
-
-/**
  * POST /api/intake
- * Capture intake request and route using AI logic
+ * Capture intake request and route using Orchestration Agent
  *
  * This endpoint:
  * 1. Validates and stores the intake request
  * 2. Checks quota limits before processing
- * 3. Applies AI routing logic (uses AIRoutingService if OpenAI configured, fallback otherwise)
- * 4. Assigns to appropriate pipeline
- * 5. Returns routing result
+ * 3. Emits intake:created event for Orchestration Agent to handle routing
+ * 4. OA determines appropriate pipeline and assignments
+ * 5. Returns intake request (routing happens asynchronously via OA)
  */
 export async function POST(req: NextRequest) {
   try {
@@ -96,18 +88,12 @@ export async function POST(req: NextRequest) {
       throw quotaError;
     }
 
-    // Use AI routing if OpenAI is configured, otherwise use fallback
-    const useAIRouting = isOpenAIConfigured();
-    let aiRoutingResult: {
-      assignedPipeline: string | null;
-      confidence: number;
-      reasoning: string;
-      suggestedPipelines: string[];
-      usedAIRouting: boolean;
-    };
+    // OA (Orchestration Agent) now handles all routing via events
+    // Check if OpenAI is configured for backward compatibility
+    const useAIRouting = Boolean(process.env.OPENAI_API_KEY);
 
     if (useAIRouting) {
-      console.log(`[Intake API] Using AIRoutingService for intake request (org: ${orgId})`);
+      console.log(`[Intake API] OpenAI configured - creating intake for OA routing (org: ${orgId})`);
 
       // First create the intake request with NEW status
       const intakeRequest = await prisma.intakeRequest.create({
@@ -130,10 +116,10 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      // Process with AIRoutingService (updates the intake request directly)
+      // OA (Orchestration Agent) handles all routing via events
       try {
-        const aiService = new AIRoutingService();
-        await aiService.processIntakeRequest(intakeRequest.id);
+        // Emit event - OA will handle routing decisions
+        console.log('[Intake API] Relying on OA for routing via intake:created event');
 
         // Fetch updated intake request after AI processing
         const updatedIntake = await prisma.intakeRequest.findUnique({
@@ -321,36 +307,23 @@ export async function POST(req: NextRequest) {
         );
       }
     } else {
-      // Fallback to basic keyword routing (no OpenAI key configured)
-      console.log(`[Intake API] Using fallback routing for intake request (org: ${orgId}) - OpenAI not configured`);
+      // No OpenAI configured - OA will still handle routing via events
+      console.log(`[Intake API] No OpenAI configured - OA will handle routing via events (org: ${orgId})`);
 
-      aiRoutingResult = {
-        ...(await performFallbackRouting({
-          title,
-          description,
-          requestData,
-          orgId,
-        })),
-        usedAIRouting: false,
-      };
-
-      // Create intake request with fallback routing metadata
+      // Create intake request with NEW status - OA will route it
       const intakeRequest = await prisma.intakeRequest.create({
         data: {
           source: source as IntakeSource,
-          status: aiRoutingResult.assignedPipeline ? IntakeStatus.ASSIGNED : IntakeStatus.NEW,
+          status: IntakeStatus.NEW,
           title,
           description,
           requestData,
           priority: priority || 0,
           orgId,
-          assignedPipeline: aiRoutingResult.assignedPipeline,
           aiRoutingMeta: {
-            confidence: aiRoutingResult.confidence,
-            reasoning: aiRoutingResult.reasoning,
-            suggestedPipelines: aiRoutingResult.suggestedPipelines,
-            routingMethod: "fallback_keyword",
+            routingMethod: "oa_event_based",
             routedAt: new Date().toISOString(),
+            pending: true,
           },
         },
         include: {
@@ -424,9 +397,9 @@ export async function POST(req: NextRequest) {
         {
           intakeRequest,
           routing: {
-            assigned: Boolean(aiRoutingResult.assignedPipeline),
-            confidence: aiRoutingResult.confidence,
-            reasoning: aiRoutingResult.reasoning,
+            assigned: false,
+            confidence: 0,
+            reasoning: "OA will handle routing via events",
             usedAIRouting: false,
           },
         },
@@ -444,74 +417,6 @@ export async function POST(req: NextRequest) {
       { status: 500 },
     );
   }
-}
-
-/**
- * Fallback Routing Logic (Keyword-based)
- *
- * Used when OpenAI API key is not configured.
- * Provides basic keyword-based routing as a fallback.
- *
- * Features:
- * - Basic keyword pattern matching
- * - Pipeline name matching
- * - Priority keywords detection (urgent, emergency)
- *
- * For production AI routing, see AIRoutingService.
- */
-async function performFallbackRouting(params: {
-  title: string;
-  description?: string;
-  requestData: unknown;
-  orgId: string;
-}): Promise<{
-  assignedPipeline: string | null;
-  confidence: number;
-  reasoning: string;
-  suggestedPipelines: string[];
-}> {
-  // Fetch available pipelines for the organization
-  const pipelines = await prisma.pipeline.findMany({
-    where: { orgId: params.orgId },
-    select: { id: true, name: true },
-  });
-
-  if (pipelines.length === 0) {
-    return {
-      assignedPipeline: null,
-      confidence: 0,
-      reasoning: "No pipelines available for this organization",
-      suggestedPipelines: [],
-    };
-  }
-
-  // Basic keyword-based routing (fallback when OpenAI not configured)
-  const content = `${params.title} ${params.description || ""}`.toLowerCase();
-
-  // Simple pattern matching (fallback - use AIRoutingService for production AI routing)
-  let selectedPipeline = null;
-  let confidence = 0.3; // Low confidence for keyword-based routing
-  let reasoning = "Fallback routing to first available pipeline (AI routing not configured)";
-
-  // Example routing patterns
-  if (content.includes("urgent") || content.includes("emergency")) {
-    selectedPipeline = pipelines[0].id;
-    confidence = 0.7;
-    reasoning = "Urgent request detected - routed to priority pipeline";
-  } else if (content.includes("document") || content.includes("invoice")) {
-    selectedPipeline = pipelines.find(p => p.name.toLowerCase().includes("document"))?.id || pipelines[0].id;
-    confidence = 0.6;
-    reasoning = "Document processing request detected";
-  } else {
-    selectedPipeline = pipelines[0].id;
-  }
-
-  return {
-    assignedPipeline: selectedPipeline,
-    confidence,
-    reasoning,
-    suggestedPipelines: pipelines.map(p => p.id),
-  };
 }
 
 /**

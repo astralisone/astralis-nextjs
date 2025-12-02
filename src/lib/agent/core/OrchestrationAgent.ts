@@ -44,6 +44,7 @@ import { AgentEventBus, type EmitResult, type EventBusConfig } from '../inputs/E
 import { DecisionEngine, type DecisionEngineConfig } from './DecisionEngine';
 import { ActionExecutor, type ActionExecutorConfig } from './ActionExecutor';
 import { PromptBuilder, type OrgContext as PromptOrgContext } from '../prompts';
+import { prisma } from '@/lib/prisma';
 
 // =============================================================================
 // Constants
@@ -795,15 +796,60 @@ export class OrchestrationAgent {
   }
 
   /**
-   * Make LLM decision call.
+   * Make LLM decision call with Claude→OpenAI fallback.
    */
   private async makeLLMDecision(systemPrompt: string, userPrompt: string): Promise<string> {
-    const response = await this.llmClient.complete([
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt },
-    ]);
+    try {
+      // Try Claude first (or configured primary provider)
+      const response = await this.llmClient.complete([
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ]);
 
-    return response.content;
+      return response.content;
+    } catch (claudeError) {
+      this.logger.error('[OA] Primary LLM failed, attempting OpenAI fallback', claudeError as Error, {
+        primaryProvider: this.config.llmProvider,
+      });
+
+      try {
+        // Fallback to OpenAI
+        const openaiClient = createLLMClient({
+          provider: LLMProvider.OPENAI,
+          model: 'gpt-4o' as LLMModel,
+          defaultOptions: {
+            temperature: this.config.temperature,
+            maxTokens: this.config.maxTokens,
+          },
+        });
+
+        const fallbackResponse = await openaiClient.complete([
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ]);
+
+        this.logger.info('[OA] OpenAI fallback succeeded', {
+          primaryProvider: this.config.llmProvider,
+        });
+
+        return fallbackResponse.content;
+      } catch (openaiError) {
+        this.logger.error('[OA] OpenAI fallback also failed', openaiError as Error);
+
+        // Emit routing failure event for UI visibility
+        await this.eventBus.emit('intake:routing_failed', {
+          error: 'Both Claude and OpenAI LLM calls failed',
+          primaryError: claudeError instanceof Error ? claudeError.message : String(claudeError),
+          fallbackError: openaiError instanceof Error ? openaiError.message : String(openaiError),
+          timestamp: new Date(),
+        }, { source: 'agent' });
+
+        // Surface error with details
+        throw new Error(
+          `LLM routing failed - Primary (${this.config.llmProvider}): ${claudeError instanceof Error ? claudeError.message : String(claudeError)}, Fallback (OpenAI): ${openaiError instanceof Error ? openaiError.message : String(openaiError)}`
+        );
+      }
+    }
   }
 
   // ===========================================================================
@@ -829,6 +875,7 @@ export class OrchestrationAgent {
 
   /**
    * Get organization context (with caching).
+   * Fetches real pipelines, stages, and users from the database.
    */
   private async getOrganizationContext(): Promise<OrgContext> {
     const now = new Date();
@@ -842,36 +889,125 @@ export class OrchestrationAgent {
       return this.orgContextCache;
     }
 
-    // In production, this would fetch from database/API
-    // For now, return a placeholder context
-    const context: OrgContext = {
-      id: this.config.orgId,
-      name: 'Organization',
-      pipelines: [
-        { id: 'sales', name: 'Sales Inquiries', stages: ['New', 'Qualified', 'Proposal', 'Closed'], category: 'sales', isActive: true },
-        { id: 'support', name: 'Support Requests', stages: ['New', 'In Progress', 'Resolved'], category: 'support', isActive: true },
-        { id: 'general', name: 'General Intake', stages: ['New', 'Reviewed', 'Actioned'], category: 'general', isActive: true },
-      ],
-      users: [
-        { id: 'admin-1', name: 'Admin User', email: 'admin@example.com', role: 'ADMIN', currentLoad: 0, isAvailable: true },
-        { id: 'sales-1', name: 'Sales Rep', email: 'sales@example.com', role: 'SALES', currentLoad: 5, isAvailable: true },
-        { id: 'support-1', name: 'Support Agent', email: 'support@example.com', role: 'OPERATOR', currentLoad: 3, isAvailable: true },
-      ],
-      settings: {
-        timezone: 'America/New_York',
-        workingHours: { start: '09:00', end: '17:00', workingDays: [1, 2, 3, 4, 5] },
-        defaultPipeline: 'general',
-        escalationEmail: this.config.escalationEmail,
-        defaultEventDuration: 30,
-        lunchBreak: { start: '12:00', end: '13:00' },
-      },
-    };
+    try {
+      // Fetch organization details
+      const org = await prisma.organization.findUnique({
+        where: { id: this.config.orgId },
+        select: { id: true, name: true },
+      });
 
-    // Cache the context
-    this.orgContextCache = context;
-    this.orgContextCacheTime = now;
+      // Fetch real pipelines with stages from database
+      const pipelines = await prisma.pipeline.findMany({
+        where: { orgId: this.config.orgId, isActive: true },
+        include: {
+          stages: {
+            orderBy: { order: 'asc' },
+            select: { id: true, name: true, order: true },
+          },
+        },
+        orderBy: { createdAt: 'asc' },
+      });
 
-    return context;
+      // Fetch real users from database
+      const users = await prisma.users.findMany({
+        where: { orgId: this.config.orgId, isActive: true },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+        },
+      });
+
+      // Find default pipeline (prefer one named "General Intake" or first available)
+      const defaultPipeline = pipelines.find(p =>
+        p.name.toLowerCase().includes('general') ||
+        p.name.toLowerCase().includes('intake')
+      ) || pipelines[0];
+
+      const context: OrgContext = {
+        id: this.config.orgId,
+        name: org?.name || 'Organization',
+        pipelines: pipelines.map(p => ({
+          id: p.id,
+          name: p.name,
+          description: p.description ?? undefined,
+          stages: p.stages.map(s => s.name),
+          category: this.inferPipelineCategory(p.name),
+          isActive: true,
+        })),
+        users: users.map(u => ({
+          id: u.id,
+          name: u.name || 'Unknown',
+          email: u.email,
+          role: u.role,
+          currentLoad: 0, // Could be calculated from active assignments
+          isAvailable: true,
+        })),
+        settings: {
+          timezone: 'America/New_York',
+          workingHours: { start: '09:00', end: '17:00', workingDays: [1, 2, 3, 4, 5] },
+          defaultPipeline: defaultPipeline?.id || 'general',
+          escalationEmail: this.config.escalationEmail,
+          defaultEventDuration: 30,
+          lunchBreak: { start: '12:00', end: '13:00' },
+        },
+      };
+
+      this.logger.info('Loaded organization context from database', {
+        orgId: this.config.orgId,
+        pipelineCount: pipelines.length,
+        userCount: users.length,
+        pipelines: pipelines.map(p => ({ id: p.id, name: p.name })),
+      });
+
+      // Cache the context
+      this.orgContextCache = context;
+      this.orgContextCacheTime = now;
+
+      return context;
+
+    } catch (error) {
+      this.logger.error('Failed to load organization context from database, using fallback', error as Error);
+
+      // Fallback to minimal context if database fails
+      const fallbackContext: OrgContext = {
+        id: this.config.orgId,
+        name: 'Organization',
+        pipelines: [],
+        users: [],
+        settings: {
+          timezone: 'America/New_York',
+          workingHours: { start: '09:00', end: '17:00', workingDays: [1, 2, 3, 4, 5] },
+          defaultPipeline: 'general',
+          escalationEmail: this.config.escalationEmail,
+          defaultEventDuration: 30,
+          lunchBreak: { start: '12:00', end: '13:00' },
+        },
+      };
+
+      return fallbackContext;
+    }
+  }
+
+  /**
+   * Infer pipeline category from its name for routing hints.
+   */
+  private inferPipelineCategory(name: string): string {
+    const lowerName = name.toLowerCase();
+    if (lowerName.includes('sales') || lowerName.includes('lead') || lowerName.includes('opportunity')) {
+      return 'sales';
+    }
+    if (lowerName.includes('support') || lowerName.includes('ticket') || lowerName.includes('help')) {
+      return 'support';
+    }
+    if (lowerName.includes('billing') || lowerName.includes('invoice') || lowerName.includes('payment')) {
+      return 'billing';
+    }
+    if (lowerName.includes('partner') || lowerName.includes('integration')) {
+      return 'partnership';
+    }
+    return 'general';
   }
 
   /**

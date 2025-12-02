@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { queueIntakeRouting } from "@/workers/queues/intakeRouting.queue";
 
 const contactFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -95,30 +94,6 @@ export async function POST(req: NextRequest) {
     });
 
     console.log(`[Contact] Intake request created: ${intakeRequest.id}`);
-
-    // Queue for AI routing (wrap in try-catch to not fail the request if queueing fails)
-    try {
-      await queueIntakeRouting({
-        intakeRequestId: intakeRequest.id,
-        orgId: DEFAULT_ORG_ID,
-        source: "FORM",
-        title: `Contact Form: ${subject}`,
-        description: message,
-        requestData: {
-          name,
-          email,
-          phone,
-          company,
-          formType: "contact",
-          submittedAt: new Date().toISOString(),
-        },
-        priority: 2,
-      });
-      console.log(`[Contact] Intake request queued for routing: ${intakeRequest.id}`);
-    } catch (queueError) {
-      // Log the error but don't fail the request - the intake request is already created
-      console.error("[Contact] Failed to queue intake for routing:", queueError);
-    }
 
     return NextResponse.json(
       {

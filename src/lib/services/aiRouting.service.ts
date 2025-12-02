@@ -270,32 +270,36 @@ Return a JSON classification.`;
     let assignedPipelineId: string | undefined;
     let pipelineMatchMethod: RoutingMeta['pipelineMatchMethod'] = 'none';
 
-    // Match category to pipeline by name
-    const pipelineNameMatch = pipelines.find(
-      (p) =>
-        p.name.toLowerCase().includes(classification.category.toLowerCase()) ||
-        p.name
-          .toLowerCase()
-          .includes(classification.category.replace('_', ' ').toLowerCase())
-    );
+    // Map categories to pipeline name keywords
+    const categoryToKeywords: Record<ClassificationCategory, string[]> = {
+      'SALES_INQUIRY': ['sales', 'lead', 'opportunity', 'prospect'],
+      'SUPPORT_REQUEST': ['support', 'help', 'ticket', 'issue'],
+      'BILLING_QUESTION': ['billing', 'invoice', 'payment', 'finance'],
+      'PARTNERSHIP': ['partner', 'integration', 'affiliate'],
+      'GENERAL': ['general', 'intake', 'misc'],
+    };
+
+    const keywords = categoryToKeywords[classification.category] || [];
+
+    // Match category to pipeline by keyword in name
+    const pipelineNameMatch = pipelines.find((p) => {
+      const pipelineName = p.name.toLowerCase();
+      return keywords.some(keyword => pipelineName.includes(keyword));
+    });
 
     if (pipelineNameMatch) {
       assignedPipelineId = pipelineNameMatch.id;
       pipelineMatchMethod = 'name_match';
       console.log(
-        `[AIRoutingService] Matched pipeline by name: ${pipelineNameMatch.name}`
+        `[AIRoutingService] Matched pipeline by category keyword: ${pipelineNameMatch.name} (category: ${classification.category})`
       );
     } else {
       // Try matching by description
-      const pipelineDescMatch = pipelines.find(
-        (p) =>
-          p.description
-            ?.toLowerCase()
-            .includes(classification.category.toLowerCase()) ||
-          p.description
-            ?.toLowerCase()
-            .includes(classification.subcategory.toLowerCase())
-      );
+      const pipelineDescMatch = pipelines.find((p) => {
+        const pipelineDesc = (p.description || '').toLowerCase();
+        return keywords.some(keyword => pipelineDesc.includes(keyword)) ||
+          pipelineDesc.includes(classification.subcategory.toLowerCase());
+      });
 
       if (pipelineDescMatch) {
         assignedPipelineId = pipelineDescMatch.id;

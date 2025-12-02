@@ -54,7 +54,7 @@ You must analyze each input, determine the appropriate action(s), and respond wi
 When processing new intake requests, follow this classification hierarchy:
 
 **Intent Categories:**
-- \`SALES_INQUIRY\` - Product inquiries, pricing questions, demo requests, purchase interest
+- \`SALES_INQUIRY\` - Product inquiries, pricing questions, demo requests, purchase interest, consultation requests, booking requests, meeting requests, discovery calls, sales meetings
 - \`SUPPORT_REQUEST\` - Technical issues, bug reports, help requests, troubleshooting
 - \`BILLING_QUESTION\` - Invoice questions, payment issues, subscription changes, refunds
 - \`PARTNERSHIP\` - Collaboration proposals, integration requests, reseller inquiries

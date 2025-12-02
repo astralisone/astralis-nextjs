@@ -35,6 +35,7 @@ import {
 import { AgentEventBus, type EmitResult } from '../inputs/EventBus';
 import { emitTaskCreated } from '@/lib/events/taskEvents';
 import { prisma } from '@/lib/prisma';
+import { PipelineAssigner } from '../actions/PipelineAssigner';
 
 // =============================================================================
 // Types
@@ -252,7 +253,23 @@ export class ActionExecutor {
           return { success: true, data: { dryRun: true, ...params } };
         }
 
-        // Emit event - actual implementation would call pipeline service
+        // Actually call PipelineAssigner instead of just emitting event
+        const assigner = new PipelineAssigner({ orgId: ctx.orgId! });
+        const result = await assigner.assign(
+          params.intakeId,
+          params.pipelineId,
+          params.stageId || undefined,
+          params.assigneeId || undefined
+        );
+
+        if (!result.success) {
+          return {
+            success: false,
+            error: result.error || 'Pipeline assignment failed',
+          };
+        }
+
+        // Emit event for other listeners
         await ctx.eventBus.emit('intake:assigned', {
           id: params.intakeId,
           intakeId: params.intakeId,
@@ -260,16 +277,24 @@ export class ActionExecutor {
           stageId: params.stageId,
           assigneeId: params.assigneeId,
           timestamp: new Date(),
-          source: 'WORKER' as const,
+          source: 'agent' as const,
         }, { source: 'agent', correlationId: ctx.correlationId });
 
         return {
           success: true,
-          data: { assignmentId: `assign-${Date.now()}`, ...params },
+          data: {
+            assignmentId: result.auditLogId || `assign-${Date.now()}`,
+            intakeId: params.intakeId,
+            pipelineId: result.newState.pipelineId,
+            stageId: result.newState.stageId,
+            assigneeId: result.newState.assigneeId,
+            previousState: result.previousState,
+            newState: result.newState,
+          },
           rollbackable: true,
           rollback: async () => {
             this.logger.info('Rolling back ASSIGN_PIPELINE', { intakeId: params.intakeId });
-            // Actual rollback would unassign the intake
+            // Could implement unassign here if needed
           },
         };
       }

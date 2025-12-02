@@ -1,0 +1,65 @@
+# Special .dockerignore for Dockerfile.prod
+# This file INCLUDES the .next build folder (built locally)
+# All other build artifacts are excluded
+
+# Dependencies (will be copied from .next/standalone)
+# But we need Prisma client for runtime
+node_modules
+!node_modules/.prisma
+!node_modules/@prisma
+
+# Build outputs
+dist
+.turbo
+
+# Docker files
+Dockerfile*
+docker-compose*
+
+# Git
+.git
+.gitignore
+
+# Environment files (use .env.production instead)
+.env
+.env.local
+.env.development
+.env.test
+
+# Documentation
+docs
+*.md
+
+# Media files
+*.zip
+*.tar
+*.gz
+
+# Test artifacts
+test-results
+playwright-report
+coverage
+**/__tests__/**
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+
+# Storybook
+storybook-static
+.storybook
+
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+logs
+*.log
+
+# CI/CD
+.github

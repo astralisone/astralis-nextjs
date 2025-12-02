@@ -1,15 +1,7 @@
 import { Job } from 'bullmq';
 import { prisma } from '@/lib/prisma';
 import { getDefaultPipeline } from '@/lib/services/defaultPipelines.service';
-import { getAIRoutingService } from '@/lib/services/aiRouting.service';
 import type { IntakeRoutingJobData } from '../queues/intakeRouting.queue';
-
-/**
- * Check if OpenAI is configured for AI routing
- */
-function isOpenAIConfigured(): boolean {
-  return Boolean(process.env.OPENAI_API_KEY);
-}
 
 /**
  * Intake Routing Processor
@@ -65,54 +57,20 @@ export async function processIntakeRouting(job: Job<IntakeRoutingJobData>) {
 
     await job.updateProgress(50);
 
-    // Perform routing logic - use AI service if configured, otherwise fallback to rule-based
-    let routingResult: RoutingResult;
+    // OA (Orchestration Agent) now handles all routing via events
+    // This processor is kept minimal - just ensures default pipeline assignment
+    console.log('[IntakeRouting] OA handles routing - using default pipeline assignment');
 
-    if (isOpenAIConfigured()) {
-      console.log('[IntakeRouting] Using AI-powered routing (OpenAI configured)');
-      try {
-        const aiRoutingService = getAIRoutingService();
-
-        // Use the AI service for classification and routing
-        const classification = await aiRoutingService.classifyRequest(
-          intakeRequest.title,
-          intakeRequest.description || '',
-          intakeRequest.source as Parameters<typeof aiRoutingService.classifyRequest>[2],
-          intakeRequest.requestData as Record<string, unknown>
-        );
-
-        await job.updateProgress(60);
-
-        const routing = await aiRoutingService.routeRequest(orgId, classification);
-
-        routingResult = {
-          assigned: Boolean(routing.assignedToId || routing.assignedPipelineId),
-          pipelineId: routing.assignedPipelineId || null,
-          assignedUserId: routing.assignedToId || null,
-          method: 'ai',
-          metadata: {
-            ...routing.routingMeta,
-            matchedPipeline: routing.assignedPipelineId ?
-              pipelines.find(p => p.id === routing.assignedPipelineId)?.name : undefined,
-            tags: routing.tags,
-            priority: routing.priority,
-          },
-        };
-
-        console.log(`[IntakeRouting] AI classification: ${classification.category} (confidence: ${classification.confidence})`);
-      } catch (aiError) {
-        console.error('[IntakeRouting] AI routing failed, falling back to rule-based:', aiError);
-        routingResult = await performRouting(intakeRequest, pipelines);
-        routingResult.metadata = {
-          ...routingResult.metadata,
-          aiError: aiError instanceof Error ? aiError.message : 'AI routing failed',
-          fallbackReason: 'AI service error',
-        };
-      }
-    } else {
-      console.log('[IntakeRouting] Using rule-based routing (OpenAI not configured)');
-      routingResult = await performRouting(intakeRequest, pipelines);
-    }
+    const routingResult: RoutingResult = {
+      assigned: false,
+      pipelineId: null,
+      assignedUserId: null,
+      method: 'default',
+      metadata: {
+        message: 'OA handles routing',
+        analyzedAt: new Date().toISOString(),
+      },
+    };
 
     await job.updateProgress(70);
 
@@ -257,88 +215,4 @@ interface RoutingResult {
   assignedUserId: string | null;
   method: 'ai' | 'rule-based' | 'default';
   metadata: Record<string, unknown>;
-}
-
-/**
- * Perform routing logic
- * Currently rule-based, will integrate with AI service
- */
-async function performRouting(
-  intakeRequest: {
-    id: string;
-    title: string;
-    description: string | null;
-    source: string;
-    priority: number;
-    requestData: unknown;
-  },
-  pipelines: Array<{
-    id: string;
-    name: string;
-    description: string | null;
-    stages: Array<{ id: string; name: string; order: number }>;
-  }>
-): Promise<RoutingResult> {
-  // Default routing result
-  const result: RoutingResult = {
-    assigned: false,
-    pipelineId: null,
-    assignedUserId: null,
-    method: 'rule-based',
-    metadata: {
-      analyzedAt: new Date().toISOString(),
-      pipelinesEvaluated: pipelines.length,
-    },
-  };
-
-  if (pipelines.length === 0) {
-    console.log('[IntakeRouting] No active pipelines available for routing');
-    result.metadata = {
-      ...result.metadata,
-      reason: 'No active pipelines available',
-    };
-    return result;
-  }
-
-  // Simple keyword-based routing
-  const title = (intakeRequest.title || '').toLowerCase();
-  const description = (intakeRequest.description || '').toLowerCase();
-  const combinedText = `${title} ${description}`;
-
-  // Find matching pipeline based on keywords in name/description
-  for (const pipeline of pipelines) {
-    const pipelineName = pipeline.name.toLowerCase();
-    const pipelineDesc = (pipeline.description || '').toLowerCase();
-
-    // Check if intake content relates to pipeline
-    const keywords = pipelineName.split(/\s+/);
-    const matchScore = keywords.filter((keyword) =>
-      keyword.length > 3 && combinedText.includes(keyword)
-    ).length;
-
-    if (matchScore > 0) {
-      result.assigned = true;
-      result.pipelineId = pipeline.id;
-      result.metadata = {
-        ...result.metadata,
-        matchedPipeline: pipeline.name,
-        matchScore,
-        matchedKeywords: keywords.filter((k) => k.length > 3 && combinedText.includes(k)),
-      };
-      console.log(`[IntakeRouting] Matched pipeline: ${pipeline.name} (score: ${matchScore})`);
-      break;
-    }
-  }
-
-  // If no match found from keyword analysis, return without assigning a pipeline
-  // The processor will handle fallback to the default "General Intake" pipeline
-  if (!result.pipelineId) {
-    console.log(`[IntakeRouting] No keyword match found in ${pipelines.length} pipelines`);
-    result.metadata = {
-      ...result.metadata,
-      reason: 'No keyword match found',
-    };
-  }
-
-  return result;
 }
