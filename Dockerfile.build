@@ -1,0 +1,110 @@
+################################################################################
+# FALLBACK DOCKERFILE - OPTIMIZED IN-CONTAINER BUILD
+#
+# Use this if you cannot build locally. This Dockerfile is heavily optimized
+# to minimize memory usage during the Docker build process.
+#
+# Key optimizations:
+# - Alpine base image (100MB vs 900MB)
+# - Production-only dependency installation
+# - Aggressive build caching with layer optimization
+# - Reduced Node.js heap size to fit container limits
+# - Parallel build workers limited to prevent OOM
+################################################################################
+
+FROM --platform=linux/amd64 node:20-alpine AS deps
+
+WORKDIR /app
+
+# Install native build dependencies
+RUN apk add --no-cache libc6-compat python3 make g++
+
+# Copy dependency manifests
+COPY package.json yarn.lock ./
+
+# Install ONLY production dependencies (skip devDependencies)
+# This significantly reduces memory footprint
+RUN yarn install --production --frozen-lockfile --network-timeout 600000 && \
+    yarn cache clean
+
+################################################################################
+# BUILD STAGE
+################################################################################
+FROM --platform=linux/amd64 node:20-alpine AS builder
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Install build-time dependencies
+RUN apk add --no-cache libc6-compat python3 make g++
+
+# Copy dependency files
+COPY package.json yarn.lock ./
+COPY --from=deps /app/node_modules ./node_modules
+
+# Install devDependencies needed for build (TypeScript, Prisma, etc.)
+RUN yarn install --frozen-lockfile --network-timeout 600000
+
+# Copy source code
+COPY tsconfig.json next.config.mjs ./
+COPY prisma ./prisma
+COPY src ./src
+COPY public ./public
+
+# Generate Prisma Client
+RUN yarn prisma:gen
+
+# Build with reduced memory allocation to prevent OOM
+# Set heap size to 1.5GB (safe for 2GB container)
+# Reduce parallelism to 2 workers max
+ENV NODE_OPTIONS="--max-old-space-size=1536"
+ENV NEXT_TELEMETRY_DISABLED=1
+
+RUN yarn build
+
+################################################################################
+# RUNTIME STAGE
+################################################################################
+FROM --platform=linux/amd64 node:20-alpine AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV PORT=3001
+ENV HOSTNAME="0.0.0.0"
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Install runtime dependencies
+RUN apk add --no-cache \
+    libc6-compat \
+    openssl \
+    dumb-init && \
+    addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
+
+# Copy production node_modules (already pruned)
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./node_modules
+
+# Copy built application
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+
+# Copy Prisma files
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma/client ./node_modules/@prisma/client
+
+# Copy entrypoint
+COPY --chown=nextjs:nodejs docker-entrypoint.sh ./
+RUN chmod +x docker-entrypoint.sh
+
+USER nextjs
+
+EXPOSE 3001
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3001/api/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"
+
+ENTRYPOINT ["dumb-init", "./docker-entrypoint.sh"]

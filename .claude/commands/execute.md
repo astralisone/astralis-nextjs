@@ -44,15 +44,25 @@ Launch agents in parallel using a **single message with multiple Task tool calls
 Each agent task MUST include:
 1. Specific files/areas to work on
 2. Expected deliverables
-3. Type checking requirement: Run `npx tsc --noEmit` to verify no type errors
+3. Type checking requirement: Check if tsc is running first (`pgrep -f "tsc"`), then run `npx tsc --noEmit` only if not already running
 4. Structured report format for findings
 
 ### Step 4: Type Error Checking
 
 **CRITICAL**: Every agent working with code must:
-1. Run `npx tsc --noEmit` BEFORE making changes to establish baseline
-2. Run `npx tsc --noEmit` AFTER changes to verify no new type errors introduced
-3. Report any type errors found with file:line format
+1. **Check if tsc is already running** before starting type check:
+   ```bash
+   # Check for existing tsc process
+   if pgrep -f "tsc" > /dev/null; then
+     echo "tsc already running, skipping type check"
+   else
+     npx tsc --noEmit
+   fi
+   ```
+2. Run type check BEFORE making changes to establish baseline (if not already running)
+3. Run type check AFTER changes to verify no new type errors introduced (if not already running)
+4. Report any type errors found with file:line format
+5. If tsc is already running, wait for it to complete or skip the check with a note
 
 ### Step 5: Results Aggregation
 

@@ -935,6 +935,7 @@ export type AgentEventType =
   | 'intake:updated'
   | 'intake:assigned'
   | 'intake:escalated'
+  | 'intake:routing_failed'
   // Task events (Agentic Task System)
   | 'task:created'
   | 'task:status_changed'

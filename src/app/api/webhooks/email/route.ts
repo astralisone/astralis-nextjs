@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { prisma } from '@/lib/prisma';
 import { IntakeSource, IntakeStatus } from '@prisma/client';
-import { queueIntakeRouting } from '@/workers/queues/intakeRouting.queue';
 import {
   EmailInputHandler,
   EmailProvider,
@@ -451,34 +450,7 @@ export async function POST(req: NextRequest) {
 
     console.log(`[Email Webhook] Created intake request: ${intakeRequest.id}`);
 
-    // 10. Queue for AI routing
-    try {
-      await queueIntakeRouting({
-        intakeRequestId: intakeRequest.id,
-        orgId: org.id,
-        source: 'EMAIL',
-        title: subject,
-        description: bodyPreview,
-        requestData,
-        priority: 2,
-      });
-      console.log(`[Email Webhook] Queued for AI routing: ${intakeRequest.id}`);
-    } catch (queueError) {
-      // Log but don't fail the request - the intake is created, just not queued
-      console.error('[Email Webhook] Failed to queue for routing:', queueError);
-      // Update intake with queue error
-      await prisma.intakeRequest.update({
-        where: { id: intakeRequest.id },
-        data: {
-          aiRoutingMeta: {
-            ...intakeRequest.aiRoutingMeta as object,
-            queueError: queueError instanceof Error ? queueError.message : 'Unknown queue error',
-          },
-        },
-      });
-    }
-
-    // 10b. Process through orchestration agent (async, non-blocking)
+    // 10. Process through orchestration agent (async, non-blocking)
     // This supplements the existing queue-based routing with LLM-powered decisions
     processEmailThroughAgent(emailPayload, org.id).catch((error) => {
       console.error('[Email Webhook] Agent processing failed:', error);

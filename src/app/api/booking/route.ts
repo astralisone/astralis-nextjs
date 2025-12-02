@@ -312,9 +312,10 @@ export async function POST(req: NextRequest) {
     }
 
     // Send notification email to support team
+    const systemNotificationEmail = process.env.SYSTEM_NOTIFICATION_EMAIL || 'gregory.a.starr@gmail.com';
     try {
       await sendEmail({
-        to: 'support@astralisone.com',
+        to: systemNotificationEmail,
         subject: `🔔 New Booking: ${name} - ${date} at ${time}`,
         html: generateInternalNotificationEmail(bookingData),
         attachments: [
@@ -325,7 +326,7 @@ export async function POST(req: NextRequest) {
           },
         ],
       });
-      console.log("Internal notification email sent to support@astralisone.com");
+      console.log(`Internal notification email sent to ${systemNotificationEmail}`);
     } catch (emailError) {
       console.error("Failed to send internal notification email:", emailError);
       // Continue processing even if email fails
