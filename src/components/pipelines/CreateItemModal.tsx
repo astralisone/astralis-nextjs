@@ -123,7 +123,7 @@ export function CreateItemModal({
       <DialogTrigger asChild>
         {trigger || (
           <Button variant="outline" size="sm" className="w-full gap-1.5 text-sm">
-            <Plus className="w-4 h-4" />
+            <Plus className=" ui-icon w-5 h-5" />
             Add Item
           </Button>
         )}

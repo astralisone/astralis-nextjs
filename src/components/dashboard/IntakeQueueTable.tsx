@@ -106,7 +106,7 @@ export function IntakeQueueTable({
     const config = sourceIcons[source];
     if (!config) return null;
     const IconComponent = config.icon;
-    return <IconComponent className={`w-4 h-4 flex-shrink-0 ${config.className}`} />;
+    return <IconComponent className={` ui-icon w-5 h-5 flex-shrink-0 ${config.className}`} />;
   };
 
   const handleSort = (column: SortColumn) => {
@@ -220,7 +220,7 @@ export function IntakeQueueTable({
             onClick={handleBulkDeleteClick}
             disabled={!onDeleteBulk}
           >
-            <Trash2 className="w-4 h-4 mr-2" />
+            <Trash2 className=" ui-icon w-5 h-5 mr-2" />
             Delete Selected
           </Button>
         </div>
@@ -314,7 +314,7 @@ export function IntakeQueueTable({
                       <SelectTrigger className="h-9 w-[200px] text-sm">
                         {assigningIntakeId === request.id ? (
                           <div className="flex items-center gap-2">
-                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <Loader2 className=" ui-icon w-5 h-5 animate-spin" />
                             <span>Assigning...</span>
                           </div>
                         ) : (
@@ -346,7 +346,7 @@ export function IntakeQueueTable({
                     className="h-8 w-8 text-slate-400 hover:text-red-600 hover:bg-red-50"
                     disabled={!onDeleteSingle}
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className=" ui-icon w-5 h-5" />
                   </Button>
                 </td>
               </tr>
@@ -383,7 +383,7 @@ export function IntakeQueueTable({
           >
             {isDeleting ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <Loader2 className=" ui-icon w-5 h-5 mr-2 animate-spin" />
                 Deleting...
               </>
             ) : (

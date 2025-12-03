@@ -33,7 +33,7 @@ export function RecentPipelinesTable({
         <Link href="/pipelines">
           <Button variant="outline" size="sm">
             View all
-            <ArrowRight className="ml-2 w-4 h-4" />
+            <ArrowRight className="ml-2  ui-icon w-5 h-5" />
           </Button>
         </Link>
       </CardHeader>
@@ -110,7 +110,7 @@ export function RecentPipelinesTable({
                       <td className="py-4 px-4 text-right">
                         <Link href={`/pipelines/${pipeline.id}`}>
                           <Button variant="ghost" size="sm">
-                            <Eye className="w-4 h-4 mr-1" />
+                            <Eye className=" ui-icon w-5 h-5 mr-1" />
                             View
                           </Button>
                         </Link>

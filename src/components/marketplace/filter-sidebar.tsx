@@ -153,9 +153,9 @@ export const FilterSidebar = React.forwardRef<HTMLDivElement, FilterSidebarProps
                   {section.collapsible !== false && (
                     <div className="text-slate-400 group-hover:text-slate-600 transition-colors">
                       {isCollapsed ? (
-                        <ChevronRight className="w-4 h-4" />
+                        <ChevronRight className=" ui-icon w-5 h-5" />
                       ) : (
-                        <ChevronDown className="w-4 h-4" />
+                        <ChevronDown className=" ui-icon w-5 h-5" />
                       )}
                     </div>
                   )}

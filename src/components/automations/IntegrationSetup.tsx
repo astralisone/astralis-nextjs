@@ -274,7 +274,7 @@ export function IntegrationSetup({
         {/* Last Used */}
         {isConnected && lastUsedAt && (
           <div className="flex items-center gap-2 text-sm text-slate-600">
-            <Clock className="w-4 h-4" />
+            <Clock className=" ui-icon w-5 h-5" />
             <span>
               Last used:{' '}
               {new Date(lastUsedAt).toLocaleDateString('en-US', {
@@ -291,7 +291,7 @@ export function IntegrationSetup({
         {/* Connection Info */}
         {isConnected && expiresAt && !isExpired && (
           <div className="flex items-center gap-2 text-sm text-slate-600">
-            <AlertCircle className="w-4 h-4" />
+            <AlertCircle className=" ui-icon w-5 h-5" />
             <span>
               Expires on:{' '}
               {new Date(expiresAt).toLocaleDateString('en-US', {
@@ -314,7 +314,7 @@ export function IntegrationSetup({
                 disabled={isDisconnecting}
                 className="flex-1"
               >
-                <Unlink className="w-4 h-4 mr-2" />
+                <Unlink className=" ui-icon w-5 h-5 mr-2" />
                 {isDisconnecting ? 'Disconnecting...' : 'Disconnect'}
               </Button>
               {onTest && (
@@ -337,7 +337,7 @@ export function IntegrationSetup({
               disabled={isConnecting}
               className="w-full"
             >
-              <LinkIcon className="w-4 h-4 mr-2" />
+              <LinkIcon className=" ui-icon w-5 h-5 mr-2" />
               {isConnecting ? 'Connecting...' : 'Connect'}
             </Button>
           )}

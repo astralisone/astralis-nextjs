@@ -151,7 +151,7 @@ export default function ContactPage() {
                       <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
                       <Input id="name" name="name" type="text" placeholder="John Smith" value={formData.name} onChange={(e) => handleFieldChange('name', e.target.value)} autoComplete="name" required aria-required="true" aria-invalid={errors.name ? 'true' : 'false'} aria-describedby={errors.name ? 'name-error' : undefined} className={`bg-white border-slate-300 pl-10 ${errors.name ? 'border-red-500 focus-visible:ring-red-500' : ''}`} />
                     </div>
-                    {errors.name && <p id="name-error" className="text-sm text-red-600 flex items-center gap-1" role="alert"><AlertCircle className="w-4 h-4" />{errors.name}</p>}
+                    {errors.name && <p id="name-error" className="text-sm text-red-600 flex items-center gap-1" role="alert"><AlertCircle className=" ui-icon w-5 h-5" />{errors.name}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email" className="text-slate-700">Email Address *</Label>
@@ -159,7 +159,7 @@ export default function ContactPage() {
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
                       <Input id="email" name="email" type="email" placeholder="john@company.com" value={formData.email} onChange={(e) => handleFieldChange('email', e.target.value)} autoComplete="email" inputMode="email" required aria-required="true" aria-invalid={errors.email ? 'true' : 'false'} aria-describedby={errors.email ? 'email-error' : undefined} className={`bg-white border-slate-300 pl-10 ${errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''}`} />
                     </div>
-                    {errors.email && <p id="email-error" className="text-sm text-red-600 flex items-center gap-1" role="alert"><AlertCircle className="w-4 h-4" />{errors.email}</p>}
+                    {errors.email && <p id="email-error" className="text-sm text-red-600 flex items-center gap-1" role="alert"><AlertCircle className=" ui-icon w-5 h-5" />{errors.email}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="company" className="text-slate-700">Company</Label>
@@ -174,7 +174,7 @@ export default function ContactPage() {
                       <MessageSquare className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
                       <Input id="subject" name="subject" type="text" placeholder="How can we help?" value={formData.subject} onChange={(e) => handleFieldChange('subject', e.target.value)} required aria-required="true" aria-invalid={errors.subject ? 'true' : 'false'} aria-describedby={errors.subject ? 'subject-error' : undefined} className={`bg-white border-slate-300 pl-10 ${errors.subject ? 'border-red-500 focus-visible:ring-red-500' : ''}`} />
                     </div>
-                    {errors.subject && <p id="subject-error" className="text-sm text-red-600 flex items-center gap-1" role="alert"><AlertCircle className="w-4 h-4" />{errors.subject}</p>}
+                    {errors.subject && <p id="subject-error" className="text-sm text-red-600 flex items-center gap-1" role="alert"><AlertCircle className=" ui-icon w-5 h-5" />{errors.subject}</p>}
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
@@ -182,7 +182,7 @@ export default function ContactPage() {
                       <span className="text-xs text-slate-500" aria-live="polite">{formData.message.length} / 500 characters</span>
                     </div>
                     <Textarea id="message" name="message" placeholder="Tell us about your project or question..." rows={6} value={formData.message} onChange={(e) => handleFieldChange('message', e.target.value)} maxLength={500} required aria-required="true" aria-invalid={errors.message ? 'true' : 'false'} aria-describedby={errors.message ? 'message-error' : undefined} className={`bg-white border-slate-300 ${errors.message ? 'border-red-500 focus-visible:ring-red-500' : ''}`} />
-                    {errors.message && <p id="message-error" className="text-sm text-red-600 flex items-center gap-1" role="alert"><AlertCircle className="w-4 h-4" />{errors.message}</p>}
+                    {errors.message && <p id="message-error" className="text-sm text-red-600 flex items-center gap-1" role="alert"><AlertCircle className=" ui-icon w-5 h-5" />{errors.message}</p>}
                   </div>
                   {submitStatus === 'success' && (
                     <div className="p-4 bg-green-50 border border-green-200 rounded-md" role="alert" aria-live="polite">
@@ -238,7 +238,7 @@ export default function ContactPage() {
               <div className="bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 rounded-xl p-6 shadow-md">
                 <div className="flex items-start gap-3">
                   <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-astralis-blue/10 flex-shrink-0">
-                    <Clock className="w-4 h-4 text-astralis-blue" />
+                    <Clock className=" ui-icon w-5 h-5 text-astralis-blue" />
                   </div>
                   <div>
                     <p className="text-sm font-bold text-astralis-navy mb-1">Response time</p>

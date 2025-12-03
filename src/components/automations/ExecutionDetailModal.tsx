@@ -125,7 +125,7 @@ export function ExecutionDetailModal({
                 size="sm"
                 onClick={() => onRetry(execution.id)}
               >
-                <RotateCw className="w-4 h-4 mr-2" />
+                <RotateCw className=" ui-icon w-5 h-5 mr-2" />
                 Retry
               </Button>
             )}
@@ -157,7 +157,7 @@ export function ExecutionDetailModal({
                   size="sm"
                   onClick={() => copyToClipboard(formatJSON(execution.triggerData))}
                 >
-                  <Copy className="w-4 h-4 mr-2" />
+                  <Copy className=" ui-icon w-5 h-5 mr-2" />
                   Copy
                 </Button>
               </div>
@@ -175,7 +175,7 @@ export function ExecutionDetailModal({
                     size="sm"
                     onClick={() => copyToClipboard(formatJSON(execution.outputData))}
                   >
-                    <Copy className="w-4 h-4 mr-2" />
+                    <Copy className=" ui-icon w-5 h-5 mr-2" />
                     Copy
                   </Button>
                 )}
@@ -200,7 +200,7 @@ export function ExecutionDetailModal({
                     size="sm"
                     onClick={() => copyToClipboard(execution.errorStack || '')}
                   >
-                    <Copy className="w-4 h-4 mr-2" />
+                    <Copy className=" ui-icon w-5 h-5 mr-2" />
                     Copy
                   </Button>
                 </div>
@@ -219,7 +219,7 @@ export function ExecutionDetailModal({
                     size="sm"
                     onClick={() => copyToClipboard(formatJSON(execution.metadata))}
                   >
-                    <Copy className="w-4 h-4 mr-2" />
+                    <Copy className=" ui-icon w-5 h-5 mr-2" />
                     Copy
                   </Button>
                 </div>

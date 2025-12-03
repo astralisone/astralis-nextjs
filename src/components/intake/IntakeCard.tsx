@@ -260,9 +260,9 @@ export function IntakeCard({
                     <SelectTrigger className="h-8 text-sm bg-white flex-1">
                       <div className="flex items-center gap-1.5">
                         {isAssigning ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <Loader2 className=" ui-icon w-5 h-5 animate-spin" />
                         ) : (
-                          <GitBranch className="w-4 h-4 text-astralis-blue" />
+                          <GitBranch className=" ui-icon w-5 h-5 text-astralis-blue" />
                         )}
                         <SelectValue placeholder="Assign to pipeline..." />
                       </div>
@@ -277,7 +277,7 @@ export function IntakeCard({
                   </Select>
                 ) : (
                   <div className="flex items-center gap-1.5 text-slate-400 flex-1">
-                    <GitBranch className="w-4 h-4" />
+                    <GitBranch className=" ui-icon w-5 h-5" />
                     <span className="text-sm">{pipelineName || 'Unassigned'}</span>
                   </div>
                 )}
@@ -290,9 +290,9 @@ export function IntakeCard({
                     aria-label="Reclassify with AI"
                   >
                     {isReclassifying ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <Loader2 className=" ui-icon w-5 h-5 animate-spin" />
                     ) : (
-                      <RefreshCw className="w-4 h-4" />
+                      <RefreshCw className=" ui-icon w-5 h-5" />
                     )}
                   </button>
                 )}

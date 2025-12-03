@@ -39,10 +39,10 @@ const statusColors: Record<string, string> = {
 };
 
 const sourceIcons: Record<string, React.ReactNode> = {
-  FORM: <Inbox className="w-4 h-4" />,
-  EMAIL: <Mail className="w-4 h-4" />,
-  CHAT: <MessageSquare className="w-4 h-4" />,
-  API: <Zap className="w-4 h-4" />,
+  FORM: <Inbox className=" ui-icon w-5 h-5" />,
+  EMAIL: <Mail className=" ui-icon w-5 h-5" />,
+  CHAT: <MessageSquare className=" ui-icon w-5 h-5" />,
+  API: <Zap className=" ui-icon w-5 h-5" />,
 };
 
 const priorityLabels: Record<number, { label: string; className: string }> = {
@@ -95,7 +95,7 @@ export function IntakeDetailPanel({
           onClick={onClose}
           className="h-8 w-8"
         >
-          <X className="w-4 h-4" />
+          <X className=" ui-icon w-5 h-5" />
         </Button>
       </div>
 
@@ -128,7 +128,7 @@ export function IntakeDetailPanel({
         {intake.description && (
           <div>
             <div className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-1">
-              <FileText className="w-4 h-4" />
+              <FileText className=" ui-icon w-5 h-5" />
               Description
             </div>
             <p className="text-sm text-slate-600 bg-slate-50 rounded-lg p-3">
@@ -210,7 +210,7 @@ export function IntakeDetailPanel({
         {intake.aiRoutingMeta && (
           <div className="bg-blue-50 rounded-lg p-3">
             <div className="flex items-center gap-2 text-sm font-medium text-blue-700 mb-1">
-              <AlertTriangle className="w-4 h-4" />
+              <AlertTriangle className=" ui-icon w-5 h-5" />
               AI Routing
             </div>
             {intake.aiRoutingMeta.confidence !== undefined && (

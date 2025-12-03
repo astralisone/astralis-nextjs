@@ -216,7 +216,7 @@ export default function ProfilePage() {
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2  ui-icon w-5 h-5 text-slate-400" />
                   <Input
                     id="name"
                     name="name"
@@ -232,7 +232,7 @@ export default function ProfilePage() {
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2  ui-icon w-5 h-5 text-slate-400" />
                   <Input
                     id="email"
                     name="email"
@@ -250,7 +250,7 @@ export default function ProfilePage() {
               <div className="space-y-2">
                 <Label htmlFor="company">Company</Label>
                 <div className="relative">
-                  <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Building className="absolute left-3 top-1/2 -translate-y-1/2  ui-icon w-5 h-5 text-slate-400" />
                   <Input
                     id="company"
                     name="company"
@@ -266,7 +266,7 @@ export default function ProfilePage() {
               <div className="space-y-2">
                 <Label htmlFor="teamSize">Team Size</Label>
                 <div className="relative">
-                  <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2  ui-icon w-5 h-5 text-slate-400" />
                   <Input
                     id="teamSize"
                     name="teamSize"
@@ -304,7 +304,7 @@ export default function ProfilePage() {
                 onClick={handleSave}
                 disabled={loading || saving}
               >
-                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                {saving && <Loader2 className=" ui-icon w-5 h-5 animate-spin" />}
                 {saving ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>

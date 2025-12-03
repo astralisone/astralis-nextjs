@@ -253,15 +253,15 @@ export default function BlogPage() {
 
                 <div className="flex items-center flex-wrap gap-4 md:gap-6 text-sm text-slate-600">
                   <div className="flex items-center gap-2">
-                    <User className="w-4 h-4 text-astralis-blue" />
+                    <User className=" ui-icon w-5 h-5 text-astralis-blue" />
                     <span className="font-medium">{featuredPost.author}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-astralis-blue" />
+                    <Calendar className=" ui-icon w-5 h-5 text-astralis-blue" />
                     <span>{new Date(featuredPost.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-astralis-blue" />
+                    <Clock className=" ui-icon w-5 h-5 text-astralis-blue" />
                     <span>{featuredPost.readTime}</span>
                   </div>
                 </div>
@@ -274,7 +274,7 @@ export default function BlogPage() {
                 >
                   <Link href={`/blog/${featuredPost.slug}`}>
                     Read Full Article
-                    <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
+                    <ArrowRight className="ml-2  ui-icon w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
                   </Link>
                 </Button>
               </div>
@@ -356,16 +356,16 @@ export default function BlogPage() {
                   {/* Meta Information */}
                   <div className="space-y-3 pt-4 border-t border-slate-200">
                     <div className="flex items-center gap-2 text-xs text-slate-600">
-                      <User className="w-4 h-4 text-astralis-blue" />
+                      <User className=" ui-icon w-5 h-5 text-astralis-blue" />
                       <span className="font-medium">{post.author}</span>
                     </div>
                     <div className="flex items-center justify-between text-xs text-slate-600">
                       <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-astralis-blue" />
+                        <Calendar className=" ui-icon w-5 h-5 text-astralis-blue" />
                         <span>{new Date(post.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-astralis-blue" />
+                        <Clock className=" ui-icon w-5 h-5 text-astralis-blue" />
                         <span className="font-medium">{post.readTime}</span>
                       </div>
                     </div>
@@ -377,7 +377,7 @@ export default function BlogPage() {
                     className="inline-flex items-center gap-2 text-astralis-blue hover:text-blue-700 font-semibold text-sm mt-4 group/link"
                   >
                     Read more
-                    <ArrowRight className="w-4 h-4 group-hover/link:translate-x-1 transition-transform duration-200" />
+                    <ArrowRight className=" ui-icon w-5 h-5 group-hover/link:translate-x-1 transition-transform duration-200" />
                   </Link>
                 </div>
               </article>

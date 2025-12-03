@@ -222,7 +222,7 @@ export default function MarketplacePage() {
                       {[...Array(5)].map((_, i) => (
                         <Star
                           key={i}
-                          className={`w-4 h-4 ${
+                          className={` ui-icon w-5 h-5 ${
                             i < Math.floor(product.rating)
                               ? 'text-yellow-500 fill-yellow-500'
                               : 'text-slate-300'
