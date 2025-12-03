@@ -114,7 +114,7 @@ export default function PipelinesPage() {
                     className="gap-2"
                     onClick={() => setIsCreateModalOpen(true)}
                   >
-                    <Plus className="w-4 h-4" />
+                    <Plus className=" ui-icon w-5 h-5" />
                     Create Pipeline
                   </Button>
                 </CardContent>

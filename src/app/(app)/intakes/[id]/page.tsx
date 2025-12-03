@@ -102,7 +102,7 @@ export default async function IntakeDetailPage({ params }: PageProps) {
       {/* Back button */}
       <Link href={intake.pipeline ? `/pipelines/${intake.pipeline.id}` : '/pipelines'}>
         <Button variant="ghost" size="sm" className="mb-4">
-          <ArrowLeft className="w-4 h-4 mr-2" />
+          <ArrowLeft className=" ui-icon w-5 h-5 mr-2" />
           Back to Pipeline
         </Button>
       </Link>

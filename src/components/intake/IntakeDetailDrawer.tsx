@@ -282,7 +282,7 @@ export function IntakeDetailDrawer({
                 disabled={isUpdating || request.status === 'COMPLETED'}
                 className="flex-1"
               >
-                <CheckCircle2 className="w-4 h-4 mr-2" />
+                <CheckCircle2 className=" ui-icon w-5 h-5 mr-2" />
                 Mark Complete
               </Button>
               <Button
@@ -292,7 +292,7 @@ export function IntakeDetailDrawer({
                 disabled={isUpdating || request.status === 'REJECTED'}
                 className="flex-1"
               >
-                <XCircle className="w-4 h-4 mr-2" />
+                <XCircle className=" ui-icon w-5 h-5 mr-2" />
                 Reject
               </Button>
             </div>

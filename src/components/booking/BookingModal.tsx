@@ -678,7 +678,7 @@ export function BookingModal({ isOpen, onClose, userId, availabilityRules: propA
 
                   {isLoadingAvailability && (
                     <div className="flex items-center gap-2 text-sm text-slate-500">
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <Loader2 className=" ui-icon w-5 h-5 animate-spin" />
                       <span>Loading availability...</span>
                     </div>
                   )}
@@ -714,7 +714,7 @@ export function BookingModal({ isOpen, onClose, userId, availabilityRules: propA
                         <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
                         {isLoadingEvents ? (
                           <div className="w-full h-10 pl-10 pr-4 bg-white border border-slate-300 rounded-md flex items-center">
-                            <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
+                            <Loader2 className=" ui-icon w-5 h-5 animate-spin text-slate-400" />
                             <span className="ml-2 text-sm text-slate-500">Loading available times...</span>
                           </div>
                         ) : (

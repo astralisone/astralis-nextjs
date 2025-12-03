@@ -226,7 +226,7 @@ function PlatformSpotlight() {
                         </div>
                       </div>
                       {step.status === 'complete' && (
-                        <CheckCircle className="w-4 h-4 text-emerald-500" />
+                        <CheckCircle className=" ui-icon w-5 h-5 text-emerald-500" />
                       )}
                     </div>
                   ))}

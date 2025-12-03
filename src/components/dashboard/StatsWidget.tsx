@@ -49,9 +49,9 @@ export function StatsWidget({
           {change && (
             <div className="flex items-center gap-1 mt-2">
               {change.trend === 'up' ? (
-                <TrendingUp className="w-4 h-4 text-green-500" />
+                <TrendingUp className=" ui-icon w-5 h-5 text-green-500" />
               ) : (
-                <TrendingDown className="w-4 h-4 text-red-500" />
+                <TrendingDown className=" ui-icon w-5 h-5 text-red-500" />
               )}
               <span
                 className={cn(

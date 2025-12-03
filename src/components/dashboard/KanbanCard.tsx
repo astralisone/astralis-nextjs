@@ -63,7 +63,7 @@ export function KanbanCard({ item, isDragging = false }: KanbanCardProps) {
         <CardContent className="p-4">
           <div className="flex items-start gap-2">
             <div className="mt-1 text-slate-400">
-              <GripVertical className="w-4 h-4" />
+              <GripVertical className=" ui-icon w-5 h-5" />
             </div>
 
             <div className="flex-1 min-w-0">

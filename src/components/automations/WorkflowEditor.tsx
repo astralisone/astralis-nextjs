@@ -167,7 +167,7 @@ export function WorkflowEditor({
           type="checkbox"
           checked={value}
           onChange={(e) => updateNodeParameter(node.id, key, e.target.checked)}
-          className="w-4 h-4 text-astralis-blue border-slate-300 rounded focus:ring-astralis-blue"
+          className=" ui-icon w-5 h-5 text-astralis-blue border-slate-300 rounded focus:ring-astralis-blue"
         />
       );
     }
@@ -243,7 +243,7 @@ export function WorkflowEditor({
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <ExternalLink className="w-4 h-4 mr-2" />
+                <ExternalLink className=" ui-icon w-5 h-5 mr-2" />
                 Edit in n8n
               </a>
             </Button>
@@ -267,9 +267,9 @@ export function WorkflowEditor({
                       className="p-1 hover:bg-slate-100 rounded transition-colors"
                     >
                       {isExpanded ? (
-                        <ChevronDown className="w-4 h-4 text-slate-600" />
+                        <ChevronDown className=" ui-icon w-5 h-5 text-slate-600" />
                       ) : (
-                        <ChevronRight className="w-4 h-4 text-slate-600" />
+                        <ChevronRight className=" ui-icon w-5 h-5 text-slate-600" />
                       )}
                     </button>
                     <div className="flex items-center gap-2 flex-1">
@@ -290,14 +290,14 @@ export function WorkflowEditor({
                       size="icon"
                       onClick={() => toggleNodeExpanded(node.id)}
                     >
-                      <Settings className="w-4 h-4" />
+                      <Settings className=" ui-icon w-5 h-5" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => deleteNode(node.id)}
                     >
-                      <Trash2 className="w-4 h-4 text-error" />
+                      <Trash2 className=" ui-icon w-5 h-5 text-error" />
                     </Button>
                   </div>
                 </div>

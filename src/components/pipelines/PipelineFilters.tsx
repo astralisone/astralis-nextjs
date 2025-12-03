@@ -132,7 +132,7 @@ export function PipelineFilters({ onFiltersChange }: PipelineFiltersProps) {
     <div className="flex items-center gap-3">
       {/* Search Input */}
       <div className="relative flex-1 max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2  ui-icon w-5 h-5 text-slate-400" />
         <Input
           type="search"
           placeholder="Search pipelines..."
@@ -145,7 +145,7 @@ export function PipelineFilters({ onFiltersChange }: PipelineFiltersProps) {
             onClick={() => handleSearchChange('')}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
           >
-            <X className="w-4 h-4" />
+            <X className=" ui-icon w-5 h-5" />
           </button>
         )}
       </div>
@@ -154,7 +154,7 @@ export function PipelineFilters({ onFiltersChange }: PipelineFiltersProps) {
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
           <Button variant="outline" className="relative">
-            <Filter className="w-4 h-4 mr-2" />
+            <Filter className=" ui-icon w-5 h-5 mr-2" />
             Filters
             {activeFilterCount > 0 && (
               <Badge className="ml-2 bg-astralis-blue text-white">
@@ -247,7 +247,7 @@ export function PipelineFilters({ onFiltersChange }: PipelineFiltersProps) {
           onClick={clearAllFilters}
           className="text-slate-500 hover:text-slate-700"
         >
-          <X className="w-4 h-4 mr-1" />
+          <X className=" ui-icon w-5 h-5 mr-1" />
           Clear
         </Button>
       )}

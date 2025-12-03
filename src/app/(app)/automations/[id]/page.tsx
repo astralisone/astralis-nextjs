@@ -187,7 +187,7 @@ export default function AutomationDetailPage() {
           </Alert>
           <Button variant="outline" className="mt-4" asChild>
             <Link href="/automations">
-              <ArrowLeft className="w-4 h-4 mr-2" />
+              <ArrowLeft className=" ui-icon w-5 h-5 mr-2" />
               Back to Automations
             </Link>
           </Button>

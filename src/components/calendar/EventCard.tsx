@@ -212,7 +212,7 @@ export function EventCard({ event, onClick, onAccept, onDecline, isUpdating }: E
                 onClick={(e) => { e.stopPropagation(); onAccept(event.id); }}
                 disabled={isUpdating}
               >
-                {isUpdating ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-1" />}
+                {isUpdating ? <Loader2 className=" ui-icon w-5 h-5 mr-1 animate-spin" /> : <CheckCircle2 className=" ui-icon w-5 h-5 mr-1" />}
                 Accept
               </Button>
             )}
@@ -224,7 +224,7 @@ export function EventCard({ event, onClick, onAccept, onDecline, isUpdating }: E
                 onClick={(e) => { e.stopPropagation(); onDecline(event.id); }}
                 disabled={isUpdating}
               >
-                {isUpdating ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <XCircle className="w-4 h-4 mr-1" />}
+                {isUpdating ? <Loader2 className=" ui-icon w-5 h-5 mr-1 animate-spin" /> : <XCircle className=" ui-icon w-5 h-5 mr-1" />}
                 Decline
               </Button>
             )}

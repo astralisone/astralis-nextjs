@@ -125,19 +125,19 @@ export default function PipelinePage({ params }: { params: Promise<{ id: string 
                 <div className="flex items-center gap-2">
                   {intakeCounts.new > 0 && (
                     <Badge className="bg-yellow-100 text-yellow-700 text-xs flex items-center gap-1">
-                      <AlertTriangle className="w-4 h-4" />
+                      <AlertTriangle className=" ui-icon w-5 h-5" />
                       {intakeCounts.new} new
                     </Badge>
                   )}
                   {intakeCounts.routing > 0 && (
                     <Badge className="bg-blue-100 text-blue-700 text-xs flex items-center gap-1">
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <Loader2 className=" ui-icon w-5 h-5 animate-spin" />
                       {intakeCounts.routing} routing
                     </Badge>
                   )}
                   {intakeCounts.processing > 0 && (
                     <Badge className="bg-blue-100 text-blue-700 text-xs flex items-center gap-1">
-                      <Inbox className="w-4 h-4" />
+                      <Inbox className=" ui-icon w-5 h-5" />
                       {intakeCounts.processing} processing
                     </Badge>
                   )}
@@ -189,7 +189,7 @@ export default function PipelinePage({ params }: { params: Promise<{ id: string 
               work items as they move through your workflow.
             </p>
             <Button onClick={() => setIsStageManagerOpen(true)} className="gap-2">
-              <Settings className="w-4 h-4" />
+              <Settings className=" ui-icon w-5 h-5" />
               Create First Stage
             </Button>
           </div>
@@ -239,13 +239,13 @@ export default function PipelinePage({ params }: { params: Promise<{ id: string 
                   <div className="flex items-center gap-2">
                     {unclassifiedCounts.new > 0 && (
                       <Badge className="bg-yellow-100 text-yellow-700 flex items-center gap-1">
-                        <AlertTriangle className="w-4 h-4" />
+                        <AlertTriangle className=" ui-icon w-5 h-5" />
                         {unclassifiedCounts.new} New
                       </Badge>
                     )}
                     {unclassifiedCounts.routing > 0 && (
                       <Badge className="bg-blue-100 text-blue-700 flex items-center gap-1">
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <Loader2 className=" ui-icon w-5 h-5 animate-spin" />
                         {unclassifiedCounts.routing} Routing
                       </Badge>
                     )}

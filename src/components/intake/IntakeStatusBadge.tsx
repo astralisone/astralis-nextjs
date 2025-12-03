@@ -62,7 +62,7 @@ export function IntakeStatusBadge({
       variant="default"
       className={`${config.color} ${className || ''}`}
     >
-      {showIcon && <Icon className="w-4 h-4 mr-1.5" />}
+      {showIcon && <Icon className=" ui-icon w-5 h-5 mr-1.5" />}
       {config.label}
     </Badge>
   );

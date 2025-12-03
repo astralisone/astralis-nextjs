@@ -206,7 +206,7 @@ function ServicesHeroVisual() {
       {/* Service Badge */}
       <div className="absolute -bottom-3 left-4 md:left-6 bg-white border border-slate-200 rounded-lg px-4 py-2 shadow-lg">
         <div className="flex items-center gap-2">
-          <Zap className="w-4 h-4 text-astralis-blue" />
+          <Zap className=" ui-icon w-5 h-5 text-astralis-blue" />
           <span className="text-sm font-medium text-astralis-navy">278% Average ROI</span>
         </div>
       </div>

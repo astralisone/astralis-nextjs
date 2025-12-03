@@ -255,19 +255,38 @@ export function UnifiedKanbanCard({
               {/* Title Row with Source Icon and Actions */}
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-start gap-2 flex-1 min-w-0">
-                  {(() => {
+                 
+                 {
+                //  (() => {
+                //     const source = getItemSource(item);
+                //     if (source && sourceIcons[source]) {
+                //       const IconComponent = sourceIcons[source].icon;
+                //       return (
+                //         <div className="flex-shrink-0 mt-0.5">
+                //           <IconComponent className={`w-5 h-5 ${sourceIcons[source].className}`} />
+                //         </div>
+                //       );
+                //     }
+                //     return null;
+                //   })()
+                  }
+                  
+                  <h4 className="font-medium text-sm text-astralis-navy line-clamp-2 flex-1 min-w-0">
+                     {/* Icon */}
+                     {(() => {
                     const source = getItemSource(item);
                     if (source && sourceIcons[source]) {
                       const IconComponent = sourceIcons[source].icon;
                       return (
                         <div className="flex-shrink-0 mt-0.5">
-                          <IconComponent className={`w-4 h-4 ${sourceIcons[source].className}`} />
+                          <IconComponent className={`w-5 h-5 ${sourceIcons[source].className}`} />
                         </div>
                       );
                     }
                     return null;
                   })()}
-                  <h4 className="font-medium text-sm text-astralis-navy line-clamp-2">
+
+
                     {item.title}
                   </h4>
                 </div>
@@ -288,9 +307,9 @@ export function UnifiedKanbanCard({
                         title="Mark as completed"
                       >
                         {isUpdating === 'complete' ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <Loader2 className="w-5 h-5 animate-spin" />
                         ) : (
-                          <Check className="w-4 h-4" />
+                          <Check className="w-5 h-5" />
                         )}
                       </button>
                       {/* Close Button */}
@@ -306,9 +325,9 @@ export function UnifiedKanbanCard({
                         title="Close item (hide from board)"
                       >
                         {isUpdating === 'close' ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <Loader2 className="w-5 h-5 animate-spin" />
                         ) : (
-                          <X className="w-4 h-4" />
+                          <X className="w-5 h-5" />
                         )}
                       </button>
                     </>
@@ -402,7 +421,7 @@ export function UnifiedKanbanCard({
                         />
                       ) : (
                         <div className="w-6 h-6 rounded-full bg-astralis-blue/10 flex items-center justify-center">
-                          <User className="w-4 h-4 text-astralis-blue" />
+                          <User className="w-5 h-5 text-astralis-blue" />
                         </div>
                       )}
                       <span className="truncate max-w-[100px]">
@@ -411,7 +430,7 @@ export function UnifiedKanbanCard({
                     </div>
                   ) : (
                     <div className="flex items-center gap-1.5 text-slate-400">
-                      <User className="w-4 h-4" />
+                      <User className="w-5 h-5" />
                       <span>Unassigned</span>
                     </div>
                   )
@@ -425,8 +444,8 @@ export function UnifiedKanbanCard({
                       isOverdue && 'text-red-600 font-medium'
                     )}
                   >
-                    {isOverdue && <AlertCircle className="w-4 h-4" />}
-                    <Calendar className="w-4 h-4" />
+                    {isOverdue && <AlertCircle className="w-5 h-5" />}
+                    <Calendar className="w-5 h-5" />
                     <span>
                       {formatDistanceToNow(parseISO(item.dueDate), { addSuffix: true })}
                     </span>
@@ -436,7 +455,7 @@ export function UnifiedKanbanCard({
                 {/* Created timestamp (if no due date but has createdAt) */}
                 {!item.dueDate && item.createdAt && (
                   <div className="flex items-center gap-1.5 text-slate-400 ml-auto">
-                    <Clock className="w-4 h-4" />
+                    <Clock className="w-5 h-5" />
                     <span>
                       {formatDistanceToNow(parseISO(item.createdAt), { addSuffix: true })}
                     </span>
