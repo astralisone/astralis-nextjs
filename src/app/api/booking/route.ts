@@ -291,7 +291,9 @@ export async function POST(req: NextRequest) {
     });
 
     // Send confirmation email to customer
+    let customerEmailSent = false;
     try {
+      console.log(`[Booking] Sending confirmation email to customer: ${email}`);
       await sendEmail({
         to: email,
         subject: `Consultation Confirmed - ${date} at ${time}`,
@@ -305,15 +307,19 @@ export async function POST(req: NextRequest) {
           },
         ],
       });
-      console.log(`Confirmation email sent to ${email}`);
+      customerEmailSent = true;
+      console.log(`[Booking] ✅ Customer confirmation email sent successfully to ${email}`);
     } catch (emailError) {
-      console.error("Failed to send customer confirmation email:", emailError);
-      // Continue processing even if email fails
+      console.error("[Booking] ❌ FAILED to send customer confirmation email:", emailError);
+      console.error("[Booking] Error details:", emailError instanceof Error ? emailError.stack : String(emailError));
+      // Continue processing even if email fails, but log prominently
     }
 
     // Send notification email to support team
     const systemNotificationEmail = process.env.SYSTEM_NOTIFICATION_EMAIL || 'gregory.a.starr@gmail.com';
+    let internalEmailSent = false;
     try {
+      console.log(`[Booking] Sending internal notification email to: ${systemNotificationEmail}`);
       await sendEmail({
         to: systemNotificationEmail,
         subject: `🔔 New Booking: ${name} - ${date} at ${time}`,
@@ -326,10 +332,12 @@ export async function POST(req: NextRequest) {
           },
         ],
       });
-      console.log(`Internal notification email sent to ${systemNotificationEmail}`);
+      internalEmailSent = true;
+      console.log(`[Booking] ✅ Internal notification email sent successfully to ${systemNotificationEmail}`);
     } catch (emailError) {
-      console.error("Failed to send internal notification email:", emailError);
-      // Continue processing even if email fails
+      console.error("[Booking] ❌ FAILED to send internal notification email:", emailError);
+      console.error("[Booking] Error details:", emailError instanceof Error ? emailError.stack : String(emailError));
+      // Continue processing even if email fails, but log prominently
     }
 
     // Create intake request for the booking to appear in the intake pipeline
@@ -445,12 +453,25 @@ export async function POST(req: NextRequest) {
       console.warn("[Booking] DEFAULT_ORG_ID not configured, skipping intake request creation");
     }
 
+    // Log final status summary
+    console.log(`[Booking] ========== BOOKING COMPLETE ==========`);
+    console.log(`[Booking] Booking ID: ${bookingId}`);
+    console.log(`[Booking] Scheduling Event ID: ${schedulingEventId || 'N/A'}`);
+    console.log(`[Booking] Intake Request ID: ${intakeRequestId || 'N/A'}`);
+    console.log(`[Booking] Customer Email Sent: ${customerEmailSent ? '✅ YES' : '❌ NO'}`);
+    console.log(`[Booking] Internal Email Sent: ${internalEmailSent ? '✅ YES' : '❌ NO'}`);
+    console.log(`[Booking] ==========================================`);
+
     return NextResponse.json(
       {
         success: true,
         bookingId,
         schedulingEventId,
         intakeRequestId,
+        emailStatus: {
+          customerEmail: customerEmailSent,
+          internalEmail: internalEmailSent,
+        },
         message: "Booking confirmed! Check your email for details and calendar invite.",
       },
       { status: 200 }

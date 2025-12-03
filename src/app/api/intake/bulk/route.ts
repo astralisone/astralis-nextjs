@@ -115,8 +115,40 @@ export async function POST(req: NextRequest) {
         break;
 
       case "delete":
-        result = await prisma.intakeRequest.deleteMany({
-          where: { id: { in: ids } },
+        // Cascade delete in transaction to ensure atomicity
+        result = await prisma.$transaction(async (tx) => {
+          // 1. Delete related Tasks that were created from these intakes
+          const deletedTasks = await tx.task.deleteMany({
+            where: {
+              source: "FORM",
+              sourceId: { in: ids },
+            },
+          });
+
+          // 2. Delete related ActivityLog entries
+          const deletedLogs = await tx.activityLog.deleteMany({
+            where: {
+              entity: "INTAKE",
+              entityId: { in: ids },
+            },
+          });
+
+          // 3. Delete the intake requests
+          const deletedIntakes = await tx.intakeRequest.deleteMany({
+            where: {
+              id: { in: ids },
+              orgId: orgIds[0], // Ensure org scoping for security
+            },
+          });
+
+          console.log(`Bulk deleted ${deletedIntakes.count} intakes (orgId: ${orgIds[0]}):`, {
+            cascadeDeleted: {
+              tasks: deletedTasks.count,
+              activityLogs: deletedLogs.count,
+            },
+          });
+
+          return deletedIntakes;
         });
         break;
 

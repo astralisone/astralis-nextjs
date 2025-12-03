@@ -249,81 +249,52 @@ export function IntakeCard({
                 </p>
               )}
 
-              {/* Pipeline Assignment Section - Always visible */}
+              {/* Pipeline Assignment Section - Always show dropdown for reassignment */}
               <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                {isAssigned && pipelineName ? (
-                  // Show assigned pipeline label with reclassify button
-                  <>
-                    <div className="flex items-center gap-1.5 flex-1">
-                      <GitBranch className="w-5 h-5 text-astralis-blue" />
-                      <span className="text-sm font-medium text-astralis-blue">
-                        {pipelineName}
-                      </span>
-                    </div>
-                    {onReclassify && (
-                      <button
-                        onClick={handleReclassify}
-                        disabled={isReclassifying}
-                        className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
-                        title="Reclassify with AI"
-                        aria-label="Reclassify with AI"
-                      >
-                        {isReclassifying ? (
-                          <Loader2 className="w-5 h-5 animate-spin" />
+                {availablePipelines.length > 0 && onPipelineAssign ? (
+                  <Select
+                    value={intake.assignedPipeline || intake.pipeline?.id || ''}
+                    onValueChange={handlePipelineSelect}
+                    disabled={isAssigning}
+                  >
+                    <SelectTrigger className="h-8 text-sm bg-white flex-1">
+                      <div className="flex items-center gap-1.5">
+                        {isAssigning ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
                         ) : (
-                          <RefreshCw className="w-5 h-5" />
+                          <GitBranch className="w-4 h-4 text-astralis-blue" />
                         )}
-                      </button>
-                    )}
-                  </>
-                ) : (
-                  // Show pipeline dropdown for unassigned items
-                  <>
-                    {availablePipelines.length > 0 && onPipelineAssign ? (
-                      <Select
-                        onValueChange={handlePipelineSelect}
-                        disabled={isAssigning}
-                      >
-                        <SelectTrigger className="h-8 text-sm bg-white flex-1">
-                          <div className="flex items-center gap-1.5">
-                            {isAssigning ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <GitBranch className="w-5 h-5"/>
-                            )}
-                            <SelectValue placeholder="Assign to pipeline..." />
-                          </div>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availablePipelines.map((pipeline) => (
-                            <SelectItem key={pipeline.id} value={pipeline.id}>
-                              {pipeline.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <div className="flex items-center gap-1.5 text-slate-400 flex-1">
-                        <GitBranch className="w-5 h-5" />
-                        <span className="text-sm">Unassigned</span>
+                        <SelectValue placeholder="Assign to pipeline..." />
                       </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availablePipelines.map((pipeline) => (
+                        <SelectItem key={pipeline.id} value={pipeline.id}>
+                          {pipeline.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="flex items-center gap-1.5 text-slate-400 flex-1">
+                    <GitBranch className="w-4 h-4" />
+                    <span className="text-sm">{pipelineName || 'Unassigned'}</span>
+                  </div>
+                )}
+                {onReclassify && (
+                  <button
+                    onClick={handleReclassify}
+                    disabled={isReclassifying}
+                    className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+                    title="Reclassify with AI"
+                    aria-label="Reclassify with AI"
+                  >
+                    {isReclassifying ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="w-4 h-4" />
                     )}
-                    {onReclassify && (
-                      <button
-                        onClick={handleReclassify}
-                        disabled={isReclassifying}
-                        className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
-                        title="Auto-classify with AI"
-                        aria-label="Auto-classify with AI"
-                      >
-                        {isReclassifying ? (
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                        ) : (
-                          <RefreshCw className="w-5 h-5" />
-                        )}
-                      </button>
-                    )}
-                  </>
+                  </button>
                 )}
               </div>
 

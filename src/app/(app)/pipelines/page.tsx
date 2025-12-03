@@ -62,32 +62,41 @@ export default function PipelinesPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {pipelines && pipelines.length > 0 && pipelines.map((pipeline) => (
-            <Link key={pipeline.id} href={`/pipelines/${pipeline.id}`}>
-              <Card variant="default" hover>
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-astralis-blue/10 rounded-lg">
-                      <GitBranch className="w-5 h-5 text-astralis-blue" />
+          {pipelines && pipelines.length > 0 && pipelines.map((pipeline) => {
+            // Calculate total items across all stages
+            const totalItems = pipeline.stages?.reduce((sum, stage) => {
+              // API returns _count.items for each stage
+              const stageCount = (stage as any)._count?.items || 0;
+              return sum + stageCount;
+            }, 0) || 0;
+
+            return (
+              <Link key={pipeline.id} href={`/pipelines/${pipeline.id}`}>
+                <Card variant="default" hover>
+                  <CardHeader>
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-astralis-blue/10 rounded-lg">
+                        <GitBranch className="w-5 h-5 text-astralis-blue" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-lg">{pipeline.name}</CardTitle>
+                        <p className="text-sm text-slate-500 mt-1">
+                          {pipeline.stages?.length || 0} stages • {totalItems} items
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <CardTitle className="text-lg">{pipeline.name}</CardTitle>
-                      <p className="text-sm text-slate-500 mt-1">
-                        {pipeline.stages?.length || 0} stages
+                  </CardHeader>
+                  {pipeline.description && (
+                    <CardContent>
+                      <p className="text-sm text-slate-600 line-clamp-2">
+                        {pipeline.description}
                       </p>
-                    </div>
-                  </div>
-                </CardHeader>
-                {pipeline.description && (
-                  <CardContent>
-                    <p className="text-sm text-slate-600 line-clamp-2">
-                      {pipeline.description}
-                    </p>
-                  </CardContent>
-                )}
-              </Card>
-            </Link>
-          ))}
+                    </CardContent>
+                  )}
+                </Card>
+              </Link>
+            );
+          })}
 
           {(!pipelines || pipelines.length === 0) && (
             <div className="col-span-full">

@@ -29,6 +29,8 @@ interface KanbanColumnProps {
   pipelineId: string;
   onItemCreated?: () => void;
   onStatusChange?: (itemId: string, newStatus: PipelineItemStatus) => void;
+  teamMembers?: Array<{ id: string; name: string; email?: string; avatar?: string | null }>;
+  onAssigneeChange?: (itemId: string, assigneeId: string | null) => void;
 }
 
 export function KanbanColumn({
@@ -37,6 +39,8 @@ export function KanbanColumn({
   pipelineId,
   onItemCreated,
   onStatusChange,
+  teamMembers,
+  onAssigneeChange,
 }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: stage.id,
@@ -48,7 +52,7 @@ export function KanbanColumn({
   );
 
   return (
-    <div className="flex-shrink-0 w-80 h-full flex flex-col">
+    <div className="flex-shrink-0 w-80 h-full max-h-full flex flex-col overflow-hidden">
       <div className="bg-slate-100 rounded-lg p-4 flex flex-col h-full">
         {/* Column Header - Fixed */}
         <div className="flex items-center justify-center gap-3 mb-4 py-2 px-3 -mx-4 -mt-4 rounded-t-lg bg-slate-200/70 flex-shrink-0">
@@ -81,6 +85,8 @@ export function KanbanColumn({
               item={item}
               pipelineId={pipelineId}
               onStatusChange={onStatusChange}
+              teamMembers={teamMembers}
+              onAssigneeChange={onAssigneeChange}
               fullCardDrag
             />
           ))}

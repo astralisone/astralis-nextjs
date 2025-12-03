@@ -89,7 +89,7 @@ export default function DocumentsPage() {
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [showUploader, setShowUploader] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [showChat, setShowChat] = useState(true);
+  const [showChat, setShowChat] = useState(false);
   const [chatDocumentId, setChatDocumentId] = useState<string | undefined>();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<DocumentStatus | undefined>();
