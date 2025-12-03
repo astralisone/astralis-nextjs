@@ -67,6 +67,11 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
 
+  // Skip type checking in Docker builds to prevent OOM (types checked in CI separately)
+  typescript: {
+    ignoreBuildErrors: process.env.DOCKER_BUILD === 'true',
+  },
+
   // Externalize these packages from the server bundle (Next.js 15+)
   // This prevents bundling issues and reduces build memory usage
   serverExternalPackages: [
