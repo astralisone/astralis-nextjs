@@ -192,3 +192,40 @@ export function useUpdatePipeline() {
     },
   });
 }
+
+/**
+ * Update the assignee of a pipeline item
+ */
+export function useUpdateItemAssignee() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      pipelineId,
+      itemId,
+      assigneeId,
+    }: {
+      pipelineId: string;
+      itemId: string;
+      assigneeId: string | null;
+    }) => {
+      const response = await fetch(`/api/pipelines/${pipelineId}/items/${itemId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assignedToId: assigneeId }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update assignee');
+      }
+
+      return response.json();
+    },
+    onSuccess: (_, variables) => {
+      // Invalidate pipeline queries to refresh the data
+      queryClient.invalidateQueries({ queryKey: pipelineKeys.detail(variables.pipelineId) });
+      queryClient.invalidateQueries({ queryKey: pipelineKeys.lists() });
+    },
+  });
+}

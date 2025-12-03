@@ -12,7 +12,7 @@ export { useAnalytics } from './useAnalytics';
 export * from './animations';
 
 // Pipeline hooks - Data fetching
-export { usePipelines, usePipeline, useMovePipelineItem } from './usePipelines';
+export { usePipelines, usePipeline, useMovePipelineItem, useUpdateItemAssignee } from './usePipelines';
 
 // Pipeline hooks - Mutations
 export {
@@ -38,6 +38,7 @@ export {
 
 // Organization hooks
 export { useOrganization } from './useOrganization';
+export { useOrgMembers } from './useOrgMembers';
 
 // Document hooks
 export {

@@ -2,9 +2,16 @@
 
 import { useState } from 'react';
 import { useDraggable } from '@dnd-kit/core';
-import { GripVertical, Calendar, AlertCircle, User, Clock, X, Check, Loader2 } from 'lucide-react';
+import { GripVertical, Calendar, AlertCircle, User, Clock, X, Check, Loader2, Inbox, Mail, MessageSquare, Zap } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { PipelineItem, PipelinePriority, PipelineItemStatus } from '@/types/pipelines';
 import { formatDistanceToNow, isPast, parseISO } from 'date-fns';
@@ -32,6 +39,7 @@ export interface UnifiedCardItem {
   createdAt?: string;
   updatedAt?: string;
   data?: Record<string, unknown>;
+  source?: 'FORM' | 'EMAIL' | 'CHAT' | 'API' | string;
 }
 
 interface UnifiedKanbanCardProps {
@@ -44,6 +52,10 @@ interface UnifiedKanbanCardProps {
   pipelineId?: string;
   // Callback when item status changes (for parent to refetch data)
   onStatusChange?: (itemId: string, newStatus: PipelineItemStatus) => void;
+  // Team members for assignee dropdown
+  teamMembers?: Array<{ id: string; name: string; email?: string; avatar?: string | null }>;
+  // Callback when assignee changes
+  onAssigneeChange?: (itemId: string, assigneeId: string | null) => void;
 }
 
 const priorityConfig: Record<number, {
@@ -72,6 +84,23 @@ const priorityConfig: Record<number, {
   },
 };
 
+const sourceIcons: Record<string, { icon: React.ComponentType<{ className?: string }>; className: string }> = {
+  FORM: { icon: Inbox, className: 'text-purple-600' },
+  EMAIL: { icon: Mail, className: 'text-blue-600' },
+  CHAT: { icon: MessageSquare, className: 'text-green-600' },
+  API: { icon: Zap, className: 'text-orange-600' },
+};
+
+// Helper function to extract source from item
+const getItemSource = (item: UnifiedCardItem | PipelineItem): string | null => {
+  // Check if item has source directly
+  if ('source' in item && item.source) return item.source as string;
+  // Check if source is in data field
+  if (item.data && typeof item.data === 'object' && 'source' in item.data) {
+    return (item.data as Record<string, unknown>).source as string;
+  }
+  return null;
+};
 
 export function UnifiedKanbanCard({
   item,
@@ -80,8 +109,11 @@ export function UnifiedKanbanCard({
   fullCardDrag = false,
   pipelineId,
   onStatusChange,
+  teamMembers,
+  onAssigneeChange,
 }: UnifiedKanbanCardProps) {
   const [isUpdating, setIsUpdating] = useState<'close' | 'complete' | null>(null);
+  const [isAssigning, setIsAssigning] = useState(false);
 
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: item.id,
@@ -160,6 +192,18 @@ export function UnifiedKanbanCard({
     }
   };
 
+  // Handler for Assignee change
+  const handleAssigneeChange = async (value: string) => {
+    if (!onAssigneeChange) return;
+    setIsAssigning(true);
+    try {
+      const assigneeId = value === 'unassigned' ? null : value;
+      await onAssigneeChange(item.id, assigneeId);
+    } finally {
+      setIsAssigning(false);
+    }
+  };
+
   // Only show action buttons if we have pipelineId and item is not already closed/completed
   const showActions = pipelineId &&
     item.status !== PipelineItemStatus.CLOSED &&
@@ -208,11 +252,25 @@ export function UnifiedKanbanCard({
             )}
 
             <div className="flex-1 min-w-0 space-y-3">
-              {/* Title Row with Actions */}
+              {/* Title Row with Source Icon and Actions */}
               <div className="flex items-start justify-between gap-2">
-                <h4 className="font-medium text-sm text-astralis-navy line-clamp-2 flex-1">
-                  {item.title}
-                </h4>
+                <div className="flex items-start gap-2 flex-1 min-w-0">
+                  {(() => {
+                    const source = getItemSource(item);
+                    if (source && sourceIcons[source]) {
+                      const IconComponent = sourceIcons[source].icon;
+                      return (
+                        <div className="flex-shrink-0 mt-0.5">
+                          <IconComponent className={`w-4 h-4 ${sourceIcons[source].className}`} />
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+                  <h4 className="font-medium text-sm text-astralis-navy line-clamp-2">
+                    {item.title}
+                  </h4>
+                </div>
                 <div className="flex items-center gap-1 flex-shrink-0">
                   {/* Action Buttons */}
                   {showActions && (
@@ -292,29 +350,71 @@ export function UnifiedKanbanCard({
 
               {/* Metadata Row */}
               <div className="flex items-center gap-3 text-xs text-slate-500">
-                {/* Assignee */}
-                {item.assignedTo ? (
-                  <div className="flex items-center gap-1.5">
-                    {item.assignedTo.avatar ? (
-                      <img
-                        src={item.assignedTo.avatar}
-                        alt={item.assignedTo.name}
-                        className="w-6 h-6 rounded-full"
-                      />
-                    ) : (
-                      <div className="w-6 h-6 rounded-full bg-astralis-blue/10 flex items-center justify-center">
-                        <User className="w-4 h-4 text-astralis-blue" />
-                      </div>
-                    )}
-                    <span className="truncate max-w-[100px]">
-                      {item.assignedTo.name}
-                    </span>
+                {/* Assignee Dropdown */}
+                {teamMembers && teamMembers.length > 0 && onAssigneeChange ? (
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <Select
+                      value={item.assignedToId || 'unassigned'}
+                      onValueChange={handleAssigneeChange}
+                      disabled={isAssigning}
+                    >
+                      <SelectTrigger className="h-7 w-[140px] text-xs bg-white border-slate-200">
+                        <SelectValue>
+                          {isAssigning ? (
+                            <div className="flex items-center gap-1">
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                              <span>Assigning...</span>
+                            </div>
+                          ) : item.assignedTo ? (
+                            <div className="flex items-center gap-1">
+                              <User className="w-3 h-3" />
+                              <span className="truncate">{item.assignedTo.name}</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1 text-slate-400">
+                              <User className="w-3 h-3" />
+                              <span>Unassigned</span>
+                            </div>
+                          )}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="unassigned">
+                          <span className="text-slate-400">Unassigned</span>
+                        </SelectItem>
+                        {teamMembers.map((member) => (
+                          <SelectItem key={member.id} value={member.id}>
+                            {member.name || member.email}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-1.5 text-slate-400">
-                    <User className="w-4 h-4" />
-                    <span>Unassigned</span>
-                  </div>
+                  // Fallback: Read-only display when no teamMembers or callback
+                  item.assignedTo ? (
+                    <div className="flex items-center gap-1.5">
+                      {item.assignedTo.avatar ? (
+                        <img
+                          src={item.assignedTo.avatar}
+                          alt={item.assignedTo.name}
+                          className="w-6 h-6 rounded-full"
+                        />
+                      ) : (
+                        <div className="w-6 h-6 rounded-full bg-astralis-blue/10 flex items-center justify-center">
+                          <User className="w-4 h-4 text-astralis-blue" />
+                        </div>
+                      )}
+                      <span className="truncate max-w-[100px]">
+                        {item.assignedTo.name}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 text-slate-400">
+                      <User className="w-4 h-4" />
+                      <span>Unassigned</span>
+                    </div>
+                  )
                 )}
 
                 {/* Due Date */}

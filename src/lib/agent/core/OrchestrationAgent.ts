@@ -998,6 +998,9 @@ export class OrchestrationAgent {
     if (lowerName.includes('sales') || lowerName.includes('lead') || lowerName.includes('opportunity')) {
       return 'sales';
     }
+    if (lowerName.includes('scheduling') || lowerName.includes('booking') || lowerName.includes('appointment') || lowerName.includes('calendar')) {
+      return 'scheduling';
+    }
     if (lowerName.includes('support') || lowerName.includes('ticket') || lowerName.includes('help')) {
       return 'support';
     }

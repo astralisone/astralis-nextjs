@@ -28,11 +28,17 @@ interface EmailOptions {
 async function sendViaBrevoAPI(options: EmailOptions): Promise<void> {
   const apiKey = process.env.BREVO_API_KEY;
   if (!apiKey) {
+    console.error('[Email] BREVO_API_KEY not configured');
     throw new Error('BREVO_API_KEY not configured');
   }
 
   const fromEmail = process.env.SMTP_FROM_EMAIL || 'no-reply@astralisone.com';
   const fromName = process.env.SMTP_FROM_NAME || 'Astralis One';
+
+  console.log(`[Email] Attempting to send via Brevo API to ${options.to}`);
+  console.log(`[Email] Subject: ${options.subject}`);
+  console.log(`[Email] From: ${fromName} <${fromEmail}>`);
+  console.log(`[Email] Attachments: ${options.attachments?.length || 0}`);
 
   const payload: Record<string, unknown> = {
     sender: { email: fromEmail, name: fromName },
@@ -67,10 +73,12 @@ async function sendViaBrevoAPI(options: EmailOptions): Promise<void> {
 
   if (!response.ok) {
     const errorData = await response.text();
+    console.error(`[Email] Brevo API error: ${response.status} - ${errorData}`);
     throw new Error(`Brevo API error: ${response.status} - ${errorData}`);
   }
 
-  console.log(`[Email] Sent via Brevo API to ${options.to}`);
+  const responseData = await response.json();
+  console.log(`[Email] ✅ SUCCESS - Sent via Brevo API to ${options.to} (Message ID: ${responseData.messageId || 'N/A'})`);
 }
 
 /**
@@ -99,6 +107,9 @@ function createTransporter(): Transporter {
  * Send email via SMTP (fallback method)
  */
 async function sendViaSMTP(options: EmailOptions): Promise<void> {
+  console.log(`[Email] Attempting to send via SMTP to ${options.to}`);
+  console.log(`[Email] SMTP Config - Host: ${process.env.SMTP_HOST}, Port: ${process.env.SMTP_PORT}, User: ${process.env.SMTP_USER}`);
+
   const transporter = createTransporter();
 
   const mailOptions = {
@@ -110,26 +121,43 @@ async function sendViaSMTP(options: EmailOptions): Promise<void> {
     attachments: options.attachments,
   };
 
-  await transporter.sendMail(mailOptions);
-  console.log(`[Email] Sent via SMTP to ${options.to}`);
+  const result = await transporter.sendMail(mailOptions);
+  console.log(`[Email] ✅ SUCCESS - Sent via SMTP to ${options.to} (Message ID: ${result.messageId})`);
 }
 
 /**
  * Send an email - tries Brevo API first, falls back to SMTP
  */
 export async function sendEmail(options: EmailOptions): Promise<void> {
+  console.log(`[Email] ========== EMAIL SEND START ==========`);
+  console.log(`[Email] To: ${options.to}`);
+  console.log(`[Email] Subject: ${options.subject}`);
+
   // Try Brevo API first (bypasses SMTP port blocks)
   if (process.env.BREVO_API_KEY) {
+    console.log('[Email] Brevo API key found, attempting Brevo API send...');
     try {
       await sendViaBrevoAPI(options);
+      console.log(`[Email] ========== EMAIL SEND COMPLETE (BREVO) ==========`);
       return;
     } catch (error) {
-      console.error('[Email] Brevo API failed, trying SMTP fallback:', error);
+      console.error('[Email] ❌ FAILED - Brevo API send failed, attempting SMTP fallback...');
+      console.error('[Email] Brevo error details:', error instanceof Error ? error.message : String(error));
     }
+  } else {
+    console.log('[Email] No Brevo API key found, using SMTP directly');
   }
 
   // Fall back to SMTP
-  await sendViaSMTP(options);
+  try {
+    await sendViaSMTP(options);
+    console.log(`[Email] ========== EMAIL SEND COMPLETE (SMTP) ==========`);
+  } catch (error) {
+    console.error('[Email] ❌ FAILED - SMTP send failed');
+    console.error('[Email] SMTP error details:', error instanceof Error ? error.message : String(error));
+    console.log(`[Email] ========== EMAIL SEND FAILED ==========`);
+    throw error; // Re-throw so calling code knows it failed
+  }
 }
 
 interface EmailTemplateOptions {

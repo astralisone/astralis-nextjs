@@ -79,6 +79,67 @@ export default function IntakePage() {
     }
   };
 
+  const handleDeleteSingle = async (intakeId: string) => {
+    try {
+      const response = await fetch(`/api/intake/${intakeId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete intake request');
+      }
+
+      toast({
+        title: 'Deleted',
+        description: 'Intake request has been deleted',
+      });
+
+      refetch();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to delete intake request',
+        variant: 'destructive',
+      });
+      throw error; // Re-throw to let the dialog know it failed
+    }
+  };
+
+  const handleDeleteBulk = async (intakeIds: string[]) => {
+    try {
+      const response = await fetch('/api/intake/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ids: intakeIds,
+          action: 'delete',
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete intake requests');
+      }
+
+      const result = await response.json();
+
+      toast({
+        title: 'Deleted',
+        description: `${result.deletedCount || intakeIds.length} intake request${intakeIds.length > 1 ? 's' : ''} deleted`,
+      });
+
+      refetch();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to delete intake requests',
+        variant: 'destructive',
+      });
+      throw error;
+    }
+  };
+
   return (
     <>
       <div className="space-y-6">
@@ -123,6 +184,8 @@ export default function IntakePage() {
             pipelines={pipelinesForDropdown}
             onAssignToPipeline={handleAssignToPipeline}
             assigningIntakeId={assigningIntakeId}
+            onDeleteSingle={handleDeleteSingle}
+            onDeleteBulk={handleDeleteBulk}
           />
         )}
       </div>

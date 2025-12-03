@@ -213,7 +213,11 @@ export default function PipelinePage({ params }: { params: Promise<{ id: string 
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="kanban" className="flex-1 overflow-hidden">
+            <TabsContent
+              value="kanban"
+              className="flex-1 overflow-hidden"
+              style={{ height: '-webkit-fill-available' }}
+            >
               <KanbanBoard
                 pipeline={pipeline}
                 onRefetch={refetch}
