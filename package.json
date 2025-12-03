@@ -17,7 +17,6 @@
     "prod:reload": "pm2 reload ecosystem.config.js && pm2 save",
     "prod:logs": "pm2 logs",
     "prod:status": "pm2 list",
-    "vercel:build": "cp -r ./next ./.next && prisma generate",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test:e2e": "playwright test",
