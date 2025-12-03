@@ -52,7 +52,7 @@ export function KanbanColumn({
   );
 
   return (
-    <div className="flex-shrink-0 w-80 flex flex-col" style={{ maxHeight: 'calc(100vh - 280px)' }}>
+    <div className="flex-1 min-w-[280px] max-w-[320px] flex flex-col h-full">
       <div className="bg-slate-100 rounded-lg p-4 flex flex-col h-full overflow-hidden">
         {/* Column Header - Fixed */}
         <div className="flex items-center justify-center gap-3 mb-4 py-2 px-3 -mx-4 -mt-4 rounded-t-lg bg-slate-200/70 flex-shrink-0">
