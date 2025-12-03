@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { CalendarChatPanel } from '@/components/calendar/CalendarChatPanel';
 import { cn } from '@/lib/utils';
+import { toast } from '@/components/ui/use-toast';
 
 type EventFilter = 'all' | 'my' | 'team';
 
@@ -62,6 +63,7 @@ export default function SchedulingPage() {
   const [selectedEvent, setSelectedEvent] = useState<SchedulingEvent | null>(null);
   const [showEventSheet, setShowEventSheet] = useState(false);
   const [showChatPanel, setShowChatPanel] = useState(false);
+  const [updatingEventId, setUpdatingEventId] = useState<string | null>(null);
 
   // Get userId and orgId from session
   const userId = session?.user?.id || '';
@@ -151,6 +153,74 @@ export default function SchedulingPage() {
   const handleDateSelect = (date: Date) => {
     // Pre-fill the date when opening the create form
     setShowCreateSheet(true);
+  };
+
+  /**
+   * Handle accepting an event
+   */
+  const handleAcceptEvent = async (eventId: string) => {
+    setUpdatingEventId(eventId);
+    try {
+      const response = await fetch(`/api/calendar/events/${eventId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'CONFIRMED' }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to accept event');
+      }
+
+      toast({
+        title: 'Event Accepted',
+        description: 'The event has been confirmed',
+      });
+
+      await fetchEvents();
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: err instanceof Error ? err.message : 'Failed to accept event',
+        variant: 'destructive',
+      });
+    } finally {
+      setUpdatingEventId(null);
+    }
+  };
+
+  /**
+   * Handle declining an event
+   */
+  const handleDeclineEvent = async (eventId: string) => {
+    setUpdatingEventId(eventId);
+    try {
+      const response = await fetch(`/api/calendar/events/${eventId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'CANCELLED' }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to decline event');
+      }
+
+      toast({
+        title: 'Event Declined',
+        description: 'The event has been cancelled',
+      });
+
+      await fetchEvents();
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: err instanceof Error ? err.message : 'Failed to decline event',
+        variant: 'destructive',
+      });
+    } finally {
+      setUpdatingEventId(null);
+    }
   };
 
   /**
@@ -388,6 +458,9 @@ export default function SchedulingPage() {
                               status: event.status as 'SCHEDULED' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED' | 'CONFLICT',
                             }}
                             onClick={() => handleEventClick(event)}
+                            onAccept={handleAcceptEvent}
+                            onDecline={handleDeclineEvent}
+                            isUpdating={updatingEventId === event.id}
                           />
                         ))
                       )}
@@ -462,6 +535,9 @@ export default function SchedulingPage() {
                   participants: selectedEvent.participantEmails || [],
                   status: selectedEvent.status as 'SCHEDULED' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED' | 'CONFLICT',
                 }}
+                onAccept={handleAcceptEvent}
+                onDecline={handleDeclineEvent}
+                isUpdating={updatingEventId === selectedEvent.id}
               />
 
               {/* Additional Event Details */}

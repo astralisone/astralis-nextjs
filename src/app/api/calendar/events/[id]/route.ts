@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/config";
 import * as schedulingService from "@/lib/services/scheduling.service";
 import { z } from "zod";
+import { emitAgentEvent } from "@/lib/agent/inputs/EventBus";
+import { prisma } from "@/lib/prisma";
 
 // Event update validation schema
 const updateEventSchema = z.object({
@@ -103,6 +105,15 @@ export async function PUT(
 
     const updateData = result.data;
 
+    // Fetch the existing event to track previous status
+    const existingEvent = await schedulingService.getEventById(eventId);
+    if (!existingEvent) {
+      return NextResponse.json(
+        { error: "Event not found" },
+        { status: 404 }
+      );
+    }
+
     // Validate time range if both times are provided
     if (updateData.startTime && updateData.endTime) {
       const startTime = new Date(updateData.startTime);
@@ -133,6 +144,52 @@ export async function PUT(
       eventId,
       dataWithDates
     );
+
+    // Emit calendar event to EventBus
+    await emitAgentEvent('calendar:event_updated', {
+      eventId: event.id,
+      title: event.title,
+      status: event.status,
+      previousStatus: existingEvent.status,
+      userId: event.userId,
+      orgId: event.orgId,
+      timestamp: new Date(),
+    }, {
+      source: 'system',
+      orgId: event.orgId || undefined,
+    });
+
+    // If status changed to CONFIRMED, CANCELLED, or COMPLETED, find and update associated Task
+    if (updateData.status && ['CONFIRMED', 'CANCELLED', 'COMPLETED'].includes(updateData.status)) {
+      // Find Task that has this event as source
+      const relatedTask = await prisma.task.findFirst({
+        where: {
+          OR: [
+            { sourceId: eventId },
+            { data: { path: ['schedulingEventId'], equals: eventId } },
+          ],
+        },
+      });
+
+      if (relatedTask) {
+        // Map event status to task status
+        const taskStatus = updateData.status === 'CONFIRMED' ? 'IN_PROGRESS'
+          : updateData.status === 'COMPLETED' ? 'DONE'
+          : 'CANCELLED';
+
+        // Emit task:status_changed for BaseTaskAgent to process
+        await emitAgentEvent('task:status_changed', {
+          taskId: relatedTask.id,
+          previousStatus: relatedTask.status,
+          newStatus: taskStatus,
+          reason: `Calendar event ${updateData.status.toLowerCase()}`,
+          timestamp: new Date(),
+        }, {
+          source: 'system',
+          orgId: relatedTask.orgId,
+        });
+      }
+    }
 
     return NextResponse.json(
       {

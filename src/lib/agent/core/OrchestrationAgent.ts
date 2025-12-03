@@ -66,6 +66,9 @@ const DEFAULT_SUBSCRIBED_EVENTS: AgentEventType[] = [
   'email:received',
   'pipeline:stage_changed',
   'calendar:reminder_due',
+  'calendar:event_created',
+  'calendar:event_updated',
+  'calendar:event_cancelled',
   'schedule:triggered',
 ];
 
