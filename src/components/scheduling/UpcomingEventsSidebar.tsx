@@ -6,8 +6,8 @@ import { mapSchedulingEventToCardData } from './types';
 interface UpcomingEventsSidebarProps {
   events: SchedulingEvent[];
   onEventClick: (event: SchedulingEvent) => void;
-  onAccept: (eventId: string) => void;
-  onDecline: (eventId: string) => void;
+  onAccept: (eventId: string) => Promise<void>;
+  onDecline: (eventId: string) => Promise<void>;
   updatingEventId: string | null;
 }
 

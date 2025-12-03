@@ -10,8 +10,8 @@ interface EventDetailsSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   event: SchedulingEvent | null;
-  onAccept: (eventId: string) => void;
-  onDecline: (eventId: string) => void;
+  onAccept: (eventId: string) => Promise<void>;
+  onDecline: (eventId: string) => Promise<void>;
   updatingEventId: string | null;
 }
 
