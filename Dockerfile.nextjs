@@ -61,8 +61,8 @@ COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 # Copy bundled worker
 COPY --from=builder --chown=nextjs:nodejs /app/worker.js ./worker.js
 
-# Create entrypoint script inline
-RUN printf '#!/bin/sh\nset -e\necho "Starting BullMQ worker..."\nnode worker.js &\necho "Starting Next.js server..."\nexec node server.js\n' > docker-entrypoint.sh && \
+# Create entrypoint script inline with migrations
+RUN printf '#!/bin/sh\nset -e\n\n# Run database migrations\necho "Running database migrations..."\nnpx prisma migrate deploy\n\n# Optional: Run seeds if SEED_DB is set\nif [ "$SEED_DB" = "true" ]; then\n  echo "Seeding database..."\n  npx prisma db seed\nfi\n\necho "Starting BullMQ worker..."\nnode worker.js &\n\necho "Starting Next.js server..."\nexec node server.js\n' > docker-entrypoint.sh && \
     chmod +x docker-entrypoint.sh && chown nextjs:nodejs docker-entrypoint.sh
 
 USER nextjs
