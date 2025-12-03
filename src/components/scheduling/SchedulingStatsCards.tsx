@@ -10,9 +10,9 @@ export function SchedulingStatsCards({ stats }: SchedulingStatsCardsProps) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-6">
       <Card>
-        <CardContent className="p-4">
+        <CardContent className="p-5">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-slate-100 rounded-lg">
+            <div className="p-2 bg-slate-300 rounded-lg">
               <Calendar className="h-5 w-5 text-slate-600" />
             </div>
             <div>

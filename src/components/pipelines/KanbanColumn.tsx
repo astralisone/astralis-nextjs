@@ -34,7 +34,7 @@ export function KanbanColumn({
   );
 
   return (
-    <div className="flex-1 min-w-[280px] max-w-[320px] flex flex-col h-full">
+    <div className="flex-1 min-w-[280px] max-w-[320px] flex flex-col h-full ui-kanban-column ">
       <div className="bg-slate-50 rounded-lg border border-slate-200 flex flex-col h-full overflow-hidden">
         {/* Stage Header - Fixed */}
         <div className="px-4 py-3 border-b border-slate-200 bg-white rounded-t-lg flex-shrink-0">
