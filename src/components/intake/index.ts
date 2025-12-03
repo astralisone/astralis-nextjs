@@ -5,3 +5,4 @@ export { PriorityIndicator, getPriorityLevel } from './PriorityIndicator';
 export type { PriorityLevel } from './PriorityIndicator';
 export { BulkActionsToolbar } from './BulkActionsToolbar';
 export { IntakeDetailDrawer } from './IntakeDetailDrawer';
+export { IntakeDetailPanel } from './IntakeDetailPanel';
