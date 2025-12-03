@@ -56,13 +56,9 @@ export async function POST(
       );
     }
 
-    // Check if already assigned
-    if (intake.assignedPipeline && intake.status === IntakeStatus.ASSIGNED) {
-      return NextResponse.json(
-        { error: "Intake request is already assigned to a pipeline" },
-        { status: 400 }
-      );
-    }
+    // Check if reassigning to the same pipeline
+    const isReassignment = intake.assignedPipeline && intake.status === IntakeStatus.ASSIGNED;
+    const isSamePipeline = intake.assignedPipeline === pipelineId;
 
     // Verify pipeline exists and get stages
     const pipeline = await prisma.pipeline.findUnique({
@@ -116,8 +112,30 @@ export async function POST(
       },
     };
 
-    // Use transaction to update intake and create pipeline item atomically
+    // Use transaction to update intake and create/move pipeline item atomically
     const result = await prisma.$transaction(async (tx) => {
+      // If reassigning to a different pipeline, find and delete existing pipeline item
+      if (isReassignment && !isSamePipeline) {
+        // Find existing pipeline item linked to this intake
+        const existingItems = await tx.pipelineItem.findMany({
+          where: {
+            data: {
+              path: ['intakeRequestId'],
+              equals: intakeId,
+            },
+          },
+        });
+
+        // Delete existing pipeline items
+        if (existingItems.length > 0) {
+          await tx.pipelineItem.deleteMany({
+            where: {
+              id: { in: existingItems.map(item => item.id) },
+            },
+          });
+        }
+      }
+
       // Update the intake request
       const updatedIntake = await tx.intakeRequest.update({
         where: { id: intakeId },
@@ -136,23 +154,37 @@ export async function POST(
         },
       });
 
-      // Create pipeline item from intake data
-      const pipelineItem = await tx.pipelineItem.create({
-        data: {
-          title: intake.title,
-          description: intake.description,
-          priority: intake.priority,
-          status: "NOT_STARTED",
-          stageId: targetStage.id,
+      // Create pipeline item from intake data (skip if same pipeline)
+      let pipelineItem;
+      if (!isSamePipeline) {
+        pipelineItem = await tx.pipelineItem.create({
           data: {
-            intakeRequestId: intakeId,
-            source: intake.source,
-            originalRequestData: intake.requestData,
-            assignedAt: new Date().toISOString(),
+            title: intake.title,
+            description: intake.description,
+            priority: intake.priority,
+            status: "NOT_STARTED",
+            stageId: targetStage.id,
+            data: {
+              intakeRequestId: intakeId,
+              source: intake.source,
+              originalRequestData: intake.requestData,
+              assignedAt: new Date().toISOString(),
+              reassignedFrom: isReassignment ? intake.assignedPipeline : undefined,
+            },
+            tags: ["intake"],
           },
-          tags: ["intake"],
-        },
-      });
+        });
+      } else {
+        // Same pipeline - find existing item
+        pipelineItem = await tx.pipelineItem.findFirst({
+          where: {
+            data: {
+              path: ['intakeRequestId'],
+              equals: intakeId,
+            },
+          },
+        });
+      }
 
       return {
         intakeRequest: updatedIntake,
@@ -161,13 +193,15 @@ export async function POST(
           id: targetStage.id,
           name: targetStage.name,
         },
+        wasReassigned: isReassignment && !isSamePipeline,
       };
     });
 
+    const actionWord = result.wasReassigned ? 'reassigned' : 'assigned';
     return NextResponse.json(
       {
         success: true,
-        message: `Intake assigned to ${pipeline.name} in stage "${targetStage.name}"`,
+        message: `Intake ${actionWord} to ${pipeline.name} in stage "${targetStage.name}"`,
         ...result,
       },
       { status: 200 }
