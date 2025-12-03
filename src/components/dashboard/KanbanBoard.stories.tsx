@@ -1,6 +1,17 @@
 import type { Meta, StoryObj } from '@storybook/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { KanbanBoard } from './KanbanBoard';
 import { PipelineItemStatus } from '@/types/pipelines';
+
+// Create a client for Storybook
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const meta = {
   title: 'Pipelines/KanbanBoard',
@@ -11,9 +22,11 @@ const meta = {
   tags: ['autodocs'],
   decorators: [
     (Story) => (
-      <div style={{ height: '100vh', padding: '24px', background: '#f8fafc' }}>
-        <Story />
-      </div>
+      <QueryClientProvider client={queryClient}>
+        <div style={{ height: '100vh', padding: '24px', background: '#f8fafc' }}>
+          <Story />
+        </div>
+      </QueryClientProvider>
     ),
   ],
 } satisfies Meta<typeof KanbanBoard>;
