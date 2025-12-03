@@ -34,8 +34,8 @@ export function KanbanColumn({
   );
 
   return (
-    <div className="flex-shrink-0 w-80 h-full max-h-full flex flex-col overflow-hidden">
-      <div className="bg-slate-50 rounded-lg border border-slate-200 flex flex-col h-full max-h-full">
+    <div className="flex-shrink-0 w-80 flex flex-col" style={{ maxHeight: 'calc(100vh - 280px)' }}>
+      <div className="bg-slate-50 rounded-lg border border-slate-200 flex flex-col h-full overflow-hidden">
         {/* Stage Header - Fixed */}
         <div className="px-4 py-3 border-b border-slate-200 bg-white rounded-t-lg flex-shrink-0">
           <div className="flex items-center justify-between">
@@ -65,7 +65,7 @@ export function KanbanColumn({
         <div
           ref={setNodeRef}
           className={cn(
-            'p-4 space-y-3 min-h-[200px] flex-1 overflow-y-auto transition-colors duration-200',
+            'p-4 space-y-3 min-h-[120px] flex-1 overflow-y-auto transition-colors duration-200',
             isOver && 'bg-astralis-blue/5 ring-2 ring-astralis-blue/20 ring-inset'
           )}
         >
