@@ -117,7 +117,7 @@ export function KanbanBoard({ pipeline, onRefetch }: KanbanBoardProps) {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex gap-6 h-full max-h-full overflow-x-auto overflow-y-hidden pb-4 px-4">
+      <div className="flex gap-4 h-full max-h-full overflow-hidden p-4">
         {pipeline.stages.map((stage) => (
           <KanbanColumn
             key={stage.id}
