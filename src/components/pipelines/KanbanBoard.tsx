@@ -95,7 +95,7 @@ export function KanbanBoard({ pipelineId, stages, onItemClick, onRefetch }: Kanb
       onDragEnd={handleDragEnd}
       collisionDetection={closestCorners}
     >
-      <div className="flex gap-4 h-full max-h-full overflow-hidden p-4">
+      <div className="ui-kanban flex gap-4 overflow-hidden p-4">
         {stages.map((stage) => (
           <KanbanColumn
             key={stage.id}
