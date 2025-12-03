@@ -9,15 +9,16 @@
 ## Table of Contents
 
 1. [Overview](#1-overview)
-2. [OrchestrationAgent](#2-orchestrationagent)
-3. [DecisionEngine](#3-decisionengine)
-4. [ActionExecutor](#4-actionexecutor)
-5. [Event Bus (AgentEventBus)](#5-event-bus-agenteventbus)
-6. [LLM Integration](#6-llm-integration)
-7. [Confidence-Based Execution](#7-confidence-based-execution)
-8. [Database Models](#8-database-models)
-9. [Usage Examples](#9-usage-examples)
-10. [Debugging & Monitoring](#10-debugging--monitoring)
+2. [OA/TA Architecture (Critical)](#2-oata-architecture-critical)
+3. [OrchestrationAgent (OA)](#3-orchestrationagent-oa)
+4. [DecisionEngine](#4-decisionengine)
+5. [ActionExecutor](#5-actionexecutor)
+6. [Event Bus (AgentEventBus)](#6-event-bus-agenteventbus)
+7. [LLM Integration](#7-llm-integration)
+8. [Confidence-Based Execution](#8-confidence-based-execution)
+9. [Database Models](#9-database-models)
+10. [Usage Examples](#10-usage-examples)
+11. [Debugging & Monitoring](#11-debugging--monitoring)
 
 ---
 
@@ -70,7 +71,222 @@ The Astralis One Multi-Agent AI System is an LLM-powered orchestration framework
 
 ---
 
-## 2. OrchestrationAgent
+## 2. OA/TA Architecture (Critical)
+
+### Understanding the Two-Agent Pattern
+
+The Astralis agent system uses a **two-agent architecture** that separates concerns between:
+
+1. **OrchestrationAgent (OA)**: Receives external events, makes routing decisions, creates Tasks
+2. **BaseTaskAgent (TA)**: Listens to internal task events, manages task lifecycle through pipeline stages
+
+This separation ensures that:
+- External event processing is decoupled from task management
+- Tasks can respond to internal events independently
+- The system is extensible and maintainable
+
+### Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        EXTERNAL INPUT SOURCES                                │
+│   Email │ Webhooks │ API │ Calendar Events │ Form Submissions │ Chat        │
+└────────────────────────────────┬────────────────────────────────────────────┘
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          AgentEventBus (Singleton)                           │
+│                         Pub/Sub Event Distribution                           │
+│                                                                              │
+│   Events: intake:created, email:received, calendar:event_updated, etc.      │
+└────────────────────────────────┬────────────────────────────────────────────┘
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      ORCHESTRATION AGENT (OA)                                │
+│                                                                              │
+│   Subscribes to:                                                             │
+│   - intake:created, intake:updated, intake:escalated                         │
+│   - webhook:form_submitted, webhook:booking_requested                        │
+│   - email:received                                                           │
+│   - calendar:event_created, calendar:event_updated, calendar:event_cancelled │
+│   - pipeline:stage_changed                                                   │
+│   - schedule:triggered                                                       │
+│                                                                              │
+│   ┌────────────┐    ┌─────────────────┐    ┌──────────────────┐             │
+│   │ LLM Client │ →  │ DecisionEngine  │ →  │ ActionExecutor   │             │
+│   │ Claude/GPT │    │ Parse & Validate│    │ Create Tasks     │             │
+│   └────────────┘    └─────────────────┘    └──────────────────┘             │
+│                                                                              │
+│   OUTPUT: Creates Tasks, Assigns to Pipelines, Emits task:created events    │
+└────────────────────────────────┬────────────────────────────────────────────┘
+                                 │
+                                 │ Emits: task:created, task:status_changed
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       BASE TASK AGENT (TA)                                   │
+│                                                                              │
+│   Subscribes to:                                                             │
+│   - task:created, task:assigned                                              │
+│   - task:status_changed, task:stage_changed                                  │
+│   - task:blocked, task:unblocked                                             │
+│   - task:reminder_triggered                                                  │
+│                                                                              │
+│   ┌─────────────────────┐    ┌────────────────────┐    ┌──────────────────┐ │
+│   │ Load Task Context   │ →  │ TaskDecisionEngine │ →  │TaskActionExecutor│ │
+│   │ Template + Pipeline │    │ Evaluate Rules     │    │ Execute Actions  │ │
+│   └─────────────────────┘    └────────────────────┘    └──────────────────┘ │
+│                                                                              │
+│   OUTPUT: Updates pipeline position, triggers automations, sends notifs     │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Event Flow: Calendar Event → Task Update
+
+Here's how a calendar event change propagates through the system:
+
+```
+1. User clicks "Accept" on EventCard
+                 │
+                 ▼
+2. PATCH /api/calendar/events/[id]  →  Updates SchedulingEvent status to CONFIRMED
+                 │
+                 ▼
+3. API emits to EventBus:
+   - calendar:event_updated { eventId, newStatus: CONFIRMED }
+   - task:status_changed { taskId, newStatus: IN_PROGRESS }
+                 │
+                 ├────────────────────────────────────────┐
+                 │                                        │
+                 ▼                                        ▼
+4. OA receives calendar:event_updated         5. TA receives task:status_changed
+   - May create follow-up tasks                  - Loads task context + template
+   - May send notifications                      - Makes LLM decision on next action
+   - May trigger automations                     - Updates pipeline stage if needed
+                                                 - Executes template-defined actions
+```
+
+### Status Mapping: Calendar → Task
+
+When a calendar event status changes, it maps to task status:
+
+| Calendar Event Status | Task Status | Pipeline Stage |
+|-----------------------|-------------|----------------|
+| `PENDING` | `PENDING` | New/Intake |
+| `CONFIRMED` | `IN_PROGRESS` | In Progress |
+| `COMPLETED` | `DONE` | Completed |
+| `CANCELLED` | `CANCELLED` | Closed |
+| `MISSED` | `BLOCKED` | Needs Attention |
+
+### Key Responsibilities
+
+#### OrchestrationAgent (OA) Responsibilities:
+- **Event Reception**: Subscribes to external events (email, webhooks, calendar, etc.)
+- **Intelligent Routing**: Uses LLM to determine which pipeline/stage for new items
+- **Task Creation**: Creates Tasks from IntakeRequests with appropriate templates
+- **Confidence-Based Execution**: Auto-executes high-confidence decisions, queues others
+- **Audit Trail**: Records all decisions with LLM prompts/responses
+
+#### BaseTaskAgent (TA) Responsibilities:
+- **Task Lifecycle**: Manages task state transitions through pipeline stages
+- **Event-Driven Updates**: Responds to task events to update status/stage
+- **Template Execution**: Applies TaskTemplate rules for automated actions
+- **Action Execution**: Runs template-defined actions (notifications, automations)
+- **Context Loading**: Loads full task context including related entities
+
+### Linking Calendar Events to Tasks
+
+The system links calendar events to tasks through `SchedulingAgentTask`:
+
+```typescript
+// Prisma Schema
+model SchedulingAgentTask {
+  id               String         @id @default(cuid())
+  taskId           String
+  task             Task           @relation(fields: [taskId], references: [id])
+  schedulingEventId String?
+  schedulingEvent  SchedulingEvent? @relation(fields: [schedulingEventId], references: [id])
+  // ...
+}
+```
+
+When processing calendar events, the API finds associated tasks via:
+1. Task's `sourceId` matching the event ID
+2. Task data containing `schedulingEventId`
+3. `SchedulingAgentTask` linking record
+
+### Code Example: Calendar Event Emission
+
+```typescript
+// In /api/calendar/events/[id]/route.ts PATCH handler
+
+// 1. Update the calendar event
+const updatedEvent = await prisma.schedulingEvent.update({
+  where: { id: eventId },
+  data: { status: newStatus },
+});
+
+// 2. Emit calendar event to EventBus
+await emitAgentEvent({
+  type: 'calendar:event_updated',
+  payload: {
+    eventId: updatedEvent.id,
+    previousStatus: previousStatus,
+    newStatus: newStatus,
+    title: updatedEvent.title,
+    userId: updatedEvent.userId,
+    orgId: updatedEvent.orgId,
+  },
+  source: 'API',
+  orgId: updatedEvent.orgId,
+});
+
+// 3. Find associated task and emit task event
+const relatedTask = await prisma.task.findFirst({
+  where: {
+    OR: [
+      { sourceId: eventId },
+      { data: { path: ['schedulingEventId'], equals: eventId } },
+    ],
+  },
+});
+
+if (relatedTask) {
+  // Map calendar status to task status
+  const taskStatusMap = {
+    CONFIRMED: 'IN_PROGRESS',
+    COMPLETED: 'DONE',
+    CANCELLED: 'CANCELLED',
+  };
+
+  const newTaskStatus = taskStatusMap[newStatus] || relatedTask.status;
+
+  // Emit task event for BaseTaskAgent to process
+  await emitAgentEvent({
+    type: 'task:status_changed',
+    payload: {
+      taskId: relatedTask.id,
+      previousStatus: relatedTask.status,
+      newStatus: newTaskStatus,
+      reason: `Calendar event ${newStatus.toLowerCase()}`,
+    },
+    source: 'calendar',
+    orgId: relatedTask.orgId,
+  });
+}
+```
+
+### Why This Architecture?
+
+1. **Separation of Concerns**: OA handles external events, TA handles task lifecycle
+2. **Scalability**: Each agent can be scaled independently
+3. **Extensibility**: New event types can be added without modifying task logic
+4. **Traceability**: Event-driven design enables full audit trails
+5. **Resilience**: Failures in one agent don't affect the other
+
+---
+
+## 3. OrchestrationAgent (OA)
 
 ### Purpose and Responsibilities
 
@@ -191,7 +407,7 @@ interface DecisionRecord {
 const history = agent.getDecisionHistory(10); // Last 10 decisions
 ```
 
-### 2.1 Initialization
+### 3.1 Initialization
 
 ```typescript
 import { OrchestrationAgent, LLMProvider } from '@/lib/agent/core/OrchestrationAgent';
@@ -226,7 +442,7 @@ if (agent.isActive()) {
 }
 ```
 
-### 2.2 Event Handling
+### 3.2 Event Handling
 
 The agent subscribes to specific event types by default:
 
@@ -272,7 +488,7 @@ interface AgentEvent<T> {
 
 ---
 
-## 3. DecisionEngine
+## 4. DecisionEngine
 
 ### Purpose
 
@@ -423,7 +639,7 @@ const fallback = engine.createFallbackDecision(context, 'LLM parsing failed');
 
 ---
 
-## 4. ActionExecutor
+## 5. ActionExecutor
 
 ### Purpose
 
@@ -647,7 +863,7 @@ const outcome = await executor.execute(actions);
 
 ---
 
-## 5. Event Bus (AgentEventBus)
+## 6. Event Bus (AgentEventBus)
 
 ### Pub/Sub Pattern
 
@@ -781,9 +997,9 @@ await eventBus.emit('intake:assigned', {
 
 ---
 
-## 6. LLM Integration
+## 7. LLM Integration
 
-### 6.1 Dual-LLM Strategy
+### 7.1 Dual-LLM Strategy
 
 Astralis uses a **primary + fallback** approach for resilience:
 
@@ -835,7 +1051,7 @@ try {
 }
 ```
 
-### 6.2 ClaudeClient
+### 7.2 ClaudeClient
 
 **Features**:
 - Tool use for structured JSON output
@@ -904,7 +1120,7 @@ try {
 }
 ```
 
-### 6.3 OpenAIClient
+### 7.3 OpenAIClient
 
 **Features**:
 - Native JSON mode support (for supported models)
@@ -961,7 +1177,7 @@ const parsed = JSON.parse(response.content);
 
 ---
 
-## 7. Confidence-Based Execution
+## 8. Confidence-Based Execution
 
 ### Overview
 
@@ -1155,7 +1371,7 @@ await agent.rejectDecision('pending-123', 'Incorrect classification');
 
 ---
 
-## 8. Database Models
+## 9. Database Models
 
 The agent system uses Prisma models for persistence:
 
@@ -1302,9 +1518,9 @@ enum DecisionStatus {
 
 ---
 
-## 9. Usage Examples
+## 10. Usage Examples
 
-### 9.1 Creating an Agent
+### 10.1 Creating an Agent
 
 ```typescript
 import { OrchestrationAgent, LLMProvider } from '@/lib/agent/core/OrchestrationAgent';
@@ -1339,7 +1555,7 @@ agent.start();
 console.log('Agent started:', agent.isActive());
 ```
 
-### 9.2 Processing an Intake Request
+### 10.2 Processing an Intake Request
 
 ```typescript
 import { AgentInputSource } from '@/lib/agent/types/agent.types';
@@ -1388,7 +1604,7 @@ console.log('Auto-executed:', result.confidence >= 0.85);
 // - Notified on-call engineer
 ```
 
-### 9.3 Handling a Webhook Event
+### 10.3 Handling a Webhook Event
 
 ```typescript
 import { AgentEventBus } from '@/lib/agent/inputs/EventBus';
@@ -1421,7 +1637,7 @@ app.post('/api/webhooks/n8n', async (req, res) => {
 // - Execute or queue for approval
 ```
 
-### 9.4 Monitoring Agent Decisions
+### 10.4 Monitoring Agent Decisions
 
 ```typescript
 // Get agent statistics
@@ -1462,7 +1678,7 @@ for (const item of pending) {
 
 ---
 
-## 10. Debugging & Monitoring
+## 11. Debugging & Monitoring
 
 ### Decision Logs
 

@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   Calendar,
   Clock,
@@ -28,6 +29,9 @@ interface EventCardProps {
     conflicts?: any[];
   };
   onClick?: () => void;
+  onAccept?: (eventId: string) => Promise<void>;
+  onDecline?: (eventId: string) => Promise<void>;
+  isUpdating?: boolean;
 }
 
 const STATUS_CONFIG = {
@@ -68,7 +72,7 @@ const STATUS_CONFIG = {
   },
 };
 
-export function EventCard({ event, onClick }: EventCardProps) {
+export function EventCard({ event, onClick, onAccept, onDecline, isUpdating }: EventCardProps) {
   const startDate = new Date(event.startTime);
   const endDate = new Date(event.endTime);
 
@@ -106,7 +110,7 @@ export function EventCard({ event, onClick }: EventCardProps) {
 
   return (
     <Card
-      className={`p-4 hover:shadow-card-hover transition-all cursor-pointer ${
+      className={`p-4 bg-slate-50 hover:shadow-card-hover transition-all cursor-pointer ${
         hasConflicts ? "border-l-4 border-l-red-500" : ""
       } ${onClick ? "hover:border-astralis-blue" : ""}`}
       onClick={onClick}
@@ -127,7 +131,6 @@ export function EventCard({ event, onClick }: EventCardProps) {
 
           {/* Status Indicator */}
           <div className="flex items-center gap-1.5 flex-shrink-0">
-            <span className={`w-2 h-2 rounded-full ${statusConfig.dotColor}`} />
             <StatusIcon className={`h-5 w-5 ${statusConfig.color}`} />
           </div>
         </div>
@@ -198,13 +201,35 @@ export function EventCard({ event, onClick }: EventCardProps) {
           </div>
         </div>
 
-        {/* Status Badge (bottom) */}
-        <div
-          className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium ${statusConfig.bgColor} ${statusConfig.color}`}
-        >
-          <span className={`w-1.5 h-1.5 rounded-full ${statusConfig.dotColor}`} />
-          {statusConfig.label}
-        </div>
+        {/* Action Buttons */}
+        {(onAccept || onDecline) && event.status === 'SCHEDULED' && (
+          <div className="flex items-center gap-2 pt-2 border-t border-slate-200 mt-2">
+            {onAccept && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1 bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+                onClick={(e) => { e.stopPropagation(); onAccept(event.id); }}
+                disabled={isUpdating}
+              >
+                {isUpdating ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-1" />}
+                Accept
+              </Button>
+            )}
+            {onDecline && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1 bg-red-50 hover:bg-red-100 text-red-700 border-red-200"
+                onClick={(e) => { e.stopPropagation(); onDecline(event.id); }}
+                disabled={isUpdating}
+              >
+                {isUpdating ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <XCircle className="w-4 h-4 mr-1" />}
+                Decline
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     </Card>
   );
