@@ -1,5 +1,14 @@
 import path from 'node:path';
 
+// Vercel Postgres: Map Vercel-provided env vars to DATABASE_URL if not set
+if (!process.env.DATABASE_URL) {
+  process.env.DATABASE_URL =
+    process.env.astralis_PRISMA_DATABASE_URL ||
+    process.env.astralis_POSTGRES_URL ||
+    process.env.POSTGRES_PRISMA_URL ||
+    process.env.POSTGRES_URL;
+}
+
 /**
  * Sentry Integration (Phase 3: Task 3.4)
  *
