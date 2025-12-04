@@ -48,3 +48,5 @@ server.log
 ehthumbs.db
 Thumbs.db
 .env.production
+.vercel
+.env*.local
