@@ -1,0 +1,45 @@
+# Fly.io Worker Dockerfile
+# Runs BullMQ background workers for document processing, embeddings, etc.
+
+FROM node:20-bullseye-slim
+
+WORKDIR /app
+
+# Install build dependencies for native modules
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy dependency files
+COPY package.json package-lock.json ./
+
+# Install all dependencies (including dev deps for tsx)
+RUN npm ci --legacy-peer-deps
+
+# Copy Prisma schema and generate client
+COPY prisma ./prisma
+RUN npx prisma generate
+
+# Copy source files needed by workers
+COPY tsconfig.json ./
+COPY src ./src
+
+# Create a simple health check server for Fly.io
+RUN echo 'const http = require("http"); \
+const server = http.createServer((req, res) => { \
+  if (req.url === "/health") { res.writeHead(200); res.end("OK"); } \
+  else { res.writeHead(404); res.end(); } \
+}); \
+server.listen(8080, () => console.log("[Health] Listening on 8080"));' > health-server.js
+
+# Environment
+ENV NODE_ENV=production
+ENV PORT=8080
+
+# Expose port for health checks
+EXPOSE 8080
+
+# Start workers with tsx (for TypeScript support) and health server
+CMD ["sh", "-c", "node health-server.js & npx tsx src/workers/index.ts"]

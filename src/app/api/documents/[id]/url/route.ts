@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { getDocumentService } from '@/lib/services/document.service';
-import { getSpacesService } from '@/lib/services/spaces.service';
 
 /**
  * GET /api/documents/[id]/url
- * Generate a temporary signed URL for document access
+ * Get the public URL for document access
+ *
+ * Note: Vercel Blob URLs are public by default, so we return the cdnUrl directly.
  */
 export async function GET(
   req: NextRequest,
@@ -29,11 +30,10 @@ export async function GET(
     const documentService = getDocumentService();
     const document = await documentService.getDocument(documentId, orgId);
 
-    // 3. Generate signed URL (valid for 1 hour)
-    const spacesService = getSpacesService();
-    const signedUrl = await spacesService.getSignedUrl(document.filePath, 3600);
+    // 3. Return the public URL (Vercel Blob URLs are public)
+    const url = document.cdnUrl || document.filePath;
 
-    return NextResponse.json({ url: signedUrl });
+    return NextResponse.json({ url });
   } catch (error) {
     console.error('Document URL generation error:', error);
 

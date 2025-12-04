@@ -1,25 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/config';
 import { prisma } from '@/lib/prisma';
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { put, del } from '@vercel/blob';
 import crypto from 'crypto';
 
 // Allowed image types
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-
-// Initialize S3 client for DigitalOcean Spaces
-const s3Client = new S3Client({
-  endpoint: 'https://nyc3.digitaloceanspaces.com',
-  region: 'nyc3',
-  credentials: {
-    accessKeyId: process.env.DO_SPACES_ACCESS_KEY || 'DO00EFT8GE4WBBXWP32Z',
-    secretAccessKey: process.env.DO_SPACES_SECRET_KEY || 'nun1YaTVRqgvS3cIKMPBPNlU/RxTGMkYzKMZqLlen6g',
-  },
-  forcePathStyle: false,
-});
-
-const BUCKET_NAME = 'astralisone-documents';
 
 /**
  * Generate unique filename for avatar
@@ -44,23 +31,15 @@ function getExtensionFromMimeType(mimeType: string): string {
 }
 
 /**
- * Extract avatar path from URL for deletion
+ * Check if URL is a Vercel Blob URL
  */
-function extractAvatarPath(url: string): string | null {
+function isVercelBlobUrl(url: string): boolean {
   try {
     const urlObj = new URL(url);
-    // Remove leading slash and bucket name prefix if present
-    let path = urlObj.pathname;
-    if (path.startsWith('/')) {
-      path = path.slice(1);
-    }
-    // Only return path if it's in avatars folder
-    if (path.includes('avatars/')) {
-      return path;
-    }
-    return null;
+    return urlObj.hostname.includes('vercel-storage.com') ||
+           urlObj.hostname.includes('blob.vercel-storage.com');
   } catch {
-    return null;
+    return false;
   }
 }
 
@@ -120,22 +99,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       select: { avatar: true },
     });
 
-    // Delete old avatar if it exists and is in our storage
-    if (currentUser?.avatar) {
-      const oldAvatarPath = extractAvatarPath(currentUser.avatar);
-      if (oldAvatarPath) {
-        try {
-          await s3Client.send(
-            new DeleteObjectCommand({
-              Bucket: BUCKET_NAME,
-              Key: oldAvatarPath,
-            })
-          );
-          console.log('[Avatar] Deleted old avatar:', oldAvatarPath);
-        } catch (deleteError) {
-          // Log but don't fail the upload if deletion fails
-          console.error('[Avatar] Failed to delete old avatar:', deleteError);
-        }
+    // Delete old avatar if it exists and is in Vercel Blob storage
+    if (currentUser?.avatar && isVercelBlobUrl(currentUser.avatar)) {
+      try {
+        await del(currentUser.avatar);
+        console.log('[Avatar] Deleted old avatar:', currentUser.avatar);
+      } catch (deleteError) {
+        // Log but don't fail the upload if deletion fails
+        console.error('[Avatar] Failed to delete old avatar:', deleteError);
       }
     }
 
@@ -147,30 +118,17 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const ext = getExtensionFromMimeType(file.type);
     const avatarPath = generateAvatarFilename(userId, ext);
 
-    // Upload to DigitalOcean Spaces
-    const uploadCommand = new PutObjectCommand({
-      Bucket: BUCKET_NAME,
-      Key: avatarPath,
-      Body: buffer,
-      ContentType: file.type,
-      ACL: 'public-read', // Make avatar publicly readable
-      CacheControl: 'public, max-age=31536000', // Cache for 1 year
-      Metadata: {
-        'user-id': userId,
-        'original-name': file.name,
-        'uploaded-at': new Date().toISOString(),
-      },
+    // Upload to Vercel Blob
+    const blob = await put(avatarPath, buffer, {
+      access: 'public',
+      contentType: file.type,
+      addRandomSuffix: false,
     });
-
-    await s3Client.send(uploadCommand);
-
-    // Generate public URL
-    const avatarUrl = `https://${BUCKET_NAME}.nyc3.digitaloceanspaces.com/${avatarPath}`;
 
     // Update user avatar in database
     const updatedUser = await prisma.users.update({
       where: { id: userId },
-      data: { avatar: avatarUrl },
+      data: { avatar: blob.url },
       select: {
         id: true,
         avatar: true,
@@ -230,17 +188,11 @@ export async function DELETE(): Promise<NextResponse> {
       );
     }
 
-    // Delete from Spaces if it's our avatar
-    const avatarPath = extractAvatarPath(currentUser.avatar);
-    if (avatarPath) {
+    // Delete from Vercel Blob if it's our avatar
+    if (isVercelBlobUrl(currentUser.avatar)) {
       try {
-        await s3Client.send(
-          new DeleteObjectCommand({
-            Bucket: BUCKET_NAME,
-            Key: avatarPath,
-          })
-        );
-        console.log('[Avatar] Deleted avatar from storage:', avatarPath);
+        await del(currentUser.avatar);
+        console.log('[Avatar] Deleted avatar from storage:', currentUser.avatar);
       } catch (deleteError) {
         console.error('[Avatar] Failed to delete avatar from storage:', deleteError);
         // Continue to remove from database even if storage deletion fails

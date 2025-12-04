@@ -1,6 +1,6 @@
 import { Job } from 'bullmq';
 import { prisma } from '@/lib/prisma';
-import { getSpacesService } from '@/lib/services/spaces.service';
+import { getBlobService } from '@/lib/services/blob.service';
 import { getOCRService } from '@/lib/services/ocr.service';
 import { getVisionService, DocumentType } from '@/lib/services/vision.service';
 import type { DocumentProcessingJobData } from '../queues/document-processing.queue';
@@ -43,12 +43,13 @@ export async function processDocumentOCR(job: Job<DocumentProcessingJobData>) {
 
     console.log(`[Worker] Found document: ${document.originalName}`);
 
-    // Download file from Spaces
+    // Download file from Blob storage
     await job.updateProgress(20);
-    const spacesService = getSpacesService();
-    const fileBuffer = await spacesService.downloadFile(document.filePath);
+    const blobService = getBlobService();
+    // Use cdnUrl for Vercel Blob, fall back to filePath for compatibility
+    const fileBuffer = await blobService.downloadFile(document.cdnUrl || document.filePath);
 
-    console.log(`[Worker] Downloaded file from Spaces: ${fileBuffer.length} bytes`);
+    console.log(`[Worker] Downloaded file from Blob storage: ${fileBuffer.length} bytes`);
 
     // Extract text via OCR
     let ocrText = '';

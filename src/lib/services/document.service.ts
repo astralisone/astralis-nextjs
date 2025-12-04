@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
-import { getSpacesService } from './spaces.service';
+import { getBlobService } from './blob.service';
 import { getOCRService } from './ocr.service';
 import { getVisionService, DocumentType } from './vision.service';
 import { validateFile, supportsOCR } from '@/lib/utils/file-validation';
@@ -49,7 +49,7 @@ interface DocumentWithRelations {
 }
 
 export class DocumentService {
-  private spacesService = getSpacesService();
+  private blobService = getBlobService();
   private ocrService = getOCRService();
   private visionService = getVisionService();
 
@@ -87,7 +87,7 @@ export class DocumentService {
     }
 
     // 2. Upload to Spaces
-    const uploadResult = await this.spacesService.uploadFile(
+    const uploadResult = await this.blobService.uploadFile(
       file,
       filename,
       validation.detectedMimeType || mimeType,
@@ -99,7 +99,7 @@ export class DocumentService {
     if (options.generateThumbnail && mimeType.startsWith('image/')) {
       try {
         const thumbnail = await this.generateThumbnail(file);
-        const thumbResult = await this.spacesService.uploadThumbnail(
+        const thumbResult = await this.blobService.uploadThumbnail(
           thumbnail,
           `thumb_${filename}`,
           orgId
@@ -322,19 +322,20 @@ export class DocumentService {
    * @param orgId - Organization ID (for access control)
    */
   async deleteDocument(documentId: string, orgId: string): Promise<void> {
-    // Get document to retrieve file path
+    // Get document to retrieve file URL
     const document = await this.getDocument(documentId, orgId);
 
-    // Delete from Spaces
+    // Delete from Blob storage
     try {
-      await this.spacesService.deleteFile(document.filePath);
+      // For Vercel Blob, cdnUrl is the full URL we need to delete
+      if (document.cdnUrl) {
+        await this.blobService.deleteFile(document.cdnUrl);
+      }
       if (document.thumbnailUrl) {
-        // Extract path from CDN URL and delete thumbnail
-        const thumbPath = document.thumbnailUrl.split('/').slice(-3).join('/');
-        await this.spacesService.deleteFile(thumbPath);
+        await this.blobService.deleteFile(document.thumbnailUrl);
       }
     } catch (error) {
-      console.error('Failed to delete files from Spaces:', error);
+      console.error('Failed to delete files from Blob storage:', error);
       // Continue with database deletion
     }
 
@@ -358,7 +359,8 @@ export class DocumentService {
   }> {
     const document = await this.getDocument(documentId, orgId);
 
-    const buffer = await this.spacesService.downloadFile(document.filePath);
+    // Use cdnUrl for Vercel Blob, fall back to filePath for compatibility
+    const buffer = await this.blobService.downloadFile(document.cdnUrl || document.filePath);
 
     return {
       buffer,
@@ -390,8 +392,8 @@ export class DocumentService {
     await this.updateDocument(documentId, orgId, { status: 'PROCESSING' });
 
     try {
-      // Download file
-      const fileBuffer = await this.spacesService.downloadFile(document.filePath);
+      // Download file (use cdnUrl for Vercel Blob)
+      const fileBuffer = await this.blobService.downloadFile(document.cdnUrl || document.filePath);
 
       // Perform OCR
       const ocrResult = await this.ocrService.extractText(
@@ -448,8 +450,8 @@ export class DocumentService {
     }
 
     try {
-      // Download file
-      const fileBuffer = await this.spacesService.downloadFile(document.filePath);
+      // Download file (use cdnUrl for Vercel Blob)
+      const fileBuffer = await this.blobService.downloadFile(document.cdnUrl || document.filePath);
 
       // Detect document type if not provided
       let detectedType = documentType;
