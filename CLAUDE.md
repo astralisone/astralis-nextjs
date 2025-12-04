@@ -54,11 +54,14 @@ npm run build-storybook  # Build static Storybook
 
 ### Deployment
 ```bash
-./scripts/deploy.sh      # Deploy to production server
+# Vercel (Next.js app + API routes)
+git push origin main      # Automatic Vercel deployment
+
+# Fly.io (Background workers)
+fly deploy -c fly.toml    # Deploy workers
+fly logs                  # View worker logs
+fly ssh console           # SSH into worker machine
 ```
-- Server: `/home/deploy/astralis-nextjs` on 137.184.31.207
-- SSH: `ssh -i ~/.ssh/id_ed25519 root@137.184.31.207`
-- PM2 logs: `/var/log/pm2/astralis-*.log`
 
 ## Architecture Overview
 
@@ -66,18 +69,18 @@ npm run build-storybook  # Build static Storybook
 - **Framework**: Next.js 15 (App Router) on port 3001
 - **Language**: TypeScript 5 with strict mode
 - **Styling**: Tailwind CSS 3 with Astralis brand theme
-- **Database**: PostgreSQL + Prisma ORM
-- **Queue System**: BullMQ + Redis for background jobs
+- **Database**: Prisma Postgres (db.prisma.io - managed PostgreSQL)
+- **Queue System**: BullMQ + Upstash Redis for background jobs
 - **UI Components**: Radix UI primitives + custom styling
 - **State Management**: Zustand + React Query
 - **Email**: Nodemailer SMTP
 - **Calendar**: ICS generation for bookings
 - **Analytics**: Google Analytics 4 + Google Ads
 - **Authentication**: NextAuth.js with Prisma adapter
-- **File Storage**: DigitalOcean Spaces (S3-compatible)
+- **File Storage**: Vercel Blob (serverless object storage)
 - **AI/ML**: OpenAI API for embeddings + chat, Anthropic Claude API
 - **OCR**: Tesseract.js for document processing
-- **Process Manager**: PM2 for production
+- **Deployment**: Vercel (app) + Fly.io (workers)
 
 ### Brand Design System
 
@@ -177,19 +180,20 @@ export const processQueue = async (job: Job) => {
 Critical variables in `.env.local`:
 ```bash
 # Database & Auth
-DATABASE_URL="postgresql://..."
+DATABASE_URL="postgresql://..."  # Prisma Postgres for production
 NEXTAUTH_SECRET="..."
 NEXTAUTH_URL="http://localhost:3001"
 
-# Redis (for BullMQ)
-REDIS_URL="redis://localhost:6379"
+# Redis (Upstash for production, local for dev)
+REDIS_URL="redis://localhost:6379"  # Local dev
+UPSTASH_REDIS_REST_URL="..."       # Production (Vercel)
+UPSTASH_REDIS_REST_TOKEN="..."     # Production (Vercel)
 
 # Email (SMTP)
 SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD
 
-# Storage (DigitalOcean Spaces)
-SPACES_ACCESS_KEY, SPACES_SECRET_KEY
-SPACES_ENDPOINT, SPACES_BUCKET
+# Storage (Vercel Blob)
+BLOB_READ_WRITE_TOKEN="vercel_blob_rw_..."
 
 # AI APIs
 OPENAI_API_KEY="sk-..."
@@ -251,28 +255,78 @@ Every UI component has a `.stories.tsx` file for visual testing and documentatio
 
 ## Production Deployment
 
+### Deployment Architecture
+- **Vercel**: Hosts Next.js application and API routes
+- **Fly.io**: Runs background workers (2 machines in iad region)
+- **Prisma Postgres**: Managed database at db.prisma.io
+- **Upstash Redis**: Managed Redis for BullMQ queues
+- **Vercel Blob**: Document and file storage
+
 ### Pre-deployment Checklist
 - [ ] Run `npm run build` locally
 - [ ] Run `npm run test:e2e`
-- [ ] Check environment variables
+- [ ] Check environment variables in Vercel dashboard
 - [ ] Review database migrations
 - [ ] Test email sending
-- [ ] Verify Redis connection
+- [ ] Verify Upstash Redis connection
 
 ### Deployment Process
-1. SSH to server: `ssh -i ~/.ssh/id_ed25519 root@137.184.31.207`
-2. Navigate: `cd /home/deploy/astralis-nextjs`
-3. Pull latest: `git pull origin main`
-4. Install deps: `npm install --legacy-peer-deps`
-5. Run migrations: `npx prisma migrate deploy`
-6. Build: `npm run build`
-7. Reload PM2: `npm run prod:reload`
+
+#### Vercel (Automatic on push to main)
+```bash
+git push origin main
+# Vercel automatically:
+# 1. Runs `npm install --legacy-peer-deps`
+# 2. Executes `prisma generate && prisma migrate deploy && next build`
+# 3. Deploys to production
+```
+
+**Manual Deploy:**
+```bash
+vercel --prod
+```
+
+#### Fly.io Workers (Manual deployment)
+```bash
+# 1. Set secrets (first time only)
+fly secrets set \
+  DATABASE_URL="postgresql://..." \
+  REDIS_URL="..." \
+  OPENAI_API_KEY="..." \
+  ANTHROPIC_API_KEY="..." \
+  BLOB_READ_WRITE_TOKEN="..."
+
+# 2. Deploy workers
+fly deploy -c fly.toml
+
+# 3. Scale workers (if needed)
+fly scale count 2 --region iad
+
+# 4. Monitor
+fly logs
+fly status
+```
 
 ### Monitoring
-- PM2 status: `pm2 list`
-- Logs: `pm2 logs astralis-nextjs`
-- Worker logs: `pm2 logs astralis-worker`
-- Error logs: `/var/log/pm2/astralis-error.log`
+
+**Vercel:**
+- Dashboard: https://vercel.com/dashboard
+- Logs: `vercel logs`
+- Analytics: Built-in Vercel Analytics
+
+**Fly.io Workers:**
+- Status: `fly status`
+- Logs: `fly logs`
+- SSH access: `fly ssh console`
+- Metrics: https://fly.io/dashboard
+
+**Database:**
+- Prisma Studio: `npx prisma studio`
+- Prisma Postgres dashboard: https://console.prisma.io
+
+**Redis:**
+- Upstash Console: https://console.upstash.com
+- BullBoard (if enabled): `/admin/queues`
 
 ## Important Implementation Notes
 
@@ -312,8 +366,10 @@ Every UI component has a `.stories.tsx` file for visual testing and documentatio
 4. **Import paths**: Use `@/` alias, not relative
 5. **Brand colors**: Don't override without reason
 6. **Silent failures**: Always surface errors to user
-7. **PM2 in dev**: Don't use PM2 locally, use npm scripts
-8. **Redis required**: Worker processes need Redis running
+7. **Blob token**: Ensure BLOB_READ_WRITE_TOKEN is set in Vercel
+8. **Redis connection**: Workers need REDIS_URL (Upstash in production, local in dev)
+9. **Worker deployment**: Fly.io workers must be deployed separately from Vercel app
+10. **Database migrations**: Run in Vercel build step via `vercel-build` script
 
 ## Related Documentation
 
@@ -322,5 +378,7 @@ Every UI component has a `.stories.tsx` file for visual testing and documentatio
 - `.env.local.template` - All environment variables
 - `docs/BOOKING_SETUP.md` - Email configuration
 - `prisma/schema.prisma` - Complete data model
-- `ecosystem.config.js` - PM2 configuration
+- `vercel.json` - Vercel deployment configuration
+- `fly.toml` - Fly.io worker configuration
+- `Dockerfile.workers` - Worker container definition
 - `playwright.config.ts` - E2E test setup
