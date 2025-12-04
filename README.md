@@ -59,9 +59,9 @@ All core features are complete and production-ready:
 - **Font:** Inter (Google Fonts)
 
 ### Data & Storage
-- **Database:** PostgreSQL + Prisma ORM (89 models)
-- **Queue System:** BullMQ + Redis for background job processing
-- **File Storage:** DigitalOcean Spaces (S3-compatible)
+- **Database:** Prisma Postgres (managed PostgreSQL at db.prisma.io)
+- **Queue System:** BullMQ + Upstash Redis for background job processing
+- **File Storage:** Vercel Blob (serverless object storage)
 - **State Management:** Zustand + React Query
 
 ### AI & Automation
@@ -78,7 +78,7 @@ All core features are complete and production-ready:
 - **Testing:** Playwright E2E + Storybook for component testing
 
 ### Production Infrastructure
-- **Process Manager:** PM2 for zero-downtime deployments
+- **Hosting:** Vercel (Next.js app) + Fly.io (background workers)
 - **Email:** Nodemailer SMTP with HTML templates
 - **Authentication:** NextAuth.js with Prisma adapter
 - **Real-time:** WebSocket support via n8n webhooks
@@ -89,36 +89,38 @@ All core features are complete and production-ready:
 graph TB
     Client[Next.js Client<br/>Port 3001]
     API[API Routes<br/>/api/*]
-    DB[(PostgreSQL<br/>89 Models)]
-    Redis[(Redis<br/>Job Queue)]
-    Workers[BullMQ Workers]
+    DB[(Prisma Postgres<br/>db.prisma.io)]
+    Redis[(Upstash Redis<br/>Job Queue)]
+    Workers[BullMQ Workers<br/>Fly.io]
     OA[OrchestrationAgent<br/>Claude + OpenAI]
     N8N[n8n Workflows]
-    Spaces[DigitalOcean Spaces<br/>File Storage]
+    Blob[Vercel Blob<br/>File Storage]
     GCal[Google Calendar<br/>API]
 
     Client --> API
     API --> DB
     API --> Redis
-    API --> Spaces
+    API --> Blob
     API --> GCal
     Redis --> Workers
     Workers --> DB
     Workers --> OA
-    Workers --> Spaces
+    Workers --> Blob
     API --> N8N
     N8N --> API
 
     style Client fill:#2B6CB0
     style DB fill:#0A1B2B
     style OA fill:#38A169
+    style Workers fill:#DD6B20
+    style Blob fill:#3182CE
 ```
 
 ### Data Flow Patterns
 
 **1. Document Processing Pipeline**
 ```
-Upload → API → S3 Storage → Queue → Worker → OCR → Embeddings → DB → RAG Chat
+Upload → API → Vercel Blob → Queue → Worker (Fly.io) → OCR → Embeddings → DB → RAG Chat
 ```
 
 **2. AI Orchestration Flow**
@@ -239,14 +241,17 @@ npm run storybook        # Start Storybook on port 6006
 npm run build-storybook  # Build static Storybook
 ```
 
-### Production Management (PM2)
+### Production Deployment
 ```bash
-npm run prod:start       # Start PM2 processes (app + worker)
-npm run prod:stop        # Stop all PM2 processes
-npm run prod:restart     # Restart all PM2 processes
-npm run prod:reload      # Zero-downtime reload
-npm run prod:logs        # View PM2 logs
-npm run prod:status      # Show PM2 process status
+# Vercel (Next.js app - automatic on push)
+git push origin main     # Triggers automatic deployment
+vercel --prod            # Manual deployment
+
+# Fly.io (Background workers)
+fly deploy -c fly.toml   # Deploy workers
+fly logs                 # View worker logs
+fly status               # Check worker status
+fly scale count 2        # Scale to 2 worker instances
 ```
 
 ## 🔐 Environment Variables
@@ -255,14 +260,18 @@ Required in `.env.local` (see `.env.local.template` for complete reference):
 
 ### Database & Auth
 ```bash
-DATABASE_URL="postgresql://user:password@localhost:5432/astralis_one"
+DATABASE_URL="postgresql://user:password@localhost:5432/astralis_one"  # Local dev
+# Production uses Prisma Postgres from db.prisma.io (set in Vercel)
 NEXTAUTH_SECRET="your-secret-key"
 NEXTAUTH_URL="http://localhost:3001"
 ```
 
 ### Redis (for BullMQ)
 ```bash
-REDIS_URL="redis://localhost:6379"
+REDIS_URL="redis://localhost:6379"  # Local dev
+# Production uses Upstash Redis (set in Vercel & Fly.io)
+UPSTASH_REDIS_REST_URL="https://..."
+UPSTASH_REDIS_REST_TOKEN="..."
 ```
 
 ### Email (SMTP)
@@ -274,12 +283,9 @@ SMTP_PASSWORD="your-app-password"
 SMTP_FROM="noreply@astralisone.com"
 ```
 
-### File Storage (DigitalOcean Spaces)
+### File Storage (Vercel Blob)
 ```bash
-SPACES_ACCESS_KEY="your-access-key"
-SPACES_SECRET_KEY="your-secret-key"
-SPACES_ENDPOINT="nyc3.digitaloceanspaces.com"
-SPACES_BUCKET="astralis-documents"
+BLOB_READ_WRITE_TOKEN="vercel_blob_rw_..."  # From Vercel Dashboard > Storage > Blob
 ```
 
 ### AI Services
@@ -325,42 +331,148 @@ All UI components follow these design standards and include Storybook stories fo
 
 ## 🏭 Production Deployment
 
-### Server Configuration
-- **Host:** 137.184.31.207
-- **Path:** `/home/deploy/astralis-nextjs`
-- **SSH:** `ssh -i ~/.ssh/id_ed25519 root@137.184.31.207`
-- **PM2 Logs:** `/var/log/pm2/astralis-*.log`
+### Deployment Architecture
+The application is deployed across three managed services:
+
+1. **Vercel** - Next.js application and API routes
+   - Automatic deployments on push to main
+   - Edge functions for API routes
+   - Environment variables managed in dashboard
+
+2. **Fly.io** - Background workers (2 machines in iad region)
+   - Manual deployments via `fly deploy`
+   - Runs BullMQ workers for document processing, OCR, embeddings
+   - Connects to Upstash Redis and Prisma Postgres
+
+3. **Managed Services**
+   - **Prisma Postgres** (db.prisma.io) - Database
+   - **Upstash Redis** - Queue management
+   - **Vercel Blob** - File storage
+
+### Initial Setup
+
+#### 1. Vercel Setup
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Link project
+vercel link
+
+# Set environment variables in Vercel dashboard:
+# - DATABASE_URL (from Prisma Postgres)
+# - BLOB_READ_WRITE_TOKEN
+# - UPSTASH_REDIS_REST_URL
+# - UPSTASH_REDIS_REST_TOKEN
+# - OPENAI_API_KEY
+# - ANTHROPIC_API_KEY
+# - SMTP_* variables
+# - NEXTAUTH_SECRET
+```
+
+#### 2. Fly.io Workers Setup
+```bash
+# Install Fly CLI
+curl -L https://fly.io/install.sh | sh
+
+# Login to Fly.io
+fly auth login
+
+# Create app (first time only)
+fly apps create astralis-workers --region iad
+
+# Set secrets
+fly secrets set \
+  DATABASE_URL="postgresql://..." \
+  REDIS_URL="redis://..." \
+  OPENAI_API_KEY="..." \
+  ANTHROPIC_API_KEY="..." \
+  BLOB_READ_WRITE_TOKEN="..."
+
+# Deploy workers
+fly deploy -c fly.toml
+```
 
 ### Deployment Process
+
+#### Vercel (Automatic)
 ```bash
-# 1. Connect to server
-ssh -i ~/.ssh/id_ed25519 root@137.184.31.207
+# Simply push to main branch
+git push origin main
 
-# 2. Navigate to project
-cd /home/deploy/astralis-nextjs
+# Vercel will automatically:
+# 1. Install dependencies
+# 2. Run prisma generate
+# 3. Run database migrations (prisma migrate deploy)
+# 4. Build Next.js app
+# 5. Deploy to production
+```
 
-# 3. Pull latest code
-git pull origin main
+#### Fly.io Workers (Manual)
+```bash
+# Deploy workers
+fly deploy -c fly.toml
 
-# 4. Install dependencies
-npm install --legacy-peer-deps
+# Monitor deployment
+fly logs
 
-# 5. Run database migrations
-npx prisma migrate deploy
+# Check status
+fly status
 
-# 6. Build application
-npm run build
-
-# 7. Reload PM2 processes (zero-downtime)
-npm run prod:reload
+# Scale workers if needed
+fly scale count 2 --region iad
 ```
 
 ### Monitoring
+
+#### Vercel
 ```bash
-pm2 list                     # Show all processes
-pm2 logs astralis-nextjs     # View app logs
-pm2 logs astralis-worker     # View worker logs
-pm2 monit                    # Real-time monitoring
+vercel logs                  # View application logs
+vercel logs --follow         # Stream logs
+vercel env ls                # List environment variables
+```
+
+Dashboard: https://vercel.com/dashboard
+
+#### Fly.io Workers
+```bash
+fly logs                     # View worker logs
+fly logs --follow            # Stream logs
+fly status                   # Check worker status
+fly ssh console              # SSH into worker machine
+fly scale show               # Show current scaling
+```
+
+Dashboard: https://fly.io/dashboard
+
+#### Database (Prisma Postgres)
+```bash
+npx prisma studio            # Open database GUI
+```
+
+Dashboard: https://console.prisma.io
+
+#### Redis (Upstash)
+Dashboard: https://console.upstash.com
+
+### Rollback Procedures
+
+#### Vercel
+```bash
+# Rollback to previous deployment
+vercel rollback
+
+# Or redeploy specific deployment
+vercel --prod <deployment-url>
+```
+
+#### Fly.io Workers
+```bash
+# List releases
+fly releases
+
+# Rollback to previous release
+fly releases rollback <version>
 ```
 
 ## 🧪 Testing Strategy
