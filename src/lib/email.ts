@@ -28,7 +28,10 @@ interface EmailOptions {
  */
 async function sendViaResend(options: EmailOptions): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
+  console.log(`[Email] RESEND_API_KEY present: ${!!apiKey}, length: ${apiKey?.length || 0}`);
+
   if (!apiKey) {
+    console.error('[Email] RESEND_API_KEY is not configured!');
     throw new Error('RESEND_API_KEY not configured');
   }
 
@@ -37,25 +40,35 @@ async function sendViaResend(options: EmailOptions): Promise<void> {
   const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
   const fromName = process.env.SMTP_FROM_NAME || 'Astralis One';
 
-  console.log(`[Email] Attempting to send via Resend to ${options.to}`);
+  console.log(`[Email] Attempting to send via Resend`);
+  console.log(`[Email] To: ${options.to}`);
   console.log(`[Email] From: ${fromName} <${fromEmail}>`);
+  console.log(`[Email] Subject: ${options.subject}`);
 
   const resend = new Resend(apiKey);
 
-  const { data, error } = await resend.emails.send({
-    from: `${fromName} <${fromEmail}>`,
-    to: [options.to],
-    subject: options.subject,
-    html: options.html,
-    text: options.text,
-  });
+  try {
+    const { data, error } = await resend.emails.send({
+      from: `${fromName} <${fromEmail}>`,
+      to: [options.to],
+      subject: options.subject,
+      html: options.html,
+      text: options.text,
+    });
 
-  if (error) {
-    console.error(`[Email] Resend error:`, error);
-    throw new Error(`Resend error: ${error.message}`);
+    console.log(`[Email] Resend response - data:`, JSON.stringify(data));
+    console.log(`[Email] Resend response - error:`, JSON.stringify(error));
+
+    if (error) {
+      console.error(`[Email] Resend API returned error:`, error);
+      throw new Error(`Resend error: ${error.message}`);
+    }
+
+    console.log(`[Email] ✅ SUCCESS - Sent via Resend to ${options.to} (ID: ${data?.id || 'N/A'})`);
+  } catch (err) {
+    console.error(`[Email] Resend exception:`, err);
+    throw err;
   }
-
-  console.log(`[Email] ✅ SUCCESS - Sent via Resend to ${options.to} (ID: ${data?.id || 'N/A'})`);
 }
 
 /**
