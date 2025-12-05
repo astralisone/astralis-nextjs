@@ -90,10 +90,27 @@ export const authOptions: NextAuthOptions = {
 
       // Google OAuth - find or create organization
       if (account?.provider === "google" && user) {
-        const dbUser = await prisma.users.findUnique({
+        let dbUser = await prisma.users.findUnique({
           where: { id: user.id },
           include: { organization: true }
         });
+
+        // If user exists but has no organization, create one
+        if (dbUser && !dbUser.organization) {
+          const org = await prisma.organization.create({
+            data: {
+              name: `${dbUser.name || dbUser.email}'s Organization`,
+            }
+          });
+
+          dbUser = await prisma.users.update({
+            where: { id: dbUser.id },
+            data: { orgId: org.id, role: 'ADMIN' },
+            include: { organization: true }
+          });
+
+          console.log(`[Auth] Created organization ${org.id} for Google user ${dbUser.email}`);
+        }
 
         if (dbUser) {
           token.orgId = dbUser.orgId || '';
@@ -114,38 +131,7 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async signIn({ user, account, profile }) {
-      // Allow email verification without full profile
-      if (account?.provider === "email") {
-        return true;
-      }
-
-      // For OAuth, ensure user has organization
-      if (account?.provider === "google") {
-        const dbUser = await prisma.users.findUnique({
-          where: { email: user.email! },
-          include: { organization: true }
-        });
-
-        // If user doesn't have org, create one (first-time OAuth)
-        if (!dbUser?.organization) {
-          const org = await prisma.organization.create({
-            data: {
-              name: `${user.name}'s Organization`,
-              users: {
-                connect: { id: dbUser!.id }
-              }
-            }
-          });
-
-          await prisma.users.update({
-            where: { id: dbUser!.id },
-            data: { orgId: org.id, role: 'ADMIN' }
-          });
-        }
-
-        return true;
-      }
-
+      // Allow all sign-ins - org creation is handled in jwt callback
       return true;
     },
   },
