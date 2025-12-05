@@ -32,10 +32,13 @@ async function sendViaResend(options: EmailOptions): Promise<void> {
     throw new Error('RESEND_API_KEY not configured');
   }
 
-  const fromEmail = process.env.SMTP_FROM_EMAIL || 'onboarding@resend.dev';
+  // Use RESEND_FROM_EMAIL if set, otherwise use Resend's test domain
+  // To use your own domain, verify it in Resend dashboard first
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
   const fromName = process.env.SMTP_FROM_NAME || 'Astralis One';
 
   console.log(`[Email] Attempting to send via Resend to ${options.to}`);
+  console.log(`[Email] From: ${fromName} <${fromEmail}>`);
 
   const resend = new Resend(apiKey);
 
