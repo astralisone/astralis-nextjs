@@ -88,35 +88,24 @@ export const authOptions: NextAuthOptions = {
         }
       }
 
-      // Google OAuth - find or create organization
+      // Google OAuth - fetch user data from DB (don't auto-create org)
       if (account?.provider === "google" && user) {
-        let dbUser = await prisma.users.findUnique({
+        const dbUser = await prisma.users.findUnique({
           where: { id: user.id },
           include: { organization: true }
         });
 
-        // If user exists but has no organization, create one
-        if (dbUser && !dbUser.organization) {
-          const org = await prisma.organization.create({
-            data: {
-              name: `${dbUser.name || dbUser.email}'s Organization`,
-            }
-          });
-
-          dbUser = await prisma.users.update({
-            where: { id: dbUser.id },
-            data: { orgId: org.id, role: 'ADMIN' },
-            include: { organization: true }
-          });
-
-          console.log(`[Auth] Created organization ${org.id} for Google user ${dbUser.email}`);
-        }
-
         if (dbUser) {
+          // User may not have org yet - that's OK, they'll be redirected to onboarding
           token.orgId = dbUser.orgId || '';
           token.role = dbUser.role;
           token.picture = dbUser.avatar;
         }
+      }
+
+      // Handle org update after onboarding
+      if (trigger === "update" && updateSession?.orgId) {
+        token.orgId = updateSession.orgId;
       }
 
       return token;
