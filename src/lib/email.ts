@@ -1,12 +1,13 @@
 import nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
 import crypto from 'crypto';
+import { Resend } from 'resend';
 
 /**
- * Email Service using Brevo HTTP API (primary) or Nodemailer SMTP (fallback)
+ * Email Service using Resend (primary), Brevo HTTP API (fallback), or Nodemailer SMTP (last resort)
  *
  * Sends booking confirmation emails to customers and notifications to support team.
- * Supports both Brevo HTTP API and SMTP configuration via environment variables.
+ * Priority: Resend > Brevo API > SMTP
  */
 
 interface EmailOptions {
@@ -19,6 +20,39 @@ interface EmailOptions {
     content: string | Buffer;
     contentType?: string;
   }>;
+}
+
+/**
+ * Send email via Resend HTTP API (recommended for Vercel)
+ * Works reliably on serverless platforms
+ */
+async function sendViaResend(options: EmailOptions): Promise<void> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    throw new Error('RESEND_API_KEY not configured');
+  }
+
+  const fromEmail = process.env.SMTP_FROM_EMAIL || 'onboarding@resend.dev';
+  const fromName = process.env.SMTP_FROM_NAME || 'Astralis One';
+
+  console.log(`[Email] Attempting to send via Resend to ${options.to}`);
+
+  const resend = new Resend(apiKey);
+
+  const { data, error } = await resend.emails.send({
+    from: `${fromName} <${fromEmail}>`,
+    to: [options.to],
+    subject: options.subject,
+    html: options.html,
+    text: options.text,
+  });
+
+  if (error) {
+    console.error(`[Email] Resend error:`, error);
+    throw new Error(`Resend error: ${error.message}`);
+  }
+
+  console.log(`[Email] ✅ SUCCESS - Sent via Resend to ${options.to} (ID: ${data?.id || 'N/A'})`);
 }
 
 /**
@@ -126,14 +160,27 @@ async function sendViaSMTP(options: EmailOptions): Promise<void> {
 }
 
 /**
- * Send an email - tries Brevo API first, falls back to SMTP
+ * Send an email - tries Resend first, then Brevo API, then SMTP
  */
 export async function sendEmail(options: EmailOptions): Promise<void> {
   console.log(`[Email] ========== EMAIL SEND START ==========`);
   console.log(`[Email] To: ${options.to}`);
   console.log(`[Email] Subject: ${options.subject}`);
 
-  // Try Brevo API first (bypasses SMTP port blocks)
+  // Try Resend first (best for Vercel)
+  if (process.env.RESEND_API_KEY) {
+    console.log('[Email] Resend API key found, attempting Resend send...');
+    try {
+      await sendViaResend(options);
+      console.log(`[Email] ========== EMAIL SEND COMPLETE (RESEND) ==========`);
+      return;
+    } catch (error) {
+      console.error('[Email] ❌ FAILED - Resend send failed, trying fallback...');
+      console.error('[Email] Resend error details:', error instanceof Error ? error.message : String(error));
+    }
+  }
+
+  // Try Brevo API second (bypasses SMTP port blocks)
   if (process.env.BREVO_API_KEY) {
     console.log('[Email] Brevo API key found, attempting Brevo API send...');
     try {
@@ -144,11 +191,9 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
       console.error('[Email] ❌ FAILED - Brevo API send failed, attempting SMTP fallback...');
       console.error('[Email] Brevo error details:', error instanceof Error ? error.message : String(error));
     }
-  } else {
-    console.log('[Email] No Brevo API key found, using SMTP directly');
   }
 
-  // Fall back to SMTP
+  // Fall back to SMTP (may not work on Vercel due to port blocking)
   try {
     await sendViaSMTP(options);
     console.log(`[Email] ========== EMAIL SEND COMPLETE (SMTP) ==========`);
