@@ -1,6 +1,9 @@
 import { sendEmail } from '@/lib/email';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
+// Use NEXTAUTH_URL for auth-related links, fall back to API base URL without /api suffix
+const BASE_URL = process.env.NEXTAUTH_URL ||
+  (process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/api$/, '')) ||
+  'http://localhost:3001';
 
 /**
  * Send email verification link
