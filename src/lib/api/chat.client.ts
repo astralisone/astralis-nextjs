@@ -5,6 +5,8 @@
  * Use this in React components, hooks, or client-side utilities.
  */
 
+import React from 'react';
+
 export interface ChatSource {
   documentId: string;
   documentName: string;
@@ -308,6 +310,3 @@ export function useChatAPI() {
     error,
   };
 }
-
-// Add React import for hook (will be tree-shaken if not used)
-import React from 'react';
