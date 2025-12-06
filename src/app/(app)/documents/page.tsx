@@ -1,8 +1,24 @@
+'use client';
+
+import { useState } from 'react';
+import { useSession } from 'next-auth/react';
+import { PageContainer } from '@/components/layout/PageContainer';
+import { PageHeader } from '@/components/layout/PageHeader';
+
 export default function DocumentsPage() {
+  const { data: session } = useSession();
+  const [test, setTest] = useState('working');
+
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold text-astralis-navy mb-4">Documents</h1>
-      <p className="text-slate-600">Documents page placeholder - under maintenance.</p>
-    </div>
+    <PageContainer>
+      <PageHeader
+        title="Documents"
+        description="Testing imports - session loaded"
+      />
+      <div className="p-4">
+        <p>Session: {session?.user?.email || 'No session'}</p>
+        <p>State: {test}</p>
+      </div>
+    </PageContainer>
   );
 }
