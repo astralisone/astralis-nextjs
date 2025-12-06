@@ -371,8 +371,11 @@ export default function DocumentsPage() {
 
       {error && (
         <Card variant="bordered" className="p-6">
-          <p className="text-error text-center">
-            Failed to load documents. Please try again.
+          <p className="text-error text-center font-semibold mb-2">
+            Failed to load documents
+          </p>
+          <p className="text-sm text-slate-600 text-center">
+            {error instanceof Error ? error.message : String(error)}
           </p>
         </Card>
       )}

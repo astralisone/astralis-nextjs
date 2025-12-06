@@ -101,40 +101,23 @@ export async function GET(req: NextRequest) {
     // 3. Get documents
     const documentService = getDocumentService();
 
-    try {
-      const result = await documentService.listDocuments(parsed.data);
+    const result = await documentService.listDocuments(parsed.data);
 
-      return NextResponse.json({
-        documents: result.documents,
-        pagination: result.pagination,
-      });
-    } catch (listError) {
-      // Handle specific error cases
-      if (listError instanceof Error) {
-        if (listError.message.includes('Document model not yet implemented')) {
-          return NextResponse.json(
-            {
-              error: 'Document listing feature not yet available',
-              details: 'Database schema migration required. Contact administrator.',
-            },
-            { status: 501 }
-          );
-        }
-
-        return NextResponse.json(
-          { error: 'Failed to list documents', details: listError.message },
-          { status: 500 }
-        );
-      }
-
-      throw listError;
-    }
+    return NextResponse.json({
+      documents: result.documents,
+      pagination: result.pagination,
+    });
   } catch (error) {
     console.error('Document list error:', error);
+
+    // Return the actual error message to the UI
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+
     return NextResponse.json(
       {
-        error: 'Internal server error',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        error: errorMessage,
+        stack: process.env.NODE_ENV === 'development' ? errorStack : undefined,
       },
       { status: 500 }
     );

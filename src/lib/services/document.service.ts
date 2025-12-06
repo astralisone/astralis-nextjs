@@ -49,9 +49,16 @@ interface DocumentWithRelations {
 }
 
 export class DocumentService {
-  private blobService = getBlobService();
+  private blobService: ReturnType<typeof getBlobService> | null = null;
   private ocrService = getOCRService();
   private visionService = getVisionService();
+
+  private getBlobService() {
+    if (!this.blobService) {
+      this.blobService = getBlobService();
+    }
+    return this.blobService;
+  }
 
   /**
    * Upload and create document record
@@ -86,8 +93,8 @@ export class DocumentService {
       throw new Error(validation.error || 'File validation failed');
     }
 
-    // 2. Upload to Spaces
-    const uploadResult = await this.blobService.uploadFile(
+    // 2. Upload to Blob storage
+    const uploadResult = await this.getBlobService().uploadFile(
       file,
       filename,
       validation.detectedMimeType || mimeType,
@@ -99,7 +106,7 @@ export class DocumentService {
     if (options.generateThumbnail && mimeType.startsWith('image/')) {
       try {
         const thumbnail = await this.generateThumbnail(file);
-        const thumbResult = await this.blobService.uploadThumbnail(
+        const thumbResult = await this.getBlobService().uploadThumbnail(
           thumbnail,
           `thumb_${filename}`,
           orgId
@@ -329,10 +336,10 @@ export class DocumentService {
     try {
       // For Vercel Blob, cdnUrl is the full URL we need to delete
       if (document.cdnUrl) {
-        await this.blobService.deleteFile(document.cdnUrl);
+        await this.getBlobService().deleteFile(document.cdnUrl);
       }
       if (document.thumbnailUrl) {
-        await this.blobService.deleteFile(document.thumbnailUrl);
+        await this.getBlobService().deleteFile(document.thumbnailUrl);
       }
     } catch (error) {
       console.error('Failed to delete files from Blob storage:', error);
@@ -360,7 +367,7 @@ export class DocumentService {
     const document = await this.getDocument(documentId, orgId);
 
     // Use cdnUrl for Vercel Blob, fall back to filePath for compatibility
-    const buffer = await this.blobService.downloadFile(document.cdnUrl || document.filePath);
+    const buffer = await this.getBlobService().downloadFile(document.cdnUrl || document.filePath);
 
     return {
       buffer,
@@ -393,7 +400,7 @@ export class DocumentService {
 
     try {
       // Download file (use cdnUrl for Vercel Blob)
-      const fileBuffer = await this.blobService.downloadFile(document.cdnUrl || document.filePath);
+      const fileBuffer = await this.getBlobService().downloadFile(document.cdnUrl || document.filePath);
 
       // Perform OCR
       const ocrResult = await this.ocrService.extractText(
@@ -451,7 +458,7 @@ export class DocumentService {
 
     try {
       // Download file (use cdnUrl for Vercel Blob)
-      const fileBuffer = await this.blobService.downloadFile(document.cdnUrl || document.filePath);
+      const fileBuffer = await this.getBlobService().downloadFile(document.cdnUrl || document.filePath);
 
       // Detect document type if not provided
       let detectedType = documentType;
