@@ -176,16 +176,17 @@ async function sendViaSMTP(options: EmailOptions): Promise<void> {
 }
 
 /**
- * Send an email - tries Resend first, then Brevo API, then SMTP
+ * Send an email - tries Resend first (if configured with verified domain), then Brevo API, then SMTP
  */
 export async function sendEmail(options: EmailOptions): Promise<void> {
   console.log(`[Email] ========== EMAIL SEND START ==========`);
   console.log(`[Email] To: ${options.to}`);
   console.log(`[Email] Subject: ${options.subject}`);
 
-  // Try Resend first (best for Vercel)
-  if (process.env.RESEND_API_KEY) {
-    console.log('[Email] Resend API key found, attempting Resend send...');
+  // Try Resend first (best for Vercel) - but ONLY if we have a verified domain
+  // Without RESEND_FROM_EMAIL, Resend uses sandbox mode which only sends to account owner
+  if (process.env.RESEND_API_KEY && process.env.RESEND_FROM_EMAIL) {
+    console.log('[Email] Resend API key and verified domain found, attempting Resend send...');
     try {
       await sendViaResend(options);
       console.log(`[Email] ========== EMAIL SEND COMPLETE (RESEND) ==========`);
@@ -194,6 +195,8 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
       console.error('[Email] ❌ FAILED - Resend send failed, trying fallback...');
       console.error('[Email] Resend error details:', error instanceof Error ? error.message : String(error));
     }
+  } else if (process.env.RESEND_API_KEY && !process.env.RESEND_FROM_EMAIL) {
+    console.log('[Email] Resend API key found but RESEND_FROM_EMAIL not set - skipping Resend (sandbox mode only sends to account owner)');
   }
 
   // Try Brevo API second (bypasses SMTP port blocks)
