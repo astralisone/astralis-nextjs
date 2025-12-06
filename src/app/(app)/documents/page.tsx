@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { format } from 'date-fns';
+import { formatDate } from '@/lib/utils/date';
 import {
   Search,
   Filter,
@@ -486,7 +486,7 @@ export default function DocumentsPage() {
                           </Badge>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                          {format(new Date(document.createdAt), 'MMM d, yyyy')}
+                          {formatDate(document.createdAt)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-2">

@@ -1,6 +1,6 @@
 'use client';
 
-import { format } from 'date-fns';
+import { formatDate, formatDateTime } from '@/lib/utils/date';
 import {
   X,
   Download,
@@ -122,7 +122,7 @@ export function DocumentViewer({ document, isOpen, onClose }: DocumentViewerProp
               <SheetDescription className="flex items-center gap-2 mt-1">
                 <span>{formatFileSize(document.fileSize)}</span>
                 <span>•</span>
-                <span>{format(new Date(document.createdAt), 'PPP')}</span>
+                <span>{formatDate(document.createdAt)}</span>
               </SheetDescription>
             </div>
           </div>
@@ -311,14 +311,14 @@ export function DocumentViewer({ document, isOpen, onClose }: DocumentViewerProp
               <div>
                 <p className="text-slate-500">Uploaded</p>
                 <p className="text-astralis-navy font-medium">
-                  {format(new Date(document.createdAt), 'PPpp')}
+                  {formatDateTime(document.createdAt)}
                 </p>
               </div>
               {document.processedAt && (
                 <div>
                   <p className="text-slate-500">Processed</p>
                   <p className="text-astralis-navy font-medium">
-                    {format(new Date(document.processedAt), 'PPpp')}
+                    {formatDateTime(document.processedAt)}
                   </p>
                 </div>
               )}

@@ -1,6 +1,6 @@
 'use client';
 
-import { format } from 'date-fns';
+import { formatDate } from '@/lib/utils/date';
 import {
   FileText,
   Download,
@@ -162,7 +162,7 @@ export function DocumentCard({
                 </h3>
                 <p className="text-xs text-slate-500 mt-1">
                   {formatFileSize(document.fileSize)} •{' '}
-                  {format(new Date(document.createdAt), 'MMM d, yyyy')}
+                  {formatDate(document.createdAt)}
                 </p>
               </div>
 
