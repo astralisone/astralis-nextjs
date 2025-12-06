@@ -6,7 +6,7 @@ import crypto from 'crypto';
  * Vercel Blob Storage Service
  *
  * Handles all file storage operations using Vercel Blob Storage.
- * Drop-in replacement for SpacesService.
+ * Requires BLOB_READ_WRITE_TOKEN environment variable.
  *
  * Features:
  * - Upload files with automatic path generation
@@ -18,9 +18,9 @@ import crypto from 'crypto';
  */
 export class BlobService {
   constructor() {
-    // Validate required environment variable
+    // Require BLOB_READ_WRITE_TOKEN - throw error if not configured
     if (!process.env.BLOB_READ_WRITE_TOKEN) {
-      console.warn('[BlobService] BLOB_READ_WRITE_TOKEN not set. Blob operations will fail.');
+      throw new Error('BLOB_READ_WRITE_TOKEN environment variable is required. Please configure Vercel Blob storage.');
     }
     console.log('[BlobService] Initialized');
   }

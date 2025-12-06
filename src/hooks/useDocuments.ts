@@ -46,7 +46,11 @@ export function useDocuments(filters?: DocumentFilters) {
       if (!orgId) throw new Error('No organization ID');
 
       const response = await fetch(`/api/documents?${queryParams}`);
-      if (!response.ok) throw new Error('Failed to fetch documents');
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to fetch documents (${response.status})`);
+      }
 
       const data = (await response.json()) as DocumentListResponse;
 
