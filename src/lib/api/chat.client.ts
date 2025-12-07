@@ -5,7 +5,7 @@
  * Use this in React components, hooks, or client-side utilities.
  */
 
-import React from 'react';
+import { useState, useCallback } from 'react';
 
 export interface ChatSource {
   documentId: string;
@@ -235,10 +235,10 @@ export async function deleteChat(chatId: string): Promise<void> {
  * ```
  */
 export function useChatAPI() {
-  const [loading, setLoading] = React.useState(false);
-  const [error, setError] = React.useState<ChatAPIError | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<ChatAPIError | null>(null);
 
-  const sendMessage = async (request: SendMessageRequest) => {
+  const sendMessage = useCallback(async (request: SendMessageRequest) => {
     setLoading(true);
     setError(null);
 
@@ -252,9 +252,9 @@ export function useChatAPI() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchChats = async (limit?: number, offset?: number, documentId?: string) => {
+  const fetchChats = useCallback(async (limit?: number, offset?: number, documentId?: string) => {
     setLoading(true);
     setError(null);
 
@@ -268,9 +268,9 @@ export function useChatAPI() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchChat = async (chatId: string) => {
+  const fetchChat = useCallback(async (chatId: string) => {
     setLoading(true);
     setError(null);
 
@@ -284,9 +284,9 @@ export function useChatAPI() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const removeChat = async (chatId: string) => {
+  const removeChat = useCallback(async (chatId: string) => {
     setLoading(true);
     setError(null);
 
@@ -299,7 +299,7 @@ export function useChatAPI() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   return {
     sendMessage,
