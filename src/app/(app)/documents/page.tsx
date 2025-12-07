@@ -501,6 +501,10 @@ export default function DocumentsPage() {
       />
 
 
+      {/* Document Chat */}
+     
+
+
     </PageContainer>
   );
 }
