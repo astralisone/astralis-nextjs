@@ -376,18 +376,20 @@ export default function DocumentsPage() {
         onClose={() => setSelectedDocument(null)}
       />
 
-      <Sheet open={showChat} onOpenChange={setShowChat}>
-        <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>
-              {chatDocumentId ? 'Document Chat' : 'Chat with All Documents'}
-            </SheetTitle>
-          </SheetHeader>
-          <div className="mt-6 h-[calc(100vh-120px)]">
-            <DocumentChat documentId={chatDocumentId} className="h-full" />
-          </div>
-        </SheetContent>
-      </Sheet>
+      {showChat && (
+        <Sheet open={showChat} onOpenChange={setShowChat}>
+          <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>
+                {chatDocumentId ? 'Document Chat' : 'Chat with All Documents'}
+              </SheetTitle>
+            </SheetHeader>
+            <div className="mt-6 h-[calc(100vh-120px)]">
+              <DocumentChat documentId={chatDocumentId} className="h-full" />
+            </div>
+          </SheetContent>
+        </Sheet>
+      )}
     </PageContainer>
   );
 }
