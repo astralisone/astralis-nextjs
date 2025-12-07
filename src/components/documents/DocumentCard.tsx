@@ -168,7 +168,7 @@ export function DocumentCard({
 
               {/* Status Badge */}
               <Badge variant={statusInfo.variant} className="flex items-center gap-1">
-                <StatusIcon className={cn('h-3 w-3', statusInfo.iconClassName)} />
+                <StatusIcon className={cn('h-5 w-5', statusInfo.iconClassName)} />
                 {statusInfo.label}
               </Badge>
             </div>

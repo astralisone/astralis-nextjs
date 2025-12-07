@@ -273,7 +273,7 @@ export function IntegrationConfigDialog({
                   className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
                 >
                   Open Developer Portal
-                  <ExternalLink className="h-3 w-3" />
+                  <ExternalLink className="h-5 w-5" />
                 </a>
               </div>
               <ol className="text-sm text-slate-600 dark:text-slate-400 space-y-1 list-decimal list-inside">

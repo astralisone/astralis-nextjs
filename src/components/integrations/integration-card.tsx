@@ -80,28 +80,28 @@ export function IntegrationCard({
       case 'connected':
         return (
           <Badge variant="default" className="bg-green-600 hover:bg-green-700">
-            <Check className="mr-1 h-3 w-3" />
+            <Check className="mr-1 h-5 w-5" />
             Connected
           </Badge>
         );
       case 'expired':
         return (
           <Badge variant="destructive">
-            <Clock className="mr-1 h-3 w-3" />
+            <Clock className="mr-1 h-5 w-5" />
             Expired
           </Badge>
         );
       case 'error':
         return (
           <Badge variant="destructive">
-            <AlertCircle className="mr-1 h-3 w-3" />
+            <AlertCircle className="mr-1 h-5 w-5" />
             Error
           </Badge>
         );
       default:
         return (
           <Badge variant="secondary">
-            <X className="mr-1 h-3 w-3" />
+            <X className="mr-1 h-5 w-5" />
             Disconnected
           </Badge>
         );
@@ -146,9 +146,9 @@ export function IntegrationCard({
                     isConfigured ? (
                       <Badge variant="secondary" className={`text-xs ${isVerified ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'}`}>
                         {isVerified ? (
-                          <><ShieldCheck className="mr-1 h-3 w-3" /> Verified</>
+                          <><ShieldCheck className="mr-1 h-5 w-5" /> Verified</>
                         ) : (
-                          <><ShieldAlert className="mr-1 h-3 w-3" /> Configured</>
+                          <><ShieldAlert className="mr-1 h-5 w-5" /> Configured</>
                         )}
                       </Badge>
                     ) : (
