@@ -511,9 +511,7 @@ export default function DocumentsPage() {
           </SheetHeader>
           <div className="flex-1 overflow-hidden mt-6">
             <DocumentChat
-              documentId={chatDocumentId}
-              
-            />
+              documentId={chatDocumentId} />
           </div>
         </SheetContent>
       </Sheet>
