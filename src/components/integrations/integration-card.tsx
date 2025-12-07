@@ -38,6 +38,9 @@ import {
   X,
   Clock,
   AlertCircle,
+  Settings2,
+  ShieldCheck,
+  ShieldAlert,
 } from 'lucide-react';
 
 interface IntegrationCardProps {
@@ -46,8 +49,11 @@ interface IntegrationCardProps {
   onConnect: () => void;
   onDisconnect: (id: string) => void;
   onTest: (id: string) => void;
+  onConfigure?: () => void;
   isConnecting?: boolean;
   isTesting?: boolean;
+  isConfigured?: boolean;
+  isVerified?: boolean;
 }
 
 export function IntegrationCard({
@@ -56,8 +62,11 @@ export function IntegrationCard({
   onConnect,
   onDisconnect,
   onTest,
+  onConfigure,
   isConnecting,
   isTesting,
+  isConfigured = false,
+  isVerified = false,
 }: IntegrationCardProps) {
   const [showDisconnectDialog, setShowDisconnectDialog] = useState(false);
   const isConnected = !!connection && connection.status === 'connected';
@@ -129,49 +138,89 @@ export function IntegrationCard({
               </div>
               <div>
                 <CardTitle className="text-lg">{integration.name}</CardTitle>
-                <Badge variant="outline" className="mt-1 text-xs capitalize">
-                  {integration.category}
-                </Badge>
+                <div className="mt-1 flex items-center gap-2">
+                  <Badge variant="outline" className="text-xs capitalize">
+                    {integration.category}
+                  </Badge>
+                  {onConfigure && (
+                    isConfigured ? (
+                      <Badge variant="secondary" className={`text-xs ${isVerified ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'}`}>
+                        {isVerified ? (
+                          <><ShieldCheck className="mr-1 h-3 w-3" /> Verified</>
+                        ) : (
+                          <><ShieldAlert className="mr-1 h-3 w-3" /> Configured</>
+                        )}
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="text-xs bg-slate-100 text-slate-500 dark:bg-slate-800">
+                        Not Configured
+                      </Badge>
+                    )
+                  )}
+                </div>
               </div>
             </div>
 
-            {isConnected && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <MoreVertical className="h-4 w-4" />
-                    <span className="sr-only">Open menu</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    onClick={() => connection && onTest(connection.id)}
-                    disabled={isTesting}
-                  >
-                    <RefreshCw className={`mr-2 h-4 w-4 ${isTesting ? 'animate-spin' : ''}`} />
-                    Test Connection
-                  </DropdownMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <MoreVertical className="h-4 w-4" />
+                  <span className="sr-only">Open menu</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {onConfigure && (
+                  <>
+                    <DropdownMenuItem onClick={onConfigure}>
+                      <Settings2 className="mr-2 h-4 w-4" />
+                      Configure OAuth
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                {isConnected && (
+                  <>
+                    <DropdownMenuItem
+                      onClick={() => connection && onTest(connection.id)}
+                      disabled={isTesting}
+                    >
+                      <RefreshCw className={`mr-2 h-4 w-4 ${isTesting ? 'animate-spin' : ''}`} />
+                      Test Connection
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <a
+                        href={getProviderSettingsUrl(integration.provider)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <ExternalLink className="mr-2 h-4 w-4" />
+                        Open {integration.name}
+                      </a>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => setShowDisconnectDialog(true)}
+                      className="text-red-600 focus:text-red-600"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Disconnect
+                    </DropdownMenuItem>
+                  </>
+                )}
+                {!isConnected && !onConfigure && (
                   <DropdownMenuItem asChild>
                     <a
-                      href={getProviderSettingsUrl(integration.provider)}
+                      href={integration.documentationUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
                       <ExternalLink className="mr-2 h-4 w-4" />
-                      Open {integration.name}
+                      Documentation
                     </a>
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => setShowDisconnectDialog(true)}
-                    className="text-red-600 focus:text-red-600"
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Disconnect
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </CardHeader>
 
@@ -184,25 +233,36 @@ export function IntegrationCard({
             {getStatusBadge()}
 
             {!isConnected ? (
-              <Button
-                onClick={onConnect}
-                disabled={isConnecting}
-                size="sm"
-                style={{
-                  backgroundColor: integration.color,
-                  borderColor: integration.color,
-                }}
-                className="hover:opacity-90"
-              >
-                {isConnecting ? (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                    Connecting...
-                  </>
-                ) : (
-                  'Connect'
-                )}
-              </Button>
+              onConfigure && !isConfigured ? (
+                <Button
+                  onClick={onConfigure}
+                  size="sm"
+                  variant="outline"
+                >
+                  <Settings2 className="mr-2 h-4 w-4" />
+                  Configure
+                </Button>
+              ) : (
+                <Button
+                  onClick={onConnect}
+                  disabled={isConnecting || (onConfigure && !isConfigured)}
+                  size="sm"
+                  style={{
+                    backgroundColor: integration.color,
+                    borderColor: integration.color,
+                  }}
+                  className="hover:opacity-90"
+                >
+                  {isConnecting ? (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                      Connecting...
+                    </>
+                  ) : (
+                    'Connect'
+                  )}
+                </Button>
+              )
             ) : isExpired || hasError ? (
               <Button
                 onClick={onConnect}

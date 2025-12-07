@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/config';
 import {
-  generateAuthorizationUrl,
+  generateAuthorizationUrlWithCredentials,
   generateOAuthState,
+  getOrgOAuthCredentials,
   supportsOAuth,
 } from '@/lib/integrations/oauth-config';
 import type { IntegrationProvider } from '@prisma/client';
@@ -11,6 +12,8 @@ import type { IntegrationProvider } from '@prisma/client';
  * GET /api/integrations/[provider]/connect
  *
  * Initiates OAuth authorization flow for a third-party integration.
+ * Uses organization-specific OAuth credentials if configured,
+ * otherwise falls back to platform-level credentials.
  *
  * Query params:
  * - returnUrl: URL to redirect back to after OAuth (default: /app/integrations)
@@ -51,11 +54,25 @@ export async function GET(
       );
     }
 
-    // 3. Get return URL from query params
+    // 3. Get OAuth credentials for this organization
+    const credentials = await getOrgOAuthCredentials(provider, session.user.orgId);
+
+    if (!credentials) {
+      return NextResponse.json(
+        {
+          error: 'Integration not configured',
+          details: `${provider} OAuth credentials have not been configured for your organization. Please contact your administrator to set up this integration.`,
+          code: 'INTEGRATION_NOT_CONFIGURED',
+        },
+        { status: 400 }
+      );
+    }
+
+    // 4. Get return URL from query params
     const { searchParams } = req.nextUrl;
     const returnUrl = searchParams.get('returnUrl') || '/app/integrations';
 
-    // 4. Generate OAuth state for CSRF protection
+    // 5. Generate OAuth state for CSRF protection
     const state = generateOAuthState({
       provider,
       returnUrl,
@@ -63,17 +80,18 @@ export async function GET(
       orgId: session.user.orgId,
     });
 
-    // 5. Build redirect URI (callback URL)
+    // 6. Build redirect URI (callback URL)
     const callbackUrl = new URL(
       `/api/integrations/${providerParam}/oauth/callback`,
       req.nextUrl.origin
     );
 
-    // 6. Generate authorization URL
-    const authUrl = generateAuthorizationUrl(
+    // 7. Generate authorization URL with org credentials
+    const authUrl = generateAuthorizationUrlWithCredentials(
       provider,
       callbackUrl.toString(),
-      state
+      state,
+      credentials
     );
 
     if (!authUrl) {
@@ -83,9 +101,9 @@ export async function GET(
       );
     }
 
-    console.log(`[OAuth Connect] Redirecting to ${provider} authorization`);
+    console.log(`[OAuth Connect] Redirecting to ${provider} authorization (org: ${session.user.orgId})`);
 
-    // 7. Redirect to provider's authorization URL
+    // 8. Redirect to provider's OAuth authorization URL
     return NextResponse.redirect(authUrl);
 
   } catch (error) {

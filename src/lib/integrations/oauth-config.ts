@@ -6,7 +6,19 @@
  */
 
 import type { IntegrationProvider } from '@prisma/client';
-import { generateSecureToken } from '@/lib/utils/crypto';
+import { generateSecureToken, decrypt } from '@/lib/utils/crypto';
+import { prisma } from '@/lib/prisma';
+
+/**
+ * OAuth credentials for a specific organization
+ */
+export interface OrgOAuthCredentials {
+  clientId: string;
+  clientSecret: string;
+  customScopes?: string;
+  redirectUri?: string;
+  metadata?: Record<string, unknown>;
+}
 
 /**
  * OAuth provider configuration
@@ -65,6 +77,7 @@ export function getOAuthConfig(provider: IntegrationProvider): OAuthProviderConf
 
 /**
  * Generate OAuth authorization URL
+ * @deprecated Use generateAuthorizationUrlWithCredentials for org-specific credentials
  */
 export function generateAuthorizationUrl(
   provider: IntegrationProvider,
@@ -82,6 +95,38 @@ export function generateAuthorizationUrl(
     redirect_uri: redirectUri,
     response_type: 'code',
     scope: config.scopes.join(' '),
+    state,
+    ...config.additionalAuthParams,
+  });
+
+  return `${config.authorizationUrl}?${params.toString()}`;
+}
+
+/**
+ * Generate OAuth authorization URL with org-specific credentials
+ */
+export function generateAuthorizationUrlWithCredentials(
+  provider: IntegrationProvider,
+  redirectUri: string,
+  state: string,
+  credentials: OrgOAuthCredentials
+): string | null {
+  const config = getOAuthConfig(provider);
+  if (!config) return null;
+
+  // Use custom scopes if provided, otherwise use default
+  const scopes = credentials.customScopes
+    ? credentials.customScopes.split(',').map((s) => s.trim())
+    : config.scopes;
+
+  // Use custom redirect URI if provided
+  const finalRedirectUri = credentials.redirectUri || redirectUri;
+
+  const params = new URLSearchParams({
+    client_id: credentials.clientId,
+    redirect_uri: finalRedirectUri,
+    response_type: 'code',
+    scope: scopes.join(' '),
     state,
     ...config.additionalAuthParams,
   });
@@ -128,7 +173,79 @@ export function validateOAuthState(
 }
 
 /**
- * Get client ID for a provider
+ * Get OAuth credentials for an organization
+ * First checks org config, then falls back to environment variables
+ */
+export async function getOrgOAuthCredentials(
+  provider: IntegrationProvider,
+  orgId: string
+): Promise<OrgOAuthCredentials | null> {
+  // First, try to get org-specific credentials
+  const orgConfig = await prisma.organizationIntegrationConfig.findUnique({
+    where: {
+      orgId_provider: {
+        orgId,
+        provider,
+      },
+    },
+  });
+
+  if (orgConfig && orgConfig.isEnabled) {
+    try {
+      return {
+        clientId: decrypt(orgConfig.clientId),
+        clientSecret: decrypt(orgConfig.clientSecret),
+        customScopes: orgConfig.customScopes || undefined,
+        redirectUri: orgConfig.redirectUri || undefined,
+        metadata: orgConfig.metadata as Record<string, unknown> | undefined,
+      };
+    } catch (error) {
+      console.error(`[OAuth] Error decrypting org credentials for ${provider}:`, error);
+    }
+  }
+
+  // Fall back to environment variables (platform-level credentials)
+  const clientId = getClientId(provider);
+  const clientSecret = getClientSecret(provider);
+
+  if (clientId && clientSecret) {
+    return {
+      clientId,
+      clientSecret,
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Check if an organization has configured credentials for a provider
+ */
+export async function hasOrgCredentials(
+  provider: IntegrationProvider,
+  orgId: string
+): Promise<boolean> {
+  const orgConfig = await prisma.organizationIntegrationConfig.findUnique({
+    where: {
+      orgId_provider: {
+        orgId,
+        provider,
+      },
+    },
+    select: { isEnabled: true },
+  });
+
+  if (orgConfig?.isEnabled) {
+    return true;
+  }
+
+  // Check environment variables as fallback
+  const clientId = getClientId(provider);
+  return !!clientId;
+}
+
+/**
+ * Get client ID for a provider (from environment variables)
  */
 export function getClientId(provider: IntegrationProvider): string | null {
   const envKey = getEnvKeyPrefix(provider) + '_CLIENT_ID';
@@ -136,7 +253,7 @@ export function getClientId(provider: IntegrationProvider): string | null {
 }
 
 /**
- * Get client secret for a provider
+ * Get client secret for a provider (from environment variables)
  */
 export function getClientSecret(provider: IntegrationProvider): string | null {
   const envKey = getEnvKeyPrefix(provider) + '_CLIENT_SECRET';
@@ -163,17 +280,13 @@ function getEnvKeyPrefix(provider: IntegrationProvider): string {
 
 /**
  * Exchange authorization code for tokens
+ * @deprecated Use exchangeCodeForTokensWithCredentials for org-specific credentials
  */
 export async function exchangeCodeForTokens(
   provider: IntegrationProvider,
   code: string,
   redirectUri: string
 ): Promise<TokenResponseData> {
-  const config = getOAuthConfig(provider);
-  if (!config) {
-    throw new Error(`Unsupported OAuth provider: ${provider}`);
-  }
-
   const clientId = getClientId(provider);
   const clientSecret = getClientSecret(provider);
 
@@ -181,10 +294,33 @@ export async function exchangeCodeForTokens(
     throw new Error(`OAuth credentials not configured for ${provider}`);
   }
 
+  return exchangeCodeForTokensWithCredentials(provider, code, redirectUri, {
+    clientId,
+    clientSecret,
+  });
+}
+
+/**
+ * Exchange authorization code for tokens with org-specific credentials
+ */
+export async function exchangeCodeForTokensWithCredentials(
+  provider: IntegrationProvider,
+  code: string,
+  redirectUri: string,
+  credentials: OrgOAuthCredentials
+): Promise<TokenResponseData> {
+  const config = getOAuthConfig(provider);
+  if (!config) {
+    throw new Error(`Unsupported OAuth provider: ${provider}`);
+  }
+
+  // Use custom redirect URI if provided
+  const finalRedirectUri = credentials.redirectUri || redirectUri;
+
   const body = new URLSearchParams({
     grant_type: 'authorization_code',
     code,
-    redirect_uri: redirectUri,
+    redirect_uri: finalRedirectUri,
     ...config.additionalTokenParams,
   });
 
@@ -193,11 +329,11 @@ export async function exchangeCodeForTokens(
   };
 
   if (config.tokenAuthMethod === 'header') {
-    const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
-    headers['Authorization'] = `Basic ${credentials}`;
+    const creds = Buffer.from(`${credentials.clientId}:${credentials.clientSecret}`).toString('base64');
+    headers['Authorization'] = `Basic ${creds}`;
   } else {
-    body.append('client_id', clientId);
-    body.append('client_secret', clientSecret);
+    body.append('client_id', credentials.clientId);
+    body.append('client_secret', credentials.clientSecret);
   }
 
   console.log(`[OAuth] Exchanging code for tokens: ${provider}`);
@@ -234,21 +370,36 @@ export async function exchangeCodeForTokens(
 
 /**
  * Refresh access token
+ * @deprecated Use refreshAccessTokenWithCredentials for org-specific credentials
  */
 export async function refreshAccessToken(
   provider: IntegrationProvider,
   refreshToken: string
 ): Promise<TokenResponseData> {
-  const config = getOAuthConfig(provider);
-  if (!config) {
-    throw new Error(`Unsupported OAuth provider: ${provider}`);
-  }
-
   const clientId = getClientId(provider);
   const clientSecret = getClientSecret(provider);
 
   if (!clientId || !clientSecret) {
     throw new Error(`OAuth credentials not configured for ${provider}`);
+  }
+
+  return refreshAccessTokenWithCredentials(provider, refreshToken, {
+    clientId,
+    clientSecret,
+  });
+}
+
+/**
+ * Refresh access token with org-specific credentials
+ */
+export async function refreshAccessTokenWithCredentials(
+  provider: IntegrationProvider,
+  refreshToken: string,
+  credentials: OrgOAuthCredentials
+): Promise<TokenResponseData> {
+  const config = getOAuthConfig(provider);
+  if (!config) {
+    throw new Error(`Unsupported OAuth provider: ${provider}`);
   }
 
   const body = new URLSearchParams({
@@ -261,11 +412,11 @@ export async function refreshAccessToken(
   };
 
   if (config.tokenAuthMethod === 'header') {
-    const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
-    headers['Authorization'] = `Basic ${credentials}`;
+    const creds = Buffer.from(`${credentials.clientId}:${credentials.clientSecret}`).toString('base64');
+    headers['Authorization'] = `Basic ${creds}`;
   } else {
-    body.append('client_id', clientId);
-    body.append('client_secret', clientSecret);
+    body.append('client_id', credentials.clientId);
+    body.append('client_secret', credentials.clientSecret);
   }
 
   console.log(`[OAuth] Refreshing token for: ${provider}`);
