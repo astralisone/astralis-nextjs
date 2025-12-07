@@ -242,6 +242,30 @@ export default function DocumentsPage() {
       )}
 
       {/* Error */}
+      {error && (
+        <Alert variant="error" showIcon className="mb-6">
+          <AlertTitle>Failed to load documents</AlertTitle>
+          <AlertDescription>
+            <p className="mb-3">{error instanceof Error ? error.message : 'An error occurred.'}</p>
+            <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Retry
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Empty */}
+      {!isLoading && !error && documents.length === 0 && (
+        <EmptyState
+          icon={FileText}
+          title="No documents found"
+          description={hasFilters ? 'Try adjusting your filters' : 'Upload your first document'}
+          primaryAction={!hasFilters ? { label: 'Upload Documents', onClick: () => setShowUploader(true) } : undefined}
+        />
+      )}
+
+      {/* Content */}
       
     </PageContainer>
   );
