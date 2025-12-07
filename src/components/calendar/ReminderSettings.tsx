@@ -191,7 +191,7 @@ export function ReminderSettings({
                         {formatReminderTime(reminder.offsetMinutes)}
                       </p>
                       <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-0.5">
-                        <Mail className="h-3 w-3" />
+                        <Mail className="h-5 w-5" />
                         <span>Email notification</span>
                       </div>
                     </div>

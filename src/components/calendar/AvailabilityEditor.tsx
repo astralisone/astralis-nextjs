@@ -199,7 +199,7 @@ export function AvailabilityEditor({
                     onClick={() => addTimeRange(day)}
                     className="gap-1"
                   >
-                    <Plus className="h-3 w-3" />
+                    <Plus className="h-5 w-5" />
                     <span className="hidden sm:inline">Add Time</span>
                   </Button>
                 )}

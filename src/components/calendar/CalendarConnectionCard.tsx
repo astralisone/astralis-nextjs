@@ -114,12 +114,12 @@ export function CalendarConnectionCard({
           >
             {connection.isActive ? (
               <>
-                <CheckCircle2 className="h-3 w-3" />
+                <CheckCircle2 className="h-5 w-5" />
                 <span>Active</span>
               </>
             ) : (
               <>
-                <XCircle className="h-3 w-3" />
+                <XCircle className="h-5 w-5" />
                 <span>Inactive</span>
               </>
             )}

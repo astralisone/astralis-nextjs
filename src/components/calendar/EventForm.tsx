@@ -423,7 +423,7 @@ export function EventForm({ event, onSubmit, onCancel, mode }: EventFormProps) {
                   onClick={() => handleRemoveParticipant(email)}
                   className="hover:bg-red-100 rounded-full p-0.5 transition-colors"
                 >
-                  <X className="h-3 w-3" />
+                  <X className="h-5 w-5" />
                 </button>
               </div>
             ))}

@@ -379,7 +379,7 @@ export default function HealthPage() {
                                   className="text-astralis-blue hover:underline flex items-center gap-1 text-xs"
                                 >
                                   Code
-                                  <ExternalLink className="h-3 w-3" />
+                                  <ExternalLink className="h-5 w-5" />
                                 </a>
                               </div>
                               <div className="flex flex-wrap gap-1 mb-1">

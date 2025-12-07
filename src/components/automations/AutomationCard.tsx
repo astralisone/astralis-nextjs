@@ -142,7 +142,7 @@ export function AutomationCard({
           <div className="grid grid-cols-3 gap-3 pt-3 border-t border-slate-200">
             <div className="space-y-1">
               <div className="flex items-center gap-1 text-xs text-slate-500">
-                <TrendingUp className="h-3 w-3" />
+                <TrendingUp className="h-5 w-5" />
                 <span>Executions</span>
               </div>
               <p className="text-lg font-semibold text-astralis-navy">
@@ -152,7 +152,7 @@ export function AutomationCard({
 
             <div className="space-y-1">
               <div className="flex items-center gap-1 text-xs text-slate-500">
-                <CheckCircle2 className="h-3 w-3" />
+                <CheckCircle2 className="h-5 w-5" />
                 <span>Success Rate</span>
               </div>
               <p className="text-lg font-semibold text-astralis-navy">
@@ -162,7 +162,7 @@ export function AutomationCard({
 
             <div className="space-y-1">
               <div className="flex items-center gap-1 text-xs text-slate-500">
-                <Clock className="h-3 w-3" />
+                <Clock className="h-5 w-5" />
                 <span>Avg Time</span>
               </div>
               <p className="text-lg font-semibold text-astralis-navy">

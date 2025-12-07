@@ -275,15 +275,15 @@ export function AvailabilityDisplay({
         {/* Legend */}
         <div className="mt-4 flex items-center justify-center gap-4 text-xs text-slate-500">
           <div className="flex items-center gap-1">
-            <div className="h-3 w-3 rounded bg-astralis-blue" />
+            <div className="h-5 w-5 rounded bg-astralis-blue" />
             <span>Selected</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="h-3 w-3 rounded bg-white border border-slate-300" />
+            <div className="h-5 w-5 rounded bg-white border border-slate-300" />
             <span>Available</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="h-3 w-3 rounded bg-slate-100" />
+            <div className="h-5 w-5 rounded bg-slate-100" />
             <span>Unavailable</span>
           </div>
         </div>
