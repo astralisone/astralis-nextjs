@@ -26,7 +26,8 @@ export const ChatMessageSchema = z.object({
  */
 export const SendChatMessageSchema = z.object({
   chatId: z.string().cuid().optional(),
-  documentId: z.string().cuid().optional(),
+  documentId: z.string().cuid().optional(), // Single document (legacy, for backwards compatibility)
+  documentIds: z.array(z.string().cuid()).max(20, 'Maximum 20 documents allowed').optional(), // Multiple documents
   message: z.string().min(1, 'Message cannot be empty').max(10000, 'Message too long'),
   maxContextChunks: z.number().int().min(1).max(20).default(5).optional(),
   temperature: z.number().min(0).max(2).default(0.7).optional(),

@@ -49,7 +49,7 @@ export class ChatService {
    * @param orgId - Organization ID
    * @param message - User message
    * @param chatId - Existing chat ID (optional)
-   * @param documentId - Specific document to chat with (optional)
+   * @param documentIds - Specific document(s) to chat with (optional) - single ID or array
    * @param maxContextChunks - Max number of context chunks to retrieve
    * @param temperature - GPT temperature (0-2)
    * @returns Chat response with sources
@@ -59,7 +59,7 @@ export class ChatService {
     orgId: string,
     message: string,
     chatId?: string,
-    documentId?: string,
+    documentIds?: string | string[],
     maxContextChunks: number = 5,
     temperature: number = 0.7
   ): Promise<{ chatId: string; response: ChatResponse }> {
@@ -73,12 +73,19 @@ export class ChatService {
         : null;
 
       if (!chat) {
+        // For new chats, store the first documentId if single, or null for multi-doc
+        const primaryDocId = documentIds
+          ? Array.isArray(documentIds)
+            ? (documentIds.length === 1 ? documentIds[0] : null)
+            : documentIds
+          : null;
+
         // Create new chat
         chat = await prisma.documentChat.create({
           data: {
             userId,
             orgId,
-            documentId: documentId || null,
+            documentId: primaryDocId,
             title: null, // Will be generated from first message
             messages: [],
             lastMessageAt: new Date(),
@@ -89,20 +96,24 @@ export class ChatService {
         console.log(`[ChatService] Created new chat: ${chat.id}`);
       }
 
+      // Determine which documents to search
+      // Priority: passed documentIds > chat's documentId > all org documents
+      const searchDocIds = documentIds || chat.documentId || undefined;
+
       // Retrieve relevant context using RAG
       const searchResults = await this.vectorSearchService.search(
         message,
         orgId,
-        chat.documentId || documentId,
+        searchDocIds,
         maxContextChunks
       );
 
       console.log(`[ChatService] Retrieved ${searchResults.length} relevant chunks for context`);
 
       // Get document names for sources
-      const documentIds = [...new Set(searchResults.map(r => r.documentId))];
+      const resultDocIds = [...new Set(searchResults.map(r => r.documentId))];
       const documents = await prisma.document.findMany({
-        where: { id: { in: documentIds } },
+        where: { id: { in: resultDocIds } },
         select: { id: true, originalName: true },
       });
 
@@ -120,8 +131,9 @@ export class ChatService {
         content: msg.content,
       }));
 
-      // Build system prompt
-      const systemPrompt = this.buildSystemPrompt(context, chat.documentId || documentId);
+      // Build system prompt - determine if single doc or multi-doc mode
+      const isSingleDoc = searchDocIds && !Array.isArray(searchDocIds);
+      const systemPrompt = this.buildSystemPrompt(context, isSingleDoc ? searchDocIds : undefined);
 
       // Call GPT-4 with context
       console.log(`[ChatService] Calling OpenAI ${this.chatModel} (timeout: 30s)...`);

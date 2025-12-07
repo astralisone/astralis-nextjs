@@ -73,10 +73,19 @@ export async function POST(req: NextRequest) {
     const {
       chatId,
       documentId,
+      documentIds,
       message,
       maxContextChunks = 5,
       temperature = 0.7,
     } = validationResult.data;
+
+    // Merge documentId and documentIds for backwards compatibility
+    // Priority: documentIds array > single documentId
+    const effectiveDocumentIds = documentIds && documentIds.length > 0
+      ? documentIds
+      : documentId
+        ? documentId
+        : undefined;
 
     // Send message using ChatService
     const chatService = getChatService();
@@ -85,7 +94,7 @@ export async function POST(req: NextRequest) {
       orgId,
       message,
       chatId,
-      documentId,
+      effectiveDocumentIds,
       maxContextChunks,
       temperature
     );
