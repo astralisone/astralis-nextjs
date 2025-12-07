@@ -7,7 +7,7 @@ import { formatDate } from '@/lib/utils/date';
 // Components
 import { DocumentCard } from '@/components/documents/DocumentCard';
 import { DocumentViewer } from '@/components/documents/DocumentViewer';
-import { DocumentChat } from '@/components/documents/DocumentChat';
+import { DocsChatAlpha } from '@/components/documents/DocsChatAlpha';
 import { DocumentUploader } from '@/components/documents/DocumentUploader';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -95,7 +95,7 @@ export default function DocumentsPage() {
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [showUploader, setShowUploader] = useState(false);
   const [showChat, setShowChat] = useState(false);
-  const [chatDocumentId, setChatDocumentId] = useState<string | undefined>();
+  const [chatDocumentIds, setChatDocumentIds] = useState<string[]>([]);
 
   const itemsPerPage = 12;
 
@@ -144,7 +144,9 @@ export default function DocumentsPage() {
   };
 
   const handleChat = (documentId?: string) => {
-    setChatDocumentId(documentId);
+    // If a specific document ID is provided, chat with just that document
+    // Otherwise chat with all documents (empty array means all)
+    setChatDocumentIds(documentId ? [documentId] : []);
     setShowChat(true);
   };
 
@@ -376,7 +378,18 @@ export default function DocumentsPage() {
         onClose={() => setSelectedDocument(null)}
       />
 
-    
+      {/* Chat Sheet - conditionally rendered to avoid hydration issues */}
+      {showChat && (
+        <Sheet open={showChat} onOpenChange={setShowChat}>
+          <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto p-0">
+            <DocsChatAlpha
+              documentIds={chatDocumentIds}
+              className="h-full min-h-[500px]"
+              onClose={() => setShowChat(false)}
+            />
+          </SheetContent>
+        </Sheet>
+      )}
     </PageContainer>
   );
 }

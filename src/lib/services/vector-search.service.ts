@@ -159,20 +159,20 @@ export class VectorSearchService {
    *
    * Process:
    * 1. Generate embedding for query text
-   * 2. Retrieve all embeddings for organization (optionally filtered by document)
+   * 2. Retrieve all embeddings for organization (optionally filtered by document(s))
    * 3. Calculate cosine similarity for each chunk
    * 4. Sort by similarity and return top-k results
    *
    * @param query - Search query text
    * @param orgId - Organization ID (for multi-tenancy)
-   * @param documentId - Optional: Limit search to specific document
+   * @param documentIds - Optional: Limit search to specific document(s) - can be single ID or array
    * @param limit - Maximum number of results to return (default: 5)
    * @returns Array of search results sorted by similarity (highest first)
    */
   async search(
     query: string,
     orgId: string,
-    documentId?: string,
+    documentIds?: string | string[],
     limit: number = 5
   ): Promise<SearchResult[]> {
     if (!query || query.trim().length === 0) {
@@ -194,13 +194,20 @@ export class VectorSearchService {
 
       // Step 2: Retrieve document embeddings from database
       const where: any = { orgId };
-      if (documentId) {
-        where.documentId = documentId;
+      if (documentIds) {
+        if (Array.isArray(documentIds)) {
+          where.documentId = { in: documentIds };
+        } else {
+          where.documentId = documentIds;
+        }
       }
 
-      console.log(
-        `[VectorSearch] Retrieving embeddings for orgId: ${orgId}${documentId ? `, documentId: ${documentId}` : ''}`
-      );
+      const docIdLog = documentIds
+        ? Array.isArray(documentIds)
+          ? `documentIds: [${documentIds.join(', ')}]`
+          : `documentId: ${documentIds}`
+        : 'all documents';
+      console.log(`[VectorSearch] Retrieving embeddings for orgId: ${orgId}, ${docIdLog}`);
 
       const embeddings = await prisma.documentEmbedding.findMany({
         where,
@@ -296,7 +303,7 @@ export class VectorSearchService {
    * @param query - Search query text
    * @param orgId - Organization ID
    * @param threshold - Minimum similarity score (0-1, default: 0.7)
-   * @param documentId - Optional: Limit search to specific document
+   * @param documentIds - Optional: Limit search to specific document(s)
    * @param limit - Maximum number of results (default: 5)
    * @returns Array of search results above threshold
    */
@@ -304,14 +311,14 @@ export class VectorSearchService {
     query: string,
     orgId: string,
     threshold: number = 0.7,
-    documentId?: string,
+    documentIds?: string | string[],
     limit: number = 5
   ): Promise<SearchResult[]> {
     if (threshold < 0 || threshold > 1) {
       throw new Error('Threshold must be between 0 and 1');
     }
 
-    const results = await this.search(query, orgId, documentId, limit);
+    const results = await this.search(query, orgId, documentIds, limit);
 
     // Filter by threshold
     const filteredResults = results.filter((result) => result.similarity >= threshold);
@@ -370,14 +377,14 @@ export class VectorSearchService {
    *
    * @param queries - Array of query strings
    * @param orgId - Organization ID
-   * @param documentId - Optional: Limit search to specific document
+   * @param documentIds - Optional: Limit search to specific document(s)
    * @param limitPerQuery - Maximum results per query (default: 3)
    * @returns Combined and deduplicated search results
    */
   async batchSearch(
     queries: string[],
     orgId: string,
-    documentId?: string,
+    documentIds?: string | string[],
     limitPerQuery: number = 3
   ): Promise<SearchResult[]> {
     if (queries.length === 0) {
@@ -392,7 +399,7 @@ export class VectorSearchService {
 
     // Execute searches in parallel
     const searchPromises = queries.map((query) =>
-      this.search(query, orgId, documentId, limitPerQuery)
+      this.search(query, orgId, documentIds, limitPerQuery)
     );
 
     const allResults = await Promise.all(searchPromises);
