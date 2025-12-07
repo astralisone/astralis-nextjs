@@ -241,7 +241,7 @@ export default function DocumentsPage() {
       {/* Header */}
       <PageHeader
         title="Documents"
-        description="Manage and view all uploaded documents with OCR processing"
+        description={`OrgId: ${session?.user?.orgId || 'none'} | Manage and view all uploaded documents`}
         actions={
           <div className="flex gap-3">
             <Button
