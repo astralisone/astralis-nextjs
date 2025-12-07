@@ -1,18 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-
-const createPipelineSchema = z.object({
-  name: z.string().min(2),
-  description: z.string().optional(),
-  orgId: z.string(),
-});
-
-const pipelineFiltersSchema = z.object({
-  orgId: z.string().min(1),
-  search: z.string().optional().nullable(),
-  isActive: z.enum(["true", "false"]).optional().nullable(),
-});
+import {
+  createPipelineSchema,
+  pipelineFiltersSchema,
+} from "@/lib/validators/pipeline.validators";
+import { getTemplateByKey } from "@/lib/services/defaultPipelines.service";
 
 /**
  * GET /api/pipelines
@@ -84,7 +76,25 @@ export async function GET(req: NextRequest) {
 
 /**
  * POST /api/pipelines
- * Create a new pipeline
+ *
+ * Create a new pipeline, either from a template or as a custom pipeline.
+ *
+ * Request Body:
+ * - name: string (required) - Pipeline name
+ * - description: string (optional) - Pipeline description
+ * - orgId: string (required) - Organization ID
+ * - templateKey: string (optional) - Template to use (e.g., 'sales', 'support', 'generic')
+ * - type: PipelineType (optional) - Pipeline type, inferred from template if not provided
+ *
+ * Template-based Creation:
+ * If templateKey is provided, the pipeline will be created with stages from that template.
+ * The type will be set from the template unless explicitly overridden.
+ *
+ * Custom Creation:
+ * If no templateKey is provided, an empty pipeline is created with type CUSTOM.
+ * Stages must be added separately via the stages API.
+ *
+ * Response: Created pipeline with stages (if from template)
  */
 export async function POST(req: NextRequest) {
   try {
@@ -98,18 +108,64 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const { name, description, orgId, templateKey, type } = parsed.data;
+
     // Generate key from name (kebab-case)
-    const key = parsed.data.name
+    const key = name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '');
 
+    // Check if template-based creation
+    if (templateKey) {
+      const template = getTemplateByKey(templateKey);
+
+      if (!template) {
+        return NextResponse.json(
+          { error: `Invalid template key: ${templateKey}` },
+          { status: 400 }
+        );
+      }
+
+      // Create pipeline with stages from template
+      const pipeline = await prisma.pipeline.create({
+        data: {
+          name,
+          key,
+          description: description || template.description,
+          type: type || template.type,
+          isActive: true,
+          orgId,
+          stages: {
+            create: template.stages.map((stage) => ({
+              name: stage.name,
+              key: stage.key,
+              description: stage.description,
+              order: stage.order,
+              color: stage.color,
+              isTerminal: stage.isTerminal,
+            })),
+          },
+        },
+        include: {
+          stages: {
+            orderBy: { order: 'asc' },
+          },
+        },
+      });
+
+      return NextResponse.json(pipeline, { status: 201 });
+    }
+
+    // Custom pipeline creation (no template)
     const pipeline = await prisma.pipeline.create({
       data: {
-        name: parsed.data.name,
+        name,
         key,
-        description: parsed.data.description,
-        orgId: parsed.data.orgId,
+        description,
+        type: type || 'CUSTOM',
+        isActive: true,
+        orgId,
       },
       include: {
         stages: true,
@@ -119,6 +175,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(pipeline, { status: 201 });
   } catch (error) {
     console.error("Error creating pipeline:", error);
+
+    // Handle unique constraint violation (duplicate pipeline name)
+    if (error instanceof Error && 'code' in error && error.code === 'P2002') {
+      return NextResponse.json(
+        { error: "A pipeline with this name already exists in your organization" },
+        { status: 409 }
+      );
+    }
+
     return NextResponse.json(
       { error: "Failed to create pipeline" },
       { status: 500 }

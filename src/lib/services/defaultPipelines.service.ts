@@ -443,6 +443,23 @@ export async function getOrganizationPipelines(orgId: string): Promise<PipelineW
 }
 
 /**
+ * Get template definitions without database interaction
+ * Returns all available pipeline templates as JSON
+ */
+export function getPipelineTemplates(): DefaultPipelineDefinition[] {
+  return DEFAULT_PIPELINES;
+}
+
+/**
+ * Get a specific template by key
+ * @param templateKey - The template key (e.g., 'sales', 'support', 'generic')
+ * @returns The template definition or null if not found
+ */
+export function getTemplateByKey(templateKey: string): DefaultPipelineDefinition | null {
+  return DEFAULT_PIPELINES.find((template) => template.key === templateKey) || null;
+}
+
+/**
  * Service class for managing default pipelines
  */
 export class DefaultPipelinesService {
@@ -492,7 +509,14 @@ export class DefaultPipelinesService {
    * Get the default pipeline definitions (without database interaction)
    */
   getDefinitions(): DefaultPipelineDefinition[] {
-    return DEFAULT_PIPELINES;
+    return getPipelineTemplates();
+  }
+
+  /**
+   * Get a specific template by key
+   */
+  getTemplateByKey(templateKey: string): DefaultPipelineDefinition | null {
+    return getTemplateByKey(templateKey);
   }
 }
 
