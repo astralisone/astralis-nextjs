@@ -1,7 +1,6 @@
 'use client';
 
-import * as React from 'react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Send, FileText, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -10,104 +9,34 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
-import {
-  useChatAPI,
-  type ChatMessage,
+  sendChatMessage,
   type ChatSource,
-  ChatAPIError,
+  type SendMessageResponse,
 } from '@/lib/api/chat.client';
 
-/**
- * DocumentChat Component
- *
- * Chat interface for document Q&A with AI-powered responses.
- *
- * Features:
- * - Message history display (user and AI messages)
- * - Source citations from retrieved document chunks
- * - Loading states with spinner
- * - Error handling with branded alerts
- * - Auto-scroll to latest message
- * - Responsive design with Astralis brand styling
- *
- * @example
- * ```tsx
- * <DocumentChat
- *   documentId="doc-123"
- *   chatId="chat-abc" // Optional
- * />
- * ```
- */
-
 export interface DocumentChatProps {
-  /** Optional - if not provided, chat across all docs */
   documentId?: string;
-  /** Optional - for continuing existing chat */
-  chatId?: string;
-  /** Additional CSS classes */
   className?: string;
 }
 
-interface Message extends ChatMessage {
+interface Message {
   id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  sources?: ChatSource[];
 }
 
-export function DocumentChat({
-  documentId,
-  chatId: initialChatId,
-  className,
-}: DocumentChatProps) {
+export function DocumentChat({ documentId, className }: DocumentChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  const [chatId, setChatId] = useState<string | undefined>(initialChatId);
-  const [initError, setInitError] = useState<string | null>(null);
+  const [chatId, setChatId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const { sendMessage, fetchChat, loading, error } = useChatAPI();
-
-  // Load existing chat if chatId provided
-  useEffect(() => {
-    let cancelled = false;
-
-    if (initialChatId) {
-      const loadChat = async () => {
-        try {
-          const chat = await fetchChat(initialChatId);
-          if (!cancelled) {
-            setMessages(
-              chat.messages.map((msg, index) => ({
-                ...msg,
-                id: `${initialChatId}-${index}`,
-              }))
-            );
-          }
-        } catch (err) {
-          if (!cancelled) {
-            setInitError(
-              err instanceof ChatAPIError
-                ? err.message
-                : 'Failed to load chat history'
-            );
-          }
-        }
-      };
-
-      loadChat();
-    }
-
-    return () => {
-      cancelled = true;
-    };
-  }, [initialChatId, fetchChat]);
-
-  // Auto-scroll to bottom when messages change
+  // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -115,20 +44,20 @@ export function DocumentChat({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!input.trim() || loading) {
-      return;
-    }
+    const trimmedInput = input.trim();
+    if (!trimmedInput || loading) return;
 
+    // Add user message
     const userMessage: Message = {
       id: `user-${Date.now()}`,
       role: 'user',
-      content: input.trim(),
-      timestamp: new Date().toISOString(),
+      content: trimmedInput,
     };
 
-    // Add user message immediately
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
+    setError(null);
+    setLoading(true);
 
     // Reset textarea height
     if (textareaRef.current) {
@@ -136,35 +65,34 @@ export function DocumentChat({
     }
 
     try {
-      const response = await sendMessage({
-        chatId,
+      const response: SendMessageResponse = await sendChatMessage({
+        chatId: chatId || undefined,
         documentId,
-        message: userMessage.content,
+        message: trimmedInput,
       });
 
-      // Update chatId if this is a new conversation
+      // Store chatId for conversation continuity
       if (!chatId && response.chatId) {
         setChatId(response.chatId);
       }
 
+      // Add assistant message
       const assistantMessage: Message = {
         id: `assistant-${Date.now()}`,
         role: 'assistant',
         content: response.message,
-        timestamp: new Date().toISOString(),
         sources: response.sources,
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (err) {
-      // Error is handled by useChatAPI hook
-      // We could add a retry mechanism here if needed
-      console.error('Failed to send message:', err);
+      setError(err instanceof Error ? err.message : 'Failed to send message');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    // Submit on Enter (without Shift)
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit(e);
@@ -173,20 +101,10 @@ export function DocumentChat({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
-
-    // Auto-resize textarea
+    // Auto-resize
     const textarea = e.target;
     textarea.style.height = 'auto';
     textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`;
-  };
-
-  const formatTimestamp = (timestamp: string) => {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
-    });
   };
 
   return (
@@ -211,16 +129,7 @@ export function DocumentChat({
         )}
       </div>
 
-      {/* Initialization Error */}
-      {initError && (
-        <div className="px-6 pt-4">
-          <Alert variant="error" showIcon>
-            <AlertDescription>{initError}</AlertDescription>
-          </Alert>
-        </div>
-      )}
-
-      {/* Messages Area */}
+      {/* Messages */}
       <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
         {messages.length === 0 && !loading && (
           <div className="flex flex-col items-center justify-center h-full text-center py-12">
@@ -229,7 +138,7 @@ export function DocumentChat({
               Start a Conversation
             </h4>
             <p className="text-sm text-slate-500 max-w-md">
-              Ask questions about {documentId ? 'this document' : 'your documents'} and get AI-powered answers with source citations.
+              Ask questions about {documentId ? 'this document' : 'your documents'} and get AI-powered answers.
             </p>
           </div>
         )}
@@ -248,9 +157,7 @@ export function DocumentChat({
                 message.role === 'user' ? 'items-end' : 'items-start'
               )}
             >
-              {/* Message Bubble */}
               <Card
-                variant="default"
                 className={cn(
                   'px-4 py-3',
                   message.role === 'user'
@@ -268,89 +175,58 @@ export function DocumentChat({
                 </p>
               </Card>
 
-              {/* Timestamp */}
-              <span className="text-xs text-slate-500">
-                {formatTimestamp(message.timestamp)}
-              </span>
-
-              {/* Sources (for assistant messages) */}
+              {/* Sources */}
               {message.role === 'assistant' && message.sources && message.sources.length > 0 && (
-                <div className="w-full">
-                  <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="sources" className="border-0">
-                      <AccordionTrigger className="py-2 hover:no-underline">
-                        <div className="flex items-center gap-2">
-                          <FileText className="h-3.5 w-3.5 text-astralis-blue" />
-                          <span className="text-xs font-semibold text-slate-700">
-                            Sources ({message.sources.length})
-                          </span>
+                <div className="w-full mt-2">
+                  <p className="text-xs font-medium text-slate-600 mb-2">
+                    Sources ({message.sources.length}):
+                  </p>
+                  <div className="space-y-2">
+                    {message.sources.slice(0, 3).map((source, idx) => (
+                      <Card key={idx} className="p-2 bg-slate-50 border-slate-200">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-xs font-medium text-slate-700 truncate">
+                            {source.documentName}
+                          </p>
+                          <Badge variant="default" className="text-xs">
+                            {Math.round(source.similarity * 100)}%
+                          </Badge>
                         </div>
-                      </AccordionTrigger>
-                      <AccordionContent className="pt-2">
-                        <div className="space-y-2">
-                          {message.sources.map((source, index) => (
-                            <Card
-                              key={`${source.documentId}-${source.chunkIndex}`}
-                              variant="bordered"
-                              className="p-3 bg-slate-50"
-                            >
-                              <div className="flex items-start justify-between gap-2 mb-2">
-                                <div className="flex items-center gap-2">
-                                  <FileText className="h-3.5 w-3.5 text-astralis-blue flex-shrink-0" />
-                                  <p className="text-xs font-medium text-slate-900">
-                                    {source.documentName}
-                                  </p>
-                                </div>
-                                <Badge variant="default" className="text-xs">
-                                  {Math.round(source.similarity * 100)}% match
-                                </Badge>
-                              </div>
-                              <p className="text-xs text-slate-600 line-clamp-2">
-                                {source.content}
-                              </p>
-                            </Card>
-                          ))}
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
+                        <p className="text-xs text-slate-500 line-clamp-2">
+                          {source.content}
+                        </p>
+                      </Card>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
           </div>
         ))}
 
-        {/* Loading Indicator */}
+        {/* Loading */}
         {loading && (
           <div className="flex justify-start">
-            <Card variant="default" className="px-4 py-3 bg-slate-50 border-slate-300">
+            <Card className="px-4 py-3 bg-slate-50 border-slate-300">
               <div className="flex items-center gap-3">
-                <Loader2
-                  size={25}
-                  className="text-astralis-blue animate-spin"
-                />
-                <p className="text-sm text-slate-600 font-medium">Thinking...</p>
+                <Loader2 className="h-5 w-5 text-astralis-blue animate-spin" />
+                <p className="text-sm text-slate-600">Thinking...</p>
               </div>
             </Card>
           </div>
         )}
 
-        {/* Error Alert */}
+        {/* Error */}
         {error && (
           <Alert variant="error" showIcon>
-            <AlertDescription>
-              <strong>Error:</strong> {error.message}
-              {error.details && (
-                <p className="mt-1 text-xs">{JSON.stringify(error.details)}</p>
-              )}
-            </AlertDescription>
+            <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
 
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area */}
+      {/* Input */}
       <div className="px-6 py-4 border-t border-slate-300 bg-slate-50">
         <form onSubmit={handleSubmit} className="flex gap-2">
           <Textarea
@@ -358,7 +234,7 @@ export function DocumentChat({
             value={input}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
-            placeholder="Ask a question about the document..."
+            placeholder="Ask a question..."
             disabled={loading}
             className="resize-none min-h-[44px] max-h-[200px]"
             rows={1}
