@@ -266,7 +266,117 @@ export default function DocumentsPage() {
       )}
 
       {/* Content */}
-      
+      {!isLoading && !error && documents.length > 0 && (
+        <>
+          {viewMode === 'table' ? (
+            <Card className="mb-6">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    {(['name', 'type', 'size', 'status', 'createdAt'] as SortColumn[]).map((col) => (
+                      <TableHead
+                        key={col}
+                        className="cursor-pointer hover:bg-slate-50"
+                        onClick={() => handleSort(col)}
+                      >
+                        <div className="flex items-center gap-1">
+                          {col === 'createdAt' ? 'Uploaded' : col.charAt(0).toUpperCase() + col.slice(1)}
+                          <SortIcon column={col} />
+                        </div>
+                      </TableHead>
+                    ))}
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sortedDocuments.map((doc) => (
+                    <TableRow key={doc.id}>
+                      <TableCell className="font-medium max-w-[250px] truncate">{doc.originalName}</TableCell>
+                      <TableCell><Badge variant="default">{getFileTypeLabel(doc.mimeType)}</Badge></TableCell>
+                      <TableCell className="text-slate-500">{formatFileSize(doc.fileSize)}</TableCell>
+                      <TableCell><Badge variant={STATUS_VARIANTS[doc.status]}>{doc.status}</Badge></TableCell>
+                      <TableCell className="text-slate-500">{formatDate(doc.createdAt)}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setSelectedDocument(doc)}
+                            className="p-2 hover:bg-slate-100 rounded"
+                            title="View"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDownload(doc)}
+                            className="p-2 hover:bg-slate-100 rounded disabled:opacity-50"
+                            title="Download"
+                            disabled={!doc.cdnUrl}
+                          >
+                            <Download className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              {documents.map((doc) => (
+                <DocumentCard
+                  key={doc.id}
+                  document={doc}
+                  onView={setSelectedDocument}
+                  onChat={handleChat}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {totalDocuments > itemsPerPage && (
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-slate-600">
+                Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, totalDocuments)} of {totalDocuments}
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage((p) => p + 1)}
+                  disabled={!hasMore}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Sheets */}
+      <Sheet open={showUploader} onOpenChange={setShowUploader}>
+        <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
+          <SheetHeader><SheetTitle>Upload Documents</SheetTitle></SheetHeader>
+          <div className="mt-6">
+            <DocumentUploader onComplete={() => setShowUploader(false)} />
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <DocumentViewer
+        document={selectedDocument}
+        isOpen={!!selectedDocument}
+        onClose={() => setSelectedDocument(null)}
+      />
+
+    
     </PageContainer>
   );
 }
