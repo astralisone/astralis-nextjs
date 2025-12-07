@@ -189,7 +189,7 @@ function PlatformSpotlight() {
             {/* Right Column: Visual Element with Background Image */}
             <div className="relative">
               {/* Dashboard/Analytics Image */}
-              <div className="rounded-xl overflow-hidden border border-slate-300 shadow-lg mb-6 relative h-64">
+              <div className="rounded-xl overflow-hidden border border-slate-300 shadow-lg mb-6 relative h-[200px]">
                 <Image
                   src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=65"
                   alt="Data analytics dashboard"
