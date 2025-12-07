@@ -501,26 +501,22 @@ export default function DocumentsPage() {
       />
 
 
-      {/* Document Chat - only render when user has orgId */}
-      {session?.user?.orgId && (
-        <Sheet open={showChat} onOpenChange={setShowChat}>
-          <SheetContent side="right" className="w-full sm:max-w-2xl overflow-hidden flex flex-col">
-            <SheetHeader>
-              <SheetTitle>
-                {chatDocumentId ? 'Chat with Document' : 'Chat with Documents'}
-              </SheetTitle>
-            </SheetHeader>
-            <div className="flex-1 overflow-hidden mt-6">
-              <DocumentChat
-                documentId={chatDocumentId}
-                orgId={session.user.orgId}
-                userId={session.user.id}
-                className="h-full"
-              />
-            </div>
-          </SheetContent>
-        </Sheet>
-      )}
+      {/* Document Chat */}
+      <Sheet open={showChat} onOpenChange={setShowChat}>
+        <SheetContent side="right" className="w-full sm:max-w-2xl overflow-hidden flex flex-col">
+          <SheetHeader>
+            <SheetTitle>
+              {chatDocumentId ? 'Chat with Document' : 'Chat with Documents'}
+            </SheetTitle>
+          </SheetHeader>
+          <div className="flex-1 overflow-hidden mt-6">
+            <DocumentChat
+              documentId={chatDocumentId}
+              className="h-full"
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
 
 
     </PageContainer>
