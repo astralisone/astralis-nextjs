@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { IntegrationCard } from './integration-card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { IntegrationConfigDialog } from './integration-config-dialog';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import {
   INTEGRATION_CATALOG,
@@ -12,10 +14,23 @@ import {
   type ConnectedIntegration,
   type IntegrationMetadata,
 } from '@/types/integrations';
-import { Search, RefreshCw } from 'lucide-react';
+import { Search, RefreshCw, Settings2 } from 'lucide-react';
+
+interface IntegrationConfig {
+  id: string;
+  provider: string;
+  clientId: string;
+  hasClientSecret: boolean;
+  customScopes?: string;
+  redirectUri?: string;
+  isEnabled: boolean;
+  isVerified: boolean;
+  verifiedAt?: string;
+}
 
 interface IntegrationsGridProps {
   initialConnections?: ConnectedIntegration[];
+  isAdmin?: boolean;
 }
 
 const CATEGORIES: { id: IntegrationCategory | 'all'; label: string }[] = [
@@ -26,17 +41,22 @@ const CATEGORIES: { id: IntegrationCategory | 'all'; label: string }[] = [
   { id: 'storage', label: 'Storage' },
 ];
 
-export function IntegrationsGrid({ initialConnections = [] }: IntegrationsGridProps) {
+export function IntegrationsGrid({ initialConnections = [], isAdmin = false }: IntegrationsGridProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
 
   const [connections, setConnections] = useState<ConnectedIntegration[]>(initialConnections);
+  const [configs, setConfigs] = useState<IntegrationConfig[]>([]);
   const [category, setCategory] = useState<IntegrationCategory | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [connectingProvider, setConnectingProvider] = useState<string | null>(null);
   const [testingCredential, setTestingCredential] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Config dialog state
+  const [configDialogOpen, setConfigDialogOpen] = useState(false);
+  const [selectedIntegration, setSelectedIntegration] = useState<IntegrationMetadata | null>(null);
 
   // Handle success/error from OAuth callback
   useEffect(() => {
@@ -65,10 +85,13 @@ export function IntegrationsGrid({ initialConnections = [] }: IntegrationsGridPr
     }
   }, [searchParams, router, toast]);
 
-  // Fetch connections on mount
+  // Fetch connections and configs on mount
   useEffect(() => {
     fetchConnections();
-  }, []);
+    if (isAdmin) {
+      fetchConfigs();
+    }
+  }, [isAdmin]);
 
   const fetchConnections = async () => {
     try {
@@ -87,6 +110,18 @@ export function IntegrationsGrid({ initialConnections = [] }: IntegrationsGridPr
       console.error('Failed to fetch connections:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchConfigs = async () => {
+    try {
+      const response = await fetch('/api/settings/integrations/config');
+      if (response.ok) {
+        const data = await response.json();
+        setConfigs(data.configs || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch integration configs:', error);
     }
   };
 
@@ -172,6 +207,32 @@ export function IntegrationsGrid({ initialConnections = [] }: IntegrationsGridPr
     return connections.find((c) => c.provider === provider);
   };
 
+  // Get config for an integration
+  const getConfig = (provider: string): IntegrationConfig | undefined => {
+    return configs.find((c) => c.provider === provider);
+  };
+
+  // Check if integration is configured (has org-level credentials)
+  const isConfigured = (provider: string): boolean => {
+    const config = getConfig(provider);
+    return config?.isEnabled ?? false;
+  };
+
+  // Handle opening config dialog
+  const handleConfigure = (integration: IntegrationMetadata) => {
+    setSelectedIntegration(integration);
+    setConfigDialogOpen(true);
+  };
+
+  // Handle config save
+  const handleConfigSave = () => {
+    fetchConfigs();
+    toast({
+      title: 'Configuration saved',
+      description: 'Integration credentials have been updated.',
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* Search and Filters */}
@@ -210,18 +271,26 @@ export function IntegrationsGrid({ initialConnections = [] }: IntegrationsGridPr
       {/* Integrations Grid */}
       {!isLoading && (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredIntegrations.map((integration) => (
-            <IntegrationCard
-              key={integration.id}
-              integration={integration}
-              connection={getConnection(integration.provider)}
-              onConnect={() => handleConnect(integration)}
-              onDisconnect={handleDisconnect}
-              onTest={handleTest}
-              isConnecting={connectingProvider === integration.provider}
-              isTesting={testingCredential === getConnection(integration.provider)?.id}
-            />
-          ))}
+          {filteredIntegrations.map((integration) => {
+            const config = getConfig(integration.provider);
+            const configured = config?.isEnabled ?? false;
+
+            return (
+              <IntegrationCard
+                key={integration.id}
+                integration={integration}
+                connection={getConnection(integration.provider)}
+                onConnect={() => handleConnect(integration)}
+                onDisconnect={handleDisconnect}
+                onTest={handleTest}
+                onConfigure={isAdmin ? () => handleConfigure(integration) : undefined}
+                isConnecting={connectingProvider === integration.provider}
+                isTesting={testingCredential === getConnection(integration.provider)?.id}
+                isConfigured={configured}
+                isVerified={config?.isVerified}
+              />
+            );
+          })}
         </div>
       )}
 
@@ -234,6 +303,24 @@ export function IntegrationsGrid({ initialConnections = [] }: IntegrationsGridPr
             Try adjusting your search or filter criteria.
           </p>
         </div>
+      )}
+
+      {/* Integration Config Dialog */}
+      {selectedIntegration && (
+        <IntegrationConfigDialog
+          open={configDialogOpen}
+          onOpenChange={setConfigDialogOpen}
+          integration={{
+            provider: selectedIntegration.provider,
+            name: selectedIntegration.name,
+            description: selectedIntegration.description,
+            category: selectedIntegration.category,
+            documentationUrl: selectedIntegration.documentationUrl,
+            setupUrl: selectedIntegration.documentationUrl,
+          }}
+          existingConfig={getConfig(selectedIntegration.provider) as any}
+          onSave={handleConfigSave}
+        />
       )}
     </div>
   );

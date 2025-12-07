@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/config';
 import { integrationService } from '@/lib/services/integration.service';
 import {
-  exchangeCodeForTokens,
+  exchangeCodeForTokensWithCredentials,
+  getOrgOAuthCredentials,
   parseOAuthState,
   validateOAuthState,
   supportsOAuth,
@@ -112,16 +113,31 @@ export async function GET(
       );
     }
 
-    // 5. Build redirect URI (must match the one used in authorization request)
+    // 5. Get OAuth credentials for this organization
+    const credentials = await getOrgOAuthCredentials(provider, orgId);
+
+    if (!credentials) {
+      console.error(`[OAuth Callback] No credentials configured for ${provider} in org ${orgId}`);
+      return NextResponse.redirect(
+        new URL('/app/integrations?error=IntegrationNotConfigured', req.url)
+      );
+    }
+
+    // 6. Build redirect URI (must match the one used in authorization request)
     const redirectUri = new URL(
       `/api/integrations/${providerParam}/oauth/callback`,
       req.nextUrl.origin
     ).toString();
 
-    // 6. Exchange code for tokens
-    const tokenData = await exchangeCodeForTokens(provider, code, redirectUri);
+    // 7. Exchange code for tokens using org credentials
+    const tokenData = await exchangeCodeForTokensWithCredentials(
+      provider,
+      code,
+      redirectUri,
+      credentials
+    );
 
-    // 7. Add provider-specific data
+    // 8. Add provider-specific data
     const credentialData: Record<string, unknown> = {
       accessToken: tokenData.accessToken,
       refreshToken: tokenData.refreshToken,
@@ -147,7 +163,7 @@ export async function GET(
       credentialData.instanceUrl = tokenData.instanceUrl; // Salesforce instance URL
     }
 
-    // 8. Fetch additional info if available (e.g., Xero tenant ID)
+    // 9. Fetch additional info if available (e.g., Xero tenant ID)
     if (provider === 'XERO' && !credentialData.tenantId) {
       try {
         const config = getOAuthConfig(provider);
@@ -171,13 +187,12 @@ export async function GET(
       }
     }
 
-    // 9. Generate credential name
-    const config = getOAuthConfig(provider);
+    // 10. Generate credential name
     const providerName = provider.replace(/_/g, ' ').toLowerCase()
       .replace(/\b\w/g, (c) => c.toUpperCase());
     const credentialName = `${providerName} - ${new Date().toLocaleDateString()}`;
 
-    // 10. Save credential
+    // 11. Save credential
     await integrationService.saveCredential(userId, orgId, {
       provider,
       credentialName,
@@ -188,9 +203,9 @@ export async function GET(
         : undefined,
     });
 
-    console.log(`[OAuth Callback] Successfully connected ${provider}`);
+    console.log(`[OAuth Callback] Successfully connected ${provider} (org: ${orgId})`);
 
-    // 11. Redirect with success
+    // 12. Redirect with success
     const successUrl = new URL(returnUrl, req.url);
     successUrl.searchParams.set('success', 'true');
     successUrl.searchParams.set('provider', providerParam);

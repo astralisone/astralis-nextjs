@@ -172,6 +172,42 @@ model IntegrationCredential {
   @@map("integration_credentials")
 }
 
+// Organization-level OAuth app configuration for white-label multi-tenancy
+// Each tenant can configure their own OAuth apps for integrations
+model OrganizationIntegrationConfig {
+  id           String              @id @default(cuid())
+  orgId        String
+  provider     IntegrationProvider
+
+  // OAuth App Credentials (encrypted)
+  clientId     String              // Encrypted OAuth client ID
+  clientSecret String              // Encrypted OAuth client secret
+
+  // Optional customization
+  customScopes String?             // Custom scopes (comma-separated), overrides defaults
+  redirectUri  String?             // Custom redirect URI if needed
+
+  // Provider-specific configuration
+  metadata     Json?               // Additional provider-specific config (e.g., Salesforce instance URL)
+
+  // Status
+  isEnabled    Boolean             @default(true)
+  isVerified   Boolean             @default(false) // Set to true after successful test connection
+
+  // Audit
+  configuredBy String?             // User ID who configured this
+  verifiedAt   DateTime?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  organization organization        @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, provider])
+  @@index([orgId, isEnabled])
+  @@index([provider])
+  @@map("organization_integration_configs")
+}
+
 model AccessRequest {
   id           String       @id
   engagementId String
@@ -1080,19 +1116,20 @@ model wishlists {
 }
 
 model organization {
-  id                     String                  @id @default(cuid())
+  id                     String                           @id @default(cuid())
   name                   String
-  slug                   String?                 @unique
+  slug                   String?                          @unique
   website                String?
-  plan                   PlanType                @default(FREE)
-  quotaResetAt           DateTime                @default(now())
-  createdAt              DateTime                @default(now())
-  updatedAt              DateTime                @default(now()) @updatedAt
+  plan                   PlanType                         @default(FREE)
+  quotaResetAt           DateTime                         @default(now())
+  createdAt              DateTime                         @default(now())
+  updatedAt              DateTime                         @default(now()) @updatedAt
   documents              Document[]
   documentChats          DocumentChat[]
   automations            Automation[]
   intakeRequests         intakeRequest[]
   integrationCredentials IntegrationCredential[]
+  integrationConfigs     OrganizationIntegrationConfig[]
   schedulingEvents       SchedulingEvent[]
   schedulingAgentTasks   SchedulingAgentTask[]
   users                  users[]

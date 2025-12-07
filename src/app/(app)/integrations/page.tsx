@@ -1,14 +1,38 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { IntegrationsGrid } from '@/components/integrations';
-import { ArrowLeft, Plug, Zap, Shield, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Plug, Zap, Shield, Settings2 } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 
 export default function IntegrationsPage() {
+  const { data: session } = useSession();
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  // Fetch user role
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      try {
+        const response = await fetch('/api/auth/me');
+        if (response.ok) {
+          const data = await response.json();
+          setUserRole(data.user?.role || null);
+        }
+      } catch (error) {
+        console.error('Failed to fetch user role:', error);
+      }
+    };
+
+    if (session?.user) {
+      fetchUserRole();
+    }
+  }, [session]);
+
+  const isAdmin = userRole === 'ADMIN';
   return (
     <div className="min-h-screen bg-slate-50 p-6">
       <div className="max-w-7xl mx-auto space-y-8">
@@ -74,9 +98,27 @@ export default function IntegrationsPage() {
           </Card>
         </div>
 
+        {/* Admin notice */}
+        {isAdmin && (
+          <Card className="bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800">
+            <div className="p-4 flex items-start gap-3">
+              <div className="rounded-lg bg-amber-100 dark:bg-amber-900/50 p-2">
+                <Settings2 className="h-5 w-5 text-amber-600" />
+              </div>
+              <div>
+                <h3 className="font-medium text-amber-800 dark:text-amber-300">Admin Mode</h3>
+                <p className="text-sm text-amber-700 dark:text-amber-400">
+                  As an administrator, you can configure OAuth credentials for each integration.
+                  Click the menu on any integration card to set up your organization&apos;s OAuth app credentials.
+                </p>
+              </div>
+            </div>
+          </Card>
+        )}
+
         {/* Integrations Grid */}
         <Suspense fallback={<IntegrationsGridSkeleton />}>
-          <IntegrationsGrid />
+          <IntegrationsGrid isAdmin={isAdmin} />
         </Suspense>
 
         {/* Help Card */}
