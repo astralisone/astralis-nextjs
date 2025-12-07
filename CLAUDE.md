@@ -124,6 +124,19 @@ fly ssh console           # SSH into worker machine
 Upload → Queue → OCR → Embeddings → Vector Storage → RAG Chat
 ```
 
+**6. Operational Agents**:
+Three specialized agents process documents automatically:
+- **APClerkAgent**: Invoice/bill processing, duplicate detection, accounting sync
+- **ComplianceSentinelAgent**: Contract monitoring, date extraction, calendar alerts
+- **LogisticsCoordinatorAgent**: Goods received reconciliation, PO matching
+
+**7. Third-Party Integrations**:
+Nine OAuth-based integrations:
+- **Accounting**: QuickBooks, Xero
+- **CRM**: Salesforce, HubSpot
+- **Communication**: Gmail, Slack, Microsoft Teams
+- **Storage**: Google Drive, Dropbox
+
 ### Key Architectural Patterns
 
 **Path Aliasing**: Use `@/` prefix for imports:
@@ -213,6 +226,14 @@ tests/e2e/
 ├── auth/          # Authentication flows
 ├── booking/       # Booking system
 ├── pipeline/      # Kanban pipeline
+├── pipelines/     # Pipeline-specific tests
+│   ├── pipeline-fixtures.ts    # Test infrastructure
+│   ├── pipeline-helpers.ts     # Utility functions
+│   ├── sales-pipeline.spec.ts  # Sales flow tests
+│   ├── finance-pipeline.spec.ts # Invoice processing
+│   ├── compliance-pipeline.spec.ts # Contract monitoring
+│   ├── logistics-pipeline.spec.ts # PO matching
+│   └── document-processing.spec.ts # Agent integration
 └── fixtures/      # Test data & helpers
 ```
 

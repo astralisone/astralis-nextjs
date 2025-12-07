@@ -39,12 +39,26 @@ Visit `http://localhost:3001`
 
 All core features are complete and production-ready:
 
+### AI & Automation
 - ✅ **Multi-Agent AI Orchestration** - OrchestrationAgent with Claude + OpenAI for intelligent decision-making
+- ✅ **Operational Agents** - APClerkAgent (invoices), ComplianceSentinelAgent (contracts), LogisticsCoordinatorAgent (receiving)
 - ✅ **AI-Powered Intake Routing** - Automated triage and classification of incoming requests
 - ✅ **Document Processing & RAG Chat** - OCR, embeddings, and conversational document analysis
 - ✅ **AI Scheduling Agent** - Intelligent calendar management with conflict detection
-- ✅ **Pipeline Management** - Kanban-style workflow with drag-and-drop
+
+### Pipeline & Workflow
+- ✅ **Pipeline Management** - Kanban-style workflow with drag-and-drop (9 pipeline types)
+- ✅ **Pipeline Templates** - Pre-built templates for Sales, Finance, Compliance, Logistics, Support
 - ✅ **n8n Automation Integration** - External workflow orchestration and webhooks
+
+### Third-Party Integrations (9 Services)
+- ✅ **Accounting** - QuickBooks, Xero
+- ✅ **CRM** - Salesforce, HubSpot
+- ✅ **Communication** - Gmail, Slack, Microsoft Teams
+- ✅ **Storage** - Google Drive, Dropbox
+- ✅ **White-Label OAuth** - Tenant-level OAuth configuration for multi-tenancy
+
+### Core Platform
 - ✅ **Public Booking System** - Client-facing appointment scheduling with email confirmations
 - ✅ **Calendar Integration** - Google Calendar sync and ICS file generation
 - ✅ **Multi-tenant Authentication** - Role-based access control (ADMIN, OPERATOR, CLIENT, PM)
@@ -507,6 +521,10 @@ The OrchestrationAgent coordinates multiple specialized AI agents:
 - **Scheduling Agent**: Calendar management and conflict resolution
 - **Document Agent**: OCR, embeddings, and RAG chat
 - **Intake Agent**: Request triage and routing
+- **Operational Agents**:
+  - **APClerkAgent**: Invoice/bill processing, duplicate detection, accounting sync
+  - **ComplianceSentinelAgent**: Contract monitoring, date extraction, calendar alerts
+  - **LogisticsCoordinatorAgent**: Goods received reconciliation, PO matching
 
 ### 2. Background Job Processing
 BullMQ queues handle async operations:
@@ -533,6 +551,14 @@ Uses React Hook Form + Zod validation with localStorage persistence.
 - Role-based access control (RBAC)
 - Per-tenant customization
 - Audit logging for compliance
+
+### 6. Third-Party Integrations
+Nine comprehensive integrations with OAuth support:
+- **Accounting**: QuickBooks, Xero (invoices, payments, vendors)
+- **CRM**: Salesforce, HubSpot (contacts, deals, companies)
+- **Communication**: Gmail, Slack, Microsoft Teams (messages, channels, notifications)
+- **Storage**: Google Drive, Dropbox (files, folders, sync)
+- **White-Label OAuth**: Tenant-level OAuth configuration for multi-tenancy
 
 ## 🔒 Security Best Practices
 
