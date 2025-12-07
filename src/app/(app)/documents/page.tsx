@@ -6,6 +6,7 @@ import { useDocuments } from '@/hooks/useDocuments';
 import { DocumentCard } from '@/components/documents/DocumentCard';
 import { DocumentViewer } from '@/components/documents/DocumentViewer';
 import { DocumentChat } from '@/components/documents/DocumentChat';
+import { DocumentUploader } from '@/components/documents/DocumentUploader';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Document } from '@/types/documents';
@@ -29,7 +30,7 @@ export default function DocumentsPage() {
     <PageContainer>
       <PageHeader
         title="Documents"
-        description="Testing with DocumentChat import"
+        description="Testing with DocumentUploader import"
       />
       <div className="p-4">
         <p>Session: {session?.user?.email || 'No session'}</p>
