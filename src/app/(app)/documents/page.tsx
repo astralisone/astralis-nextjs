@@ -501,8 +501,8 @@ export default function DocumentsPage() {
       />
 
 
-      {/* Document Chat */}
-      {session?.user && (
+      {/* Document Chat - only render when user has orgId */}
+      {session?.user?.orgId && (
         <Sheet open={showChat} onOpenChange={setShowChat}>
           <SheetContent side="right" className="w-full sm:max-w-2xl overflow-hidden flex flex-col">
             <SheetHeader>
