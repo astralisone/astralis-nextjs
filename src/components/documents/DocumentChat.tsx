@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
-import { Send, FileText, Loader2, AlertCircle, ChevronDown } from 'lucide-react';
+import { Send, FileText, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -74,27 +74,37 @@ export function DocumentChat({
 
   // Load existing chat if chatId provided
   useEffect(() => {
+    let cancelled = false;
+
     if (initialChatId) {
       const loadChat = async () => {
         try {
           const chat = await fetchChat(initialChatId);
-          setMessages(
-            chat.messages.map((msg, index) => ({
-              ...msg,
-              id: `${initialChatId}-${index}`,
-            }))
-          );
+          if (!cancelled) {
+            setMessages(
+              chat.messages.map((msg, index) => ({
+                ...msg,
+                id: `${initialChatId}-${index}`,
+              }))
+            );
+          }
         } catch (err) {
-          setInitError(
-            err instanceof ChatAPIError
-              ? err.message
-              : 'Failed to load chat history'
-          );
+          if (!cancelled) {
+            setInitError(
+              err instanceof ChatAPIError
+                ? err.message
+                : 'Failed to load chat history'
+            );
+          }
         }
       };
 
       loadChat();
     }
+
+    return () => {
+      cancelled = true;
+    };
   }, [initialChatId, fetchChat]);
 
   // Auto-scroll to bottom when messages change
@@ -316,8 +326,8 @@ export function DocumentChat({
             <Card variant="default" className="px-4 py-3 bg-slate-50 border-slate-300">
               <div className="flex items-center gap-3">
                 <Loader2
-                  size={'25'}
-                  className="text-astralis-blue animate-spin "
+                  size={25}
+                  className="text-astralis-blue animate-spin"
                 />
                 <p className="text-sm text-slate-600 font-medium">Thinking...</p>
               </div>
