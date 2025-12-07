@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, Component, ReactNode } from 'react';
 import { useSession } from 'next-auth/react';
 import { useDocuments, useDocumentStats } from '@/hooks/useDocuments';
 import { formatDate } from '@/lib/utils/date';
@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   Sheet,
   SheetContent,
@@ -36,7 +37,260 @@ import {
   LayoutGrid,
   LayoutList,
   FileText,
+  AlertCircle,
+  RefreshCw,
+  Bug,
+  Copy,
+  CheckCircle,
 } from 'lucide-react';
+
+// Error logging utility
+function logError(context: string, error: unknown, extra?: Record<string, unknown>) {
+  const errorInfo = {
+    context,
+    timestamp: new Date().toISOString(),
+    message: error instanceof Error ? error.message : String(error),
+    stack: error instanceof Error ? error.stack : undefined,
+    name: error instanceof Error ? error.name : 'Unknown',
+    ...extra,
+  };
+
+  // Log to console with structured format
+  console.error(`[Documents Page Error] ${context}:`, errorInfo);
+
+  // In production, you could send this to an error tracking service
+  if (typeof window !== 'undefined') {
+    // Store in sessionStorage for debugging
+    try {
+      const existingErrors = JSON.parse(sessionStorage.getItem('documentPageErrors') || '[]');
+      existingErrors.push(errorInfo);
+      // Keep only last 10 errors
+      if (existingErrors.length > 10) existingErrors.shift();
+      sessionStorage.setItem('documentPageErrors', JSON.stringify(existingErrors));
+    } catch {
+      // Ignore storage errors
+    }
+  }
+
+  return errorInfo;
+}
+
+// Client-side Error Boundary
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+  errorInfo: { componentStack?: string } | null;
+}
+
+interface ErrorBoundaryProps {
+  children: ReactNode;
+  fallback?: ReactNode;
+}
+
+class DocumentsErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+
+  static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: { componentStack?: string }) {
+    this.setState({ errorInfo });
+    logError('ErrorBoundary', error, {
+      componentStack: errorInfo.componentStack,
+      type: 'render_error',
+    });
+  }
+
+  render() {
+    if (this.state.hasError) {
+      if (this.props.fallback) {
+        return this.props.fallback;
+      }
+
+      return (
+        <ErrorDisplay
+          error={this.state.error}
+          componentStack={this.state.errorInfo?.componentStack}
+          onRetry={() => this.setState({ hasError: false, error: null, errorInfo: null })}
+        />
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+// Error Display Component
+interface ErrorDisplayProps {
+  error: Error | null;
+  componentStack?: string;
+  onRetry?: () => void;
+  title?: string;
+  description?: string;
+}
+
+function ErrorDisplay({ error, componentStack, onRetry, title, description }: ErrorDisplayProps) {
+  const [copied, setCopied] = useState(false);
+  const isDev = process.env.NODE_ENV === 'development';
+
+  const errorDetails = useMemo(() => {
+    if (!error) return '';
+    return JSON.stringify(
+      {
+        message: error.message,
+        name: error.name,
+        stack: error.stack,
+        componentStack,
+      },
+      null,
+      2
+    );
+  }, [error, componentStack]);
+
+  const handleCopyError = async () => {
+    try {
+      await navigator.clipboard.writeText(errorDetails);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback for older browsers
+      const textarea = document.createElement('textarea');
+      textarea.value = errorDetails;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  return (
+    <PageContainer>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
+        <div className="w-full max-w-2xl">
+          {/* Error Icon */}
+          <div className="mb-6 flex justify-center">
+            <div className="inline-flex items-center justify-center rounded-full bg-error/10 p-6">
+              <Bug className="h-12 w-12 text-error" strokeWidth={2} />
+            </div>
+          </div>
+
+          {/* Error Title */}
+          <h1 className="mb-3 text-2xl font-semibold text-astralis-navy text-center">
+            {title || 'Something went wrong'}
+          </h1>
+
+          <p className="mb-6 text-slate-600 text-center">
+            {description || 'An error occurred while loading the documents page. This may be due to a code error or configuration issue.'}
+          </p>
+
+          {/* Error Details - Always show in development, summarized in production */}
+          {error && (
+            <Alert variant="error" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle className="flex items-center justify-between">
+                <span>Error Details</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCopyError}
+                  className="h-7 px-2"
+                >
+                  {copied ? (
+                    <>
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Copied
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3 w-3 mr-1" />
+                      Copy
+                    </>
+                  )}
+                </Button>
+              </AlertTitle>
+              <AlertDescription>
+                <div className="mt-2 space-y-3">
+                  <div>
+                    <p className="text-xs font-semibold text-error mb-1">Error Type:</p>
+                    <code className="text-sm font-mono bg-white/50 px-2 py-1 rounded">
+                      {error.name}
+                    </code>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-error mb-1">Message:</p>
+                    <p className="text-sm font-mono bg-white/50 p-2 rounded break-words">
+                      {error.message}
+                    </p>
+                  </div>
+
+                  {isDev && error.stack && (
+                    <details className="mt-3">
+                      <summary className="text-xs font-semibold text-error cursor-pointer hover:text-error/80">
+                        Stack Trace (click to expand)
+                      </summary>
+                      <pre className="mt-2 text-xs font-mono bg-white/50 p-3 rounded overflow-x-auto max-h-48 overflow-y-auto whitespace-pre-wrap">
+                        {error.stack}
+                      </pre>
+                    </details>
+                  )}
+
+                  {isDev && componentStack && (
+                    <details className="mt-3">
+                      <summary className="text-xs font-semibold text-error cursor-pointer hover:text-error/80">
+                        Component Stack (click to expand)
+                      </summary>
+                      <pre className="mt-2 text-xs font-mono bg-white/50 p-3 rounded overflow-x-auto max-h-48 overflow-y-auto whitespace-pre-wrap">
+                        {componentStack}
+                      </pre>
+                    </details>
+                  )}
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Actions */}
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            {onRetry && (
+              <Button onClick={onRetry} variant="primary">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Try Again
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              onClick={() => window.location.reload()}
+            >
+              Reload Page
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => (window.location.href = '/dashboard')}
+            >
+              Go to Dashboard
+            </Button>
+          </div>
+
+          {/* Debug Info in Development */}
+          {isDev && (
+            <div className="mt-8 p-4 bg-slate-100 rounded-lg">
+              <p className="text-xs font-semibold text-slate-500 mb-2">Development Debug Info</p>
+              <p className="text-xs text-slate-600">
+                Check the browser console for detailed error logs. Errors are also stored in sessionStorage under &apos;documentPageErrors&apos;.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </PageContainer>
+  );
+}
 
 // Types
 import { Document, DocumentStatus } from '@/types/documents';
@@ -71,12 +325,21 @@ function getFileTypeLabel(mimeType: string): string {
 }
 
 /**
- * Documents Page
- * Displays uploaded documents with filtering, search, and management
+ * Documents Page Content
+ * The actual page content, wrapped by error boundary
  */
-export default function DocumentsPage() {
+function DocumentsPageContent() {
   // Session
   const { data: session } = useSession();
+
+  // Log page mount for debugging
+  useEffect(() => {
+    console.log('[Documents Page] Mounted', {
+      timestamp: new Date().toISOString(),
+      sessionStatus: session ? 'authenticated' : 'unauthenticated',
+      orgId: session?.user?.orgId,
+    });
+  }, [session]);
 
   // UI State
   const [viewMode, setViewMode] = useState<ViewMode>('table');
@@ -315,12 +578,12 @@ export default function DocumentsPage() {
 
       {/* Error State */}
       {error && (
-        <Card className="p-6">
-          <p className="text-error text-center font-semibold mb-2">Failed to load documents</p>
-          <p className="text-sm text-slate-600 text-center">
-            {error instanceof Error ? error.message : String(error)}
-          </p>
-        </Card>
+        <ErrorDisplay
+          error={error instanceof Error ? error : new Error(String(error))}
+          title="Failed to load documents"
+          description="There was a problem fetching your documents. This could be a network issue or a server error."
+          onRetry={() => window.location.reload()}
+        />
       )}
 
       {/* Empty State */}
@@ -518,5 +781,18 @@ export default function DocumentsPage() {
 
 
     </PageContainer>
+  );
+}
+
+/**
+ * Documents Page
+ * Wrapped with error boundary to catch and display runtime errors
+ * instead of showing a 404 or blank page
+ */
+export default function DocumentsPage() {
+  return (
+    <DocumentsErrorBoundary>
+      <DocumentsPageContent />
+    </DocumentsErrorBoundary>
   );
 }
