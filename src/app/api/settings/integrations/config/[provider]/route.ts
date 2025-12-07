@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
-import { authOptions } from '@/lib/auth';
+import { authOptions } from '@/lib/auth/config';
 import { decrypt } from '@/lib/utils/crypto';
 import { IntegrationProvider } from '@prisma/client';
 
