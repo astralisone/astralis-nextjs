@@ -969,6 +969,12 @@ export type AgentEventType =
   | 'automation:triggered'
   | 'automation:completed'
   | 'automation:failed'
+  // Document events
+  | 'document:uploaded'
+  | 'document:processed'
+  | 'document:classification_complete'
+  | 'document:ocr_complete'
+  | 'document:failed'
   // Agent events
   | 'agent:decision_made'
   | 'agent:action_executed'
@@ -1147,6 +1153,18 @@ export interface DecisionEventPayload extends BaseEventPayload {
 }
 
 /**
+ * Payload for document processed events
+ */
+export interface DocumentProcessedEventPayload extends BaseEventPayload {
+  documentId: string;
+  documentType: string; // 'INVOICE' | 'BILL' | 'CONTRACT' | etc.
+  extractedData: Record<string, unknown>;
+  classificationConfidence?: number;
+  ocrText?: string;
+  ocrConfidence?: number;
+}
+
+/**
  * Map of event types to their payload types
  */
 export type EventPayloadMap = {
@@ -1168,6 +1186,11 @@ export type EventPayloadMap = {
   'automation:triggered': AutomationEventPayload;
   'automation:completed': AutomationEventPayload;
   'automation:failed': AutomationEventPayload;
+  'document:uploaded': BaseEventPayload;
+  'document:processed': DocumentProcessedEventPayload;
+  'document:classification_complete': DocumentProcessedEventPayload;
+  'document:ocr_complete': DocumentProcessedEventPayload;
+  'document:failed': BaseEventPayload;
   'agent:decision_made': DecisionEventPayload;
   'agent:action_executed': DecisionEventPayload;
   'agent:error': BaseEventPayload;
@@ -1642,6 +1665,87 @@ export const AgentDecisionResultSchema = z.object({
     reason: z.string(),
   })).optional(),
 });
+
+// =============================================================================
+// OPERATIONAL AGENT TYPES
+// =============================================================================
+
+/**
+ * Types of operational agents that handle specialized document processing
+ */
+export enum OperationalAgentType {
+  /** Accounts Payable Clerk - processes invoices and payment documents */
+  AP_CLERK = 'AP_CLERK',
+  /** Compliance Sentinel - validates regulatory and compliance documents */
+  COMPLIANCE_SENTINEL = 'COMPLIANCE_SENTINEL',
+  /** Logistics Coordinator - manages shipping and logistics documents */
+  LOGISTICS_COORDINATOR = 'LOGISTICS_COORDINATOR',
+}
+
+/**
+ * Event payload when a document is processed and ready for agent handling
+ */
+export interface DocumentProcessedEvent {
+  /** ID of the processed document */
+  documentId: string;
+  /** Type of document (invoice, contract, shipping_manifest, etc.) */
+  documentType: string;
+  /** Extracted text content from OCR */
+  extractedText: string;
+  /** Structured data extracted from the document */
+  extractedData?: Record<string, unknown>;
+  /** Organization ID */
+  orgId: string;
+  /** User who uploaded the document */
+  uploadedBy?: string;
+  /** Timestamp when processing completed */
+  processedAt: Date;
+  /** Metadata about the document */
+  metadata?: {
+    /** File name */
+    fileName?: string;
+    /** MIME type */
+    mimeType?: string;
+    /** File size in bytes */
+    fileSize?: number;
+    /** Number of pages */
+    pageCount?: number;
+    /** Confidence score from OCR */
+    ocrConfidence?: number;
+  };
+}
+
+/**
+ * Field to extract from a document
+ */
+export interface ExtractionField {
+  /** Field name/key */
+  name: string;
+  /** Field type for validation */
+  type: 'string' | 'number' | 'date' | 'boolean' | 'email' | 'phone' | 'currency';
+  /** Whether this field is required */
+  required: boolean;
+  /** Description of what this field contains */
+  description?: string;
+  /** Example values */
+  examples?: string[];
+  /** Validation pattern (regex) */
+  pattern?: string;
+}
+
+/**
+ * Schema defining what fields to extract from a document type
+ */
+export interface ExtractionSchema {
+  /** Document type this schema applies to */
+  documentType: string;
+  /** Fields to extract */
+  fields: ExtractionField[];
+  /** Description of this document type */
+  description?: string;
+  /** Example document content */
+  exampleDocument?: string;
+}
 
 // =============================================================================
 // UTILITY TYPES

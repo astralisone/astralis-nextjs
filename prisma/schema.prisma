@@ -19,6 +19,9 @@ enum PipelineType {
   INTERNAL
   GENERIC
   CUSTOM
+  FINANCE
+  COMPLIANCE
+  LOGISTICS
 }
 
 enum TaskSource {
@@ -1402,6 +1405,11 @@ model Document {
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
   originalName    String
+  // Operational agent fields
+  documentType    DocumentType?       // AI-classified document type
+  classificationConfidence Float?     // Confidence of AI classification
+  agentProcessed  Boolean             @default(false) // Has an operational agent processed this?
+  agentProcessedAt DateTime?
   organization    organization        @relation(fields: [orgId], references: [id])
   chats           DocumentChat[]
   embeddings      DocumentEmbedding[]
@@ -1411,6 +1419,7 @@ model Document {
   @@index([status])
   @@index([createdAt])
   @@index([mimeType])
+  @@index([documentType])
 }
 
 model DocumentEmbedding {
@@ -2028,6 +2037,12 @@ enum DecisionType {
   TRIGGER_AUTOMATION
   ESCALATE
   NO_ACTION
+  // Operational Agent Decision Types
+  DB_LOOKUP
+  API_POST
+  DATE_CALCULATION
+  ARRAY_COMPARISON
+  CREATE_TASK
 }
 
 enum DecisionStatus {
@@ -2131,6 +2146,30 @@ enum ChatMessageType {
   INFO
 }
 
+// ============================================================================
+// OPERATIONAL AGENT DOCUMENT TYPES
+// ============================================================================
+
+enum DocumentType {
+  INVOICE
+  BILL
+  CONTRACT
+  POLICY
+  CERTIFICATE
+  PACKING_SLIP
+  BOL
+  RECEIVING_REPORT
+  PURCHASE_ORDER
+  QUOTE
+  UNKNOWN
+}
+
+enum OperationalAgentType {
+  AP_CLERK
+  COMPLIANCE_SENTINEL
+  LOGISTICS_COORDINATOR
+}
+
 model ChatMessage {
   id        String          @id @default(cuid())
   userId    String
@@ -2146,4 +2185,24 @@ model ChatMessage {
   @@index([taskId])
   @@index([read])
   @@map("chat_messages")
+}
+
+// ============================================================================
+// EXTRACTION SCHEMA MODEL (For operational agents)
+// ============================================================================
+
+model ExtractionSchema {
+  id           String       @id @default(cuid())
+  documentType DocumentType
+  name         String
+  description  String?
+  fields       Json // Array of { name, type, required, pattern }
+  isActive     Boolean      @default(true)
+  version      Int          @default(1)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@unique([documentType])
+  @@index([isActive])
+  @@map("extraction_schemas")
 }

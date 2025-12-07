@@ -45,6 +45,14 @@ import { DecisionEngine, type DecisionEngineConfig } from './DecisionEngine';
 import { ActionExecutor, type ActionExecutorConfig } from './ActionExecutor';
 import { PromptBuilder, type OrgContext as PromptOrgContext } from '../prompts';
 import { prisma } from '@/lib/prisma';
+import type { BaseOperationalAgent } from '../operational/BaseOperationalAgent';
+import type { DocumentProcessedEvent as OperationalDocumentEvent } from '../operational/BaseOperationalAgent';
+import {
+  apClerkAgent,
+  complianceSentinelAgent,
+  logisticsCoordinatorAgent,
+  getAgentForDocumentType,
+} from '../operational';
 
 // =============================================================================
 // Constants
@@ -70,6 +78,7 @@ const DEFAULT_SUBSCRIBED_EVENTS: AgentEventType[] = [
   'calendar:event_updated',
   'calendar:event_cancelled',
   'schedule:triggered',
+  'document:processed', // Added for operational agents
 ];
 
 // =============================================================================
@@ -301,6 +310,9 @@ export class OrchestrationAgent {
   private orgContextCacheTime: Date | null = null;
   private readonly ORG_CONTEXT_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
+  // Operational agents
+  private operationalAgents: BaseOperationalAgent[] = [];
+
   constructor(config: OrchestrationAgentConfig) {
     this.config = this.validateAndMergeConfig(config);
     this.logger = config.logger ?? defaultLogger;
@@ -337,9 +349,112 @@ export class OrchestrationAgent {
       ...config.actionExecutorConfig,
     });
 
+    // Initialize operational agents
+    this.initializeOperationalAgents();
+
     this.logger.info('OrchestrationAgent initialized successfully', {
       agentId: this.agentId,
+      operationalAgents: this.operationalAgents.map(a => a.getName()),
     });
+  }
+
+  // ===========================================================================
+  // Operational Agents Integration
+  // ===========================================================================
+
+  /**
+   * Initialize operational agents for document processing.
+   * Sets up handlers for document:processed events and routes them to appropriate agents.
+   */
+  private initializeOperationalAgents(): void {
+    this.logger.info('Initializing operational agents');
+
+    // Register operational agents
+    this.operationalAgents = [
+      apClerkAgent,
+      complianceSentinelAgent,
+      logisticsCoordinatorAgent,
+    ];
+
+    this.logger.info('Operational agents registered', {
+      agents: this.operationalAgents.map(a => ({
+        name: a.getName(),
+        supportedTypes: a.getSupportedTypes(),
+      })),
+    });
+  }
+
+  /**
+   * Handle document:processed events by routing to appropriate operational agent.
+   */
+  private async handleDocumentProcessed(event: AgentEvent<unknown>): Promise<void> {
+    const docEvent = event.payload as OperationalDocumentEvent;
+
+    this.logger.debug('Handling document:processed event', {
+      documentId: docEvent.documentId,
+      documentType: docEvent.documentType,
+      orgId: docEvent.orgId,
+    });
+
+    // Only process documents for this organization
+    if (docEvent.orgId !== this.config.orgId) {
+      this.logger.debug('Skipping document from different organization', {
+        eventOrgId: docEvent.orgId,
+        agentOrgId: this.config.orgId,
+      });
+      return;
+    }
+
+    // Find appropriate operational agent
+    const agent = getAgentForDocumentType(docEvent.documentType);
+
+    if (!agent) {
+      this.logger.warn('No operational agent found for document type', {
+        documentType: docEvent.documentType,
+        documentId: docEvent.documentId,
+      });
+      return;
+    }
+
+    try {
+      this.logger.info('Routing document to operational agent', {
+        documentId: docEvent.documentId,
+        documentType: docEvent.documentType,
+        agent: agent.getName(),
+      });
+
+      // Process document with the operational agent
+      const result = await agent.process(docEvent);
+
+      if (result.success) {
+        this.logger.info('Document processed successfully by operational agent', {
+          documentId: docEvent.documentId,
+          agent: agent.getName(),
+          actionsTaken: result.actionsTaken,
+          pipelineItemId: result.pipelineItemId,
+        });
+      } else {
+        this.logger.error('Document processing failed', new Error(result.error || 'Unknown error'), {
+          documentId: docEvent.documentId,
+          agent: agent.getName(),
+          error: result.error,
+        });
+      }
+
+      if (result.warnings && result.warnings.length > 0) {
+        this.logger.warn('Document processing warnings', {
+          documentId: docEvent.documentId,
+          agent: agent.getName(),
+          warnings: result.warnings,
+        });
+      }
+    } catch (error) {
+      this.logger.error('Error in operational agent processing', error as Error, {
+        documentId: docEvent.documentId,
+        documentType: docEvent.documentType,
+        agent: agent.getName(),
+      });
+    }
   }
 
   // ===========================================================================
@@ -555,7 +670,20 @@ export class OrchestrationAgent {
       return;
     }
 
-    // Convert event to AgentInput
+    // Route document:processed events to operational agents
+    if (event.type === 'document:processed') {
+      try {
+        await this.handleDocumentProcessed(event);
+      } catch (error) {
+        this.logger.error('Error handling document:processed event', error as Error, {
+          eventType: event.type,
+          eventId: event.eventId,
+        });
+      }
+      return;
+    }
+
+    // Convert event to AgentInput for other event types
     const input = this.eventToInput(event);
 
     try {

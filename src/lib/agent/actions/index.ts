@@ -135,3 +135,87 @@ export {
   type NotificationTemplate,
   type NotificationDispatcherConfig,
 } from './NotificationDispatcher';
+
+// =============================================================================
+// OPERATIONAL AGENT HANDLERS
+// =============================================================================
+
+// Database Lookup Handler
+export {
+  DbLookupHandler,
+  createDbLookupHandler,
+  dbLookupHandler,
+  // Types
+  type LookupTable,
+  type DbLookupInput,
+  type DbLookupResult,
+  type DuplicateCheckResult,
+  type DbLookupHandlerConfig,
+  // Errors
+  DbLookupError,
+  TableNotFoundError,
+  QueryTimeoutError,
+  // Constants
+  DEFAULT_LOOKUP_CONFIG,
+} from './DbLookupHandler';
+
+// Date Calculation Handler
+export {
+  DateCalculationHandler,
+  createDateCalculationHandler,
+  dateCalculationHandler,
+  // Types
+  type DateOperation,
+  type TimeUnit,
+  type DateCalculationInput,
+  type DateCalculationResult,
+  type AlertThreshold,
+  type ExpirationCheckResult,
+  type DateCalculationHandlerConfig,
+  // Errors
+  DateCalculationError,
+  InvalidDateError,
+  // Constants
+  DEFAULT_DATE_CONFIG,
+} from './DateCalculationHandler';
+
+// Array Comparison Handler
+export {
+  ArrayComparisonHandler,
+  createArrayComparisonHandler,
+  arrayComparisonHandler,
+  // Types
+  type ComparisonItem,
+  type ArrayComparisonInput,
+  type MatchedItem,
+  type ArrayComparisonResult,
+  type DiscrepancyReport,
+  type ArrayComparisonHandlerConfig,
+  // Errors
+  ArrayComparisonError,
+  InvalidInputError,
+  // Constants
+  DEFAULT_COMPARISON_CONFIG,
+} from './ArrayComparisonHandler';
+
+// API Post Handler
+export {
+  ApiPostHandler,
+  createApiPostHandler,
+  apiPostHandler,
+  // Types
+  type AuthType,
+  type AuthConfig,
+  type ApiPostInput,
+  type ApiPostResult,
+  type IntegrationType,
+  type IntegrationConfig,
+  type ApiPostHandlerConfig,
+  // Errors
+  ApiPostError,
+  AuthenticationError,
+  RateLimitError,
+  TimeoutError,
+  // Constants
+  DEFAULT_API_CONFIG,
+} from './ApiPostHandler';

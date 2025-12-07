@@ -112,6 +112,53 @@ export const DEFAULT_PIPELINES: DefaultPipelineDefinition[] = [
       { key: 'completed', name: 'Completed', description: 'Final stage', order: 3, color: '#10B981', isTerminal: true },
     ],
   },
+  // Operational Agent Pipelines
+  {
+    key: 'finance',
+    name: 'Accounts Payable Pipeline',
+    type: 'FINANCE',
+    description: 'Invoice and bill processing with AP Clerk agent automation',
+    isDefault: false,
+    stages: [
+      { key: 'received', name: 'Received', description: 'Document received and classified', order: 0, color: '#3B82F6', isTerminal: false },
+      { key: 'processing', name: 'Processing', description: 'Extracting data and validating', order: 1, color: '#8B5CF6', isTerminal: false },
+      { key: 'review', name: 'Review', description: 'Awaiting human review/approval', order: 2, color: '#F59E0B', isTerminal: false },
+      { key: 'approved', name: 'Approved', description: 'Approved for payment', order: 3, color: '#10B981', isTerminal: false },
+      { key: 'paid', name: 'Paid', description: 'Payment processed', order: 4, color: '#059669', isTerminal: true },
+      { key: 'exception', name: 'Exception', description: 'Requires manual intervention', order: 5, color: '#EF4444', isTerminal: false },
+    ],
+  },
+  {
+    key: 'compliance',
+    name: 'Compliance Review Pipeline',
+    type: 'COMPLIANCE',
+    description: 'Contract and policy monitoring with Compliance Sentinel agent automation',
+    isDefault: false,
+    stages: [
+      { key: 'new', name: 'New', description: 'Newly received document', order: 0, color: '#3B82F6', isTerminal: false },
+      { key: 'under_review', name: 'Under Review', description: 'Being reviewed for compliance', order: 1, color: '#8B5CF6', isTerminal: false },
+      { key: 'action_required', name: 'Action Required', description: 'Requires action before expiration', order: 2, color: '#F59E0B', isTerminal: false },
+      { key: 'expiring_soon', name: 'Expiring Soon', description: 'Document expiring within 30 days', order: 3, color: '#EF4444', isTerminal: false },
+      { key: 'compliant', name: 'Compliant', description: 'Document is current and compliant', order: 4, color: '#10B981', isTerminal: false },
+      { key: 'expired', name: 'Expired', description: 'Document has expired', order: 5, color: '#6B7280', isTerminal: true },
+      { key: 'renewed', name: 'Renewed', description: 'Successfully renewed', order: 6, color: '#059669', isTerminal: true },
+    ],
+  },
+  {
+    key: 'logistics',
+    name: 'Receiving Pipeline',
+    type: 'LOGISTICS',
+    description: 'Goods received reconciliation with Logistics Coordinator agent automation',
+    isDefault: false,
+    stages: [
+      { key: 'expected', name: 'Expected', description: 'Shipment expected from PO', order: 0, color: '#3B82F6', isTerminal: false },
+      { key: 'received', name: 'Received', description: 'Shipment arrived, pending inspection', order: 1, color: '#8B5CF6', isTerminal: false },
+      { key: 'inspecting', name: 'Inspecting', description: 'Verifying against PO', order: 2, color: '#F59E0B', isTerminal: false },
+      { key: 'discrepancy', name: 'Discrepancy', description: 'Quantity or item mismatch', order: 3, color: '#EF4444', isTerminal: false },
+      { key: 'stocked', name: 'Stocked', description: 'Items added to inventory', order: 4, color: '#10B981', isTerminal: true },
+      { key: 'returned', name: 'Returned', description: 'Items returned to vendor', order: 5, color: '#6B7280', isTerminal: true },
+    ],
+  },
 ];
 
 /**

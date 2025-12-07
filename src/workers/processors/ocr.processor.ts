@@ -5,6 +5,8 @@ import { getOCRService } from '@/lib/services/ocr.service';
 import { getVisionService, DocumentType } from '@/lib/services/vision.service';
 import type { DocumentProcessingJobData } from '../queues/document-processing.queue';
 import { queueDocumentEmbedding } from '../queues/document-embedding.queue';
+import { getEventBus } from '@/lib/agent/inputs/EventBus';
+import type { DocumentProcessedEventPayload } from '@/lib/agent/types/agent.types';
 
 /**
  * Document OCR Processor
@@ -130,7 +132,7 @@ export async function processDocumentOCR(job: Job<DocumentProcessingJobData>) {
           .trim()
       : null;
 
-    await prisma.document.update({
+    const updatedDocument = await prisma.document.update({
       where: { id: documentId },
       data: {
         status: 'COMPLETED',
@@ -142,6 +144,40 @@ export async function processDocumentOCR(job: Job<DocumentProcessingJobData>) {
     });
 
     console.log(`[Worker] Document ${documentId} processing completed`);
+
+    // Emit document:processed event for operational agents
+    try {
+      const eventBus = getEventBus();
+      const eventPayload: DocumentProcessedEventPayload = {
+        id: documentId,
+        timestamp: new Date(),
+        source: 'WORKER' as const,
+        orgId: orgId,
+        documentId: documentId,
+        documentType: updatedDocument.documentType ?? 'UNKNOWN',
+        extractedData: extractedData ?? {},
+        classificationConfidence: updatedDocument.classificationConfidence ?? undefined,
+        ocrText: sanitizedOcrText ?? undefined,
+        ocrConfidence: ocrConfidence ?? undefined,
+      };
+
+      await eventBus.emit('document:processed', eventPayload, {
+        source: 'WORKER',
+        correlationId: documentId,
+        orgId: orgId,
+        metadata: {
+          jobId: job.id,
+          documentType: documentType,
+          performOCR,
+          performVisionExtraction,
+        },
+      });
+
+      console.log(`[Worker] Emitted document:processed event for document ${documentId}`);
+    } catch (eventError) {
+      console.error(`[Worker] Failed to emit document:processed event for ${documentId}:`, eventError);
+      // Don't fail the entire job if event emission fails
+    }
 
     // Queue embedding job if OCR text exists
     let embeddingQueued = false;

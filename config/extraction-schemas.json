@@ -1,0 +1,1135 @@
+{
+  "INVOICE": {
+    "name": "Invoice",
+    "description": "Commercial invoice for goods or services provided",
+    "fields": [
+      {
+        "name": "vendor_name",
+        "type": "string",
+        "required": true,
+        "aliases": ["supplier", "from", "billed_from", "seller", "provider"],
+        "description": "Name of the vendor/supplier issuing the invoice"
+      },
+      {
+        "name": "vendor_address",
+        "type": "string",
+        "required": false,
+        "aliases": ["supplier_address", "from_address", "seller_address"],
+        "description": "Full address of the vendor"
+      },
+      {
+        "name": "vendor_tax_id",
+        "type": "string",
+        "required": false,
+        "aliases": ["tax_id", "ein", "vat_number", "gst_number"],
+        "description": "Vendor's tax identification number"
+      },
+      {
+        "name": "invoice_number",
+        "type": "string",
+        "required": true,
+        "aliases": ["inv_no", "invoice_#", "document_number", "invoice_id"],
+        "description": "Unique invoice number"
+      },
+      {
+        "name": "invoice_date",
+        "type": "date",
+        "required": true,
+        "aliases": ["date", "issued_date", "billing_date"],
+        "description": "Date the invoice was issued"
+      },
+      {
+        "name": "due_date",
+        "type": "date",
+        "required": false,
+        "aliases": ["payment_due", "due_by", "payment_due_date"],
+        "description": "Payment due date"
+      },
+      {
+        "name": "amount",
+        "type": "currency",
+        "required": true,
+        "aliases": ["total", "grand_total", "amount_due", "total_amount"],
+        "description": "Total invoice amount including tax"
+      },
+      {
+        "name": "subtotal",
+        "type": "currency",
+        "required": false,
+        "aliases": ["sub_total", "amount_before_tax"],
+        "description": "Amount before tax"
+      },
+      {
+        "name": "tax_amount",
+        "type": "currency",
+        "required": false,
+        "aliases": ["tax", "vat", "gst", "sales_tax"],
+        "description": "Total tax amount"
+      },
+      {
+        "name": "currency",
+        "type": "string",
+        "required": false,
+        "aliases": ["currency_code"],
+        "description": "Currency code (USD, EUR, etc.)"
+      },
+      {
+        "name": "customer_name",
+        "type": "string",
+        "required": false,
+        "aliases": ["bill_to", "client", "buyer"],
+        "description": "Name of the customer being billed"
+      },
+      {
+        "name": "customer_address",
+        "type": "string",
+        "required": false,
+        "aliases": ["bill_to_address", "billing_address"],
+        "description": "Customer's billing address"
+      },
+      {
+        "name": "line_items",
+        "type": "array",
+        "required": false,
+        "description": "Individual line items on the invoice",
+        "itemSchema": {
+          "description": "string",
+          "quantity": "number",
+          "unit_price": "currency",
+          "total": "currency",
+          "item_code": "string"
+        }
+      },
+      {
+        "name": "payment_terms",
+        "type": "string",
+        "required": false,
+        "aliases": ["terms", "payment_conditions"],
+        "description": "Payment terms (Net 30, Net 60, etc.)"
+      },
+      {
+        "name": "po_number",
+        "type": "string",
+        "required": false,
+        "aliases": ["purchase_order", "po", "reference_number"],
+        "description": "Associated purchase order number"
+      }
+    ]
+  },
+  "BILL": {
+    "name": "Bill",
+    "description": "Bill or statement for services or utilities",
+    "fields": [
+      {
+        "name": "provider_name",
+        "type": "string",
+        "required": true,
+        "aliases": ["biller", "company", "service_provider"],
+        "description": "Name of the service provider"
+      },
+      {
+        "name": "account_number",
+        "type": "string",
+        "required": false,
+        "aliases": ["account_id", "customer_number"],
+        "description": "Customer account number"
+      },
+      {
+        "name": "bill_number",
+        "type": "string",
+        "required": true,
+        "aliases": ["statement_number", "bill_id"],
+        "description": "Unique bill identifier"
+      },
+      {
+        "name": "bill_date",
+        "type": "date",
+        "required": true,
+        "aliases": ["statement_date", "date"],
+        "description": "Date the bill was issued"
+      },
+      {
+        "name": "due_date",
+        "type": "date",
+        "required": true,
+        "aliases": ["payment_due", "pay_by_date"],
+        "description": "Payment due date"
+      },
+      {
+        "name": "amount_due",
+        "type": "currency",
+        "required": true,
+        "aliases": ["total_due", "balance_due", "current_amount"],
+        "description": "Total amount due"
+      },
+      {
+        "name": "previous_balance",
+        "type": "currency",
+        "required": false,
+        "aliases": ["last_balance", "prior_balance"],
+        "description": "Balance from previous billing period"
+      },
+      {
+        "name": "current_charges",
+        "type": "currency",
+        "required": false,
+        "aliases": ["new_charges", "this_period"],
+        "description": "Charges for current billing period"
+      },
+      {
+        "name": "payments_received",
+        "type": "currency",
+        "required": false,
+        "aliases": ["payments", "credits"],
+        "description": "Payments received since last bill"
+      },
+      {
+        "name": "service_period_start",
+        "type": "date",
+        "required": false,
+        "aliases": ["billing_period_start", "from_date"],
+        "description": "Start date of service period"
+      },
+      {
+        "name": "service_period_end",
+        "type": "date",
+        "required": false,
+        "aliases": ["billing_period_end", "to_date"],
+        "description": "End date of service period"
+      },
+      {
+        "name": "late_fee",
+        "type": "currency",
+        "required": false,
+        "aliases": ["penalty", "late_charge"],
+        "description": "Late payment fee if applicable"
+      },
+      {
+        "name": "service_address",
+        "type": "string",
+        "required": false,
+        "aliases": ["property_address", "location"],
+        "description": "Address where service is provided"
+      }
+    ]
+  },
+  "CONTRACT": {
+    "name": "Contract",
+    "description": "Legal agreement between parties",
+    "fields": [
+      {
+        "name": "contract_title",
+        "type": "string",
+        "required": false,
+        "aliases": ["title", "agreement_name"],
+        "description": "Title of the contract"
+      },
+      {
+        "name": "contract_number",
+        "type": "string",
+        "required": false,
+        "aliases": ["contract_id", "agreement_number"],
+        "description": "Unique contract identifier"
+      },
+      {
+        "name": "parties",
+        "type": "array",
+        "required": true,
+        "description": "Parties involved in the contract",
+        "itemSchema": {
+          "name": "string",
+          "role": "string",
+          "address": "string"
+        }
+      },
+      {
+        "name": "effective_date",
+        "type": "date",
+        "required": true,
+        "aliases": ["start_date", "commencement_date", "execution_date"],
+        "description": "Date the contract becomes effective"
+      },
+      {
+        "name": "expiration_date",
+        "type": "date",
+        "required": false,
+        "aliases": ["end_date", "termination_date", "expiry_date"],
+        "description": "Date the contract expires"
+      },
+      {
+        "name": "contract_value",
+        "type": "currency",
+        "required": false,
+        "aliases": ["total_value", "contract_amount", "total_contract_price"],
+        "description": "Total monetary value of the contract"
+      },
+      {
+        "name": "payment_terms",
+        "type": "string",
+        "required": false,
+        "aliases": ["payment_schedule", "billing_terms"],
+        "description": "Payment terms and schedule"
+      },
+      {
+        "name": "renewal_terms",
+        "type": "string",
+        "required": false,
+        "aliases": ["renewal_conditions", "extension_terms"],
+        "description": "Terms for contract renewal"
+      },
+      {
+        "name": "auto_renewal",
+        "type": "boolean",
+        "required": false,
+        "aliases": ["automatic_renewal", "auto_renew"],
+        "description": "Whether contract auto-renews"
+      },
+      {
+        "name": "notice_period",
+        "type": "string",
+        "required": false,
+        "aliases": ["termination_notice", "cancellation_notice"],
+        "description": "Required notice period for termination"
+      },
+      {
+        "name": "scope_of_work",
+        "type": "string",
+        "required": false,
+        "aliases": ["deliverables", "services", "work_description"],
+        "description": "Description of work or services"
+      },
+      {
+        "name": "governing_law",
+        "type": "string",
+        "required": false,
+        "aliases": ["jurisdiction", "legal_jurisdiction"],
+        "description": "Governing law or jurisdiction"
+      },
+      {
+        "name": "termination_clauses",
+        "type": "array",
+        "required": false,
+        "description": "Conditions under which contract can be terminated"
+      }
+    ]
+  },
+  "POLICY": {
+    "name": "Insurance Policy",
+    "description": "Insurance policy document",
+    "fields": [
+      {
+        "name": "policy_number",
+        "type": "string",
+        "required": true,
+        "aliases": ["policy_id", "certificate_number"],
+        "description": "Unique policy identifier"
+      },
+      {
+        "name": "policyholder_name",
+        "type": "string",
+        "required": true,
+        "aliases": ["insured", "named_insured", "policy_holder"],
+        "description": "Name of the policyholder"
+      },
+      {
+        "name": "insurance_company",
+        "type": "string",
+        "required": true,
+        "aliases": ["insurer", "carrier", "insurance_provider"],
+        "description": "Name of the insurance company"
+      },
+      {
+        "name": "policy_type",
+        "type": "string",
+        "required": false,
+        "aliases": ["coverage_type", "insurance_type"],
+        "description": "Type of insurance (auto, health, liability, etc.)"
+      },
+      {
+        "name": "effective_date",
+        "type": "date",
+        "required": true,
+        "aliases": ["start_date", "policy_start"],
+        "description": "Date coverage begins"
+      },
+      {
+        "name": "expiration_date",
+        "type": "date",
+        "required": true,
+        "aliases": ["end_date", "policy_end", "renewal_date"],
+        "description": "Date coverage expires"
+      },
+      {
+        "name": "premium_amount",
+        "type": "currency",
+        "required": false,
+        "aliases": ["premium", "policy_premium", "cost"],
+        "description": "Policy premium amount"
+      },
+      {
+        "name": "premium_frequency",
+        "type": "string",
+        "required": false,
+        "aliases": ["payment_frequency", "billing_frequency"],
+        "description": "How often premium is paid (monthly, annually, etc.)"
+      },
+      {
+        "name": "coverage_limits",
+        "type": "array",
+        "required": false,
+        "description": "Coverage limits and amounts",
+        "itemSchema": {
+          "coverage_type": "string",
+          "limit": "currency",
+          "deductible": "currency"
+        }
+      },
+      {
+        "name": "deductible",
+        "type": "currency",
+        "required": false,
+        "aliases": ["policy_deductible"],
+        "description": "Policy deductible amount"
+      },
+      {
+        "name": "agent_name",
+        "type": "string",
+        "required": false,
+        "aliases": ["broker", "insurance_agent"],
+        "description": "Name of insurance agent or broker"
+      },
+      {
+        "name": "agent_contact",
+        "type": "string",
+        "required": false,
+        "aliases": ["agent_phone", "broker_contact"],
+        "description": "Contact information for agent"
+      },
+      {
+        "name": "beneficiaries",
+        "type": "array",
+        "required": false,
+        "description": "Named beneficiaries on the policy"
+      }
+    ]
+  },
+  "CERTIFICATE": {
+    "name": "Certificate",
+    "description": "Certificate of completion, compliance, or qualification",
+    "fields": [
+      {
+        "name": "certificate_number",
+        "type": "string",
+        "required": true,
+        "aliases": ["cert_number", "certificate_id", "credential_number"],
+        "description": "Unique certificate identifier"
+      },
+      {
+        "name": "certificate_name",
+        "type": "string",
+        "required": true,
+        "aliases": ["title", "credential_name", "certification_name"],
+        "description": "Name or title of the certificate"
+      },
+      {
+        "name": "recipient_name",
+        "type": "string",
+        "required": true,
+        "aliases": ["holder", "awarded_to", "certified_individual"],
+        "description": "Name of certificate recipient"
+      },
+      {
+        "name": "issuing_authority",
+        "type": "string",
+        "required": true,
+        "aliases": ["issuer", "certifying_body", "authority"],
+        "description": "Organization that issued the certificate"
+      },
+      {
+        "name": "issue_date",
+        "type": "date",
+        "required": true,
+        "aliases": ["date_issued", "awarded_date", "certification_date"],
+        "description": "Date certificate was issued"
+      },
+      {
+        "name": "expiration_date",
+        "type": "date",
+        "required": false,
+        "aliases": ["valid_until", "renewal_date", "expiry_date"],
+        "description": "Date certificate expires (if applicable)"
+      },
+      {
+        "name": "scope",
+        "type": "string",
+        "required": false,
+        "aliases": ["coverage", "certification_scope", "areas_covered"],
+        "description": "Scope or areas covered by certification"
+      },
+      {
+        "name": "requirements_met",
+        "type": "array",
+        "required": false,
+        "aliases": ["qualifications", "criteria_met"],
+        "description": "Requirements or criteria satisfied"
+      },
+      {
+        "name": "accreditation_body",
+        "type": "string",
+        "required": false,
+        "aliases": ["accreditor", "recognized_by"],
+        "description": "Accreditation body recognizing the certificate"
+      },
+      {
+        "name": "renewal_required",
+        "type": "boolean",
+        "required": false,
+        "aliases": ["requires_renewal"],
+        "description": "Whether renewal is required"
+      },
+      {
+        "name": "continuing_education",
+        "type": "string",
+        "required": false,
+        "aliases": ["ceu_requirements", "maintenance_requirements"],
+        "description": "Continuing education or maintenance requirements"
+      }
+    ]
+  },
+  "PACKING_SLIP": {
+    "name": "Packing Slip",
+    "description": "Document listing contents of a shipment",
+    "fields": [
+      {
+        "name": "packing_slip_number",
+        "type": "string",
+        "required": true,
+        "aliases": ["slip_number", "document_number", "packing_list_number"],
+        "description": "Unique packing slip identifier"
+      },
+      {
+        "name": "po_number",
+        "type": "string",
+        "required": true,
+        "aliases": ["purchase_order", "po", "order_number"],
+        "description": "Associated purchase order number"
+      },
+      {
+        "name": "ship_date",
+        "type": "date",
+        "required": true,
+        "aliases": ["shipment_date", "date_shipped"],
+        "description": "Date items were shipped"
+      },
+      {
+        "name": "ship_from",
+        "type": "string",
+        "required": false,
+        "aliases": ["origin", "shipper_address", "warehouse"],
+        "description": "Origin address of shipment"
+      },
+      {
+        "name": "ship_to",
+        "type": "string",
+        "required": false,
+        "aliases": ["destination", "delivery_address", "recipient_address"],
+        "description": "Destination address"
+      },
+      {
+        "name": "carrier",
+        "type": "string",
+        "required": false,
+        "aliases": ["shipping_carrier", "shipper"],
+        "description": "Shipping carrier (UPS, FedEx, etc.)"
+      },
+      {
+        "name": "tracking_number",
+        "type": "string",
+        "required": false,
+        "aliases": ["tracking_id", "waybill_number"],
+        "description": "Shipment tracking number"
+      },
+      {
+        "name": "shipping_method",
+        "type": "string",
+        "required": false,
+        "aliases": ["service_level", "delivery_method"],
+        "description": "Shipping method or service level"
+      },
+      {
+        "name": "number_of_packages",
+        "type": "number",
+        "required": false,
+        "aliases": ["package_count", "total_packages"],
+        "description": "Total number of packages in shipment"
+      },
+      {
+        "name": "total_weight",
+        "type": "number",
+        "required": false,
+        "aliases": ["weight", "gross_weight"],
+        "description": "Total weight of shipment"
+      },
+      {
+        "name": "line_items",
+        "type": "array",
+        "required": true,
+        "description": "Items included in the shipment",
+        "itemSchema": {
+          "item_number": "string",
+          "description": "string",
+          "quantity": "number",
+          "unit": "string",
+          "weight": "number"
+        }
+      },
+      {
+        "name": "special_instructions",
+        "type": "string",
+        "required": false,
+        "aliases": ["handling_instructions", "notes"],
+        "description": "Special handling or delivery instructions"
+      }
+    ]
+  },
+  "BOL": {
+    "name": "Bill of Lading",
+    "description": "Legal document between shipper and carrier detailing shipment",
+    "fields": [
+      {
+        "name": "bol_number",
+        "type": "string",
+        "required": true,
+        "aliases": ["bill_of_lading_number", "bl_number", "reference_number"],
+        "description": "Unique bill of lading number"
+      },
+      {
+        "name": "bol_date",
+        "type": "date",
+        "required": true,
+        "aliases": ["date", "shipment_date"],
+        "description": "Date of bill of lading"
+      },
+      {
+        "name": "shipper_name",
+        "type": "string",
+        "required": true,
+        "aliases": ["consignor", "sender"],
+        "description": "Name of shipper"
+      },
+      {
+        "name": "shipper_address",
+        "type": "string",
+        "required": true,
+        "aliases": ["consignor_address", "origin_address"],
+        "description": "Shipper's full address"
+      },
+      {
+        "name": "consignee_name",
+        "type": "string",
+        "required": true,
+        "aliases": ["receiver", "recipient"],
+        "description": "Name of consignee/receiver"
+      },
+      {
+        "name": "consignee_address",
+        "type": "string",
+        "required": true,
+        "aliases": ["delivery_address", "destination"],
+        "description": "Consignee's full address"
+      },
+      {
+        "name": "carrier_name",
+        "type": "string",
+        "required": true,
+        "aliases": ["carrier", "transporter"],
+        "description": "Name of carrier"
+      },
+      {
+        "name": "carrier_scac",
+        "type": "string",
+        "required": false,
+        "aliases": ["scac_code"],
+        "description": "Standard Carrier Alpha Code"
+      },
+      {
+        "name": "pro_number",
+        "type": "string",
+        "required": false,
+        "aliases": ["progressive_number"],
+        "description": "Progressive number for tracking"
+      },
+      {
+        "name": "po_number",
+        "type": "string",
+        "required": false,
+        "aliases": ["purchase_order", "reference"],
+        "description": "Purchase order reference"
+      },
+      {
+        "name": "pickup_date",
+        "type": "date",
+        "required": false,
+        "aliases": ["collection_date"],
+        "description": "Scheduled pickup date"
+      },
+      {
+        "name": "delivery_date",
+        "type": "date",
+        "required": false,
+        "aliases": ["expected_delivery"],
+        "description": "Expected delivery date"
+      },
+      {
+        "name": "freight_charges",
+        "type": "currency",
+        "required": false,
+        "aliases": ["shipping_charges", "freight_cost"],
+        "description": "Total freight charges"
+      },
+      {
+        "name": "payment_terms",
+        "type": "string",
+        "required": false,
+        "aliases": ["freight_terms"],
+        "description": "Payment terms (prepaid, collect, etc.)"
+      },
+      {
+        "name": "freight_class",
+        "type": "string",
+        "required": false,
+        "aliases": ["class"],
+        "description": "Freight classification"
+      },
+      {
+        "name": "special_instructions",
+        "type": "string",
+        "required": false,
+        "aliases": ["shipping_instructions", "notes"],
+        "description": "Special shipping instructions"
+      },
+      {
+        "name": "line_items",
+        "type": "array",
+        "required": true,
+        "description": "Items being shipped",
+        "itemSchema": {
+          "description": "string",
+          "quantity": "number",
+          "weight": "number",
+          "dimensions": "string",
+          "nmfc_code": "string",
+          "hazmat": "boolean"
+        }
+      },
+      {
+        "name": "total_weight",
+        "type": "number",
+        "required": false,
+        "aliases": ["gross_weight"],
+        "description": "Total shipment weight"
+      },
+      {
+        "name": "total_pieces",
+        "type": "number",
+        "required": false,
+        "aliases": ["package_count", "piece_count"],
+        "description": "Total number of pieces"
+      }
+    ]
+  },
+  "RECEIVING_REPORT": {
+    "name": "Receiving Report",
+    "description": "Document confirming receipt of goods",
+    "fields": [
+      {
+        "name": "receiving_number",
+        "type": "string",
+        "required": true,
+        "aliases": ["receipt_number", "report_number", "receiving_id"],
+        "description": "Unique receiving report identifier"
+      },
+      {
+        "name": "received_date",
+        "type": "date",
+        "required": true,
+        "aliases": ["date_received", "receipt_date"],
+        "description": "Date goods were received"
+      },
+      {
+        "name": "po_number",
+        "type": "string",
+        "required": true,
+        "aliases": ["purchase_order", "po"],
+        "description": "Associated purchase order number"
+      },
+      {
+        "name": "packing_slip_number",
+        "type": "string",
+        "required": false,
+        "aliases": ["delivery_note", "slip_number"],
+        "description": "Associated packing slip number"
+      },
+      {
+        "name": "vendor_name",
+        "type": "string",
+        "required": true,
+        "aliases": ["supplier", "shipper"],
+        "description": "Name of vendor/supplier"
+      },
+      {
+        "name": "carrier",
+        "type": "string",
+        "required": false,
+        "aliases": ["shipping_carrier"],
+        "description": "Shipping carrier"
+      },
+      {
+        "name": "tracking_number",
+        "type": "string",
+        "required": false,
+        "aliases": ["waybill"],
+        "description": "Shipment tracking number"
+      },
+      {
+        "name": "received_by",
+        "type": "string",
+        "required": false,
+        "aliases": ["receiver", "inspector"],
+        "description": "Name of person who received goods"
+      },
+      {
+        "name": "receiving_location",
+        "type": "string",
+        "required": false,
+        "aliases": ["warehouse", "dock", "location"],
+        "description": "Location where goods were received"
+      },
+      {
+        "name": "line_items",
+        "type": "array",
+        "required": true,
+        "description": "Items received",
+        "itemSchema": {
+          "item_number": "string",
+          "description": "string",
+          "quantity_ordered": "number",
+          "quantity_received": "number",
+          "quantity_accepted": "number",
+          "quantity_rejected": "number",
+          "condition": "string",
+          "notes": "string"
+        }
+      },
+      {
+        "name": "discrepancies",
+        "type": "array",
+        "required": false,
+        "description": "Any discrepancies or issues found"
+      },
+      {
+        "name": "inspection_notes",
+        "type": "string",
+        "required": false,
+        "aliases": ["quality_notes", "remarks"],
+        "description": "Inspection or quality control notes"
+      },
+      {
+        "name": "approved_by",
+        "type": "string",
+        "required": false,
+        "aliases": ["approver", "supervisor"],
+        "description": "Name of approving authority"
+      }
+    ]
+  },
+  "PURCHASE_ORDER": {
+    "name": "Purchase Order",
+    "description": "Document authorizing a purchase transaction",
+    "fields": [
+      {
+        "name": "po_number",
+        "type": "string",
+        "required": true,
+        "aliases": ["purchase_order_number", "po", "order_number"],
+        "description": "Unique purchase order number"
+      },
+      {
+        "name": "po_date",
+        "type": "date",
+        "required": true,
+        "aliases": ["order_date", "date"],
+        "description": "Date purchase order was created"
+      },
+      {
+        "name": "buyer_name",
+        "type": "string",
+        "required": true,
+        "aliases": ["purchaser", "company", "buyer_company"],
+        "description": "Name of buying organization"
+      },
+      {
+        "name": "buyer_address",
+        "type": "string",
+        "required": false,
+        "aliases": ["bill_to_address", "billing_address"],
+        "description": "Buyer's billing address"
+      },
+      {
+        "name": "vendor",
+        "type": "string",
+        "required": true,
+        "aliases": ["supplier", "seller", "vendor_name"],
+        "description": "Name of vendor/supplier"
+      },
+      {
+        "name": "vendor_address",
+        "type": "string",
+        "required": false,
+        "aliases": ["supplier_address", "ship_from"],
+        "description": "Vendor's address"
+      },
+      {
+        "name": "ship_to_address",
+        "type": "string",
+        "required": false,
+        "aliases": ["delivery_address", "shipping_address"],
+        "description": "Delivery/shipping address"
+      },
+      {
+        "name": "requested_delivery_date",
+        "type": "date",
+        "required": false,
+        "aliases": ["expected_delivery", "delivery_date", "need_by_date"],
+        "description": "Requested or expected delivery date"
+      },
+      {
+        "name": "shipping_method",
+        "type": "string",
+        "required": false,
+        "aliases": ["delivery_method", "carrier"],
+        "description": "Requested shipping method"
+      },
+      {
+        "name": "payment_terms",
+        "type": "string",
+        "required": false,
+        "aliases": ["terms", "payment_conditions"],
+        "description": "Payment terms (Net 30, etc.)"
+      },
+      {
+        "name": "buyer_contact",
+        "type": "string",
+        "required": false,
+        "aliases": ["requisitioner", "contact_person"],
+        "description": "Buyer contact person"
+      },
+      {
+        "name": "line_items",
+        "type": "array",
+        "required": true,
+        "description": "Items being ordered",
+        "itemSchema": {
+          "item_number": "string",
+          "description": "string",
+          "quantity": "number",
+          "unit_price": "currency",
+          "total": "currency",
+          "unit": "string",
+          "requested_date": "date"
+        }
+      },
+      {
+        "name": "subtotal",
+        "type": "currency",
+        "required": false,
+        "aliases": ["amount_before_tax"],
+        "description": "Subtotal before tax and shipping"
+      },
+      {
+        "name": "tax_amount",
+        "type": "currency",
+        "required": false,
+        "aliases": ["tax", "sales_tax"],
+        "description": "Tax amount"
+      },
+      {
+        "name": "shipping_charges",
+        "type": "currency",
+        "required": false,
+        "aliases": ["freight", "delivery_charges"],
+        "description": "Shipping/freight charges"
+      },
+      {
+        "name": "total_amount",
+        "type": "currency",
+        "required": true,
+        "aliases": ["grand_total", "total", "po_amount"],
+        "description": "Total purchase order amount"
+      },
+      {
+        "name": "special_instructions",
+        "type": "string",
+        "required": false,
+        "aliases": ["notes", "comments", "delivery_instructions"],
+        "description": "Special instructions or notes"
+      },
+      {
+        "name": "approved_by",
+        "type": "string",
+        "required": false,
+        "aliases": ["approver", "authorized_by"],
+        "description": "Name of approving authority"
+      }
+    ]
+  },
+  "QUOTE": {
+    "name": "Quote / Estimate",
+    "description": "Price quotation or estimate for goods/services",
+    "fields": [
+      {
+        "name": "quote_number",
+        "type": "string",
+        "required": true,
+        "aliases": ["quotation_number", "estimate_number", "proposal_number"],
+        "description": "Unique quote identifier"
+      },
+      {
+        "name": "quote_date",
+        "type": "date",
+        "required": true,
+        "aliases": ["date", "prepared_date"],
+        "description": "Date quote was prepared"
+      },
+      {
+        "name": "valid_until",
+        "type": "date",
+        "required": false,
+        "aliases": ["expiration_date", "expires", "valid_through"],
+        "description": "Date quote expires"
+      },
+      {
+        "name": "vendor_name",
+        "type": "string",
+        "required": true,
+        "aliases": ["supplier", "company", "provider"],
+        "description": "Name of vendor providing quote"
+      },
+      {
+        "name": "vendor_contact",
+        "type": "string",
+        "required": false,
+        "aliases": ["sales_rep", "contact_person"],
+        "description": "Vendor contact person"
+      },
+      {
+        "name": "customer_name",
+        "type": "string",
+        "required": true,
+        "aliases": ["client", "prospect", "prepared_for"],
+        "description": "Name of customer receiving quote"
+      },
+      {
+        "name": "customer_contact",
+        "type": "string",
+        "required": false,
+        "aliases": ["contact", "attention"],
+        "description": "Customer contact person"
+      },
+      {
+        "name": "project_name",
+        "type": "string",
+        "required": false,
+        "aliases": ["job_name", "description"],
+        "description": "Name or description of project"
+      },
+      {
+        "name": "line_items",
+        "type": "array",
+        "required": true,
+        "description": "Quoted items or services",
+        "itemSchema": {
+          "description": "string",
+          "quantity": "number",
+          "unit_price": "currency",
+          "total": "currency",
+          "notes": "string"
+        }
+      },
+      {
+        "name": "subtotal",
+        "type": "currency",
+        "required": false,
+        "aliases": ["amount_before_tax"],
+        "description": "Subtotal before tax"
+      },
+      {
+        "name": "tax_amount",
+        "type": "currency",
+        "required": false,
+        "aliases": ["tax", "sales_tax"],
+        "description": "Tax amount"
+      },
+      {
+        "name": "discount",
+        "type": "currency",
+        "required": false,
+        "aliases": ["discount_amount"],
+        "description": "Discount amount if applicable"
+      },
+      {
+        "name": "total_amount",
+        "type": "currency",
+        "required": true,
+        "aliases": ["grand_total", "total", "quoted_amount"],
+        "description": "Total quoted amount"
+      },
+      {
+        "name": "payment_terms",
+        "type": "string",
+        "required": false,
+        "aliases": ["terms", "payment_conditions"],
+        "description": "Proposed payment terms"
+      },
+      {
+        "name": "delivery_timeframe",
+        "type": "string",
+        "required": false,
+        "aliases": ["lead_time", "completion_time"],
+        "description": "Estimated delivery or completion timeframe"
+      },
+      {
+        "name": "terms_and_conditions",
+        "type": "string",
+        "required": false,
+        "aliases": ["conditions", "notes"],
+        "description": "Terms, conditions, and notes"
+      },
+      {
+        "name": "warranty",
+        "type": "string",
+        "required": false,
+        "aliases": ["guarantee", "warranty_terms"],
+        "description": "Warranty or guarantee information"
+      }
+    ]
+  },
+  "UNKNOWN": {
+    "name": "Unknown Document Type",
+    "description": "Document type not yet classified",
+    "fields": [
+      {
+        "name": "extracted_text",
+        "type": "string",
+        "required": false,
+        "description": "Full OCR text for manual review"
+      },
+      {
+        "name": "detected_entities",
+        "type": "array",
+        "required": false,
+        "description": "Any entities detected during processing"
+      }
+    ]
+  }
+}
