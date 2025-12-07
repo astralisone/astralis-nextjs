@@ -7,6 +7,7 @@ import { formatDate } from '@/lib/utils/date';
 // Components
 import { DocumentCard } from '@/components/documents/DocumentCard';
 import { DocumentViewer } from '@/components/documents/DocumentViewer';
+import { DocumentChat } from '@/components/documents/DocumentChat';
 import { DocumentUploader } from '@/components/documents/DocumentUploader';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -93,6 +94,8 @@ export default function DocumentsPage() {
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [showUploader, setShowUploader] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+  const [chatDocumentId, setChatDocumentId] = useState<string | undefined>();
 
   const itemsPerPage = 12;
 
@@ -141,11 +144,8 @@ export default function DocumentsPage() {
   };
 
   const handleChat = (documentId?: string) => {
-    // Open chat in a new popup window to avoid page crashes
-    const url = documentId
-      ? `/documents/chat?documentId=${documentId}`
-      : '/documents/chat';
-    window.open(url, 'DocumentChat', 'width=600,height=700,menubar=no,toolbar=no,location=no,status=no');
+    setChatDocumentId(documentId);
+    setShowChat(true);
   };
 
   const clearFilters = () => {
@@ -375,6 +375,8 @@ export default function DocumentsPage() {
         isOpen={!!selectedDocument}
         onClose={() => setSelectedDocument(null)}
       />
+
+    
     </PageContainer>
   );
 }
