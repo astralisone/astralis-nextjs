@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { ensureDefaultPipelines } from "@/lib/services/defaultPipelines.service";
 
 const createOrgSchema = z.object({
   name: z.string().min(2),
@@ -68,5 +69,15 @@ export async function POST(req: NextRequest) {
   }
 
   const org = await prisma.organization.create({ data: parsed.data });
+
+  // Create default pipelines for the new organization
+  try {
+    const pipelines = await ensureDefaultPipelines(org.id);
+    console.log(`[Orgs API] Created ${pipelines.length} default pipelines for organization ${org.id}`);
+  } catch (pipelineError) {
+    // Log but don't fail - pipelines can be created later
+    console.error(`[Orgs API] Failed to create default pipelines:`, pipelineError);
+  }
+
   return NextResponse.json(org, { status: 201 });
 }

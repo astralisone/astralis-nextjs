@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import { ensureDefaultPipelines } from '@/lib/services/defaultPipelines.service';
 
 const createOrgSchema = z.object({
   name: z.string().min(1, 'Organization name is required').max(100, 'Organization name too long'),
@@ -78,6 +79,15 @@ export async function POST(req: NextRequest) {
     });
 
     console.log(`[Onboarding] Created organization "${name}" (${organization.id}) for user ${session.user.email}`);
+
+    // 5. Create default pipelines for the new organization
+    try {
+      const pipelines = await ensureDefaultPipelines(organization.id);
+      console.log(`[Onboarding] Created ${pipelines.length} default pipelines for organization ${organization.id}`);
+    } catch (pipelineError) {
+      // Log but don't fail - pipelines can be created later
+      console.error(`[Onboarding] Failed to create default pipelines:`, pipelineError);
+    }
 
     return NextResponse.json({
       organization: {
