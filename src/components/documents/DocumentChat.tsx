@@ -39,8 +39,6 @@ import {
  * ```tsx
  * <DocumentChat
  *   documentId="doc-123"
- *   orgId="org-456"
- *   userId="user-789"
  *   chatId="chat-abc" // Optional
  * />
  * ```
@@ -49,10 +47,6 @@ import {
 export interface DocumentChatProps {
   /** Optional - if not provided, chat across all docs */
   documentId?: string;
-  /** Organization ID for scoping */
-  orgId: string;
-  /** User ID for authentication */
-  userId: string;
   /** Optional - for continuing existing chat */
   chatId?: string;
   /** Additional CSS classes */
@@ -65,8 +59,6 @@ interface Message extends ChatMessage {
 
 export function DocumentChat({
   documentId,
-  orgId,
-  userId,
   chatId: initialChatId,
   className,
 }: DocumentChatProps) {
