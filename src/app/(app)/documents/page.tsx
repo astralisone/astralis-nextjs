@@ -338,7 +338,168 @@ export default function DocumentsPage() {
       )}
 
       {/* Documents Content */}
-     
+      {!isLoading && !error && documents.length > 0 && (
+        <>
+          {/* Table View */}
+          {viewMode === 'table' && (
+            <Card className="mb-6 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-slate-50 border-b">
+                    <tr>
+                      <th
+                        className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase cursor-pointer hover:bg-slate-100"
+                        onClick={() => handleSort('name')}
+                      >
+                        <div className="flex items-center gap-1">
+                          Name {renderSortIcon('name')}
+                        </div>
+                      </th>
+                      <th
+                        className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase cursor-pointer hover:bg-slate-100"
+                        onClick={() => handleSort('type')}
+                      >
+                        <div className="flex items-center gap-1">
+                          Type {renderSortIcon('type')}
+                        </div>
+                      </th>
+                      <th
+                        className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase cursor-pointer hover:bg-slate-100"
+                        onClick={() => handleSort('size')}
+                      >
+                        <div className="flex items-center gap-1">
+                          Size {renderSortIcon('size')}
+                        </div>
+                      </th>
+                      <th
+                        className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase cursor-pointer hover:bg-slate-100"
+                        onClick={() => handleSort('status')}
+                      >
+                        <div className="flex items-center gap-1">
+                          Status {renderSortIcon('status')}
+                        </div>
+                      </th>
+                      <th
+                        className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase cursor-pointer hover:bg-slate-100"
+                        onClick={() => handleSort('createdAt')}
+                      >
+                        <div className="flex items-center gap-1">
+                          Uploaded {renderSortIcon('createdAt')}
+                        </div>
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200">
+                    {sortedDocuments.map((doc) => (
+                      <tr key={doc.id} className="hover:bg-slate-50">
+                        <td className="px-6 py-4">
+                          <span className="text-sm font-medium text-astralis-navy truncate block max-w-[250px]">
+                            {doc.originalName}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <Badge variant="default">{getFileTypeLabel(doc.mimeType)}</Badge>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-slate-500">
+                          {formatFileSize(doc.fileSize)}
+                        </td>
+                        <td className="px-6 py-4">
+                          <Badge variant={STATUS_VARIANTS[doc.status]}>{doc.status}</Badge>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-slate-500">
+                          {formatDate(doc.createdAt)}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleViewDocument(doc)}
+                              className="p-2 text-slate-600 hover:text-astralis-blue hover:bg-slate-100 rounded"
+                              title="View"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDownloadDocument(doc)}
+                              className="p-2 text-slate-600 hover:text-astralis-blue hover:bg-slate-100 rounded"
+                              title="Download"
+                              disabled={!doc.cdnUrl}
+                            >
+                              <Download className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          )}
+
+          {/* Grid View */}
+          {viewMode === 'grid' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              {documents.map((doc) => (
+                <DocumentCard
+                  key={doc.id}
+                  document={doc}
+                  onView={handleViewDocument}
+                  onChat={handleChatWithDocument}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {totalDocuments > itemsPerPage && (
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-slate-600">
+                Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
+                {Math.min(currentPage * itemsPerPage, totalDocuments)} of {totalDocuments}
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage((p) => p + 1)}
+                  disabled={!hasMore}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Upload Sheet */}
+      <Sheet open={showUploader} onOpenChange={setShowUploader}>
+        <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Upload Documents</SheetTitle>
+          </SheetHeader>
+          <div className="mt-6">
+            <DocumentUploader onComplete={handleUploadComplete} />
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Document Viewer */}
+      <DocumentViewer
+        document={selectedDocument}
+        isOpen={!!selectedDocument}
+        onClose={() => setSelectedDocument(null)}
+      />
+
 
     </PageContainer>
   );
