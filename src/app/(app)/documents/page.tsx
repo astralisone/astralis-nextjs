@@ -199,7 +199,50 @@ export default function DocumentsPage() {
       )}
 
       {/* View Toggle & Filters */}
-     
+      <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'table' | 'grid')} className="mb-6">
+        <TabsList>
+          <TabsTrigger value="table">Table</TabsTrigger>
+          <TabsTrigger value="grid">Grid</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Input
+            type="search"
+            placeholder="Search documents..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as DocumentStatus | 'ALL')}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="All Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All Status</SelectItem>
+            <SelectItem value="PENDING">Pending</SelectItem>
+            <SelectItem value="PROCESSING">Processing</SelectItem>
+            <SelectItem value="COMPLETED">Completed</SelectItem>
+            <SelectItem value="FAILED">Failed</SelectItem>
+          </SelectContent>
+        </Select>
+        {hasFilters && (
+          <Button variant="ghost" onClick={clearFilters}>Clear</Button>
+        )}
+      </div>
+
+      {/* Loading */}
+      {isLoading && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
+        </div>
+      )}
+
+      {/* Error */}
+      
     </PageContainer>
   );
 }
