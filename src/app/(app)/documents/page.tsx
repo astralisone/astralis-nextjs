@@ -7,7 +7,6 @@ import { formatDate } from '@/lib/utils/date';
 // Components
 import { DocumentCard } from '@/components/documents/DocumentCard';
 import { DocumentViewer } from '@/components/documents/DocumentViewer';
-import { DocumentChat } from '@/components/documents/DocumentChat';
 import { DocumentUploader } from '@/components/documents/DocumentUploader';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -94,8 +93,6 @@ export default function DocumentsPage() {
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [showUploader, setShowUploader] = useState(false);
-  const [showChat, setShowChat] = useState(false);
-  const [chatDocumentId, setChatDocumentId] = useState<string | undefined>();
 
   const itemsPerPage = 12;
 
@@ -144,8 +141,11 @@ export default function DocumentsPage() {
   };
 
   const handleChat = (documentId?: string) => {
-    setChatDocumentId(documentId);
-    setShowChat(true);
+    // Open chat in a new popup window to avoid page crashes
+    const url = documentId
+      ? `/documents/chat?documentId=${documentId}`
+      : '/documents/chat';
+    window.open(url, 'DocumentChat', 'width=600,height=700,menubar=no,toolbar=no,location=no,status=no');
   };
 
   const clearFilters = () => {
@@ -375,21 +375,6 @@ export default function DocumentsPage() {
         isOpen={!!selectedDocument}
         onClose={() => setSelectedDocument(null)}
       />
-
-      {showChat && (
-        <Sheet open={showChat} onOpenChange={setShowChat}>
-          <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
-            <SheetHeader>
-              <SheetTitle>
-                {chatDocumentId ? 'Document Chat' : 'Chat with All Documents'}
-              </SheetTitle>
-            </SheetHeader>
-            <div className="mt-6 h-[calc(100vh-120px)]">
-              <DocumentChat documentId={chatDocumentId} className="h-full" />
-            </div>
-          </SheetContent>
-        </Sheet>
-      )}
     </PageContainer>
   );
 }
