@@ -53,7 +53,8 @@ interface PipelineItem {
  * createPipeline({
  *   name: 'Sales Pipeline',
  *   description: 'Track sales opportunities',
- *   orgId: 'org_123'
+ *   orgId: 'org_123',
+ *   templateKey: 'sales' // optional: use template
  * });
  * ```
  */
@@ -65,6 +66,7 @@ export function useCreatePipeline() {
       name: string;
       description?: string;
       orgId: string;
+      templateKey?: string;
     }) => {
       const response = await fetch('/api/pipelines', {
         method: 'POST',
