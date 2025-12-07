@@ -27,6 +27,15 @@ export default function PipelinesPage() {
     );
   }
 
+  // Debug: Show session info
+  const debugInfo = {
+    userId: session.user?.id,
+    orgId: session.user?.orgId,
+    email: session.user?.email,
+    role: session.user?.role,
+  };
+  console.log('Session debug:', debugInfo);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -109,6 +118,13 @@ export default function PipelinesPage() {
                   <p className="text-slate-500 mb-4">
                     Create your first pipeline to get started
                   </p>
+                  {/* Debug info - remove after fixing */}
+                  <div className="text-xs text-left bg-slate-100 p-2 rounded mb-4 font-mono">
+                    <div>userId: {session?.user?.id || 'none'}</div>
+                    <div>orgId: {session?.user?.orgId || 'none'}</div>
+                    <div>email: {session?.user?.email || 'none'}</div>
+                    <div>role: {session?.user?.role || 'none'}</div>
+                  </div>
                   <Button
                     variant="primary"
                     className="gap-2"
