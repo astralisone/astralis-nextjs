@@ -16,6 +16,7 @@ tsconfig.tsbuildinfo
 .env
 .env.local
 .env.production
+.env.vercel
 .env.*.local
 
 # Log files
