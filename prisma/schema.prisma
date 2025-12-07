@@ -1879,31 +1879,55 @@ enum TemplateCategory {
 }
 
 enum IntegrationProvider {
+  // Communication
   GMAIL
-  GOOGLE_SHEETS
-  GOOGLE_DRIVE
-  GOOGLE_CALENDAR
   SLACK
   MICROSOFT_TEAMS
   OUTLOOK
+
+  // Storage
+  GOOGLE_DRIVE
+  DROPBOX
+
+  // Google Suite
+  GOOGLE_SHEETS
+  GOOGLE_CALENDAR
+
+  // CRM / Sales
   HUBSPOT
   SALESFORCE
+
+  // Accounting
+  QUICKBOOKS
+  XERO
+
+  // Payments
   STRIPE
   PAYPAL
+
+  // Marketing
   MAILCHIMP
   SENDGRID
+
+  // Communication Tools
   TWILIO
   ZOOM
-  DROPBOX
+
+  // Project Management
   TRELLO
   ASANA
   NOTION
   AIRTABLE
+
+  // Infrastructure
   WEBHOOK
   HTTP_REQUEST
   DATABASE
+
+  // AI
   OPENAI
   ANTHROPIC
+
   OTHER
 }
 
