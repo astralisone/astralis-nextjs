@@ -138,7 +138,7 @@ export function BulkActionsToolbar({
                 }}
               >
                 <SelectTrigger className="w-[160px] bg-white/10 border-white/20 text-white">
-                  <UserCheck className=" ui-icon w-5 h-5 mr-2" />
+                  <UserCheck className=" w-5 h-5 mr-2" />
                   <SelectValue placeholder="Change Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -161,7 +161,7 @@ export function BulkActionsToolbar({
                   }}
                 >
                   <SelectTrigger className="w-[160px] bg-white/10 border-white/20 text-white">
-                    <Route className=" ui-icon w-5 h-5 mr-2" />
+                    <Route className=" w-5 h-5 mr-2" />
                     <SelectValue placeholder="Route to..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -183,7 +183,7 @@ export function BulkActionsToolbar({
                 }}
               >
                 <SelectTrigger className="w-[160px] bg-white/10 border-white/20 text-white">
-                  <AlertCircle className=" ui-icon w-5 h-5 mr-2" />
+                  <AlertCircle className=" w-5 h-5 mr-2" />
                   <SelectValue placeholder="Set Priority" />
                 </SelectTrigger>
                 <SelectContent>
@@ -200,7 +200,7 @@ export function BulkActionsToolbar({
                 onClick={() => setConfirmAction('delete')}
                 disabled={isProcessing}
               >
-                <Trash2 className=" ui-icon w-5 h-5 mr-2" />
+                <Trash2 className=" w-5 h-5 mr-2" />
                 Delete
               </Button>
             </div>
@@ -212,7 +212,7 @@ export function BulkActionsToolbar({
               onClick={onClearSelection}
               className="text-white hover:bg-white/10"
             >
-              <X className=" ui-icon w-5 h-5" />
+              <X className=" w-5 h-5" />
             </Button>
           </div>
         </div>

@@ -185,7 +185,7 @@ export function TemplateCard({ template, onDeploy, onPreview }: TemplateCardProp
           ) : (
             <>
               Deploy Template
-              <ArrowRight className=" ui-icon w-5 h-5 ml-2" />
+              <ArrowRight className=" w-5 h-5 ml-2" />
             </>
           )}
         </Button>

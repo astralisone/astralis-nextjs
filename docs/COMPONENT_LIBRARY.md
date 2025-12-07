@@ -27,6 +27,49 @@ Following 4/8/12/16/20/24/32/48/64/96 px increments (Section 3.2)
 
 ---
 
+## Icon Sizing Guidelines
+
+### Standard Icon Sizes
+
+| Size | Class | Pixels | Use Case |
+|------|-------|--------|----------|
+| xs | `w-3 h-3` | 12px | Inline indicators, trend arrows, small badges |
+| sm | `w-4 h-4` | 16px | Form field icons, small component icons |
+| md | `w-5 h-5` | 20px | Standard component icons, card headers, navigation |
+| lg | `w-6 h-6` | 24px | Large section icons, prominent CTAs |
+| xl | `w-8 h-8` | 32px | Hero section icons, large cards |
+| 2xl | `w-10 h-10` | 40px | Logos, avatars, featured icons |
+
+### Usage Examples
+```tsx
+// Trend indicator in stats
+<TrendingUp className="w-3 h-3 text-emerald-500" />
+
+// Form field icon
+<Search className="w-4 h-4 text-slate-400" />
+
+// Navigation icon
+<Home className="w-5 h-5" />
+
+// Section header
+<Settings className="w-6 h-6 text-astralis-navy" />
+
+// Empty state illustration
+<Inbox className="w-8 h-8 text-slate-400" />
+
+// Logo/Avatar
+<Avatar className="w-10 h-10" />
+```
+
+### Consistency Rules
+1. Navigation icons: Always `w-5 h-5`
+2. Button icons: Match button size (sm button = w-4, default = w-5)
+3. Empty state icons: `w-8 h-8` centered
+4. Alert/toast icons: `w-5 h-5`
+5. Badge icons: `w-3 h-3` or `w-4 h-4`
+
+---
+
 ## Components
 
 ### 1. Card Component

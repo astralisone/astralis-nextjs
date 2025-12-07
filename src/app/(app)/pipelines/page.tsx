@@ -118,19 +118,12 @@ export default function PipelinesPage() {
                   <p className="text-slate-500 mb-4">
                     Create your first pipeline to get started
                   </p>
-                  {/* Debug info - remove after fixing */}
-                  <div className="text-xs text-left bg-slate-100 p-2 rounded mb-4 font-mono">
-                    <div>userId: {session?.user?.id || 'none'}</div>
-                    <div>orgId: {session?.user?.orgId || 'none'}</div>
-                    <div>email: {session?.user?.email || 'none'}</div>
-                    <div>role: {session?.user?.role || 'none'}</div>
-                  </div>
                   <Button
                     variant="primary"
                     className="gap-2"
                     onClick={() => setIsCreateModalOpen(true)}
                   >
-                    <Plus className=" ui-icon w-5 h-5" />
+                    <Plus className="w-5 h-5" />
                     Create Pipeline
                   </Button>
                 </CardContent>

@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
  *   description="Manage your workflow pipelines and stages"
  *   actions={
  *     <Button variant="primary">
- *       <Plus className=" ui-icon w-5 h-5" />
+ *       <Plus className=" w-5 h-5" />
  *       New Pipeline
  *     </Button>
  *   }

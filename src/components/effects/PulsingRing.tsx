@@ -157,7 +157,7 @@ export function PulsingRing({
       {!children && (
         <div
           className={cn(
-            'absolute  ui-icon w-5 h-5 rounded-full',
+            'absolute  w-5 h-5 rounded-full',
             ringColor.ring.replace('border-', 'bg-'),
             glowClass,
             !prefersReducedMotion && 'animate-pulse-glow'

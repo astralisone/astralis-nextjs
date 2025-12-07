@@ -67,7 +67,7 @@ const statusConfig: Record<string, {
 }> = {
   [IntakeStatus.NEW]: {
     label: 'New',
-    className: 'bg-yellow-100 text-yellow-700',
+    className: 'bg-orange-100 text-orange-700',
     icon: <AlertTriangle className="w-5 h-5" />,
   },
   [IntakeStatus.ROUTING]: {
@@ -77,12 +77,12 @@ const statusConfig: Record<string, {
   },
   [IntakeStatus.ASSIGNED]: {
     label: 'Assigned',
-    className: 'bg-green-100 text-green-700',
+    className: 'bg-blue-100 text-blue-700',
     icon: null,
   },
   [IntakeStatus.PROCESSING]: {
     label: 'Processing',
-    className: 'bg-purple-100 text-purple-700',
+    className: 'bg-indigo-100 text-indigo-700',
     icon: null,
   },
   [IntakeStatus.COMPLETED]: {
@@ -260,9 +260,9 @@ export function IntakeCard({
                     <SelectTrigger className="h-8 text-sm bg-white flex-1">
                       <div className="flex items-center gap-1.5">
                         {isAssigning ? (
-                          <Loader2 className=" ui-icon w-5 h-5 animate-spin" />
+                          <Loader2 className=" w-5 h-5 animate-spin" />
                         ) : (
-                          <GitBranch className=" ui-icon w-5 h-5 text-astralis-blue" />
+                          <GitBranch className=" w-5 h-5 text-astralis-blue" />
                         )}
                         <SelectValue placeholder="Assign to pipeline..." />
                       </div>
@@ -277,7 +277,7 @@ export function IntakeCard({
                   </Select>
                 ) : (
                   <div className="flex items-center gap-1.5 text-slate-400 flex-1">
-                    <GitBranch className=" ui-icon w-5 h-5" />
+                    <GitBranch className=" w-5 h-5" />
                     <span className="text-sm">{pipelineName || 'Unassigned'}</span>
                   </div>
                 )}
@@ -290,9 +290,9 @@ export function IntakeCard({
                     aria-label="Reclassify with AI"
                   >
                     {isReclassifying ? (
-                      <Loader2 className=" ui-icon w-5 h-5 animate-spin" />
+                      <Loader2 className=" w-5 h-5 animate-spin" />
                     ) : (
-                      <RefreshCw className=" ui-icon w-5 h-5" />
+                      <RefreshCw className=" w-5 h-5" />
                     )}
                   </button>
                 )}

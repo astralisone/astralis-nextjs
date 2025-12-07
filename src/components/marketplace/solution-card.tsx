@@ -81,7 +81,7 @@ export const SolutionCard = React.forwardRef<HTMLDivElement, SolutionCardProps>(
           <Star
             key={index}
             className={cn(
-              " ui-icon w-5 h-5",
+              " w-5 h-5",
               filled
                 ? "fill-yellow-400 text-yellow-400"
                 : partial

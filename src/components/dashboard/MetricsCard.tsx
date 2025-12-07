@@ -93,7 +93,7 @@ export function MetricsCard({
                 trendColor
               )}
             >
-              <TrendIcon className=" ui-icon w-5 h-5" />
+              <TrendIcon className=" w-5 h-5" />
               <span>{Math.abs(change)}%</span>
             </div>
             <span className="text-slate-500 dark:text-slate-400">

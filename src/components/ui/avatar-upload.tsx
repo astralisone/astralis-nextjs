@@ -316,7 +316,7 @@ export function AvatarUpload({
             }}
             aria-label="Cancel preview"
           >
-            <X className=" ui-icon w-5 h-5 text-white" />
+            <X className=" w-5 h-5 text-white" />
           </button>
         )}
       </div>
@@ -342,7 +342,7 @@ export function AvatarUpload({
           disabled={disabled || isLoading}
           className="gap-1.5"
         >
-          <Upload className=" ui-icon w-5 h-5" />
+          <Upload className=" w-5 h-5" />
           {currentAvatarUrl ? 'Change Photo' : 'Upload Photo'}
         </Button>
 
@@ -355,7 +355,7 @@ export function AvatarUpload({
             disabled={disabled || isLoading}
             className="gap-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50"
           >
-            <Trash2 className=" ui-icon w-5 h-5" />
+            <Trash2 className=" w-5 h-5" />
             Remove
           </Button>
         )}
