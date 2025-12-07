@@ -44,6 +44,9 @@ import {
   CheckCircle,
 } from 'lucide-react';
 
+// Types
+import { Document, DocumentStatus } from '@/types/documents';
+
 // Error logging utility
 function logError(context: string, error: unknown, extra?: Record<string, unknown>) {
   const errorInfo = {
@@ -291,9 +294,6 @@ function ErrorDisplay({ error, componentStack, onRetry, title, description }: Er
     </PageContainer>
   );
 }
-
-// Types
-import { Document, DocumentStatus } from '@/types/documents';
 
 // Constants
 type SortColumn = 'name' | 'type' | 'size' | 'status' | 'createdAt';
