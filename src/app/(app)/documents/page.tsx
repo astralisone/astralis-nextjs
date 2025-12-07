@@ -249,6 +249,97 @@ export default function DocumentsPage() {
         </div>
       )}
 
+
+      {/* View Toggle */}
+      <div className="flex items-center gap-1 mb-4 border-b border-slate-200">
+        <button
+          onClick={() => setViewMode('table')}
+          className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${
+            viewMode === 'table'
+              ? 'border-astralis-blue text-astralis-blue'
+              : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          <LayoutList className="h-5 w-5" />
+          Table
+        </button>
+        <button
+          onClick={() => setViewMode('grid')}
+          className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${
+            viewMode === 'grid'
+              ? 'border-astralis-blue text-astralis-blue'
+              : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          <LayoutGrid className="h-5 w-5" />
+          Grid
+        </button>
+      </div>
+
+      {/* Search and Filters */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Input
+            type="search"
+            placeholder="Search documents..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <select
+          value={statusFilter || ''}
+          onChange={(e) => setStatusFilter(e.target.value as DocumentStatus || undefined)}
+          className="px-3 py-2 border rounded-md text-sm"
+        >
+          <option value="">All Status</option>
+          <option value="PENDING">Pending</option>
+          <option value="PROCESSING">Processing</option>
+          <option value="COMPLETED">Completed</option>
+          <option value="FAILED">Failed</option>
+        </select>
+        {hasFilters && (
+          <Button variant="ghost" onClick={clearFilters}>
+            Clear
+          </Button>
+        )}
+      </div>
+
+      {/* Loading State */}
+      {isLoading && (
+        <div className="text-center py-12">
+          <p className="text-slate-500">Loading documents...</p>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <Card className="p-6">
+          <p className="text-error text-center font-semibold mb-2">Failed to load documents</p>
+          <p className="text-sm text-slate-600 text-center">
+            {error instanceof Error ? error.message : String(error)}
+          </p>
+        </Card>
+      )}
+
+      {/* Empty State */}
+      {!isLoading && !error && documents.length === 0 && (
+        <EmptyState
+          icon={FileText}
+          title="No documents found"
+          description={hasFilters ? 'Try adjusting your filters' : 'Upload your first document'}
+          primaryAction={
+            !hasFilters
+              ? { label: 'Upload Documents', onClick: () => setShowUploader(true) }
+              : undefined
+          }
+        />
+      )}
+
+      {/* Documents Content */}
+     
+
     </PageContainer>
   );
 }
