@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Automation Services Page - Astralis Specification Section 4.4
  *
@@ -15,6 +17,7 @@
  * - Astralis Blue accents
  */
 
+import { useState } from 'react';
 import Image from 'next/image';
 import { Hero, CTASection } from '@/components/sections';
 import { Button } from '@/components/ui/button';
@@ -30,7 +33,10 @@ import {
   CheckCircle,
   Users,
   Settings,
-  BarChart
+  BarChart,
+  ChevronDown,
+  ChevronUp,
+  Info
 } from 'lucide-react';
 
 // Service package type definition
@@ -43,6 +49,11 @@ interface ServicePackage {
   features: string[];
   imageUrl: string;
   recommended?: boolean;
+  additionalInfo?: {
+    timeline: string;
+    deliverables: string[];
+    support: string;
+  };
 }
 
 // Local branded images for service packages
@@ -70,7 +81,12 @@ const servicePackages: ServicePackage[] = [
       'Collect and organize client documents',
       'Client portal to check their status'
     ],
-    imageUrl: serviceImages.onboarding
+    imageUrl: serviceImages.onboarding,
+    additionalInfo: {
+      timeline: '2-3 weeks for full implementation',
+      deliverables: ['Custom intake forms', 'Database integration', 'Email templates', 'Staff training session'],
+      support: '30 days post-launch support included'
+    }
   },
   {
     name: 'Document Storage & Search',
@@ -87,7 +103,12 @@ const servicePackages: ServicePackage[] = [
       'Automatic daily backups for safety'
     ],
     imageUrl: serviceImages.documents,
-    recommended: true
+    recommended: true,
+    additionalInfo: {
+      timeline: '3-4 weeks for full implementation',
+      deliverables: ['Document repository setup', 'OCR configuration', 'Search indexing', 'Permission system', 'Migration of existing files'],
+      support: '60 days post-launch support included'
+    }
   },
   {
     name: 'Full Business Automation',
@@ -102,7 +123,12 @@ const servicePackages: ServicePackage[] = [
       'Custom business reports and analytics',
       'Team messaging and task management'
     ],
-    imageUrl: serviceImages.automation
+    imageUrl: serviceImages.automation,
+    additionalInfo: {
+      timeline: '4-6 weeks for full implementation',
+      deliverables: ['Scheduling system', 'Invoice automation', 'Payment processing', 'Custom reports', 'Team collaboration tools'],
+      support: '90 days post-launch support included'
+    }
   },
   {
     name: 'Built Just for Your Business',
@@ -117,7 +143,12 @@ const servicePackages: ServicePackage[] = [
       'Dedicated support team for your account',
       'Training for your staff + user guides'
     ],
-    imageUrl: serviceImages.custom
+    imageUrl: serviceImages.custom,
+    additionalInfo: {
+      timeline: '8-16 weeks depending on scope',
+      deliverables: ['Custom solution architecture', 'API integrations', 'Legacy system connectors', 'Comprehensive documentation', 'Team training program'],
+      support: 'Dedicated account manager + 6 months support'
+    }
   },
   {
     name: 'Monthly Support & Improvements',
@@ -133,7 +164,12 @@ const servicePackages: ServicePackage[] = [
       'Add new features as your business grows',
       'Monthly usage reports and recommendations'
     ],
-    imageUrl: serviceImages.support
+    imageUrl: serviceImages.support,
+    additionalInfo: {
+      timeline: 'Ongoing monthly engagement',
+      deliverables: ['Monthly performance report', 'System health check', 'Feature updates', 'Security patches'],
+      support: 'Priority response within 4 business hours'
+    }
   }
 ];
 
@@ -183,6 +219,168 @@ const valueStatements = [
     description: 'Increase processing speed by 70% while reducing errors by 95% through intelligent automation workflows.'
   }
 ];
+
+/**
+ * ServiceCard Component with Animated Drawer
+ * Features a pulsing "More Info" button and expandable drawer
+ */
+function ServiceCard({ pkg, index }: { pkg: ServicePackage; index: number }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  return (
+    <div
+      className={cn(
+        'feature-card card-theme-light relative flex flex-col overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl h-full',
+        pkg.recommended
+          ? 'border-astralis-blue/60 ring-2 ring-astralis-blue/40'
+          : 'border-slate-200 hover:border-astralis-blue/40'
+      )}
+    >
+      <div className="relative h-40 w-full">
+        <Image
+          src={pkg.imageUrl}
+          alt={`${pkg.name} background visual`}
+          fill
+          className="object-cover"
+          sizes="(min-width: 1280px) 380px, (min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+          priority={index < 2}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-900/35 via-slate-900/10 to-transparent" />
+        {pkg.recommended && (
+          <div className="absolute top-4 left-4 bg-gradient-to-r from-astralis-blue to-blue-400 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-lg">
+            Most Popular
+          </div>
+        )}
+      </div>
+
+      <div className="flex flex-1 flex-col p-6 pt-12 md:p-8 md:pt-14">
+        <div className="feature-card__icon -mt-16 mx-auto mb-6 border border-astralis-blue/20 bg-astralis-blue/10 text-astralis-blue shadow-sm">
+          {pkg.icon}
+        </div>
+
+        <h3 className="feature-card__title text-center text-xl md:text-2xl">
+          {pkg.name}
+        </h3>
+
+        <p className="feature-card__description mb-6 min-h-[80px] text-center">
+          {pkg.description}
+        </p>
+
+        <div className="mb-6 border-b border-slate-200 pb-6 text-center">
+          <div className="mb-1 flex items-baseline justify-center gap-2">
+            <span className="text-3xl font-bold text-astralis-navy">
+              {pkg.setupFee}
+            </span>
+            <span className="text-slate-500 text-sm">setup</span>
+          </div>
+          {pkg.monthlyFee && (
+            <div className="font-medium text-slate-600">
+              + {pkg.monthlyFee}
+            </div>
+          )}
+        </div>
+
+        {/* More Info Button with Pulsing Glow */}
+        {pkg.additionalInfo && (
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className={cn(
+              'mb-4 flex items-center justify-center gap-2 w-full py-3 px-4 rounded-md',
+              'border-2 transition-all duration-300 relative',
+              'text-sm font-semibold',
+              isExpanded
+                ? 'border-astralis-blue bg-astralis-blue/10 text-astralis-blue'
+                : 'border-astralis-blue/30 bg-white text-astralis-blue hover:border-astralis-blue/60 hover:bg-astralis-blue/5'
+            )}
+          >
+            <Info className="h-4 w-4" />
+            <span className="relative">
+              More Info
+              {/* Pulsing indicator when collapsed */}
+              {!isExpanded && (
+                <span className="absolute -top-1 -right-5 flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-astralis-blue opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-astralis-blue"></span>
+                </span>
+              )}
+            </span>
+            {isExpanded ? (
+              <ChevronUp className="h-4 w-4 ml-1" />
+            ) : (
+              <ChevronDown className="h-4 w-4 ml-1" />
+            )}
+          </button>
+        )}
+
+        {/* Animated Drawer */}
+        <div
+          className={cn(
+            'overflow-hidden transition-all duration-300 ease-in-out',
+            isExpanded ? 'max-h-[400px] opacity-100 mb-6' : 'max-h-0 opacity-0'
+          )}
+        >
+          {pkg.additionalInfo && (
+            <div className="bg-slate-50 rounded-lg p-4 space-y-4 border border-slate-200">
+              {/* Timeline */}
+              <div>
+                <div className="flex items-center gap-2 text-xs font-semibold text-astralis-navy uppercase tracking-wide mb-1">
+                  <Clock className="h-3.5 w-3.5" />
+                  Timeline
+                </div>
+                <p className="text-sm text-slate-600">{pkg.additionalInfo.timeline}</p>
+              </div>
+
+              {/* Deliverables */}
+              <div>
+                <div className="flex items-center gap-2 text-xs font-semibold text-astralis-navy uppercase tracking-wide mb-2">
+                  <CheckCircle className="h-3.5 w-3.5" />
+                  Deliverables
+                </div>
+                <ul className="space-y-1.5">
+                  {pkg.additionalInfo.deliverables.map((item, idx) => (
+                    <li key={idx} className="flex items-start gap-2 text-sm text-slate-600">
+                      <span className="w-1 h-1 bg-astralis-blue rounded-full mt-2 flex-shrink-0" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Support */}
+              <div className="pt-2 border-t border-slate-200">
+                <div className="flex items-center gap-2 text-xs font-semibold text-astralis-navy uppercase tracking-wide mb-1">
+                  <Users className="h-3.5 w-3.5" />
+                  Support
+                </div>
+                <p className="text-sm text-slate-600">{pkg.additionalInfo.support}</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <ul className="mb-8 space-y-4 text-left flex-grow">
+          {pkg.features.map((feature, idx) => (
+            <li key={idx} className="flex items-start gap-3 text-base">
+              <CheckCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-astralis-blue" />
+              <span className="feature-card__description leading-relaxed">{feature}</span>
+            </li>
+          ))}
+        </ul>
+
+        <Button
+          variant={pkg.recommended ? 'primary' : 'secondary'}
+          className={cn(
+            'mt-auto w-full',
+            !pkg.recommended && 'border border-slate-200 bg-slate-100 text-astralis-navy hover:bg-slate-200'
+          )}
+          asChild
+        >
+          <a href="/contact">Get Started</a>
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 /**
  * Services Hero Visual - Automation Platform Preview
@@ -252,80 +450,7 @@ export default function ServicesPage() {
           {/* Service Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10 items-stretch">
             {servicePackages.map((pkg, index) => (
-              <div
-                key={index}
-                className={cn(
-                  'feature-card card-theme-light relative flex flex-col overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl h-full',
-                  pkg.recommended
-                    ? 'border-astralis-blue/60 ring-2 ring-astralis-blue/40'
-                    : 'border-slate-200 hover:border-astralis-blue/40'
-                )}
-              >
-                <div className="relative h-40 w-full">
-                  <Image
-                    src={pkg.imageUrl}
-                    alt={`${pkg.name} background visual`}
-                    fill
-                    className="object-cover"
-                    sizes="(min-width: 1280px) 380px, (min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
-                    priority={index < 2}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-b from-slate-900/35 via-slate-900/10 to-transparent" />
-                  {pkg.recommended && (
-                    <div className="absolute top-4 left-4 bg-gradient-to-r from-astralis-blue to-blue-400 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-lg">
-                      Most Popular
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex flex-1 flex-col p-6 pt-12 md:p-8 md:pt-14">
-                  <div className="feature-card__icon -mt-16 mx-auto mb-6 border border-astralis-blue/20 bg-astralis-blue/10 text-astralis-blue shadow-sm">
-                    {pkg.icon}
-                  </div>
-
-                  <h3 className="feature-card__title text-center text-xl md:text-2xl">
-                    {pkg.name}
-                  </h3>
-
-                  <p className="feature-card__description mb-6 min-h-[80px] text-center">
-                    {pkg.description}
-                  </p>
-
-                  <div className="mb-6 border-b border-slate-200 pb-6 text-center">
-                    <div className="mb-1 flex items-baseline justify-center gap-2">
-                      <span className="text-3xl font-bold text-astralis-navy">
-                        {pkg.setupFee}
-                      </span>
-                      <span className="text-slate-500 text-sm">setup</span>
-                    </div>
-                    {pkg.monthlyFee && (
-                      <div className="font-medium text-slate-600">
-                        + {pkg.monthlyFee}
-                      </div>
-                    )}
-                  </div>
-
-                  <ul className="mb-8 space-y-4 text-left flex-grow">
-                    {pkg.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-start gap-3 text-base">
-                        <CheckCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-astralis-blue" />
-                        <span className="feature-card__description leading-relaxed">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <Button
-                    variant={pkg.recommended ? 'primary' : 'secondary'}
-                    className={cn(
-                      'mt-auto w-full',
-                      !pkg.recommended && 'border border-slate-200 bg-slate-100 text-astralis-navy hover:bg-slate-200'
-                    )}
-                    asChild
-                  >
-                    <a href="/contact">Get Started</a>
-                  </Button>
-                </div>
-              </div>
+              <ServiceCard key={index} pkg={pkg} index={index} />
             ))}
           </div>
 
