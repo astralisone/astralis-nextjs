@@ -231,14 +231,14 @@ function PricingSection() {
         </div>
 
         {/* Pricing Tiers Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-12 items-stretch">
           {tiers.map((tier) => (
             <div
               key={tier.name}
               className={cn(
-                "relative p-8 bg-white dark:bg-slate-900 border rounded-xl shadow-lg transition-all duration-200",
+                "relative p-8 bg-white dark:bg-slate-900 border rounded-xl shadow-lg transition-all duration-200 h-full flex flex-col",
                 tier.recommended
-                  ? "border-astralis-blue shadow-xl scale-105 md:scale-110"
+                  ? "border-astralis-blue shadow-xl ring-2 ring-astralis-blue/20"
                   : "border-slate-300 dark:border-slate-700 hover:border-astralis-blue"
               )}
             >
@@ -274,7 +274,7 @@ function PricingSection() {
               </p>
 
               {/* Features List */}
-              <ul className="space-y-3 mb-8">
+              <ul className="space-y-3 mb-8 flex-grow">
                 {tier.features.map((feature, index) => (
                   <li key={index} className="flex items-start gap-3">
                     <Check className="w-5 h-5 text-astralis-blue flex-shrink-0 mt-0.5" />

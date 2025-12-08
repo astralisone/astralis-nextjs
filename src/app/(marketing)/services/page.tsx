@@ -61,7 +61,7 @@ const servicePackages: ServicePackage[] = [
     description: 'Set up online forms so new clients can submit their information automatically. No more manual data entry from paper forms or emails.',
     setupFee: '$750',
     monthlyFee: '$99/mo',
-    icon: <FileText className="w-6 h-6" />,
+    icon: <FileText />,
     features: [
       'Custom online forms for your business',
       'Automatic error checking on submissions',
@@ -77,7 +77,7 @@ const servicePackages: ServicePackage[] = [
     description: 'Organize all your business documents in one searchable system. Find any file in seconds instead of digging through folders.',
     setupFee: '$1,200',
     monthlyFee: '$149/mo',
-    icon: <Database className="w-6 h-6" />,
+    icon: <Database />,
     features: [
       'Upload and store all your documents',
       'Automatic filing and tagging',
@@ -93,7 +93,7 @@ const servicePackages: ServicePackage[] = [
     name: 'Full Business Automation',
     description: 'Automate your entire operation - from booking appointments to sending invoices. Everything works together automatically.',
     setupFee: '$3,500',
-    icon: <Workflow className="w-6 h-6" />,
+    icon: <Workflow />,
     features: [
       'Online appointment booking for clients',
       'Automatic invoice creation and sending',
@@ -108,7 +108,7 @@ const servicePackages: ServicePackage[] = [
     name: 'Built Just for Your Business',
     description: 'Custom automation designed specifically for your unique business needs. We build exactly what you need, nothing more, nothing less.',
     setupFee: '$7,500–$25,000',
-    icon: <Settings className="w-6 h-6" />,
+    icon: <Settings />,
     features: [
       'Custom workflows designed for how you work',
       'Connect to any software or system you use',
@@ -124,7 +124,7 @@ const servicePackages: ServicePackage[] = [
     description: 'Keep your automation running smoothly with ongoing maintenance, updates, and improvements every month.',
     setupFee: 'N/A',
     monthlyFee: '$450/mo',
-    icon: <TrendingUp className="w-6 h-6" />,
+    icon: <TrendingUp />,
     features: [
       'Monthly review of your automation performance',
       'Speed improvements and optimizations',
@@ -142,25 +142,25 @@ const automationExamples = [
   {
     title: 'Legal Firm Client Intake',
     description: 'Automated intake forms reduce manual data entry by 80%, allowing attorneys to focus on billable work instead of administrative tasks.',
-    icon: <Users className="w-8 h-8 text-astralis-blue" />,
+    icon: <Users className="text-astralis-blue" />,
     metrics: '80% reduction in data entry time'
   },
   {
     title: 'Financial Services Document Processing',
     description: 'Intelligent document categorization and extraction processes 500+ documents per day, improving compliance and reducing processing costs.',
-    icon: <FileText className="w-8 h-8 text-astralis-blue" />,
+    icon: <FileText className="text-astralis-blue" />,
     metrics: '500+ documents processed daily'
   },
   {
     title: 'Healthcare Appointment Scheduling',
     description: 'Automated scheduling system reduces no-shows by 35% and eliminates double-bookings, improving patient satisfaction and revenue.',
-    icon: <Clock className="w-8 h-8 text-astralis-blue" />,
+    icon: <Clock className="text-astralis-blue" />,
     metrics: '35% reduction in no-shows'
   },
   {
     title: 'E-commerce Order Fulfillment',
     description: 'End-to-end automation from order receipt to shipping notification reduces fulfillment time by 60% and eliminates manual errors.',
-    icon: <Zap className="w-8 h-8 text-astralis-blue" />,
+    icon: <Zap className="text-astralis-blue" />,
     metrics: '60% faster fulfillment'
   }
 ];
@@ -168,17 +168,17 @@ const automationExamples = [
 // Value propositions
 const valueStatements = [
   {
-    icon: <DollarSign className="w-10 h-10 text-astralis-blue" />,
+    icon: <DollarSign className="text-astralis-blue" />,
     title: 'Significant ROI',
     description: 'Average ROI of 300% within 12 months through reduced labor costs and increased operational efficiency.'
   },
   {
-    icon: <Clock className="w-10 h-10 text-astralis-blue" />,
+    icon: <Clock className="text-astralis-blue" />,
     title: 'Time Savings',
     description: 'Save 15-25 hours per week on repetitive tasks, allowing your team to focus on high-value strategic work.'
   },
   {
-    icon: <BarChart className="w-10 h-10 text-astralis-blue" />,
+    icon: <BarChart className="text-astralis-blue" />,
     title: 'Efficiency Gains',
     description: 'Increase processing speed by 70% while reducing errors by 95% through intelligent automation workflows.'
   }
@@ -250,12 +250,12 @@ export default function ServicesPage() {
           </div>
 
           {/* Service Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10 items-stretch">
             {servicePackages.map((pkg, index) => (
               <div
                 key={index}
                 className={cn(
-                  'feature-card card-theme-light relative flex flex-col overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl',
+                  'feature-card card-theme-light relative flex flex-col overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl h-full',
                   pkg.recommended
                     ? 'border-astralis-blue/60 ring-2 ring-astralis-blue/40'
                     : 'border-slate-200 hover:border-astralis-blue/40'
@@ -305,7 +305,7 @@ export default function ServicesPage() {
                     )}
                   </div>
 
-                  <ul className="mb-8 space-y-4 text-left">
+                  <ul className="mb-8 space-y-4 text-left flex-grow">
                     {pkg.features.map((feature, idx) => (
                       <li key={idx} className="flex items-start gap-3 text-base">
                         <CheckCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-astralis-blue" />

@@ -141,12 +141,25 @@ export default function MarketplacePage() {
         description="Accelerate your development with production-ready templates, components, and automation tools. Built by experts, validated in production."
         variant="dark"
         className="bg-astralis-navy"
-        textAlign="center"
-        textColumnWidth="two-thirds"
+        textAlign="left"
+        textColumnWidth="half"
         primaryButton={{
           text: "Browse All Assets",
           href: "#products"
         }}
+        rightContent={
+          <div className="relative w-full h-[400px] md:h-[500px] lg:h-[600px] rounded-lg overflow-hidden shadow-2xl border border-slate-700">
+            <Image
+              src="https://images.unsplash.com/photo-1556155092-490a1ba16284?w=1200&q=85"
+              alt="Digital marketplace showcasing enterprise software solutions and templates"
+              fill
+              className="object-cover"
+              priority
+              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 640px"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-astralis-navy/40 to-transparent" />
+          </div>
+        }
       />
 
       {/* Category Filter Section - Dark Background */}
@@ -198,14 +211,14 @@ export default function MarketplacePage() {
           </div>
 
           {/* Product Grid - 3 columns */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10 items-stretch">
             {filteredProducts.map((product) => (
               <div
                 key={product.id}
-                className="bg-white border border-slate-200 rounded-xl shadow-lg hover:shadow-2xl hover:border-astralis-blue/30 hover:scale-[1.02] transition-all duration-200 overflow-hidden group"
+                className="bg-white border border-slate-200 rounded-xl shadow-lg hover:shadow-2xl hover:border-astralis-blue/30 hover:scale-[1.02] transition-all duration-200 overflow-hidden group h-full flex flex-col"
               >
                 {/* Card Content */}
-                <div className="p-6 md:p-8">
+                <div className="p-6 md:p-8 flex flex-col flex-grow">
                   {/* Icon */}
                   <div className="mb-6 flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-50 to-slate-50 border border-slate-200 rounded-lg group-hover:from-astralis-blue/10 group-hover:to-blue-50 group-hover:border-astralis-blue/30 transition-all duration-200">
                     {product.icon}
@@ -241,7 +254,7 @@ export default function MarketplacePage() {
                   </p>
 
                   {/* Features List */}
-                  <ul className="space-y-3 mb-6 pb-6 border-b border-slate-200">
+                  <ul className="space-y-3 mb-6 pb-6 border-b border-slate-200 flex-grow">
                     {product.features.map((feature, index) => (
                       <li key={index} className="flex items-center gap-2 text-sm text-slate-600">
                         <div className="w-1.5 h-1.5 bg-astralis-blue rounded-full flex-shrink-0" />

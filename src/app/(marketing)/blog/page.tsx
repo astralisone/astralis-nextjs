@@ -280,7 +280,7 @@ export default function BlogPage() {
               </div>
 
               {/* Right: Featured Image */}
-              <div className="hidden lg:block relative rounded-xl overflow-hidden h-96 shadow-lg">
+              <div className="hidden lg:block relative rounded-xl overflow-hidden h-96 min-h-[200px] shadow-lg">
                 <Image
                   src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80"
                   alt="AI and data visualization"
@@ -322,7 +322,7 @@ export default function BlogPage() {
                 className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-200 hover:-translate-y-2 flex flex-col group"
               >
                 {/* Article Image */}
-                <div className="w-full h-48 relative border-b border-slate-200 overflow-hidden">
+                <div className="w-full h-48 min-h-[100px] relative border-b border-slate-200 overflow-hidden">
                   <Image
                     src={getArticleImage(post.id)}
                     alt={post.title}

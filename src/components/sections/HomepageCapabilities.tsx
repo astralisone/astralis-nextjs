@@ -29,7 +29,7 @@ export function HomepageCapabilities({ capabilities }: HomepageCapabilitiesProps
     <section className="w-full px-6 py-20 md:px-12 md:py-24 lg:px-20 lg:py-32 bg-slate-50 border-y border-slate-200">
       <div className="mx-auto max-w-[1280px]">
         {/* Section Header */}
-        <div className="text-center mb-12 md:mb-16">
+        <div className="text-center mb-8">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-astralis-navy tracking-tight mb-4">
             Core Capabilities
           </h2>

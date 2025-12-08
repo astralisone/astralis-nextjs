@@ -81,7 +81,7 @@ export const FeatureCardIcon = React.forwardRef<
         {/* Icon container */}
         <div
           className={cn(
-            "w-20 h-20 rounded-full flex items-center justify-center mb-6 transition-all duration-300",
+            "w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center mb-4 transition-all duration-300",
             isDark
               ? "bg-astralis-cyan/20 border-2 border-astralis-cyan"
               : "bg-astralis-blue/10 border-2 border-astralis-blue",
@@ -90,7 +90,7 @@ export const FeatureCardIcon = React.forwardRef<
         >
           <Icon
             className={cn(
-              "w-10 h-10",
+              "w-8 h-8 md:w-10 md:h-10",
               isDark ? "text-astralis-cyan" : "text-astralis-blue"
             )}
           />

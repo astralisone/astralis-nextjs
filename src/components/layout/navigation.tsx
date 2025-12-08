@@ -4,7 +4,8 @@ import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X } from 'lucide-react';
+import { useSession, signOut } from 'next-auth/react';
+import { Menu, X, User, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
@@ -38,7 +39,8 @@ interface NavItem {
   href: string;
 }
 
-const navItems: NavItem[] = [
+// Marketing navigation for unauthenticated users
+const marketingNavItems: NavItem[] = [
   { label: 'Solutions', href: '/solutions' },
   { label: 'Products', href: '/astralisops' },
   { label: 'Services', href: '/services' },
@@ -47,9 +49,27 @@ const navItems: NavItem[] = [
   { label: 'Blog', href: '/blog' },
 ];
 
+// App navigation for authenticated users
+const appNavItems: NavItem[] = [
+  { label: 'Dashboard', href: '/dashboard' },
+  { label: 'Pipelines', href: '/pipelines' },
+  { label: 'Documents', href: '/documents' },
+  { label: 'Scheduling', href: '/scheduling' },
+  { label: 'Settings', href: '/settings' },
+];
+
 export function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const pathname = usePathname();
+  const { data: session, status } = useSession();
+
+  // Select nav items based on authentication status
+  const navItems = session ? appNavItems : marketingNavItems;
+
+  // Handle sign out
+  const handleSignOut = async () => {
+    await signOut({ callbackUrl: '/' });
+  };
 
   // Close mobile menu on route change
   React.useEffect(() => {
@@ -82,7 +102,7 @@ export function Navigation() {
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link
-              href="/"
+              href={session ? "/dashboard" : "/"}
               className="group flex items-center gap-3 transition-transform duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-astralis-navy focus-visible:ring-astralis-blue"
               aria-label="Astralis home"
             >
@@ -123,23 +143,49 @@ export function Navigation() {
               ))}
             </ul>
 
-            {/* Sign In Button - Text Link Style */}
-            <Link
-              href="/auth/signin"
-              className="text-base font-medium text-slate-100 hover:text-white transition-colors duration-200"
-            >
-              Sign In
-            </Link>
+            {/* Conditional Auth Buttons */}
+            {session ? (
+              <>
+                {/* User Profile */}
+                <div className="flex items-center gap-2 text-slate-100">
+                  <User className="h-5 w-5" />
+                  <span className="text-sm font-medium truncate max-w-[120px]">
+                    {session.user?.name || session.user?.email}
+                  </span>
+                </div>
 
-            {/* Start Service Wizard Button - Bright Blue Filled */}
-            <Button
-              variant="primary"
-              size="sm"
-              className="bg-astralis-blue hover:bg-blue-600 text-white font-semibold rounded-md transition-all duration-200"
-              asChild
-            >
-              <Link href="/contact">Start Service Wizard</Link>
-            </Button>
+                {/* Sign Out Button */}
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="border-slate-600 text-slate-100 hover:bg-slate-700 hover:text-white transition-all duration-200"
+                  onClick={handleSignOut}
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <>
+                {/* Sign In Button - Text Link Style */}
+                <Link
+                  href="/auth/signin"
+                  className="text-base font-medium text-slate-100 hover:text-white transition-colors duration-200"
+                >
+                  Sign In
+                </Link>
+
+                {/* Start Service Wizard Button - Bright Blue Filled */}
+                <Button
+                  variant="primary"
+                  size="sm"
+                  className="bg-astralis-blue hover:bg-blue-600 text-white font-semibold rounded-md transition-all duration-200"
+                  asChild
+                >
+                  <Link href="/contact">Start Service Wizard</Link>
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -214,28 +260,62 @@ export function Navigation() {
                   ))}
                 </ul>
 
-                {/* Sign In Link */}
-                <Link
-                  href="/auth/signin"
-                  className="block py-4 px-5 mt-6 min-h-[44px] text-lg font-medium text-slate-100 hover:text-white hover:bg-slate-800 rounded-lg transition-all duration-200 flex items-center justify-center border border-slate-600 hover:border-slate-500"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Sign In
-                </Link>
+                {/* Conditional Mobile Auth */}
+                {session ? (
+                  <>
+                    {/* User Info */}
+                    <div className="mt-6 p-4 bg-slate-800 rounded-lg">
+                      <div className="flex items-center gap-3 text-slate-100">
+                        <User className="h-6 w-6" />
+                        <div className="truncate">
+                          <p className="text-sm font-medium">{session.user?.name || 'User'}</p>
+                          <p className="text-xs text-slate-400 truncate">{session.user?.email}</p>
+                        </div>
+                      </div>
+                    </div>
 
-                {/* Mobile CTA */}
-                <div className="mt-10 pt-10 border-t border-slate-700">
-                  <Button
-                    variant="primary"
-                    size="lg"
-                    className="w-full bg-astralis-blue hover:bg-blue-600 font-semibold text-lg"
-                    asChild
-                  >
-                    <Link href="/contact" onClick={() => setMobileMenuOpen(false)}>
-                      Contact
+                    {/* Sign Out Button */}
+                    <div className="mt-6 pt-6 border-t border-slate-700">
+                      <Button
+                        variant="secondary"
+                        size="lg"
+                        className="w-full border-slate-600 text-slate-100 hover:bg-slate-700"
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          handleSignOut();
+                        }}
+                      >
+                        <LogOut className="h-5 w-5 mr-2" />
+                        Sign Out
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Sign In Link */}
+                    <Link
+                      href="/auth/signin"
+                      className="block py-4 px-5 mt-6 min-h-[44px] text-lg font-medium text-slate-100 hover:text-white hover:bg-slate-800 rounded-lg transition-all duration-200 flex items-center justify-center border border-slate-600 hover:border-slate-500"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Sign In
                     </Link>
-                  </Button>
-                </div>
+
+                    {/* Mobile CTA */}
+                    <div className="mt-10 pt-10 border-t border-slate-700">
+                      <Button
+                        variant="primary"
+                        size="lg"
+                        className="w-full bg-astralis-blue hover:bg-blue-600 font-semibold text-lg"
+                        asChild
+                      >
+                        <Link href="/contact" onClick={() => setMobileMenuOpen(false)}>
+                          Contact
+                        </Link>
+                      </Button>
+                    </div>
+                  </>
+                )}
               </nav>
             </div>
           </>
