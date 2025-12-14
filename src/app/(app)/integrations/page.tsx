@@ -86,10 +86,28 @@ export default function IntegrationsPage() {
 
   const handleConnect = async (provider: IntegrationProvider) => {
     try {
-      // Redirect to OAuth connect endpoint
-      window.location.href = `/api/integrations/${provider.toLowerCase().replace(/_/g, '-')}/connect`;
+      // First check if OAuth credentials are available
+      const res = await fetch(`/api/integrations/${provider.toLowerCase().replace(/_/g, '-')}/connect`);
+
+      if (res.ok) {
+        // Credentials exist, proceed with OAuth
+        const data = await res.json();
+        if (data.authUrl) {
+          window.location.href = data.authUrl;
+        } else {
+          alert('Integration connected successfully!');
+          fetchIntegrations();
+        }
+      } else {
+        // Credentials missing, throw error to show setup guide
+        const errorData = await res.json();
+        const error = new Error(errorData.details || errorData.error || 'Failed to connect integration');
+        (error as any).code = errorData.code;
+        (error as any).setupGuide = errorData.setupGuide;
+        throw error;
+      }
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to connect integration');
+      throw err; // Re-throw to be caught by IntegrationSetup
     }
   };
 

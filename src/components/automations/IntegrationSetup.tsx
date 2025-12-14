@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import {
   CheckCircle2,
@@ -210,6 +212,8 @@ export function IntegrationSetup({
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<boolean | null>(null);
+  const [showSetupGuide, setShowSetupGuide] = useState(false);
+  const [setupGuide, setSetupGuide] = useState<any>(null);
 
   const info = providerInfo[provider];
 
@@ -221,6 +225,15 @@ export function IntegrationSetup({
     setIsConnecting(true);
     try {
       await onConnect();
+    } catch (error: any) {
+      // Check if OAuth credentials are required
+      if (error?.code === 'OAUTH_CREDENTIALS_REQUIRED' && error?.setupGuide) {
+        setSetupGuide(error.setupGuide);
+        setShowSetupGuide(true);
+      } else {
+        // Re-throw other errors
+        throw error;
+      }
     } finally {
       setIsConnecting(false);
     }
@@ -379,5 +392,61 @@ export function IntegrationSetup({
         </div>
       </CardContent>
     </Card>
+
+    {/* Setup Guide Dialog */}
+    {showSetupGuide && setupGuide && (
+      <Dialog open={showSetupGuide} onOpenChange={setShowSetupGuide}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Setup {setupGuide.name} Integration</DialogTitle>
+            <DialogDescription>
+              {setupGuide.description}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>OAuth Setup Required:</strong> This integration requires OAuth credentials to be configured for your organization.
+              </AlertDescription>
+            </Alert>
+
+            <div>
+              <h4 className="font-semibold text-astralis-navy mb-2">Setup Steps:</h4>
+              <ol className="list-decimal list-inside text-sm text-slate-600 space-y-2">
+                <li>Go to the {setupGuide.name} developer portal</li>
+                <li>Create a new OAuth application</li>
+                <li>Configure the redirect URI: <code className="bg-slate-100 px-1 py-0.5 rounded text-xs">https://astralisone.com/api/integrations/{provider.toLowerCase().replace(/_/g, '-')}/oauth/callback</code></li>
+                <li>Copy the Client ID and Client Secret</li>
+                <li>Enter the credentials in your organization settings</li>
+              </ol>
+            </div>
+
+            {setupGuide.setupUrl && setupGuide.setupUrl !== '#' && (
+              <div className="flex gap-2">
+                <Button asChild variant="outline">
+                  <a href={setupGuide.setupUrl} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Open {setupGuide.name} Developer Portal
+                  </a>
+                </Button>
+                <Button asChild>
+                  <Link href="/settings">
+                    Go to Settings
+                  </Link>
+                </Button>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSetupGuide(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    )}
   );
 }
