@@ -324,6 +324,7 @@ export function IntegrationSetup({
   };
 
   return (
+    <>
     <Card variant="default" className="h-full">
       <CardHeader>
         <div className="flex items-start justify-between">
@@ -516,5 +517,6 @@ export function IntegrationSetup({
         </DialogContent>
       </Dialog>
     )}
+    </>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -9,6 +10,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { IntegrationSetup } from '@/components/automations/IntegrationSetup';
+import { useToast } from '@/hooks/useToast';
 import { Search, ArrowLeft, CheckCircle2, XCircle } from 'lucide-react';
 import type { IntegrationProvider } from '@/types/automation';
 import type { CredentialData } from '@/lib/services/integration.service';
@@ -38,11 +40,42 @@ interface IntegrationStatus {
 }
 
 export default function IntegrationsPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { toast } = useToast();
+
   const [integrations, setIntegrations] = useState<IntegrationStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'connected' | 'available'>('all');
+
+  // Handle success/error from OAuth callback
+  useEffect(() => {
+    const success = searchParams.get('success');
+    const error = searchParams.get('error');
+    const provider = searchParams.get('provider');
+
+    if (success === 'true' && provider) {
+      toast({
+        title: 'Connected!',
+        description: `Successfully connected to ${provider.replace(/-/g, ' ').replace(/_/g, ' ')}`,
+      });
+      // Refresh integrations
+      fetchIntegrations();
+      // Clear URL params
+      router.replace('/app/integrations');
+    }
+
+    if (error) {
+      toast({
+        title: 'Connection failed',
+        description: decodeURIComponent(error),
+        variant: 'destructive',
+      });
+      router.replace('/app/integrations');
+    }
+  }, [searchParams, router, toast]);
 
   useEffect(() => {
     fetchIntegrations();
