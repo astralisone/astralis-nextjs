@@ -10,7 +10,7 @@
     "start": "next start -p 3001",
     "lint": "next lint",
     "postinstall": "prisma generate",
-    "vercel-build": "prisma generate && prisma migrate deploy && node prisma/seed.js && next build",
+    "vercel-build": "export DIRECT_URL=${DIRECT_URL:-$DATABASE_URL} && prisma generate && prisma migrate deploy && node prisma/seed.js && next build",
     "worker": "NODE_ENV=development tsx watch src/workers/index.ts",
     "worker:prod": "NODE_ENV=production tsx src/workers/index.ts",
     "prod:start": "pm2 start ecosystem.config.js && pm2 save",
