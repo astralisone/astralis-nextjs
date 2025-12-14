@@ -10,38 +10,31 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { IntegrationSetup } from '@/components/automations/IntegrationSetup';
 import { Search, ArrowLeft, CheckCircle2, XCircle } from 'lucide-react';
-import type { IntegrationCredential, IntegrationProvider } from '@/types/automation';
+import type { IntegrationProvider } from '@/types/automation';
+import type { CredentialData } from '@/lib/services/integration.service';
 
-// Available integrations
+// Available integrations (only those with implemented services)
 const AVAILABLE_INTEGRATIONS: IntegrationProvider[] = [
   'GMAIL',
-  'GOOGLE_SHEETS',
   'GOOGLE_DRIVE',
-  'GOOGLE_CALENDAR',
+  'GOOGLE_DOCS',
   'SLACK',
   'MICROSOFT_TEAMS',
-  'OUTLOOK',
   'HUBSPOT',
   'SALESFORCE',
-  'STRIPE',
-  'PAYPAL',
-  'MAILCHIMP',
-  'SENDGRID',
-  'TWILIO',
-  'ZOOM',
   'DROPBOX',
-  'TRELLO',
-  'ASANA',
-  'NOTION',
-  'AIRTABLE',
-  'OPENAI',
-  'ANTHROPIC',
+  'QUICKBOOKS',
+  'XERO',
+  'SHOPIFY',
+  'FACEBOOK',
+  'BAMBOOHR',
+  'GITHUB',
 ];
 
 interface IntegrationStatus {
   provider: IntegrationProvider;
   isConnected: boolean;
-  credential?: IntegrationCredential;
+  credential?: CredentialData;
 }
 
 export default function IntegrationsPage() {
@@ -58,12 +51,12 @@ export default function IntegrationsPage() {
   const fetchIntegrations = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/integrations/credentials');
+      const res = await fetch('/api/integrations');
       if (!res.ok) throw new Error('Failed to fetch integrations');
       const data = await res.json();
 
       // Map credentials to providers
-      const credentials: IntegrationCredential[] = data.credentials || [];
+      const credentials: CredentialData[] = data.data || [];
       const statusMap = new Map<IntegrationProvider, IntegrationStatus>();
 
       // Initialize all available integrations
@@ -93,24 +86,8 @@ export default function IntegrationsPage() {
 
   const handleConnect = async (provider: IntegrationProvider) => {
     try {
-      // Initiate OAuth flow or credential setup
-      const res = await fetch('/api/integrations/credentials', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider }),
-      });
-
-      if (!res.ok) throw new Error('Failed to connect integration');
-
-      const data = await res.json();
-
-      // If OAuth URL is returned, redirect to it
-      if (data.authUrl) {
-        window.location.href = data.authUrl;
-      } else {
-        alert('Integration connected successfully!');
-        fetchIntegrations();
-      }
+      // Redirect to OAuth connect endpoint
+      window.location.href = `/api/integrations/${provider.toLowerCase().replace(/_/g, '-')}/connect`;
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to connect integration');
     }
@@ -121,7 +98,7 @@ export default function IntegrationsPage() {
     if (!integration?.credential) return;
 
     try {
-      const res = await fetch(`/api/integrations/credentials/${integration.credential.id}`, {
+      const res = await fetch(`/api/integrations/${provider.toLowerCase().replace(/_/g, '-')}/${integration.credential.id}`, {
         method: 'DELETE',
       });
 
@@ -140,9 +117,11 @@ export default function IntegrationsPage() {
 
     try {
       const res = await fetch(
-        `/api/integrations/credentials/${integration.credential.id}/test`,
+        `/api/integrations/${provider.toLowerCase().replace(/_/g, '-')}/test`,
         {
           method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ credentialId: integration.credential.id }),
         }
       );
 

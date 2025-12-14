@@ -155,6 +155,41 @@ const providerInfo: Record<
     description: 'Access AI models',
     icon: '🧠',
   },
+  QUICKBOOKS: {
+    name: 'QuickBooks',
+    description: 'Manage accounting, invoices, and financial data',
+    icon: '💼',
+  },
+  XERO: {
+    name: 'Xero',
+    description: 'Cloud accounting and bookkeeping platform',
+    icon: '📊',
+  },
+  SHOPIFY: {
+    name: 'Shopify',
+    description: 'E-commerce platform for online stores',
+    icon: '🛒',
+  },
+  FACEBOOK: {
+    name: 'Facebook',
+    description: 'Social media marketing and advertising',
+    icon: '📘',
+  },
+  BAMBOOHR: {
+    name: 'BambooHR',
+    description: 'HR management and employee data',
+    icon: '👥',
+  },
+  GITHUB: {
+    name: 'GitHub',
+    description: 'Code repository and development workflow',
+    icon: '💻',
+  },
+  GOOGLE_DOCS: {
+    name: 'Google Docs',
+    description: 'Create and edit documents collaboratively',
+    icon: '📄',
+  },
   OTHER: {
     name: 'Other',
     description: 'Custom integration',

@@ -16,19 +16,24 @@ import { createIntegrationCredentialSchema } from '@/lib/validators/automation.v
  */
 export async function GET(req: NextRequest) {
   try {
+    console.log('[Integration API] Starting request');
+
     // 1. Verify authentication
     const session = await auth();
+    console.log('[Integration API] Session:', { hasSession: !!session, userId: session?.user?.id, orgId: session?.user?.orgId });
 
     if (!session?.user?.id) {
+      console.log('[Integration API] No session or user ID');
       return NextResponse.json(
         { error: 'Unauthorized', details: 'Authentication required' },
         { status: 401 }
       );
     }
 
-    if (!session.user.orgId) {
+    if (!session.user.orgId || session.user.orgId === '') {
+      console.log('[Integration API] No orgId:', session.user.orgId);
       return NextResponse.json(
-        { error: 'Forbidden', details: 'Organization required' },
+        { error: 'Forbidden', details: 'Organization required. Please complete your account setup.' },
         { status: 403 }
       );
     }
@@ -38,11 +43,20 @@ export async function GET(req: NextRequest) {
     const provider = searchParams.get('provider') || undefined;
 
     // 3. Get credentials (without decrypted data)
-    const credentials = await integrationService.listCredentials(
-      session.user.id,
-      session.user.orgId,
-      provider as any
-    );
+    let credentials;
+    try {
+      console.log('[Integration API] Querying credentials for user:', session.user.id, 'org:', session.user.orgId);
+      credentials = await integrationService.listCredentials(
+        session.user.id,
+        session.user.orgId,
+        provider as any
+      );
+      console.log('[Integration API] Found credentials:', credentials.length);
+    } catch (dbError) {
+      console.error('[Integration API] Database error:', dbError);
+      // Return empty array on database error for now
+      credentials = [];
+    }
 
     // 4. Return credentials
     return NextResponse.json({
