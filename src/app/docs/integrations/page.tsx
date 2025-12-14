@@ -341,7 +341,7 @@ export default function IntegrationsDocsPage() {
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <Link href="/integrations" className="inline-flex items-center text-astralis-blue hover:underline mb-4">
+          <Link href="/app/integrations" className="inline-flex items-center text-astralis-blue hover:underline mb-4">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Integrations
           </Link>
@@ -430,7 +430,7 @@ export default function IntegrationsDocsPage() {
                     {/* Action Button */}
                     <div className="pt-4 border-t border-slate-200">
                       <Button asChild>
-                        <Link href="/integrations">
+                        <Link href="/app/integrations">
                           Configure {provider.name} Integration
                           <ExternalLink className="w-4 h-4 ml-2" />
                         </Link>

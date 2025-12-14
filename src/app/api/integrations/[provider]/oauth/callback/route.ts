@@ -49,7 +49,7 @@ export async function GET(
       console.error('[OAuth Callback] OAuth error:', error, errorDescription);
       return NextResponse.redirect(
         new URL(
-          `/app/integrations?error=${encodeURIComponent(errorDescription || error)}`,
+          `/integrations?error=${encodeURIComponent(errorDescription || error)}`,
           req.url
         )
       );
