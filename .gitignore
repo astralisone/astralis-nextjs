@@ -14,10 +14,7 @@ tsconfig.tsbuildinfo
 
 # Environment files
 .env
-.env.local
-.env.production
-.env.vercel
-.env.*.local
+.env.*
 
 # Log files
 *.log
