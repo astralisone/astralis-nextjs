@@ -481,16 +481,32 @@ export function IntegrationSetup({
               </AlertDescription>
             </Alert>
 
-            <div>
-              <h4 className="font-semibold text-astralis-navy mb-2">Setup Steps:</h4>
-              <ol className="list-decimal list-inside text-sm text-slate-600 space-y-2">
-                <li>Go to the {setupGuide.name} developer portal</li>
-                <li>Create a new OAuth application</li>
-                <li>Configure the redirect URI: <code className="bg-slate-100 px-1 py-0.5 rounded text-xs">https://astralisone.com/api/integrations/{provider.toLowerCase().replace(/_/g, '-')}/oauth/callback</code></li>
-                <li>Copy the Client ID and Client Secret</li>
-                <li>Enter the credentials in your organization settings</li>
-              </ol>
-            </div>
+             <div>
+               <h4 className="font-semibold text-astralis-navy mb-2">Setup Steps:</h4>
+               {setupGuide.steps ? (
+                 <ol className="list-decimal list-inside text-sm text-slate-600 space-y-2">
+                   {setupGuide.steps.map((step: string, index: number) => (
+                     <li key={index}>
+                       {step.includes('redirect URI') ? (
+                         <>
+                           Configure the redirect URI: <code className="bg-slate-100 px-1 py-0.5 rounded text-xs break-all">{setupGuide.redirectUri || `https://astralisone.com/api/integrations/${provider.toLowerCase().replace(/_/g, '-')}/oauth/callback`}</code>
+                         </>
+                       ) : (
+                         step
+                       )}
+                     </li>
+                   ))}
+                 </ol>
+               ) : (
+                 <ol className="list-decimal list-inside text-sm text-slate-600 space-y-2">
+                   <li>Go to the {setupGuide.name} developer portal</li>
+                   <li>Create a new OAuth application</li>
+                   <li>Configure the redirect URI: <code className="bg-slate-100 px-1 py-0.5 rounded text-xs break-all">{setupGuide.redirectUri || `https://astralisone.com/api/integrations/${provider.toLowerCase().replace(/_/g, '-')}/oauth/callback`}</code></li>
+                   <li>Copy the Client ID and Client Secret</li>
+                   <li>Enter the credentials in your organization settings</li>
+                 </ol>
+               )}
+             </div>
 
             {setupGuide.setupUrl && setupGuide.setupUrl !== '#' && (
               <div className="flex gap-2">

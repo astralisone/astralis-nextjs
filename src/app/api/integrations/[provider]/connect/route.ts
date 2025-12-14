@@ -116,9 +116,17 @@ export async function GET(
           description: 'Enable Google Drive API and create credentials',
         },
         MICROSOFT_TEAMS: {
-          name: 'Microsoft',
+          name: 'Microsoft Teams',
           setupUrl: 'https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade',
-          description: 'Register an app in Azure AD',
+          description: 'Register an app in Azure AD and configure Teams permissions',
+          steps: [
+            'Go to Azure Portal and create a new app registration',
+            'Add the redirect URI shown below to your app',
+            'Configure Microsoft Graph permissions: User.Read, Team.ReadBasic.All, Channel.ReadBasic.All, ChannelMessage.Send',
+            'Grant admin consent for organization-wide permissions',
+            'Copy the Application (client) ID and create a client secret',
+            'Enter the credentials in your Astralis organization settings',
+          ],
         },
       };
 
@@ -135,18 +143,19 @@ export async function GET(
           code: 'OAUTH_CREDENTIALS_REQUIRED',
           provider: provider,
           setupRequired: true,
-          setupGuide: {
-            name: info.name,
-            description: info.description,
-            setupUrl: info.setupUrl,
-            steps: [
-              'Go to the developer portal',
-              'Create a new OAuth application',
-              'Configure redirect URI',
-              'Copy Client ID and Client Secret',
-              'Enter credentials in Astralis settings',
-            ],
-          },
+        setupGuide: {
+          name: info.name,
+          description: info.description,
+          setupUrl: info.setupUrl,
+          steps: [
+            'Go to the developer portal',
+            'Create a new OAuth application',
+            'Configure redirect URI',
+            'Copy Client ID and Client Secret',
+            'Enter credentials in Astralis settings',
+          ],
+          redirectUri: `https://astralisone.com/api/integrations/${providerParam}/oauth/callback`,
+        },
         },
         { status: 400 }
       );
