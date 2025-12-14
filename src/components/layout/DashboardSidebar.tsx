@@ -17,6 +17,7 @@ import {
   Bell,
   LogOut,
   User,
+  Puzzle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { OrgSwitcher } from './OrgSwitcher';
@@ -50,6 +51,7 @@ const navigation = [
   { name: 'Documents', href: '/documents', icon: FileText },
   { name: 'Scheduling', href: '/scheduling', icon: Calendar },
   { name: 'Automations', href: '/automations', icon: Zap },
+  { name: 'Integrations', href: '/integrations', icon: Puzzle },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
