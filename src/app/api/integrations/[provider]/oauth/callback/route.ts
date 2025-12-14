@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/config';
 import { integrationService } from '@/lib/services/integration.service';
 import { encrypt } from '@/lib/utils/crypto';
+import { prisma } from '@/lib/prisma';
 import {
   exchangeCodeForTokensWithCredentials,
   getOrgOAuthCredentials,
