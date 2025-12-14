@@ -15,23 +15,58 @@ import { Search, ArrowLeft, CheckCircle2, XCircle } from 'lucide-react';
 import type { IntegrationProvider } from '@/types/automation';
 import type { CredentialData } from '@/lib/services/integration.service';
 
-// Available integrations (only those with implemented services)
-const AVAILABLE_INTEGRATIONS: IntegrationProvider[] = [
-  'GMAIL',
-  'GOOGLE_DRIVE',
-  'GOOGLE_DOCS',
-  'SLACK',
-  'MICROSOFT_TEAMS',
-  'HUBSPOT',
-  'SALESFORCE',
-  'DROPBOX',
-  'QUICKBOOKS',
-  'XERO',
-  'SHOPIFY',
-  'FACEBOOK',
-  'BAMBOOHR',
-  'GITHUB',
-];
+// Get available integrations (only those with OAuth credentials configured)
+async function getAvailableIntegrations(orgId: string): Promise<IntegrationProvider[]> {
+  const allIntegrations: IntegrationProvider[] = [
+    'GMAIL',
+    'GOOGLE_DRIVE',
+    'GOOGLE_DOCS',
+    'SLACK',
+    'MICROSOFT_TEAMS',
+    'HUBSPOT',
+    'SALESFORCE',
+    'DROPBOX',
+    'QUICKBOOKS',
+    'XERO',
+    'SHOPIFY',
+    'FACEBOOK',
+    'BAMBOOHR',
+    'GITHUB',
+  ];
+
+  // Filter to only integrations that have credentials configured
+  const availableIntegrations: IntegrationProvider[] = [];
+
+  for (const provider of allIntegrations) {
+    try {
+      const hasCredentials = await checkIntegrationCredentials(provider, orgId);
+      if (hasCredentials) {
+        availableIntegrations.push(provider);
+      }
+    } catch (error) {
+      // Skip integrations with credential check errors
+      console.warn(`Failed to check credentials for ${provider}:`, error);
+    }
+  }
+
+  return availableIntegrations;
+}
+
+// Check if an integration has OAuth credentials configured
+async function checkIntegrationCredentials(
+  provider: IntegrationProvider,
+  orgId: string
+): Promise<boolean> {
+  try {
+    // Try to get OAuth credentials for this provider and org
+    const { getOrgOAuthCredentials } = await import('@/lib/integrations/oauth-config');
+    const credentials = await getOrgOAuthCredentials(provider, orgId);
+    return credentials !== null;
+  } catch (error) {
+    console.error(`Error checking credentials for ${provider}:`, error);
+    return false;
+  }
+}
 
 interface IntegrationStatus {
   provider: IntegrationProvider;
@@ -45,6 +80,7 @@ export default function IntegrationsPage() {
   const { toast } = useToast();
 
   const [integrations, setIntegrations] = useState<IntegrationStatus[]>([]);
+  const [availableProviders, setAvailableProviders] = useState<IntegrationProvider[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -84,6 +120,15 @@ export default function IntegrationsPage() {
   const fetchIntegrations = async () => {
     try {
       setLoading(true);
+
+      // First get available providers (those with credentials configured)
+      const availableRes = await fetch('/api/integrations/available');
+      if (!availableRes.ok) throw new Error('Failed to fetch available integrations');
+      const availableData = await availableRes.json();
+      const providers = availableData.providers || [];
+      setAvailableProviders(providers);
+
+      // Then get connected integrations
       const res = await fetch('/api/integrations');
       if (!res.ok) throw new Error('Failed to fetch integrations');
       const data = await res.json();
@@ -92,8 +137,8 @@ export default function IntegrationsPage() {
       const credentials: CredentialData[] = data.data || [];
       const statusMap = new Map<IntegrationProvider, IntegrationStatus>();
 
-      // Initialize all available integrations
-      AVAILABLE_INTEGRATIONS.forEach((provider) => {
+      // Initialize only available integrations (those with credentials)
+      providers.forEach((provider) => {
         statusMap.set(provider, {
           provider,
           isConnected: false,
@@ -102,11 +147,13 @@ export default function IntegrationsPage() {
 
       // Update with connected integrations
       credentials.forEach((credential) => {
-        statusMap.set(credential.provider, {
-          provider: credential.provider,
-          isConnected: credential.isActive,
-          credential,
-        });
+        if (providers.includes(credential.provider)) {
+          statusMap.set(credential.provider, {
+            provider: credential.provider,
+            isConnected: credential.isActive,
+            credential,
+          });
+        }
       });
 
       setIntegrations(Array.from(statusMap.values()));
@@ -215,7 +262,7 @@ export default function IntegrationsPage() {
             <div>
               <h1 className="text-3xl font-bold text-astralis-navy">Integrations</h1>
               <p className="text-slate-600 mt-1">
-                Connect your favorite tools and services
+                Connect your configured tools and services
               </p>
             </div>
           </div>
@@ -307,10 +354,13 @@ export default function IntegrationsPage() {
             <div className="max-w-md mx-auto space-y-4">
               <div className="text-4xl">🔌</div>
               <h3 className="text-xl font-bold text-astralis-navy">
-                No integrations found
+                {searchQuery || filter !== 'all' ? 'No integrations found' : 'No integrations available'}
               </h3>
               <p className="text-slate-600">
-                Try adjusting your search or filters to see more results.
+                {searchQuery || filter !== 'all'
+                  ? 'Try adjusting your search or filters to see more results.'
+                  : 'Integrations must be configured with OAuth credentials before they can be used. Contact your administrator to set up integrations.'
+                }
               </p>
             </div>
           </Card>
