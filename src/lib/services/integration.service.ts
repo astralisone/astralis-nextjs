@@ -397,7 +397,6 @@ export class IntegrationService {
     await this.updateStatus(credentialId, userId, orgId, 'CONNECTED_ACTIVE');
   }
 }
-  }
 
   /**
    * Delete credential (soft delete by marking inactive)
