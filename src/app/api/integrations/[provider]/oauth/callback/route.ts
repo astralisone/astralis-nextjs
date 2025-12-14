@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/config';
 import { integrationService } from '@/lib/services/integration.service';
+import { encrypt } from '@/lib/utils/crypto';
 import {
   exchangeCodeForTokensWithCredentials,
   getOrgOAuthCredentials,
@@ -187,23 +188,73 @@ export async function GET(
       }
     }
 
-    // 10. Generate credential name
+    // 10. Check for existing credential and generate name
     const providerName = provider.replace(/_/g, ' ').toLowerCase()
       .replace(/\b\w/g, (c) => c.toUpperCase());
-    const credentialName = `${providerName} - ${new Date().toLocaleDateString()}`;
 
-    // 11. Save credential
-    await integrationService.saveCredential(userId, orgId, {
-      provider,
-      credentialName,
-      credentialData,
-      scope: tokenData.scope,
-      expiresAt: tokenData.expiresIn
-        ? new Date(Date.now() + tokenData.expiresIn * 1000)
-        : undefined,
+    // Check if user already has a credential for this provider
+    const existingCredential = await prisma.integrationCredential.findFirst({
+      where: {
+        userId,
+        provider,
+        isActive: true,
+      },
     });
 
-    console.log(`[OAuth Callback] Successfully connected ${provider} (org: ${orgId})`);
+    let credentialName: string;
+    if (existingCredential) {
+      // Update existing credential
+      console.log(`[OAuth Callback] Updating existing credential for ${provider} (user: ${userId})`);
+
+      const encryptedData = encrypt(JSON.stringify(credentialData));
+
+      await prisma.integrationCredential.update({
+        where: { id: existingCredential.id },
+        data: {
+          credentialData: encryptedData,
+          scope: tokenData.scope,
+          expiresAt: tokenData.expiresIn
+            ? new Date(Date.now() + tokenData.expiresIn * 1000)
+            : null,
+          status: 'CONNECTED_ACTIVE',
+          lastUsedAt: new Date(),
+        },
+      });
+
+      // Log activity
+      await prisma.activityLog.create({
+        data: {
+          userId,
+          orgId,
+          action: 'UPDATE',
+          entity: 'INTEGRATION_CREDENTIAL',
+          entityId: existingCredential.id,
+          metadata: {
+            provider,
+            credentialName: existingCredential.credentialName,
+            reason: 'OAuth refresh',
+          },
+        },
+      });
+
+    } else {
+      // Create new credential
+      credentialName = `${providerName} - ${new Date().toLocaleDateString()}`;
+
+      console.log(`[OAuth Callback] Creating new credential for ${provider} (user: ${userId})`);
+
+      await integrationService.saveCredential(userId, orgId, {
+        provider,
+        credentialName,
+        credentialData,
+        scope: tokenData.scope,
+        expiresAt: tokenData.expiresIn
+          ? new Date(Date.now() + tokenData.expiresIn * 1000)
+          : undefined,
+      });
+    }
+
+    console.log(`[OAuth Callback] Successfully ${existingCredential ? 'updated' : 'connected'} ${provider} (org: ${orgId})`);
 
     // 12. Redirect with success
     const successUrl = new URL(returnUrl, req.url);
