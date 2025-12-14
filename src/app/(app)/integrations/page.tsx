@@ -299,6 +299,8 @@ export default function IntegrationsPage() {
                   key={integration.provider}
                   provider={integration.provider}
                   isConnected={integration.isConnected}
+                  status={integration.credential?.status}
+                  lastError={integration.credential?.lastError}
                   lastUsedAt={integration.credential?.lastUsedAt}
                   expiresAt={integration.credential?.expiresAt}
                   onConnect={() => handleConnect(integration.provider)}

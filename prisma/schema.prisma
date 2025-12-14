@@ -154,24 +154,32 @@ model AutomationTemplate {
 }
 
 model IntegrationCredential {
-  id             String              @id @default(cuid())
-  userId         String
-  orgId          String
-  provider       IntegrationProvider
-  credentialName String
-  credentialData String
-  scope          String?
-  expiresAt      DateTime?
-  isActive       Boolean             @default(true)
-  lastUsedAt     DateTime?
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
-  organization   organization        @relation(fields: [orgId], references: [id])
-  user           users               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                   String              @id @default(cuid())
+  userId               String
+  orgId                String
+  provider             IntegrationProvider
+  credentialName       String
+  credentialData       String
+  scope                String?
+  expiresAt            DateTime?
+  isActive             Boolean             @default(true)
+  status               IntegrationStatus   @default(DISCONNECTED)
+  lastError            String?
+  errorCount           Int                 @default(0)
+  lastErrorAt          DateTime?
+  lastHealthCheck      DateTime?
+  healthCheckInterval  Int                 @default(300000) // 5 minutes
+  lastUsedAt           DateTime?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  organization         organization        @relation(fields: [orgId], references: [id])
+  user                 users               @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, provider, credentialName])
   @@index([orgId])
   @@index([userId, isActive])
+  @@index([status])
+  @@index([lastErrorAt])
   @@map("integration_credentials")
 }
 
@@ -1922,6 +1930,16 @@ enum TemplateCategory {
   MARKETING
   HR_OPERATIONS
   OTHER
+}
+
+enum IntegrationStatus {
+  DISCONNECTED
+  CONNECTING
+  CONNECTED_ACTIVE
+  CONNECTED_ERROR
+  NEEDS_REAUTH
+  DISABLED
+  SUSPENDED
 }
 
 enum IntegrationProvider {

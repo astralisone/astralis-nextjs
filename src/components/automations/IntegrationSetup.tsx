@@ -21,6 +21,8 @@ import type { IntegrationProvider } from '@/types/automation';
 interface IntegrationSetupProps {
   provider: IntegrationProvider;
   isConnected: boolean;
+  status?: string;
+  lastError?: string | null;
   lastUsedAt?: Date | null;
   expiresAt?: Date | null;
   onConnect: () => Promise<void>;
@@ -202,6 +204,8 @@ const providerInfo: Record<
 export function IntegrationSetup({
   provider,
   isConnected,
+  status,
+  lastError,
   lastUsedAt,
   expiresAt,
   onConnect,
@@ -220,6 +224,64 @@ export function IntegrationSetup({
   const isExpiringSoon =
     expiresAt && new Date(expiresAt).getTime() - Date.now() < 7 * 24 * 60 * 60 * 1000; // 7 days
   const isExpired = expiresAt && new Date(expiresAt) < new Date();
+
+  // Status display logic
+  const getStatusDisplay = () => {
+    switch (status) {
+      case 'CONNECTED_ACTIVE':
+        return {
+          variant: 'default' as const,
+          icon: CheckCircle2,
+          text: 'Connected',
+          color: 'text-green-600',
+        };
+      case 'CONNECTED_ERROR':
+        return {
+          variant: 'destructive' as const,
+          icon: AlertCircle,
+          text: 'Connection Error',
+          color: 'text-red-600',
+        };
+      case 'NEEDS_REAUTH':
+        return {
+          variant: 'destructive' as const,
+          icon: AlertCircle,
+          text: 'Re-authentication Required',
+          color: 'text-orange-600',
+        };
+      case 'CONNECTING':
+        return {
+          variant: 'secondary' as const,
+          icon: Loader2,
+          text: 'Connecting...',
+          color: 'text-blue-600',
+        };
+      case 'DISABLED':
+        return {
+          variant: 'outline' as const,
+          icon: XCircle,
+          text: 'Disabled',
+          color: 'text-gray-600',
+        };
+      case 'SUSPENDED':
+        return {
+          variant: 'destructive' as const,
+          icon: AlertCircle,
+          text: 'Suspended',
+          color: 'text-red-600',
+        };
+      default:
+        return {
+          variant: 'outline' as const,
+          icon: XCircle,
+          text: 'Not Connected',
+          color: 'text-gray-600',
+        };
+    }
+  };
+
+  const statusDisplay = getStatusDisplay();
+  const StatusIcon = statusDisplay.icon;
 
   const handleConnect = async () => {
     setIsConnecting(true);
@@ -272,26 +334,32 @@ export function IntegrationSetup({
               <CardDescription className="text-sm mt-1">{info.description}</CardDescription>
             </div>
           </div>
-          <Badge variant={isConnected ? 'success' : 'default'}>
-            {isConnected ? (
-              <>
-                <CheckCircle2 className="w-3 h-3 mr-1" />
-                Connected
-              </>
-            ) : (
-              <>
-                <XCircle className="w-3 h-3 mr-1" />
-                Not Connected
-              </>
-            )}
+          <Badge variant={statusDisplay.variant} className={statusDisplay.color}>
+            <StatusIcon className="w-3 h-3 mr-1" />
+            {statusDisplay.text}
           </Badge>
         </div>
       </CardHeader>
 
       <CardContent className="space-y-4">
         {/* Status Alerts */}
+        {lastError && (status === 'CONNECTED_ERROR' || status === 'NEEDS_REAUTH') && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Connection Issue:</strong> {lastError}
+              {status === 'NEEDS_REAUTH' && (
+                <div className="mt-2">
+                  <strong>Action Required:</strong> Please reconnect this integration.
+                </div>
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
+
         {isExpired && (
-          <Alert variant="error" showIcon>
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
             <AlertDescription>
               <strong>Expired:</strong> This connection has expired. Please reconnect to continue
               using it.

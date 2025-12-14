@@ -37,6 +37,12 @@ export interface CredentialData {
   scope: string | null;
   expiresAt: Date | null;
   isActive: boolean;
+  status: string;
+  lastError: string | null;
+  errorCount: number;
+  lastErrorAt: Date | null;
+  lastHealthCheck: Date | null;
+  healthCheckInterval: number;
   lastUsedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
@@ -78,6 +84,7 @@ export class IntegrationService {
           scope: data.scope || null,
           expiresAt: data.expiresAt || null,
           isActive: true,
+          status: 'CONNECTED_ACTIVE',
         },
       });
 
@@ -146,6 +153,12 @@ export class IntegrationService {
           scope: true,
           expiresAt: true,
           isActive: true,
+          status: true,
+          lastError: true,
+          errorCount: true,
+          lastErrorAt: true,
+          lastHealthCheck: true,
+          healthCheckInterval: true,
           lastUsedAt: true,
           createdAt: true,
           updatedAt: true,
@@ -287,11 +300,103 @@ export class IntegrationService {
 
       console.log('[Integration Service] Token refreshed successfully');
     } catch (error) {
-      console.error('[Integration Service] Failed to refresh token:', error);
-      throw new Error(
-        `Failed to refresh token: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
+      console.error('[Integration Service] Token refresh failed:', error);
+      throw error;
     }
+  }
+
+  /**
+   * Update integration status
+   */
+  async updateStatus(
+    credentialId: string,
+    userId: string,
+    orgId: string,
+    status: string,
+    error?: string
+  ): Promise<void> {
+    try {
+      console.log('[Integration Service] Updating status for credential:', credentialId, 'to:', status);
+
+      const updateData: any = {
+        status,
+        lastUsedAt: new Date(),
+      };
+
+      if (error) {
+        updateData.lastError = error;
+        updateData.lastErrorAt = new Date();
+        updateData.errorCount = {
+          increment: 1,
+        };
+      } else if (status === 'CONNECTED_ACTIVE') {
+        // Clear errors on successful connection
+        updateData.lastError = null;
+        updateData.errorCount = 0;
+      }
+
+      await prisma.integrationCredential.update({
+        where: { id: credentialId, userId, orgId },
+        data: updateData,
+      });
+
+      // Log status change
+      await prisma.activityLog.create({
+        data: {
+          userId,
+          orgId,
+          action: 'UPDATE',
+          entity: 'INTEGRATION_CREDENTIAL',
+          entityId: credentialId,
+          metadata: {
+            action: 'STATUS_CHANGE',
+            newStatus: status,
+            error: error || null,
+          },
+        },
+      });
+
+    } catch (error) {
+      console.error('[Integration Service] Status update failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Mark integration as needing re-authentication
+   */
+  async markNeedsReauth(
+    credentialId: string,
+    userId: string,
+    orgId: string,
+    reason: string
+  ): Promise<void> {
+    await this.updateStatus(credentialId, userId, orgId, 'NEEDS_REAUTH', reason);
+  }
+
+  /**
+   * Mark integration as having an error
+   */
+  async markError(
+    credentialId: string,
+    userId: string,
+    orgId: string,
+    error: string
+  ): Promise<void> {
+    await this.updateStatus(credentialId, userId, orgId, 'CONNECTED_ERROR', error);
+  }
+
+  /**
+   * Mark integration as active/healthy
+   */
+  async markActive(
+    credentialId: string,
+    userId: string,
+    orgId: string
+  ): Promise<void> {
+    await this.updateStatus(credentialId, userId, orgId, 'CONNECTED_ACTIVE');
+  }
+}
   }
 
   /**
