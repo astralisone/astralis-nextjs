@@ -2294,3 +2294,78 @@ model ExtractionSchema {
   @@index([isActive])
   @@map("extraction_schemas")
 }
+
+// ============================================================================
+// AI ACTION REPOSITORY SYSTEM
+// ============================================================================
+
+enum ActionStatus {
+  ACTIVE
+  INACTIVE
+  DEPRECATED
+  BROKEN
+}
+
+model ActionDefinition {
+  id              String              @id @default(cuid())
+  actionKey       String              @unique // "gmail-send-email-v1"
+  provider        IntegrationProvider
+  name            String              // "Send Email via Gmail"
+  description     String?
+  category        String              // "communication", "storage", "crm"
+
+  // Action specification
+  inputSchema     Json                // JSON Schema for input validation
+  outputSchema    Json                // JSON Schema for output validation
+  executionSpec   Json                // How to execute (API endpoints, methods, etc.)
+
+  // Metadata
+  version         String              @default("1.0.0")
+  status          ActionStatus        @default(ACTIVE)
+  tags            String[]            @default([])
+
+  // Usage tracking
+  executionCount  Int                 @default(0)
+  lastExecutedAt  DateTime?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  // Relations
+  executions      ActionExecution[]
+
+  @@index([provider, status])
+  @@index([actionKey])
+  @@index([status])
+  @@index([lastExecutedAt])
+  @@map("action_definitions")
+}
+
+model ActionExecution {
+  id             String          @id @default(cuid())
+  actionId       String
+  actionKey      String          // Denormalized for performance
+
+  // Execution details
+  status         String          // "success", "failed", "stuck", "cancelled"
+  inputParams    Json            // Input parameters used
+  outputData     Json?           // Output data (if successful)
+  errorMessage   String?         // Error details (if failed)
+  executionTime  Int?            // Time in milliseconds
+
+  // Context
+  userId         String?
+  orgId          String?
+  integrationId  String?         // Which integration credential was used
+
+  // Timestamps
+  startedAt      DateTime        @default(now())
+  completedAt    DateTime?
+
+  // Relations
+  action         ActionDefinition @relation(fields: [actionId], references: [id], onDelete: Cascade)
+
+  @@index([actionId, startedAt])
+  @@index([status])
+  @@index([orgId, startedAt])
+  @@map("action_executions")
+}
