@@ -43,3 +43,15 @@ export * from './communication';
 
 // Storage Integrations
 export * from './storage';
+
+// DevOps Integrations
+export * from './devops';
+
+// Social Integrations
+export * from './social';
+
+// E-commerce Integrations
+export * from './ecommerce';
+
+// HR Integrations
+export * from './hr';

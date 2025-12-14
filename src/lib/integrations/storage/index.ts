@@ -4,15 +4,6 @@
  * Exports all storage integration services.
  */
 
-export { GoogleDriveService, googleDriveService } from './google-drive.service';
-export type {
-  UploadFileInput,
-  CreateFolderInput,
-  ShareFileInput,
-} from './google-drive.service';
-
-export { DropboxService, dropboxService } from './dropbox.service';
-export type {
-  UploadDropboxFileInput,
-  CreateDropboxFolderInput,
-} from './dropbox.service';
+export * from './dropbox.service';
+export * from './google-drive.service';
+export * from './docs.service';

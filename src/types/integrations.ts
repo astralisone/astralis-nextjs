@@ -20,7 +20,10 @@ export type IntegrationCategory =
   | 'communication'
   | 'storage'
   | 'marketing'
-  | 'productivity';
+  | 'productivity'
+  | 'devops'
+  | 'ecommerce'
+  | 'hr';
 
 /**
  * Integration status for connection state
@@ -682,6 +685,19 @@ export const INTEGRATION_CATALOG: IntegrationMetadata[] = [
     webhooksSupported: true,
   },
   {
+    id: 'google-docs',
+    provider: 'GOOGLE_DOCS' as PrismaIntegrationProvider,
+    name: 'Google Docs',
+    description: 'Create, edit, and manage documents in Google Docs',
+    category: 'storage',
+    icon: 'google-docs',
+    color: '#4285F4',
+    oauthSupported: true,
+    apiKeySupported: false,
+    scopes: ['https://www.googleapis.com/auth/documents'],
+    webhooksSupported: false,
+  },
+  {
     id: 'dropbox',
     provider: 'DROPBOX' as PrismaIntegrationProvider,
     name: 'Dropbox',
@@ -692,6 +708,62 @@ export const INTEGRATION_CATALOG: IntegrationMetadata[] = [
     oauthSupported: true,
     apiKeySupported: false,
     scopes: ['files.content.read', 'files.content.write', 'sharing.read', 'sharing.write'],
+    webhooksSupported: true,
+  },
+  // DevOps
+  {
+    id: 'github',
+    provider: 'GITHUB' as PrismaIntegrationProvider,
+    name: 'GitHub',
+    description: 'Connect to GitHub for repositories, issues, and pull requests',
+    category: 'devops',
+    icon: 'github',
+    color: '#181717',
+    oauthSupported: true,
+    apiKeySupported: false,
+    scopes: ['repo', 'user'],
+    webhooksSupported: true,
+  },
+  // Marketing
+  {
+    id: 'facebook',
+    provider: 'FACEBOOK' as PrismaIntegrationProvider,
+    name: 'Facebook',
+    description: 'Connect to Facebook for pages, posts, and ads',
+    category: 'marketing',
+    icon: 'facebook',
+    color: '#1877F2',
+    oauthSupported: true,
+    apiKeySupported: false,
+    scopes: ['email', 'public_profile'],
+    webhooksSupported: true,
+  },
+  // E-commerce
+  {
+    id: 'shopify',
+    provider: 'SHOPIFY' as PrismaIntegrationProvider,
+    name: 'Shopify',
+    description: 'Connect to Shopify for products, orders, and customers',
+    category: 'ecommerce',
+    icon: 'shopify',
+    color: '#7AB55C',
+    oauthSupported: true,
+    apiKeySupported: false,
+    scopes: ['read_products', 'read_orders'],
+    webhooksSupported: true,
+  },
+  // HR
+  {
+    id: 'bamboohr',
+    provider: 'BAMBOOHR' as PrismaIntegrationProvider,
+    name: 'BambooHR',
+    description: 'Connect to BambooHR for employee data and HR workflows',
+    category: 'hr',
+    icon: 'bamboohr',
+    color: '#00A852',
+    oauthSupported: true,
+    apiKeySupported: false,
+    scopes: ['openid', 'profile', 'email'],
     webhooksSupported: true,
   },
 ];

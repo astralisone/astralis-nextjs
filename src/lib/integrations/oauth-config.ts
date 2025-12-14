@@ -272,8 +272,13 @@ function getEnvKeyPrefix(provider: IntegrationProvider): string {
     SLACK: 'SLACK',
     GMAIL: 'GOOGLE',
     GOOGLE_DRIVE: 'GOOGLE',
+    GOOGLE_DOCS: 'GOOGLE',
     MICROSOFT_TEAMS: 'MICROSOFT',
     DROPBOX: 'DROPBOX',
+    GITHUB: 'GITHUB',
+    FACEBOOK: 'FACEBOOK',
+    SHOPIFY: 'SHOPIFY',
+    BAMBOOHR: 'BAMBOOHR',
   };
   return prefixMap[provider] || provider;
 }
@@ -649,6 +654,32 @@ const OAUTH_CONFIGS: Partial<Record<IntegrationProvider, OAuthProviderConfig>> =
     }),
   },
 
+  GOOGLE_DOCS: {
+    provider: 'GOOGLE_DOCS',
+    authorizationUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
+    tokenUrl: 'https://oauth2.googleapis.com/token',
+    revokeUrl: 'https://oauth2.googleapis.com/revoke',
+    userInfoUrl: 'https://www.googleapis.com/oauth2/v2/userinfo',
+    scopes: [
+      'https://www.googleapis.com/auth/documents',
+      'openid',
+      'email',
+      'profile',
+    ],
+    additionalAuthParams: {
+      access_type: 'offline',
+      prompt: 'consent',
+    },
+    tokenAuthMethod: 'body',
+    parseTokenResponse: (tokens) => ({
+      accessToken: tokens.access_token as string,
+      refreshToken: tokens.refresh_token as string,
+      expiresIn: tokens.expires_in as number,
+      scope: tokens.scope as string,
+      tokenType: tokens.token_type as string,
+    }),
+  },
+
   DROPBOX: {
     provider: 'DROPBOX',
     authorizationUrl: 'https://www.dropbox.com/oauth2/authorize',
@@ -670,6 +701,64 @@ const OAUTH_CONFIGS: Partial<Record<IntegrationProvider, OAuthProviderConfig>> =
       accessToken: tokens.access_token as string,
       refreshToken: tokens.refresh_token as string,
       expiresIn: tokens.expires_in as number,
+      tokenType: tokens.token_type as string,
+    }),
+  },
+
+  // -------------------------------------------------------------------------
+  // Developer Tools & Project Management
+  // -------------------------------------------------------------------------
+  GITHUB: {
+    provider: 'GITHUB',
+    authorizationUrl: 'https://github.com/login/oauth/authorize',
+    tokenUrl: 'https://github.com/login/oauth/access_token',
+    userInfoUrl: 'https://api.github.com/user',
+    scopes: ['repo', 'user'],
+    tokenAuthMethod: 'body',
+    parseTokenResponse: (tokens) => ({
+      accessToken: tokens.access_token as string,
+      tokenType: tokens.token_type as string,
+      scope: tokens.scope as string,
+    }),
+  },
+
+  FACEBOOK: {
+    provider: 'FACEBOOK',
+    authorizationUrl: 'https://www.facebook.com/v19.0/dialog/oauth',
+    tokenUrl: 'https://graph.facebook.com/v19.0/oauth/access_token',
+    userInfoUrl: 'https://graph.facebook.com/v19.0/me',
+    scopes: ['email', 'public_profile'],
+    tokenAuthMethod: 'body',
+    parseTokenResponse: (tokens) => ({
+      accessToken: tokens.access_token as string,
+      tokenType: tokens.token_type as string,
+      expiresIn: tokens.expires_in as number,
+    }),
+  },
+
+  SHOPIFY: {
+    provider: 'SHOPIFY',
+    authorizationUrl: 'https://{shop}.myshopify.com/admin/oauth/authorize',
+    tokenUrl: 'https://{shop}.myshopify.com/admin/oauth/access_token',
+    scopes: ['read_products', 'read_orders'],
+    tokenAuthMethod: 'body',
+    parseTokenResponse: (tokens) => ({
+      accessToken: tokens.access_token as string,
+      scope: tokens.scope as string,
+    }),
+  },
+
+  BAMBOOHR: {
+    provider: 'BAMBOOHR',
+    authorizationUrl: 'https://{subdomain}.bamboohr.com/oauth2/authorize',
+    tokenUrl: 'https://{subdomain}.bamboohr.com/oauth2/token',
+    scopes: ['openid', 'profile', 'email'],
+    tokenAuthMethod: 'header',
+    parseTokenResponse: (tokens) => ({
+      accessToken: tokens.access_token as string,
+      refreshToken: tokens.refresh_token as string,
+      expiresIn: tokens.expires_in as number,
+      scope: tokens.scope as string,
       tokenType: tokens.token_type as string,
     }),
   },
