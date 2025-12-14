@@ -4,14 +4,14 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { IntegrationSetup } from '@/components/automations/IntegrationSetup';
 import { useToast } from '@/hooks/useToast';
-import { Search, ArrowLeft, CheckCircle2, XCircle } from 'lucide-react';
+import { Search, ArrowLeft, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import type { IntegrationProvider } from '@/types/automation';
 import type { CredentialData } from '@/lib/services/integration.service';
 
@@ -85,12 +85,14 @@ export default function IntegrationsPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'connected' | 'available'>('all');
+  const [setupGuide, setSetupGuide] = useState<any>(null);
 
   // Handle success/error from OAuth callback
   useEffect(() => {
     const success = searchParams.get('success');
     const error = searchParams.get('error');
     const provider = searchParams.get('provider');
+    const setupGuideParam = searchParams.get('setupGuide');
 
     if (success === 'true' && provider) {
       toast({
@@ -104,14 +106,37 @@ export default function IntegrationsPage() {
     }
 
     if (error) {
-      toast({
-        title: 'Connection failed',
-        description: decodeURIComponent(error),
-        variant: 'destructive',
-      });
+      const decodedError = decodeURIComponent(error);
+
+      // Check if there's a setup guide for this error
+      if (setupGuideParam) {
+        try {
+          const setupGuide = JSON.parse(decodeURIComponent(setupGuideParam));
+          // Show setup guide dialog instead of just toast
+          showSetupGuideDialog(setupGuide);
+        } catch (e) {
+          // Fallback to regular error toast
+          toast({
+            title: 'Connection failed',
+            description: decodedError,
+            variant: 'destructive',
+          });
+        }
+      } else {
+        toast({
+          title: 'Connection failed',
+          description: decodedError,
+          variant: 'destructive',
+        });
+      }
+
       router.replace('/integrations');
     }
   }, [searchParams, router, toast]);
+
+  const showSetupGuideDialog = (setupGuideData: any) => {
+    setSetupGuide(setupGuideData);
+  };
 
   useEffect(() => {
     fetchIntegrations();
@@ -413,6 +438,54 @@ export default function IntegrationsPage() {
             </Button>
           </div>
         </Card>
+
+        {/* Setup Guide Dialog */}
+        {setupGuide && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <Card className="max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+              <CardHeader>
+                <CardTitle>Setup {setupGuide.name} Integration</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Alert variant="destructive" className="mb-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>OAuth Configuration Error:</strong> {setupGuide.description}
+                  </AlertDescription>
+                </Alert>
+
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-semibold text-astralis-navy mb-2">Required Redirect URI:</h4>
+                    <code className="block bg-slate-100 p-3 rounded text-sm break-all">
+                      {setupGuide.redirectUri}
+                    </code>
+                  </div>
+
+                  {setupGuide.steps && (
+                    <div>
+                      <h4 className="font-semibold text-astralis-navy mb-2">Setup Steps:</h4>
+                      <ol className="list-decimal list-inside text-sm text-slate-600 space-y-2">
+                        {setupGuide.steps.map((step: string, index: number) => (
+                          <li key={index}>{step}</li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-end gap-2 mt-6">
+                  <Button variant="outline" onClick={() => setSetupGuide(null)}>
+                    Close
+                  </Button>
+                  <Button onClick={() => setSetupGuide(null)}>
+                    Try Again
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );

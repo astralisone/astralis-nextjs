@@ -49,12 +49,45 @@ export async function GET(
     // 2. Handle OAuth errors
     if (error) {
       console.error('[OAuth Callback] OAuth error:', error, errorDescription);
-      return NextResponse.redirect(
-        new URL(
-          `/integrations?error=${encodeURIComponent(errorDescription || error)}`,
-          req.url
-        )
-      );
+
+      // Provide specific guidance for common OAuth errors
+      let userFriendlyError = errorDescription || error;
+      let setupGuide = null;
+
+      if (error === 'invalid_request' && errorDescription?.includes('redirect_uri')) {
+        userFriendlyError = 'Invalid redirect URI. The OAuth app needs to be configured with the correct redirect URI.';
+        setupGuide = {
+          name: provider.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase()),
+          description: 'Update your OAuth app configuration to include the correct redirect URI.',
+          redirectUri: `https://astralisone.com/api/integrations/${providerParam}/oauth/callback`,
+          steps: [
+            'Go to your OAuth app settings',
+            'Add or update the redirect URI to match the one shown below',
+            'Save the changes and try connecting again'
+          ]
+        };
+      } else if (error === 'redirect_uri_mismatch') {
+        userFriendlyError = 'Redirect URI mismatch. Please check your OAuth app configuration.';
+        setupGuide = {
+          name: provider.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase()),
+          description: 'The redirect URI in your OAuth app doesn\'t match the expected value.',
+          redirectUri: `https://astralisone.com/api/integrations/${providerParam}/oauth/callback`,
+          steps: [
+            'Check your OAuth app\'s redirect URI settings',
+            'Ensure it matches exactly: ' + `https://astralisone.com/api/integrations/${providerParam}/oauth/callback`,
+            'Remove any trailing slashes or extra parameters'
+          ]
+        };
+      }
+
+      const errorUrl = new URL('/integrations', req.url);
+      errorUrl.searchParams.set('error', encodeURIComponent(userFriendlyError));
+
+      if (setupGuide) {
+        errorUrl.searchParams.set('setupGuide', encodeURIComponent(JSON.stringify(setupGuide)));
+      }
+
+      return NextResponse.redirect(errorUrl);
     }
 
     if (!code) {
