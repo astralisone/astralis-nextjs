@@ -53,3 +53,4 @@ Thumbs.db
 .env.prod
 
 oauth-credentials.env
+env.ai
