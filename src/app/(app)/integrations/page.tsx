@@ -173,6 +173,8 @@ export default function IntegrationsPage() {
         // Credentials exist, proceed with OAuth
         const data = await res.json();
         if (data.authUrl) {
+          // Navigate to OAuth flow (popup windows are often blocked by OAuth providers)
+          // The OAuth callback will redirect back to /integrations with success/error params
           window.location.href = data.authUrl;
         } else {
           alert('Integration connected successfully!');

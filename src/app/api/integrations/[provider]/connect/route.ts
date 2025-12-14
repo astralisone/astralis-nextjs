@@ -185,10 +185,15 @@ export async function GET(
       );
     }
 
-    console.log(`[OAuth Connect] Redirecting to ${provider} authorization (org: ${session.user.orgId})`);
+    console.log(`[OAuth Connect] Generated OAuth URL for ${provider} (org: ${session.user.orgId})`);
 
-    // 8. Redirect to provider's OAuth authorization URL
-    return NextResponse.redirect(authUrl);
+    // 8. Return OAuth URL for client-side redirect
+    return NextResponse.json({
+      success: true,
+      authUrl,
+      provider,
+      message: `Redirecting to ${provider} authorization`,
+    });
 
   } catch (error) {
     console.error(`[API /api/integrations/${provider}/connect GET] Error:`, error);
