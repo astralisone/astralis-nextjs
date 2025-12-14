@@ -57,14 +57,14 @@ export async function GET(
 
     if (!code) {
       return NextResponse.redirect(
-        new URL('/app/integrations?error=NoAuthorizationCode', req.url)
+        new URL('/integrations?error=NoAuthorizationCode', req.url)
       );
     }
 
     // 3. Parse and validate state
     let userId: string;
     let orgId: string;
-    let returnUrl = '/app/integrations';
+    let returnUrl = '/integrations';
 
     if (stateParam) {
       const stateData = parseOAuthState(stateParam);
@@ -72,14 +72,14 @@ export async function GET(
       if (!stateData) {
         console.error('[OAuth Callback] Invalid state parameter');
         return NextResponse.redirect(
-          new URL('/app/integrations?error=InvalidState', req.url)
+          new URL('/integrations?error=InvalidState', req.url)
         );
       }
 
       if (!validateOAuthState(stateData)) {
         console.error('[OAuth Callback] State expired');
         return NextResponse.redirect(
-          new URL('/app/integrations?error=StateExpired', req.url)
+          new URL('/integrations?error=StateExpired', req.url)
         );
       }
 
@@ -109,7 +109,7 @@ export async function GET(
     // 4. Validate provider
     if (!supportsOAuth(provider)) {
       return NextResponse.redirect(
-        new URL(`/app/integrations?error=UnsupportedProvider`, req.url)
+        new URL(`/integrations?error=UnsupportedProvider`, req.url)
       );
     }
 
@@ -119,7 +119,7 @@ export async function GET(
     if (!credentials) {
       console.error(`[OAuth Callback] No credentials configured for ${provider} in org ${orgId}`);
       return NextResponse.redirect(
-        new URL('/app/integrations?error=IntegrationNotConfigured', req.url)
+        new URL('/integrations?error=IntegrationNotConfigured', req.url)
       );
     }
 

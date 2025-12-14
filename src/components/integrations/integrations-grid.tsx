@@ -72,7 +72,7 @@ export function IntegrationsGrid({ initialConnections = [], isAdmin = false }: I
       // Refresh connections
       fetchConnections();
       // Clear URL params
-      router.replace('/app/integrations');
+      router.replace('/integrations');
     }
 
     if (error) {
@@ -81,7 +81,7 @@ export function IntegrationsGrid({ initialConnections = [], isAdmin = false }: I
         description: decodeURIComponent(error),
         variant: 'destructive',
       });
-      router.replace('/app/integrations');
+      router.replace('/integrations');
     }
   }, [searchParams, router, toast]);
 

@@ -64,7 +64,7 @@ export default function IntegrationsPage() {
       // Refresh integrations
       fetchIntegrations();
       // Clear URL params
-      router.replace('/app/integrations');
+      router.replace('/integrations');
     }
 
     if (error) {
@@ -73,7 +73,7 @@ export default function IntegrationsPage() {
         description: decodeURIComponent(error),
         variant: 'destructive',
       });
-      router.replace('/app/integrations');
+      router.replace('/integrations');
     }
   }, [searchParams, router, toast]);
 

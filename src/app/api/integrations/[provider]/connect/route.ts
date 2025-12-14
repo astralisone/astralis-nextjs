@@ -154,7 +154,7 @@ export async function GET(
 
     // 4. Get return URL from query params
     const { searchParams } = req.nextUrl;
-    const returnUrl = searchParams.get('returnUrl') || '/app/integrations';
+    const returnUrl = searchParams.get('returnUrl') || '/integrations';
 
     // 5. Generate OAuth state for CSRF protection
     const state = generateOAuthState({
