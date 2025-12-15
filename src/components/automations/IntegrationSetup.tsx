@@ -225,8 +225,9 @@ export function IntegrationSetup({
 
   const info = providerInfo[provider];
 
+  // Only show "expiring soon" for tokens that expire within 24 hours (not normal OAuth refresh cycle)
   const isExpiringSoon =
-    expiresAt && new Date(expiresAt).getTime() - Date.now() < 7 * 24 * 60 * 60 * 1000; // 7 days
+    expiresAt && new Date(expiresAt).getTime() - Date.now() < 24 * 60 * 60 * 1000; // 24 hours
   const isExpired = expiresAt && new Date(expiresAt) < new Date();
 
   // Debug logging for expiration logic
