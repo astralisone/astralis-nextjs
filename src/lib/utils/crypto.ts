@@ -45,10 +45,10 @@ export function generateToken(): string {
 
 /**
  * Get encryption key from environment
- * Uses N8N_ENCRYPTION_KEY or generates one if not set
+ * Uses ASTRALIS_ENCRYPTION_KEY or falls back to N8N_ENCRYPTION_KEY or NEXTAUTH_SECRET
  */
 function getEncryptionKey(): Buffer {
-  const key = process.env.N8N_ENCRYPTION_KEY || process.env.NEXTAUTH_SECRET;
+  const key = process.env.ASTRALIS_ENCRYPTION_KEY || process.env.N8N_ENCRYPTION_KEY || process.env.NEXTAUTH_SECRET;
 
   if (!key) {
     throw new Error('Encryption key not found in environment variables');
