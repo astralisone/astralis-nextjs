@@ -38,6 +38,13 @@ export async function GET(
   try {
     console.log(`[API /api/integrations/${provider}/oauth/callback GET] Starting request for provider: ${provider}`);
 
+    // Declare variables at function scope
+    let stateData: OAuthStateData | null = null;
+    let userId: string;
+    let orgId: string;
+    let returnUrl = '/integrations';
+    let realmId: string | null = null;
+
     // 1. Parse query parameters
     const { searchParams } = req.nextUrl;
     const code = searchParams.get('code');
@@ -49,13 +56,6 @@ export async function GET(
     realmId = searchParams.get('realmId'); // QuickBooks company ID
 
     console.log(`[OAuth Callback] Query params - code: ${!!code}, state: ${!!stateParam}, error: ${error}, realmId: ${realmId}`);
-
-    // Declare variables at function scope
-    let stateData: OAuthStateData | null = null;
-    let userId: string;
-    let orgId: string;
-    let returnUrl = '/integrations';
-    let realmId: string | null = null;
 
     // 2. Handle OAuth errors
     if (error) {
@@ -291,19 +291,26 @@ export async function GET(
       const encryptedData = encrypt(JSON.stringify(credentialData));
       console.log(`[OAuth Callback] Credential data encrypted for update`);
 
-      await prisma.integrationCredential.update({
-        where: { id: existingCredential.id },
-        data: {
-          credentialData: encryptedData,
-          scope: tokenData.scope,
-          expiresAt: tokenData.expiresIn
-            ? new Date(Date.now() + tokenData.expiresIn * 1000)
-            : null,
-          status: 'CONNECTED_ACTIVE',
-          lastUsedAt: new Date(),
-        },
-      });
-      console.log(`[OAuth Callback] Existing credential updated successfully`);
+      try {
+        await prisma.integrationCredential.update({
+          where: { id: existingCredential.id },
+          data: {
+            credentialData: encryptedData,
+            scope: tokenData.scope,
+            expiresAt: tokenData.expiresIn
+              ? new Date(Date.now() + tokenData.expiresIn * 1000)
+              : null,
+            status: 'CONNECTED_ACTIVE',
+            lastUsedAt: new Date(),
+          },
+        });
+        console.log(`[OAuth Callback] Existing credential updated successfully`);
+      } catch (updateError) {
+        console.error(`[OAuth Callback] Failed to update existing credential:`, updateError);
+        return NextResponse.redirect(
+          new URL('/integrations?error=CredentialUpdateFailed', req.url)
+        );
+      }
 
       // Log activity
       await prisma.activityLog.create({
@@ -329,17 +336,24 @@ export async function GET(
       console.log(`[OAuth Callback] Creating new credential for ${provider} (user: ${userId})`);
       console.log(`[OAuth Callback] Creating credential: ${credentialName} for ${provider}`);
 
-      await integrationService.saveCredential(userId, orgId, {
-        provider,
-        credentialName,
-        credentialData,
-        scope: tokenData.scope,
-        expiresAt: tokenData.expiresIn
-          ? new Date(Date.now() + tokenData.expiresIn * 1000)
-          : undefined,
-      });
+      try {
+        await integrationService.saveCredential(userId, orgId, {
+          provider,
+          credentialName,
+          credentialData,
+          scope: tokenData.scope,
+          expiresAt: tokenData.expiresIn
+            ? new Date(Date.now() + tokenData.expiresIn * 1000)
+            : undefined,
+        });
 
-      console.log(`[OAuth Callback] New credential created successfully`);
+        console.log(`[OAuth Callback] New credential created successfully`);
+      } catch (saveError) {
+        console.error(`[OAuth Callback] Failed to save credential:`, saveError);
+        return NextResponse.redirect(
+          new URL('/integrations?error=CredentialSaveFailed', req.url)
+        );
+      }
     }
 
     console.log(`[OAuth Callback] Successfully ${existingCredential ? 'updated' : 'connected'} ${provider} (org: ${orgId})`);

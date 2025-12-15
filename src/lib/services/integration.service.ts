@@ -102,6 +102,17 @@ export class IntegrationService {
 
       console.log('[Integration Service] Database record created successfully:', credential.id);
 
+      return {
+        id: credential.id,
+        provider: credential.provider,
+        credentialName: credential.credentialName,
+        scope: credential.scope,
+        expiresAt: credential.expiresAt,
+        isActive: credential.isActive,
+        lastUsedAt: credential.lastUsedAt,
+        createdAt: credential.createdAt,
+      };
+
       // 3. Log activity
       await prisma.activityLog.create({
         data: {
