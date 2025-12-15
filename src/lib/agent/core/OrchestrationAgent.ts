@@ -37,6 +37,7 @@ import {
   DecisionStatus as DecisionStatusEnum,
   LLMProvider,
   DEFAULT_AGENT_CONFIG,
+  DecisionType,
 } from '../types/agent.types';
 import type { ILLMClient } from './LLMClient';
 import { createLLMClient } from './LLMFactory';
@@ -53,7 +54,55 @@ import {
   logisticsCoordinatorAgent,
   getAgentForDocumentType,
 } from '../operational';
+// Inline communication classifier to avoid bundling issues
+class CommunicationClassifier {
+  classifyIntent(intent: string, context: any) {
+    const normalizedIntent = intent.toLowerCase().trim();
 
+    // System communications (highest priority)
+    if (this.isSystemCommunication(normalizedIntent, context)) {
+      return {
+        channel: 'system' as const,
+        confidence: 0.9,
+        reasoning: 'System communication detected',
+        requiredIntegrations: [],
+        fallbackOptions: ['business']
+      };
+    }
+
+    // Business communications
+    if (this.isBusinessCommunication(normalizedIntent, context)) {
+      return {
+        channel: 'business' as const,
+        confidence: 0.8,
+        reasoning: 'Business communication detected',
+        requiredIntegrations: ['gmail', 'outlook'],
+        fallbackOptions: ['system']
+      };
+    }
+
+    // Default to integration channel
+    return {
+      channel: 'integration' as const,
+      confidence: 0.6,
+      reasoning: 'Defaulting to integration channel',
+      requiredIntegrations: [],
+      fallbackOptions: ['system', 'business']
+    };
+  }
+
+  private isSystemCommunication(intent: string, context: any): boolean {
+    const systemKeywords = ['system', 'admin', 'notification', 'alert', 'error', 'status'];
+    return systemKeywords.some(keyword => intent.includes(keyword));
+  }
+
+  private isBusinessCommunication(intent: string, context: any): boolean {
+    const businessKeywords = ['email', 'contact', 'customer', 'client', 'sales', 'support'];
+    return businessKeywords.some(keyword => intent.includes(keyword));
+  }
+}
+
+const communicationClassifier = new CommunicationClassifier();
 // =============================================================================
 // Constants
 // =============================================================================
@@ -767,7 +816,7 @@ export class OrchestrationAgent {
   private async buildDecisionContext(input: AgentInput): Promise<DecisionContext> {
     // Simplified context building to avoid database issues
     const org: OrgContext = {
-      id: input.orgId || this.config.orgId,
+      id: this.config.orgId,
       name: 'Organization', // Simplified for now
       pipelines: [],
       users: [],
@@ -780,7 +829,8 @@ export class OrchestrationAgent {
       relatedEvents: [],
     };
 
-    const communicationClassification = communicationClassifier.classifyIntent(input.content, input);
+    console.log('DEBUG: communicationClassifier defined?', typeof communicationClassifier);
+    const communicationClassification = communicationClassifier.classifyIntent(input.rawContent, input);
     const availableIntegrations: any[] = []; // Simplified for now
     const availableActions = this.filterActionsByCommunicationType(
       this.config.enabledActions,
@@ -878,6 +928,58 @@ export class OrchestrationAgent {
   }
 
   // ===========================================================================
+  // Private: Context Methods
+  // ===========================================================================
+
+  /**
+   * Filter available actions based on communication type and available integrations.
+   */
+  private filterActionsByCommunicationType(
+    enabledActions: DecisionType[],
+    communicationClassification: any,
+    availableIntegrations: any[]
+  ): DecisionType[] {
+    // Filter actions based on communication channel capabilities
+    return enabledActions.filter(action => {
+      switch (communicationClassification?.channel) {
+        case 'system':
+          // System channel supports email and notification actions
+          return [
+            DecisionType.SEND_SYSTEM_EMAIL,
+            DecisionType.SEND_NOTIFICATION,
+            DecisionType.ASSIGN_PIPELINE,
+            DecisionType.CREATE_TASK
+          ].includes(action);
+
+        case 'business':
+          // Business channel supports email and integration actions
+          return [
+            DecisionType.SEND_BUSINESS_EMAIL,
+            DecisionType.TRIGGER_AUTOMATION,
+            DecisionType.ASSIGN_PIPELINE,
+            DecisionType.CREATE_TASK,
+            DecisionType.CREATE_EVENT,
+            DecisionType.UPDATE_EVENT
+          ].includes(action);
+
+        case 'integration':
+          // Integration channel supports all actions
+          return true;
+
+        default:
+          // Default to basic actions for unknown channels
+          return [
+            DecisionType.ASSIGN_PIPELINE,
+            DecisionType.CREATE_TASK,
+            DecisionType.SEND_NOTIFICATION
+          ].includes(action);
+      }
+    });
+  }
+
+  // ===========================================================================
+  // Private: LLM Methods
+  // ===========================================================================  // ===========================================================================
   // Private: LLM Methods
   // ===========================================================================
 

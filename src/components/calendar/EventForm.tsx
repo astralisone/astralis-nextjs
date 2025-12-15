@@ -384,7 +384,7 @@ export function EventForm({ event, onSubmit, onCancel, mode }: EventFormProps) {
             type="email"
             value={participantEmail}
             onChange={(e) => setParticipantEmail(e.target.value)}
-            onKeyPress={(e) => {
+            onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
                 handleAddParticipant();

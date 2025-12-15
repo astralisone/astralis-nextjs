@@ -642,7 +642,14 @@ export interface DecisionContext {
   }>;
 
   /** Communication classification for channel determination */
-  communicationClassification?: import('../communication-classifier').CommunicationClassification;
+  communicationClassification?: {
+    channel: 'system' | 'business' | 'integration';
+    confidence: number;
+    reasoning: string;
+    requiredIntegrations?: string[];
+    fallbackOptions?: string[];
+    metadata?: Record<string, unknown>;
+  };
 
   /** Current timestamp for the decision */
   decisionTimestamp?: Date;

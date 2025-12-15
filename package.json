@@ -27,7 +27,7 @@
     "test:e2e:debug": "playwright test --debug",
     "test:e2e:report": "playwright show-report",
     "prisma:gen": "prisma generate",
-    "prisma:migrate": "prisma migrate dev --name add_agent_processed_column  && prisma migrate deploy",
+    "prisma:migrate": "prisma migrate deploy",
     "prisma:seed": "node prisma/seed.js && yarn seed:pipelines && yarn seed:templates",
     "seed:pipelines": "npx tsx prisma/seeds/pipelines.seed.ts",
     "seed:templates": "npx tsx prisma/seeds/task-templates.seed.ts"

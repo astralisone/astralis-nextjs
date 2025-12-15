@@ -108,18 +108,17 @@ export function AgentChatInterface() {
         throw new Error(errorData.error || `HTTP ${response.status}`);
       }
 
-      const result: AgentDecisionResult = await response.json();
+      const data = await response.json();
 
       const assistantMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: result.reasoning,
+        content: data.decision.reasoning,
         timestamp: new Date(),
         agent: AVAILABLE_AGENTS.find(a => a.id === selectedAgent)?.name,
-        suggestions: result.suggestions,
-        confidence: result.confidence,
+        suggestions: data.decision.suggestions,
+        confidence: data.decision.confidence,
       };
-
       setMessages(prev => [...prev, assistantMessage]);
 
     } catch (err) {
@@ -389,7 +388,7 @@ export function AgentChatInterface() {
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyPress={handleKeyPress}
+                onKeyDown={handleKeyPress}
                 placeholder={`Command ${selectedAgentData?.name.toLowerCase()}...`}
                 disabled={isLoading}
                 className="pr-12 py-4 text-base border-2 border-slate-200 dark:border-slate-600 rounded-xl focus:border-astralis-blue focus:ring-astralis-blue bg-slate-50 dark:bg-slate-700 transition-all duration-200"
