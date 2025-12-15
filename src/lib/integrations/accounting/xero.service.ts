@@ -144,9 +144,8 @@ export class XeroService extends BaseIntegrationService<XeroCredentialData> {
   /**
    * Test connection to Xero
    */
-  async testConnection(): Promise<boolean> {
-    const result = await this.getOrganization();
-    return result.success;
+  async testConnection(): Promise<ConnectionTestResult> {
+    return this.standardTestConnection();
   }
 
   /**

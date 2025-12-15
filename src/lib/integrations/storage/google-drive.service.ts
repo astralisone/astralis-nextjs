@@ -117,9 +117,8 @@ export class GoogleDriveService extends BaseIntegrationService<OAuthCredentialDa
   /**
    * Test connection to Google Drive
    */
-  async testConnection(): Promise<boolean> {
-    const result = await this.getAccountInfo();
-    return result.success;
+  async testConnection(): Promise<ConnectionTestResult> {
+    return this.standardTestConnection();
   }
 
   /**

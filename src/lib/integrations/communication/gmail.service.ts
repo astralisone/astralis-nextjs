@@ -109,9 +109,8 @@ export class GmailService extends BaseIntegrationService<OAuthCredentialData> {
   /**
    * Test connection to Gmail
    */
-  async testConnection(): Promise<boolean> {
-    const result = await this.getProfile();
-    return result.success;
+  async testConnection(): Promise<ConnectionTestResult> {
+    return this.standardTestConnection();
   }
 
   /**

@@ -7,6 +7,9 @@
 
 import { ActionStatus, IntegrationProvider } from '@prisma/client';
 
+// Re-export Prisma types for convenience
+export { IntegrationProvider } from '@prisma/client';
+
 // ============================================================================
 // ACTION DEFINITION TYPES
 // ============================================================================

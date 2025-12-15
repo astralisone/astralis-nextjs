@@ -75,7 +75,7 @@ services:
       - N8N_HOST=localhost
       - WEBHOOK_URL=http://localhost:5678
       - N8N_BASIC_AUTH_ACTIVE=false
-      - N8N_ENCRYPTION_KEY=your-64-character-hex-encryption-key-change-this-badassSecret
+      - ASTRALIS_ENCRYPTION_KEY=your-64-character-hex-encryption-key-change-this-badassSecret
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
       - DB_POSTGRESDB_PORT=5432

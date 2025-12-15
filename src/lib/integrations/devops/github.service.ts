@@ -21,14 +21,8 @@ export class GitHubService extends BaseIntegrationService<GitHubCredentialData> 
     });
   }
 
-  async testConnection(): Promise<boolean> {
-    try {
-      const response = await this.getAccountInfo();
-      return response.success;
-    } catch (error) {
-      console.error('[GitHub] Test connection failed:', error);
-      return false;
-    }
+  async testConnection(): Promise<ConnectionTestResult> {
+    return this.standardTestConnection();
   }
 
   async getAccountInfo(): Promise<IntegrationApiResponse<Record<string, unknown>>> {

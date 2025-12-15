@@ -19,6 +19,9 @@ vercel-oauth-credentials.env
 oauth-credentials.env
 
 # Log files
+
+# Archived documentation
+docs/archive-2024-phase-docs.zip
 *.log
 npm-debug.log*
 yarn-debug.log*

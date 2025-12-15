@@ -301,9 +301,9 @@ export async function GET(
           data: {
             credentialData: encryptedData,
             scope: tokenData.scope,
-            expiresAt: tokenData.expiresIn
-              ? new Date(Date.now() + tokenData.expiresIn * 1000)
-              : null,
+             expiresAt: tokenData.expiresIn
+               ? new Date(Date.now() + tokenData.expiresIn * 1000)
+               : new Date(Date.now() + 3600 * 1000), // Default 1 hour if not provided
             status: 'CONNECTED_ACTIVE',
             lastUsedAt: new Date(),
           },
@@ -344,9 +344,9 @@ export async function GET(
           credentialName,
           credentialData,
           scope: tokenData.scope,
-          expiresAt: tokenData.expiresIn
-            ? new Date(Date.now() + tokenData.expiresIn * 1000)
-            : undefined,
+           expiresAt: tokenData.expiresIn
+             ? new Date(Date.now() + tokenData.expiresIn * 1000)
+             : new Date(Date.now() + 3600 * 1000), // Default 1 hour if not provided
         });
 
         console.log(`[OAuth Callback] New credential created successfully`);

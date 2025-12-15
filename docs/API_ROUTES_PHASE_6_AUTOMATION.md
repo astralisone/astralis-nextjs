@@ -518,7 +518,7 @@ All sensitive operations are logged to `ActivityLog` table:
 ### Data Encryption
 
 - Integration credentials encrypted using AES-256-GCM
-- Encryption key from `N8N_ENCRYPTION_KEY` or `NEXTAUTH_SECRET`
+- Encryption key from `ASTRALIS_ENCRYPTION_KEY` or `NEXTAUTH_SECRET`
 - Never exposed in API responses
 
 ---

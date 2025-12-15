@@ -195,9 +195,8 @@ export class SalesforceService extends BaseIntegrationService<SalesforceCredenti
   /**
    * Test connection to Salesforce
    */
-  async testConnection(): Promise<boolean> {
-    const result = await this.getAccountInfo();
-    return result.success;
+  async testConnection(): Promise<ConnectionTestResult> {
+    return this.standardTestConnection();
   }
 
   /**

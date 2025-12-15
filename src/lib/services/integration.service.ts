@@ -16,7 +16,7 @@ import type { IntegrationProvider } from '@/types/automation';
  *
  * Security:
  * - All credentials are encrypted using AES-256-GCM encryption
- * - Encryption key derived from N8N_ENCRYPTION_KEY or NEXTAUTH_SECRET
+ * - Encryption key derived from ASTRALIS_ENCRYPTION_KEY or NEXTAUTH_SECRET
  * - Credentials never returned unencrypted in API responses
  * - All operations are logged in ActivityLog for audit trail
  * - Soft delete preserves audit trail while removing access

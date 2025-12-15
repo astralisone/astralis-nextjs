@@ -140,9 +140,8 @@ export class HubSpotService extends BaseIntegrationService<OAuthCredentialData> 
   /**
    * Test connection to HubSpot
    */
-  async testConnection(): Promise<boolean> {
-    const result = await this.getAccountInfo();
-    return result.success;
+  async testConnection(): Promise<ConnectionTestResult> {
+    return this.standardTestConnection();
   }
 
   /**

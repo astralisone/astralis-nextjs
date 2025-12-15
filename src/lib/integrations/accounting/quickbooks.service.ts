@@ -153,9 +153,8 @@ export class QuickBooksService extends BaseIntegrationService<QuickBooksCredenti
   /**
    * Test connection to QuickBooks
    */
-  async testConnection(): Promise<boolean> {
-    const result = await this.getCompanyInfo();
-    return result.success;
+  async testConnection(): Promise<ConnectionTestResult> {
+    return this.standardTestConnection();
   }
 
   /**

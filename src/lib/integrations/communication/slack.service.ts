@@ -120,9 +120,8 @@ export class SlackService extends BaseIntegrationService<SlackCredentialData> {
   /**
    * Test connection to Slack
    */
-  async testConnection(): Promise<boolean> {
-    const result = await this.authTest();
-    return result.success;
+  async testConnection(): Promise<ConnectionTestResult> {
+    return this.standardTestConnection();
   }
 
   /**

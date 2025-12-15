@@ -110,9 +110,8 @@ export class DropboxService extends BaseIntegrationService<OAuthCredentialData> 
   /**
    * Test connection to Dropbox
    */
-  async testConnection(): Promise<boolean> {
-    const result = await this.getAccountInfo();
-    return result.success;
+  async testConnection(): Promise<ConnectionTestResult> {
+    return this.standardTestConnection();
   }
 
   /**

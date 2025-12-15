@@ -23,14 +23,8 @@ export class ShopifyService extends BaseIntegrationService<ShopifyCredentialData
     }
   }
 
-  async testConnection(): Promise<boolean> {
-    try {
-      const response = await this.getAccountInfo();
-      return response.success;
-    } catch (error) {
-      console.error('[Shopify] Test connection failed:', error);
-      return false;
-    }
+  async testConnection(): Promise<ConnectionTestResult> {
+    return this.standardTestConnection();
   }
 
   async getAccountInfo(): Promise<IntegrationApiResponse<Record<string, unknown>>> {

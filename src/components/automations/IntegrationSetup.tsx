@@ -29,7 +29,7 @@ interface IntegrationSetupProps {
   unavailableReason?: string;
   onConnect: () => Promise<void>;
   onDisconnect: () => Promise<void>;
-  onTest?: () => Promise<boolean>;
+  onTest?: () => Promise<{ success: boolean; message?: string; needsReconnect?: boolean }>;
 }
 
 const providerInfo: Record<
@@ -219,7 +219,7 @@ export function IntegrationSetup({
   const [isConnecting, setIsConnecting] = useState(false);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
-  const [testResult, setTestResult] = useState<boolean | null>(null);
+  const [testResult, setTestResult] = useState<{ success: boolean; message?: string; needsReconnect?: boolean } | null>(null);
   const [showSetupGuide, setShowSetupGuide] = useState(false);
   const [setupGuide, setSetupGuide] = useState<any>(null);
 
@@ -411,11 +411,13 @@ export function IntegrationSetup({
 
         {/* Test Result */}
         {testResult !== null && (
-          <Alert variant={testResult ? 'success' : 'error'} showIcon>
+          <Alert variant={testResult.success ? 'success' : 'error'} showIcon>
             <AlertDescription>
-              {testResult
-                ? 'Connection test successful!'
-                : 'Connection test failed. Please check your credentials.'}
+              {testResult.success
+                ? (testResult.message || 'Connection test successful!')
+                : (testResult.needsReconnect
+                    ? 'Connection expired. Please reconnect this integration.'
+                    : (testResult.message || 'Connection test failed. Please check your credentials.'))}
             </AlertDescription>
           </Alert>
         )}

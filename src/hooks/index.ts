@@ -53,3 +53,8 @@ export {
 
 // Notifications
 export { useToast } from './useToast';
+
+// Integration hooks
+export { useIntegrationsData } from './use-integrations-data';
+export { useIntegrationsFilter } from './use-integrations-filter';
+export { useIntegrationsActions } from './use-integrations-actions';

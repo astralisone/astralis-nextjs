@@ -75,12 +75,13 @@ export async function POST(
     await service.initialize(credentialId, session.user.id, session.user.orgId);
 
     // 5. Test the connection
-    const isConnected = await service.testConnection();
+    const testResult = await service.testConnection();
 
-    if (!isConnected) {
+    if (!testResult.success) {
       return NextResponse.json({
         success: false,
-        message: 'Connection test failed',
+        message: testResult.message || 'Connection test failed',
+        needsReconnect: testResult.needsReconnect || false,
       });
     }
 

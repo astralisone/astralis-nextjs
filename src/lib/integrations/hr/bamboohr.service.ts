@@ -23,14 +23,8 @@ export class BambooHRService extends BaseIntegrationService<BambooHRCredentialDa
     }
   }
 
-  async testConnection(): Promise<boolean> {
-    try {
-      const response = await this.getAccountInfo();
-      return response.success;
-    } catch (error) {
-      console.error('[BambooHR] Test connection failed:', error);
-      return false;
-    }
+  async testConnection(): Promise<ConnectionTestResult> {
+    return this.standardTestConnection();
   }
 
   async getAccountInfo(): Promise<IntegrationApiResponse<Record<string, unknown>>> {

@@ -7,7 +7,7 @@ import { IntegrationConfigDialog } from './integration-config-dialog';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import {
   INTEGRATION_CATALOG,
   type IntegrationCategory,
@@ -44,7 +44,6 @@ const CATEGORIES: { id: IntegrationCategory | 'all'; label: string }[] = [
 export function IntegrationsGrid({ initialConnections = [], isAdmin = false }: IntegrationsGridProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { toast } = useToast();
 
   const [connections, setConnections] = useState<ConnectedIntegration[]>(initialConnections);
   const [configs, setConfigs] = useState<IntegrationConfig[]>([]);

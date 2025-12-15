@@ -128,9 +128,8 @@ export class TeamsService extends BaseIntegrationService<OAuthCredentialData> {
   /**
    * Test connection to Teams
    */
-  async testConnection(): Promise<boolean> {
-    const result = await this.getMe();
-    return result.success;
+  async testConnection(): Promise<ConnectionTestResult> {
+    return this.standardTestConnection();
   }
 
   /**

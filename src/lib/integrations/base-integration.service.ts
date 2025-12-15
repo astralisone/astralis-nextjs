@@ -31,6 +31,15 @@ export interface ApiRequestOptions {
 }
 
 /**
+ * Connection test result
+ */
+export interface ConnectionTestResult {
+  success: boolean;
+  message?: string;
+  needsReconnect?: boolean;
+}
+
+/**
  * Abstract base class for integration services
  */
 export abstract class BaseIntegrationService<TCredentialData = Record<string, unknown>> {
@@ -59,9 +68,16 @@ export abstract class BaseIntegrationService<TCredentialData = Record<string, un
       throw new Error(`Credential not found: ${credentialId}`);
     }
 
-    // Check if token is expired and refresh if needed
-    if (this.isTokenExpired()) {
-      await this.refreshToken();
+    // Check if token needs refresh (expired or close to expiring)
+    if (this.needsRefresh()) {
+      try {
+        console.log(`[${this.config.provider}] Token needs refresh, attempting automatic refresh`);
+        await this.refreshToken();
+        console.log(`[${this.config.provider}] Token refreshed successfully during initialization`);
+      } catch (refreshError) {
+        console.warn(`[${this.config.provider}] Token refresh failed during initialization:`, refreshError);
+        // Continue with expired token - let the API call handle it
+      }
     }
   }
 
@@ -88,8 +104,42 @@ export abstract class BaseIntegrationService<TCredentialData = Record<string, un
    */
   protected isTokenExpired(): boolean {
     if (!this.credential?.expiresAt) return false;
-    // Consider expired if less than 5 minutes remaining
-    return new Date(this.credential.expiresAt).getTime() < Date.now() + 5 * 60 * 1000;
+    // Consider expired if less than 10 minutes remaining
+    return new Date(this.credential.expiresAt).getTime() < Date.now() + 10 * 60 * 1000;
+  }
+
+  /**
+   * Check if the token needs refresh (expires within 30 minutes)
+   */
+  protected needsRefresh(): boolean {
+    if (!this.credential?.expiresAt) return false;
+    // Refresh if less than 30 minutes remaining
+    return new Date(this.credential.expiresAt).getTime() < Date.now() + 30 * 60 * 1000;
+  }
+
+  /**
+   * Standard test connection implementation that can be used by subclasses
+   * Calls getAccountInfo() and wraps the result in a ConnectionTestResult
+   */
+  protected async standardTestConnection(): Promise<ConnectionTestResult> {
+    try {
+      const result = await this.getAccountInfo();
+      if (result.success) {
+        return { success: true, message: 'Connection test successful' };
+      } else {
+        return {
+          success: false,
+          message: result.error || 'Connection test failed',
+          needsReconnect: this.isTokenExpired()
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Connection test failed',
+        needsReconnect: this.isTokenExpired()
+      };
+    }
   }
 
   /**
@@ -134,7 +184,22 @@ export abstract class BaseIntegrationService<TCredentialData = Record<string, un
       console.log(`[${this.config.provider}] Token refreshed successfully`);
     } catch (error) {
       console.error(`[${this.config.provider}] Token refresh failed:`, error);
-      throw new Error('Token refresh failed');
+
+      // Mark credential as needing reconnection if refresh fails
+      if (this.credential) {
+        try {
+          await integrationService.markNeedsReauth(
+            this.credential.id,
+            this.credential.userId,
+            this.credential.orgId,
+            `Token refresh failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+          );
+        } catch (statusError) {
+          console.error(`[${this.config.provider}] Failed to update credential status:`, statusError);
+        }
+      }
+
+      throw new Error(`Token refresh failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -152,8 +217,17 @@ export abstract class BaseIntegrationService<TCredentialData = Record<string, un
     const { method = 'GET', body, headers = {}, params, timeout = 30000 } = options;
 
     // Check if token needs refresh
-    if (this.isTokenExpired()) {
-      await this.refreshToken();
+    if (this.needsRefresh()) {
+      try {
+        console.log(`[${this.config.provider}] Token expired or expiring soon, refreshing before API call`);
+        await this.refreshToken();
+      } catch (refreshError) {
+        console.error(`[${this.config.provider}] Token refresh failed before API call:`, refreshError);
+        // If refresh fails and token is actually expired, throw error
+        if (this.isTokenExpired()) {
+          throw new Error('Authentication token expired and refresh failed. Please reconnect this integration.');
+        }
+      }
     }
 
     // Build URL with params
@@ -247,7 +321,7 @@ export abstract class BaseIntegrationService<TCredentialData = Record<string, un
   /**
    * Test the connection to the provider
    */
-  abstract testConnection(): Promise<boolean>;
+  abstract testConnection(): Promise<ConnectionTestResult>;
 
   /**
    * Get provider-specific user/account info

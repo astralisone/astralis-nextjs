@@ -194,7 +194,7 @@ Required in `.env.local`:
 
 ```bash
 # Primary encryption key (preferred)
-N8N_ENCRYPTION_KEY=your-64-character-hex-encryption-key-change-this-immediately
+ASTRALIS_ENCRYPTION_KEY=your-64-character-hex-encryption-key-change-this-immediately
 
 # Fallback encryption key
 NEXTAUTH_SECRET="your-nextauth-secret-key-here"
@@ -314,7 +314,7 @@ const response = await fetch('https://api.example.com/data', {
 
 ### "Encryption key not found"
 
-**Solution**: Set `N8N_ENCRYPTION_KEY` or `NEXTAUTH_SECRET` in `.env.local`
+**Solution**: Set `ASTRALIS_ENCRYPTION_KEY` or `NEXTAUTH_SECRET` in `.env.local`
 
 ### "Credential not found or inactive"
 
