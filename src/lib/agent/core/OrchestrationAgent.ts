@@ -968,6 +968,54 @@ export class OrchestrationAgent {
   }
 
   /**
+   * Send error notification to escalation contacts
+   */
+  private async sendErrorNotification(error: Error, input: AgentInput): Promise<void> {
+    try {
+      const escalationEmail = this.config.escalationEmail;
+      if (!escalationEmail) {
+        this.logger.warn('No escalation email configured, skipping error notification');
+        return;
+      }
+
+      const subject = `Agent Error: ${error.message}`;
+      const body = `
+Agent Error Notification
+
+Agent: ${this.agentId}
+Organization: ${input.orgId}
+Correlation ID: ${input.correlationId}
+
+Error: ${error.message}
+Stack: ${error.stack}
+
+Input Details:
+- Source: ${input.source}
+- Type: ${input.type}
+- Content: ${input.content?.substring(0, 200)}${input.content && input.content.length > 200 ? '...' : ''}
+
+Timestamp: ${new Date().toISOString()}
+
+This is an automated notification from the Astralis Orchestration Agent.
+      `.trim();
+
+      // Use the internal email service to send the notification
+      const { sendEmail } = await import('@/lib/email');
+
+      await sendEmail({
+        to: escalationEmail,
+        subject,
+        text: body,
+        from: 'system@astralisone.com'
+      });
+
+      this.logger.info('Error notification sent', { escalationEmail, correlationId: input.correlationId });
+    } catch (notifyError) {
+      this.logger.error('Failed to send error notification', notifyError as Error);
+    }
+  }
+
+  /**
    * Check if the agent is currently rate limited
    */
   private isRateLimited(): boolean {
