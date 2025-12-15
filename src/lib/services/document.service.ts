@@ -148,56 +148,31 @@ export class DocumentService {
     // Only add agentProcessed if the column exists (migration has run)
     // This prevents errors when deploying before migrations complete
     try {
-      // Properly check if column exists using information_schema
-      const columnCheck = await prisma.$queryRaw<{ exists: boolean }[]>`
-        SELECT EXISTS (
-          SELECT 1
-          FROM information_schema.columns
-          WHERE table_schema = 'public'
-            AND table_name = 'Document'
-            AND column_name = 'agentProcessed'
-        ) as exists
-      `;
-
-      if (columnCheck[0].exists) {
-        createData.agentProcessed = false;
-      }
+      // Try to check if the column exists by attempting a simple query
+      await prisma.$queryRaw`SELECT "agentProcessed" FROM "Document" LIMIT 1`;
+      // If we get here, the column exists, so we can include it
+      createData.agentProcessed = false;
     } catch (error) {
-      // If schema query fails, assume column doesn't exist and skip
-      console.log('[DocumentService] Could not verify agentProcessed column, skipping');
+      // Column doesn't exist yet, skip it
+      console.log('[DocumentService] agentProcessed column not yet migrated, skipping');
     }
 
     const document = await prisma.document.create({
       data: createData,
     });
 
-    // 5. Queue background processing via HTTP webhook (prevents Redis connection leaks)
+    // 5. Queue background processing
     try {
-      const workerUrl = process.env.N8N_WEBHOOK_URL || 'http://localhost:5678';
-      const webhookUrl = `${workerUrl}/webhook/document-processing`;
-
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'User-Agent': 'Astralis-One/1.0',
-        },
-        body: JSON.stringify({
-          documentId: document.id,
-          orgId,
-          performOCR: options.performOCR,
-          performVisionExtraction: options.performVisionExtraction,
-          documentType: options.documentType || undefined,
-          language: options.language,
-        }),
+      await queueDocumentProcessing({
+        documentId: document.id,
+        orgId,
+        performOCR: options.performOCR,
+        performVisionExtraction: options.performVisionExtraction,
+        documentType: options.documentType || undefined,
+        language: options.language,
       });
 
-      if (!response.ok) {
-        console.warn(`[DocumentService] Failed to queue processing via webhook: ${response.status}`);
-        // Don't fail the upload if webhook fails - processing can be retried later
-      } else {
-        console.log(`[DocumentService] Queued processing for document ${document.id} via webhook`);
-      }
+      console.log(`[DocumentService] Queued processing for document ${document.id}`);
     } catch (error) {
       console.error('[DocumentService] Failed to queue document processing:', error);
       // Don't fail the upload if queueing fails
