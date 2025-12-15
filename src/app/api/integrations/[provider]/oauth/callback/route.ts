@@ -209,6 +209,17 @@ export async function GET(
       codeVerifier // Include code verifier for PKCE if present
     );
 
+    console.log(`[OAuth Callback] Token exchange successful for ${provider}:`, {
+      hasAccessToken: !!tokenData.accessToken,
+      hasRefreshToken: !!tokenData.refreshToken,
+      scope: tokenData.scope,
+      providerSpecific: {
+        teamId: tokenData.teamId,
+        instanceUrl: tokenData.instanceUrl,
+        tenantId: tokenData.tenantId,
+      }
+    });
+
     // 8. Add provider-specific data
     const credentialData: Record<string, unknown> = {
       accessToken: tokenData.accessToken,
@@ -234,6 +245,17 @@ export async function GET(
     if (tokenData.instanceUrl) {
       credentialData.instanceUrl = tokenData.instanceUrl; // Salesforce instance URL
     }
+
+    console.log(`[OAuth Callback] Final credential data for ${provider}:`, {
+      hasAccessToken: !!credentialData.accessToken,
+      scope: credentialData.scope,
+      providerSpecific: {
+        realmId: credentialData.realmId,
+        tenantId: credentialData.tenantId,
+        teamId: credentialData.teamId,
+        instanceUrl: credentialData.instanceUrl,
+      }
+    });
 
     // 9. Fetch additional info if available (e.g., Xero tenant ID)
     if (provider === 'XERO' && !credentialData.tenantId) {

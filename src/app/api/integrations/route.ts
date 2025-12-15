@@ -38,6 +38,22 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    if (!session?.user?.id) {
+      console.log('[Integration API] No session or user ID');
+      return NextResponse.json(
+        { error: 'Unauthorized', details: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    if (!session.user.orgId || session.user.orgId === '') {
+      console.log('[Integration API] No orgId:', session.user.orgId);
+      return NextResponse.json(
+        { error: 'Forbidden', details: 'Organization required. Please complete your account setup.' },
+        { status: 403 }
+      );
+    }
+
     // 2. Parse query parameters
     const { searchParams } = req.nextUrl;
     const provider = searchParams.get('provider') || undefined;
@@ -45,15 +61,26 @@ export async function GET(req: NextRequest) {
     // 3. Get credentials (without decrypted data)
     let credentials;
     try {
-      console.log('[Integration API] Querying credentials for user:', session.user.id, 'org:', session.user.orgId);
+      console.log('[Integration API] Querying credentials for user:', session.user.id, 'org:', session.user.orgId, 'provider filter:', provider);
       credentials = await integrationService.listCredentials(
         session.user.id,
         session.user.orgId,
         provider as any
       );
       console.log('[Integration API] Found credentials:', credentials.length);
+
+      // Log credential details for debugging
+      if (credentials.length > 0) {
+        console.log('[Integration API] Credential providers:', credentials.map(c => ({ id: c.id, provider: c.provider, status: c.status })));
+      }
     } catch (dbError) {
       console.error('[Integration API] Database error:', dbError);
+      console.error('[Integration API] Error details:', {
+        userId: session.user.id,
+        orgId: session.user.orgId,
+        provider,
+        error: dbError instanceof Error ? dbError.message : String(dbError)
+      });
       // Return empty array on database error for now
       credentials = [];
     }
