@@ -75,6 +75,8 @@ export async function GET(req: NextRequest) {
       // Log credential details for debugging
       if (credentials.length > 0) {
         console.log('[Integration API] Credential providers:', credentials.map(c => ({ id: c.id, provider: c.provider, status: c.status })));
+      } else {
+        console.log('[Integration API] No credentials found - this may be why the UI shows an error');
       }
     } catch (dbError) {
       console.error('[Integration API] Database error:', dbError);
