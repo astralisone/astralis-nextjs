@@ -283,6 +283,8 @@ export async function GET(
     });
     console.log(`[OAuth Callback] Existing credential check result:`, existingCredential ? `found (id: ${existingCredential.id})` : 'none found');
 
+    console.log(`[OAuth Callback] About to attempt credential save/update`);
+
     let credentialName: string;
     if (existingCredential) {
       // Update existing credential

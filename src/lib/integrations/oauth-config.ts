@@ -198,12 +198,20 @@ export function parseOAuthState(state: string): OAuthStateData | null {
  */
 export function validateOAuthState(
   state: OAuthStateData,
-  maxAgeMs: number = 10 * 60 * 1000 // 10 minutes
+  maxAgeMs: number = 30 * 60 * 1000 // 30 minutes
 ): boolean {
   const now = Date.now();
-  if (now - state.timestamp > maxAgeMs) {
+  const ageMs = now - state.timestamp;
+  const ageMinutes = ageMs / (60 * 1000);
+
+  console.log(`[validateOAuthState] State age: ${ageMinutes.toFixed(2)} minutes (${ageMs}ms), max allowed: ${maxAgeMs / (60 * 1000)} minutes`);
+
+  if (ageMs > maxAgeMs) {
+    console.log(`[validateOAuthState] State expired - age: ${ageMinutes.toFixed(2)} minutes`);
     return false;
   }
+
+  console.log(`[validateOAuthState] State valid`);
   return true;
 }
 

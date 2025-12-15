@@ -68,7 +68,7 @@ export class IntegrationService {
     data: SaveCredentialData
   ): Promise<CredentialData> {
     try {
-      console.log(`[Integration Service] Saving credential: ${data.provider} for user ${userId}`);
+      console.log(`[Integration Service] saveCredential called: ${data.provider} for user ${userId}, org ${orgId}`);
 
       // Validate inputs
       if (!userId || !orgId) {
