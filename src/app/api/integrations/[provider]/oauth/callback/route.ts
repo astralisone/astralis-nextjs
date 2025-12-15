@@ -294,17 +294,22 @@ export async function GET(
     }
 
     // 10. Check for existing credential and generate name
+    console.log(`[OAuth Callback] Starting credential save process for ${provider}, userId: ${userId}, orgId: ${orgId}`);
+
     const providerName = provider.replace(/_/g, ' ').toLowerCase()
       .replace(/\b\w/g, (c) => c.toUpperCase());
 
     // Check if user already has a credential for this provider
+    console.log(`[OAuth Callback] Checking for existing credential...`);
     const existingCredential = await prisma.integrationCredential.findFirst({
       where: {
         userId,
+        orgId,
         provider,
         isActive: true,
       },
     });
+    console.log(`[OAuth Callback] Existing credential check result:`, existingCredential ? `found (id: ${existingCredential.id})` : 'none found');
 
     let credentialName: string;
     if (existingCredential) {
@@ -312,6 +317,7 @@ export async function GET(
       console.log(`[OAuth Callback] Updating existing credential for ${provider} (user: ${userId})`);
 
       const encryptedData = encrypt(JSON.stringify(credentialData));
+      console.log(`[OAuth Callback] Credential data encrypted for update`);
 
       await prisma.integrationCredential.update({
         where: { id: existingCredential.id },
@@ -325,6 +331,7 @@ export async function GET(
           lastUsedAt: new Date(),
         },
       });
+      console.log(`[OAuth Callback] Existing credential updated successfully`);
 
       // Log activity
       await prisma.activityLog.create({
@@ -348,6 +355,13 @@ export async function GET(
       credentialName = `${providerName} - ${timestamp}`;
 
       console.log(`[OAuth Callback] Creating new credential for ${provider} (user: ${userId})`);
+      console.log(`[OAuth Callback] Credential data to save:`, {
+        provider,
+        credentialName,
+        hasCredentialData: !!credentialData,
+        scope: tokenData.scope,
+        expiresAt: tokenData.expiresIn ? new Date(Date.now() + tokenData.expiresIn * 1000).toISOString() : null,
+      });
 
       await integrationService.saveCredential(userId, orgId, {
         provider,
@@ -358,6 +372,8 @@ export async function GET(
           ? new Date(Date.now() + tokenData.expiresIn * 1000)
           : undefined,
       });
+
+      console.log(`[OAuth Callback] New credential created successfully`);
     }
 
     console.log(`[OAuth Callback] Successfully ${existingCredential ? 'updated' : 'connected'} ${provider} (org: ${orgId})`);

@@ -68,12 +68,42 @@ export class IntegrationService {
     data: SaveCredentialData
   ): Promise<CredentialData> {
     try {
-      console.log('[Integration Service] Saving credential:', data.provider, data.credentialName);
+      console.log('[Integration Service] Saving credential:', {
+        userId,
+        orgId,
+        provider: data.provider,
+        credentialName: data.credentialName,
+        hasCredentialData: !!data.credentialData,
+        scope: data.scope,
+        expiresAt: data.expiresAt
+      });
+
+      // Validate inputs
+      if (!userId || !orgId) {
+        throw new Error(`Invalid userId or orgId: userId=${userId}, orgId=${orgId}`);
+      }
+
+      if (!data.provider || !data.credentialName) {
+        throw new Error(`Invalid provider or credentialName: provider=${data.provider}, credentialName=${data.credentialName}`);
+      }
 
       // 1. Encrypt credential data
       const encryptedData = encrypt(JSON.stringify(data.credentialData));
+      console.log('[Integration Service] Credential data encrypted successfully');
 
       // 2. Save to database
+      console.log('[Integration Service] Creating database record with data:', {
+        userId,
+        orgId,
+        provider: data.provider,
+        credentialName: data.credentialName,
+        hasEncryptedData: !!encryptedData,
+        scope: data.scope || null,
+        expiresAt: data.expiresAt || null,
+        isActive: true,
+        status: 'CONNECTED_ACTIVE',
+      });
+
       const credential = await prisma.integrationCredential.create({
         data: {
           userId,
@@ -87,6 +117,8 @@ export class IntegrationService {
           status: 'CONNECTED_ACTIVE',
         },
       });
+
+      console.log('[Integration Service] Database record created successfully:', credential.id);
 
       // 3. Log activity
       await prisma.activityLog.create({
