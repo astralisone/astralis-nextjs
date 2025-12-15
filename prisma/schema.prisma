@@ -1453,7 +1453,7 @@ model Document {
   // Operational agent fields
   documentType    DocumentType?       // AI-classified document type
   classificationConfidence Float?     // Confidence of AI classification
-  agentProcessed  Boolean             @default(false) // Has an operational agent processed this?
+  agentProcessed  Boolean?            @default(false) // Has an operational agent processed this?
   agentProcessedAt DateTime?
   organization    organization        @relation(fields: [orgId], references: [id])
   chats           DocumentChat[]

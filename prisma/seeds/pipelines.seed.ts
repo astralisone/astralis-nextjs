@@ -3,10 +3,11 @@ import { PrismaClient, PipelineType } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-  const orgId = process.env.SEED_ORG_ID;
+  const orgId = process.env.SEED_ORG_ID || process.env.DEFAULT_ORG_ID;
 
   if (!orgId) {
-    console.error("ERROR: SEED_ORG_ID environment variable is required");
+    console.error("ERROR: SEED_ORG_ID or DEFAULT_ORG_ID environment variable is required");
+    console.error("Available env vars:", Object.keys(process.env).filter(key => key.includes('ORG') || key.includes('SEED')));
     process.exit(1);
   }
 

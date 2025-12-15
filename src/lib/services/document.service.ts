@@ -137,12 +137,28 @@ export class DocumentService {
 
     // Create document record in database
     const { metadata, ...rest } = documentData;
+
+    // Prepare data without agentProcessed field (will be added by migration)
+    const createData: any = {
+      ...rest,
+      status: 'PENDING',
+      metadata: metadata === null ? Prisma.JsonNull : (metadata || Prisma.JsonNull),
+    };
+
+    // Only add agentProcessed if the column exists (migration has run)
+    // This prevents errors when deploying before migrations complete
+    try {
+      // Try to check if the column exists by attempting a simple query
+      await prisma.$queryRaw`SELECT "agentProcessed" FROM "Document" LIMIT 1`;
+      // If we get here, the column exists, so we can include it
+      createData.agentProcessed = false;
+    } catch (error) {
+      // Column doesn't exist yet, skip it
+      console.log('[DocumentService] agentProcessed column not yet migrated, skipping');
+    }
+
     const document = await prisma.document.create({
-      data: {
-        ...rest,
-        status: 'PENDING',
-        metadata: metadata === null ? Prisma.JsonNull : (metadata || Prisma.JsonNull),
-      },
+      data: createData,
     });
 
     // 5. Queue background processing
