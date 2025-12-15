@@ -296,8 +296,9 @@ export async function GET(
       });
 
     } else {
-      // Create new credential
-      credentialName = `${providerName} - ${new Date().toLocaleDateString()}`;
+      // Create new credential with unique timestamp
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      credentialName = `${providerName} - ${timestamp}`;
 
       console.log(`[OAuth Callback] Creating new credential for ${provider} (user: ${userId})`);
 
