@@ -507,7 +507,31 @@ export async function exchangeCodeForTokensWithCredentials(
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error(`[OAuth] Token exchange failed for ${provider}:`, errorText);
+    console.error(`[OAuth] Token exchange failed for ${provider}:`, {
+      status: response.status,
+      statusText: response.statusText,
+      responseBody: errorText,
+      requestUrl: config.tokenUrl,
+      requestData: {
+        grant_type: 'authorization_code',
+        code: code.substring(0, 10) + '...', // Don't log full code
+        redirect_uri: finalRedirectUri,
+        client_id: credentials.clientId.substring(0, 10) + '...', // Don't log full client_id
+      }
+    });
+
+    // Try to parse error as JSON for better error messages
+    try {
+      const errorJson = JSON.parse(errorText);
+      console.error(`[OAuth] Parsed error response:`, errorJson);
+
+      if (errorJson.error) {
+        throw new Error(`Token exchange failed: ${errorJson.error}${errorJson.error_description ? ' - ' + errorJson.error_description : ''}`);
+      }
+    } catch (parseError) {
+      // If not JSON, use the raw error text
+    }
+
     throw new Error(`Token exchange failed: ${response.statusText}`);
   }
 
@@ -758,9 +782,9 @@ const OAUTH_CONFIGS: Partial<Record<IntegrationProvider, OAuthProviderConfig>> =
 
    MICROSOFT_TEAMS: {
      provider: 'MICROSOFT_TEAMS',
-     authorizationUrl: 'https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize',
-     tokenUrl: 'https://login.microsoftonline.com/consumers/oauth2/v2.0/token',
-     revokeUrl: 'https://login.microsoftonline.com/consumers/oauth2/v2.0/logout',
+     authorizationUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
+     tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
+     revokeUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/logout',
      userInfoUrl: 'https://graph.microsoft.com/v1.0/me',
      scopes: [
        'User.Read',
