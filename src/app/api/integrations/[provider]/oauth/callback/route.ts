@@ -47,8 +47,11 @@ export async function GET(
 
     console.log(`[OAuth Callback] Query params - code: ${!!code}, state: ${!!stateParam}, error: ${error}`);
 
-    // Provider-specific params
-    const realmId = searchParams.get('realmId'); // QuickBooks
+    // Declare variables at function scope
+    let stateData: OAuthStateData | null = null;
+    let userId: string;
+    let orgId: string;
+    let returnUrl = '/integrations';
 
     // 2. Handle OAuth errors
     if (error) {
@@ -106,35 +109,45 @@ export async function GET(
     let returnUrl = '/integrations';
 
     if (stateParam) {
-      console.log('[OAuth Callback] Received state parameter:', stateParam);
-      const stateData = parseOAuthState(stateParam);
+      console.log('[OAuth Callback] Processing state parameter');
 
-      if (!stateData) {
-        console.error('[OAuth Callback] Failed to parse state parameter, raw state:', stateParam);
-        // Try to debug what went wrong with parsing
-        try {
-          const decoded = Buffer.from(stateParam, 'base64url').toString('utf-8');
-          console.error('[OAuth Callback] Decoded state:', decoded);
-        } catch (decodeError) {
-          console.error('[OAuth Callback] Failed to decode state:', decodeError);
+      try {
+        stateData = parseOAuthState(stateParam);
+
+        if (!stateData) {
+          console.error('[OAuth Callback] State parsing returned null, raw state:', stateParam);
+          return NextResponse.redirect(
+            new URL('/integrations?error=InvalidState', req.url)
+          );
         }
+
+        console.log('[OAuth Callback] State parsed successfully:', {
+          provider: stateData.provider,
+          hasCodeVerifier: !!stateData.codeVerifier,
+          userId: stateData.userId,
+          orgId: stateData.orgId
+        });
+
+        if (!validateOAuthState(stateData)) {
+          console.error('[OAuth Callback] State validation failed - expired');
+          return NextResponse.redirect(
+            new URL('/integrations?error=StateExpired', req.url)
+          );
+        }
+
+        userId = stateData.userId;
+        orgId = stateData.orgId;
+        returnUrl = stateData.returnUrl || returnUrl;
+
+        console.log('[OAuth Callback] State processing completed successfully');
+
+      } catch (error) {
+        console.error('[OAuth Callback] Exception during state processing:', error);
+        console.error('[OAuth Callback] Raw state parameter:', stateParam);
         return NextResponse.redirect(
-          new URL('/integrations?error=InvalidState', req.url)
+          new URL('/integrations?error=StateProcessingError', req.url)
         );
       }
-
-      console.log('[OAuth Callback] Parsed state data:', { provider: stateData.provider, hasCodeVerifier: !!stateData.codeVerifier });
-
-      if (!validateOAuthState(stateData)) {
-        console.error('[OAuth Callback] State expired');
-        return NextResponse.redirect(
-          new URL('/integrations?error=StateExpired', req.url)
-        );
-      }
-
-      userId = stateData.userId;
-      orgId = stateData.orgId;
-      returnUrl = stateData.returnUrl || returnUrl;
     } else {
       console.log('[OAuth Callback] No state parameter, using session fallback');
       // Fallback to session authentication
@@ -183,8 +196,8 @@ export async function GET(
     ).toString();
 
     // 7. Exchange code for tokens using org credentials
-    // Get code verifier from state data if available (for PKCE providers)
-    const codeVerifier = stateParam ? parseOAuthState(stateParam)?.codeVerifier : undefined;
+    // Get code verifier from stored state data (for PKCE providers)
+    const codeVerifier = stateData?.codeVerifier;
 
     console.log(`[OAuth Callback] About to exchange tokens - provider: ${provider}, hasCodeVerifier: ${!!codeVerifier}, userId: ${userId}, orgId: ${orgId}`);
 
@@ -320,6 +333,7 @@ export async function GET(
     successUrl.searchParams.set('success', 'true');
     successUrl.searchParams.set('provider', providerParam);
 
+    console.log(`[OAuth Callback] Redirecting to success URL: ${successUrl.toString()}`);
     return NextResponse.redirect(successUrl);
 
     } catch (error) {

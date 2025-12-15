@@ -170,9 +170,25 @@ export function generateOAuthState(data: Omit<OAuthStateData, 'timestamp' | 'non
  */
 export function parseOAuthState(state: string): OAuthStateData | null {
   try {
+    console.log('[parseOAuthState] Decoding state parameter');
     const decoded = Buffer.from(state, 'base64url').toString('utf-8');
-    return JSON.parse(decoded) as OAuthStateData;
-  } catch {
+
+    console.log('[parseOAuthState] Parsing JSON');
+    const parsed = JSON.parse(decoded);
+
+    // Validate required fields
+    if (!parsed.provider || !parsed.userId || !parsed.orgId) {
+      console.error('[parseOAuthState] Missing required fields. Found:', Object.keys(parsed));
+      console.error('[parseOAuthState] Parsed data:', parsed);
+      return null;
+    }
+
+    console.log('[parseOAuthState] State parsed successfully');
+    return parsed as OAuthStateData;
+
+  } catch (error) {
+    console.error('[parseOAuthState] Exception during parsing:', error);
+    console.error('[parseOAuthState] Raw state parameter:', state);
     return null;
   }
 }
