@@ -122,12 +122,7 @@ export async function GET(
           );
         }
 
-        console.log('[OAuth Callback] State parsed successfully:', {
-          provider: stateData.provider,
-          hasCodeVerifier: !!stateData.codeVerifier,
-          userId: stateData.userId,
-          orgId: stateData.orgId
-        });
+        console.log(`[OAuth Callback] State parsed successfully for provider: ${stateData.provider}, hasCodeVerifier: ${!!stateData.codeVerifier}`);
 
         if (!validateOAuthState(stateData)) {
           console.error('[OAuth Callback] State validation failed - expired');
@@ -210,19 +205,7 @@ export async function GET(
       codeVerifier // Include code verifier for PKCE if present
     );
 
-    console.log(`[OAuth Callback] Token exchange successful for ${provider}:`, {
-      hasAccessToken: !!tokenData.accessToken,
-      hasRefreshToken: !!tokenData.refreshToken,
-      expiresIn: tokenData.expiresIn,
-      expiresInType: typeof tokenData.expiresIn,
-      calculatedExpiry: tokenData.expiresIn ? new Date(Date.now() + tokenData.expiresIn * 1000).toISOString() : null,
-      scope: tokenData.scope,
-      providerSpecific: {
-        teamId: tokenData.teamId,
-        instanceUrl: tokenData.instanceUrl,
-        tenantId: tokenData.tenantId,
-      }
-    });
+    console.log(`[OAuth Callback] Token exchange successful for ${provider}, hasAccessToken: ${!!tokenData.accessToken}, expiresIn: ${tokenData.expiresIn}`);
 
     // 8. Add provider-specific data
     console.log(`[OAuth Callback] Building credential data for ${provider}, realmId: ${realmId}, tokenData.realmId: ${tokenData.realmId}`);
@@ -254,18 +237,7 @@ export async function GET(
       credentialData.instanceUrl = tokenData.instanceUrl; // Salesforce instance URL
     }
 
-    console.log(`[OAuth Callback] Final credential data for ${provider}:`, {
-      hasAccessToken: !!credentialData.accessToken,
-      expiresIn: tokenData.expiresIn,
-      expiresAt: tokenData.expiresIn ? new Date(Date.now() + tokenData.expiresIn * 1000).toISOString() : null,
-      scope: credentialData.scope,
-      providerSpecific: {
-        realmId: credentialData.realmId,
-        tenantId: credentialData.tenantId,
-        teamId: credentialData.teamId,
-        instanceUrl: credentialData.instanceUrl,
-      }
-    });
+    console.log(`[OAuth Callback] Final credential data for ${provider}, hasAccessToken: ${!!credentialData.accessToken}, scope: ${credentialData.scope}`);
 
     console.log(`[OAuth Callback] About to save credential for ${provider}`);
 
@@ -355,13 +327,7 @@ export async function GET(
       credentialName = `${providerName} - ${timestamp}`;
 
       console.log(`[OAuth Callback] Creating new credential for ${provider} (user: ${userId})`);
-      console.log(`[OAuth Callback] Credential data to save:`, {
-        provider,
-        credentialName,
-        hasCredentialData: !!credentialData,
-        scope: tokenData.scope,
-        expiresAt: tokenData.expiresIn ? new Date(Date.now() + tokenData.expiresIn * 1000).toISOString() : null,
-      });
+      console.log(`[OAuth Callback] Creating credential: ${credentialName} for ${provider}`);
 
       await integrationService.saveCredential(userId, orgId, {
         provider,

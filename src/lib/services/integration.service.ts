@@ -68,15 +68,7 @@ export class IntegrationService {
     data: SaveCredentialData
   ): Promise<CredentialData> {
     try {
-      console.log('[Integration Service] Saving credential:', {
-        userId,
-        orgId,
-        provider: data.provider,
-        credentialName: data.credentialName,
-        hasCredentialData: !!data.credentialData,
-        scope: data.scope,
-        expiresAt: data.expiresAt
-      });
+      console.log(`[Integration Service] Saving credential: ${data.provider} for user ${userId}`);
 
       // Validate inputs
       if (!userId || !orgId) {
@@ -92,17 +84,7 @@ export class IntegrationService {
       console.log('[Integration Service] Credential data encrypted successfully');
 
       // 2. Save to database
-      console.log('[Integration Service] Creating database record with data:', {
-        userId,
-        orgId,
-        provider: data.provider,
-        credentialName: data.credentialName,
-        hasEncryptedData: !!encryptedData,
-        scope: data.scope || null,
-        expiresAt: data.expiresAt || null,
-        isActive: true,
-        status: 'CONNECTED_ACTIVE',
-      });
+      console.log(`[Integration Service] Creating database record for ${data.provider}`);
 
       const credential = await prisma.integrationCredential.create({
         data: {
