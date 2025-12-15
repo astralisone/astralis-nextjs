@@ -307,9 +307,7 @@ export async function GET(
         console.log(`[OAuth Callback] Existing credential updated successfully`);
       } catch (updateError) {
         console.error(`[OAuth Callback] Failed to update existing credential:`, updateError);
-        return NextResponse.redirect(
-          new URL('/integrations?error=CredentialUpdateFailed', req.url)
-        );
+        throw new Error(`Credential update failed: ${updateError instanceof Error ? updateError.message : 'Unknown error'}`);
       }
 
       // Log activity
@@ -350,9 +348,7 @@ export async function GET(
         console.log(`[OAuth Callback] New credential created successfully`);
       } catch (saveError) {
         console.error(`[OAuth Callback] Failed to save credential:`, saveError);
-        return NextResponse.redirect(
-          new URL('/integrations?error=CredentialSaveFailed', req.url)
-        );
+        throw new Error(`Credential save failed: ${saveError instanceof Error ? saveError.message : 'Unknown error'}`);
       }
     }
 
