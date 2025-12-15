@@ -229,6 +229,21 @@ export function IntegrationSetup({
     expiresAt && new Date(expiresAt).getTime() - Date.now() < 7 * 24 * 60 * 60 * 1000; // 7 days
   const isExpired = expiresAt && new Date(expiresAt) < new Date();
 
+  // Debug logging for expiration logic
+  if (expiresAt) {
+    const expiresTime = new Date(expiresAt).getTime();
+    const now = Date.now();
+    const diffMs = expiresTime - now;
+    const diffDays = diffMs / (24 * 60 * 60 * 1000);
+    console.log(`[Integration ${provider}] Expiration check:`, {
+      expiresAt: new Date(expiresAt).toISOString(),
+      now: new Date(now).toISOString(),
+      diffDays: diffDays.toFixed(2),
+      isExpiringSoon,
+      isExpired
+    });
+  }
+
   // Status display logic
   const getStatusDisplay = () => {
     switch (status) {

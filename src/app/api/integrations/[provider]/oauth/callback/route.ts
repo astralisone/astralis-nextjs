@@ -209,6 +209,9 @@ export async function GET(
     console.log(`[OAuth Callback] Token exchange successful for ${provider}:`, {
       hasAccessToken: !!tokenData.accessToken,
       hasRefreshToken: !!tokenData.refreshToken,
+      expiresIn: tokenData.expiresIn,
+      expiresInType: typeof tokenData.expiresIn,
+      calculatedExpiry: tokenData.expiresIn ? new Date(Date.now() + tokenData.expiresIn * 1000).toISOString() : null,
       scope: tokenData.scope,
       providerSpecific: {
         teamId: tokenData.teamId,
@@ -245,6 +248,8 @@ export async function GET(
 
     console.log(`[OAuth Callback] Final credential data for ${provider}:`, {
       hasAccessToken: !!credentialData.accessToken,
+      expiresIn: tokenData.expiresIn,
+      expiresAt: tokenData.expiresIn ? new Date(Date.now() + tokenData.expiresIn * 1000).toISOString() : null,
       scope: credentialData.scope,
       providerSpecific: {
         realmId: credentialData.realmId,
