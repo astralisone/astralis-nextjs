@@ -563,6 +563,11 @@ export class OrchestrationAgent {
       throw new Error('Rate limit exceeded. Please try again later.');
     }
 
+    // Record rate limit timestamps
+    const now = Date.now();
+    this.rateLimiter.minuteTimestamps.push(now);
+    this.rateLimiter.hourTimestamps.push(now);
+
     try {
       // Build decision context
       const context = await this.buildDecisionContext(input);
@@ -960,6 +965,29 @@ export class OrchestrationAgent {
     };
 
     return merged;
+  }
+
+  /**
+   * Check if the agent is currently rate limited
+   */
+  private isRateLimited(): boolean {
+    const now = Date.now();
+
+    // Clean old timestamps
+    this.rateLimiter.minuteTimestamps = this.rateLimiter.minuteTimestamps.filter(
+      t => now - t < 60000 // 1 minute
+    );
+    this.rateLimiter.hourTimestamps = this.rateLimiter.hourTimestamps.filter(
+      t => now - t < 3600000 // 1 hour
+    );
+
+    const perMinute = this.config.maxActionsPerMinute ?? 60;
+    const perHour = this.config.maxActionsPerHour ?? 500;
+
+    return (
+      this.rateLimiter.minuteTimestamps.length >= perMinute ||
+      this.rateLimiter.hourTimestamps.length >= perHour
+    );
   }
 }
 
