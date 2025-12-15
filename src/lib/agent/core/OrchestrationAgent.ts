@@ -333,7 +333,13 @@ export class OrchestrationAgent {
     });
 
     // Initialize LLM client
-    this.llmClient = config.llmClient ?? this.createLLMClient();
+    this.llmClient = config.llmClient ?? createLLMClient({
+      provider: this.config.llmProvider,
+      model: this.config.llmModel,
+      defaultOptions: {
+        temperature: this.config.temperature,
+      },
+    });
 
     // Initialize event bus
     this.eventBus = AgentEventBus.getInstance(config.eventBusConfig);
