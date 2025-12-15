@@ -7,7 +7,7 @@ import { StatsWidget } from '@/components/dashboard/StatsWidget';
 import { AgentChatInterface } from '@/components/dashboard/AgentChatInterface';
 import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
 import { MetricCard, LineChart, BarChart, AreaChart, ChartContainer } from '@/components/dashboard/charts';
-import { Inbox, GitBranch, FileText, CheckCircle, Calendar, Bot, TrendingUp, RefreshCw, Download } from 'lucide-react';
+import { Inbox, GitBranch, FileText, CheckCircle, Calendar, Bot, TrendingUp, RefreshCw, Download, Lightbulb } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,29 +42,29 @@ export default function DashboardPage() {
       setLoading(true);
       setError(null);
 
-      // Fetch stats and chart data in parallel
-      const [statsResponse, intakeResponse, documentResponse, agentResponse] = await Promise.all([
-        fetch('/api/dashboard/stats'),
-        fetch(`/api/dashboard/charts/intake-trends?range=${timeRange}`),
-        fetch(`/api/dashboard/charts/document-processing?range=${timeRange}`),
-        fetch(`/api/dashboard/charts/agent-metrics?range=${timeRange}`),
-      ]);
+        // Fetch stats and chart data in parallel
+        const [statsResponse, intakeResponse, documentResponse, agentResponse] = await Promise.all([
+          fetch('/api/dashboard/stats'),
+          fetch(`/api/dashboard/charts/intake-trends?range=${timeRange}`),
+          fetch(`/api/dashboard/charts/document-processing?range=${timeRange}`),
+          fetch(`/api/dashboard/charts/agent-metrics?range=${timeRange}`),
+        ]);
 
-      if (!statsResponse.ok) {
-        throw new Error('Failed to fetch dashboard stats');
-      }
+        if (!statsResponse.ok) {
+          throw new Error('Failed to fetch dashboard stats');
+        }
 
-      const statsData: DashboardData = await statsResponse.json();
-      const intakeData = intakeResponse.ok ? await intakeResponse.json() : [];
-      const documentData = documentResponse.ok ? await documentResponse.json() : [];
-      const agentData = agentResponse.ok ? await agentResponse.json() : [];
+        const statsData: DashboardData = await statsResponse.json();
+        const intakeData = intakeResponse.ok ? await intakeResponse.json() : [];
+        const documentData = documentResponse.ok ? await documentResponse.json() : [];
+        const agentData = agentResponse.ok ? await agentResponse.json() : [];
 
-      setDashboardData(statsData);
-      setChartData({
-        intakeTrends: intakeData,
-        documentProcessing: documentData,
-        agentMetrics: agentData,
-      });
+        setDashboardData(statsData);
+        setChartData({
+          intakeTrends: intakeData,
+          documentProcessing: documentData,
+          agentMetrics: agentData,
+        });
       setLastRefresh(new Date());
     } catch (err) {
       console.error('Dashboard fetch error:', err);
