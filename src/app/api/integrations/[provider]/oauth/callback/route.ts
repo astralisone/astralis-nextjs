@@ -369,12 +369,18 @@ export async function GET(
 
       if (error instanceof Error) {
         // Check for specific error patterns
-        if (error.message.includes('Unexpected token')) {
+        if (error.message.includes('Encryption key not found')) {
+          userFriendlyError = 'Server configuration error: Encryption keys are not configured. Please contact support.';
+          console.error('[OAuth Callback] CRITICAL: Encryption keys not configured in environment');
+        } else if (error.message.includes('Unexpected token')) {
           userFriendlyError = 'OAuth credentials are misconfigured. The integration provider rejected the authentication request.';
         } else if (error.message.includes('invalid_client')) {
           userFriendlyError = 'Invalid OAuth client credentials. Please check that the client ID and secret are correct.';
         } else if (error.message.includes('redirect_uri')) {
           userFriendlyError = 'Redirect URI mismatch. The OAuth app configuration needs to be updated.';
+        } else if (error.message.includes('Failed to encrypt data') || error.message.includes('Failed to decrypt data')) {
+          userFriendlyError = 'Server encryption error. Please try again or contact support.';
+          console.error('[OAuth Callback] Encryption/decryption error:', error);
         } else {
           userFriendlyError = error.message;
         }

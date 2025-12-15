@@ -15,12 +15,14 @@ import { createIntegrationCredentialSchema } from '@/lib/validators/automation.v
  * Returns: CredentialData[] (without credentialData field)
  */
 export async function GET(req: NextRequest) {
+  console.log('[Integration API] Route called');
   try {
     console.log('[Integration API] Starting request');
 
     // 1. Verify authentication
+    console.log('[Integration API] Calling auth()...');
     const session = await auth();
-    console.log('[Integration API] Session:', { hasSession: !!session, userId: session?.user?.id, orgId: session?.user?.orgId });
+    console.log('[Integration API] Auth completed, session:', { hasSession: !!session, userId: session?.user?.id, orgId: session?.user?.orgId });
 
     if (!session?.user?.id) {
       console.log('[Integration API] No session or user ID');
@@ -61,13 +63,14 @@ export async function GET(req: NextRequest) {
     // 3. Get credentials (without decrypted data)
     let credentials;
     try {
+      console.log('[Integration API] About to query credentials...');
       console.log('[Integration API] Querying credentials for user:', session.user.id, 'org:', session.user.orgId, 'provider filter:', provider);
       credentials = await integrationService.listCredentials(
         session.user.id,
         session.user.orgId,
         provider as any
       );
-      console.log('[Integration API] Found credentials:', credentials.length);
+      console.log('[Integration API] Database query completed, found credentials:', credentials.length);
 
       // Log credential details for debugging
       if (credentials.length > 0) {

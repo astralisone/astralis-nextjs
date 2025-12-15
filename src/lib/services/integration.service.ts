@@ -100,49 +100,56 @@ export class IntegrationService {
         },
       });
 
-      console.log('[Integration Service] Database record created successfully:', credential.id);
+       console.log('[Integration Service] Database record created successfully:', credential.id);
 
-      return {
-        id: credential.id,
-        provider: credential.provider,
-        credentialName: credential.credentialName,
-        scope: credential.scope,
-        expiresAt: credential.expiresAt,
-        isActive: credential.isActive,
-        lastUsedAt: credential.lastUsedAt,
-        createdAt: credential.createdAt,
-      };
+       // 3. Log activity
+       await prisma.activityLog.create({
+         data: {
+           userId,
+           orgId,
+           action: 'CREATE',
+           entity: 'INTEGRATION_CREDENTIAL',
+           entityId: credential.id,
+           metadata: {
+             provider: data.provider,
+             credentialName: data.credentialName,
+           },
+         },
+       });
 
-      // 3. Log activity
-      await prisma.activityLog.create({
-        data: {
-          userId,
-          orgId,
-          action: 'CREATE',
-          entity: 'INTEGRATION_CREDENTIAL',
-          entityId: credential.id,
-          metadata: {
-            provider: data.provider,
-            credentialName: data.credentialName,
-          },
-        },
-      });
+       console.log('[Integration Service] Credential saved successfully:', credential.id);
 
-      console.log('[Integration Service] Credential saved successfully:', credential.id);
-
-      return {
-        id: credential.id,
-        provider: credential.provider as IntegrationProvider,
-        credentialName: credential.credentialName,
-        scope: credential.scope,
-        expiresAt: credential.expiresAt,
-        isActive: credential.isActive,
-        lastUsedAt: credential.lastUsedAt,
-        createdAt: credential.createdAt,
-        updatedAt: credential.updatedAt,
-      };
+       return {
+         id: credential.id,
+         provider: credential.provider as IntegrationProvider,
+         credentialName: credential.credentialName,
+         scope: credential.scope,
+         expiresAt: credential.expiresAt,
+         isActive: credential.isActive,
+         status: credential.status,
+         lastError: credential.lastError,
+         errorCount: credential.errorCount,
+         lastErrorAt: credential.lastErrorAt,
+         lastHealthCheck: credential.lastHealthCheck,
+         healthCheckInterval: credential.healthCheckInterval,
+         lastUsedAt: credential.lastUsedAt,
+         createdAt: credential.createdAt,
+         updatedAt: credential.updatedAt,
+       };
     } catch (error) {
       console.error('[Integration Service] Failed to save credential:', error);
+
+      // Provide more specific error messages for common issues
+      if (error instanceof Error) {
+        if (error.message.includes('Encryption key not found')) {
+          throw new Error('Server configuration error: Encryption keys are not configured. Please contact support.');
+        } else if (error.message.includes('Failed to encrypt data')) {
+          throw new Error('Server encryption error: Unable to secure credential data. Please contact support.');
+        } else if (error.message.includes('unique constraint')) {
+          throw new Error(`A credential with the name "${data.credentialName}" already exists for this provider.`);
+        }
+      }
+
       throw new Error(
         `Failed to save credential: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
