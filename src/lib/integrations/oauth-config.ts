@@ -697,14 +697,12 @@ const OAUTH_CONFIGS: Partial<Record<IntegrationProvider, OAuthProviderConfig>> =
     tokenUrl: 'https://slack.com/api/oauth.v2.access',
     revokeUrl: 'https://slack.com/api/auth.revoke',
     userInfoUrl: 'https://slack.com/api/auth.test',
-    scopes: [
-      'channels:read',
-      'channels:write',
-      'chat:write',
-      'users:read',
-      'team:read',
-      'groups:read',
-    ],
+     scopes: [
+       'channels:read',
+       'chat:write',
+       'users:read',
+       'team:read',
+     ],
     tokenAuthMethod: 'body',
     parseTokenResponse: (tokens) => ({
       accessToken: tokens.access_token as string,
