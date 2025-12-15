@@ -96,7 +96,8 @@ export function AgentChatInterface() {
         },
         body: JSON.stringify({
           content: userMessage.content,
-          source: 'chat',
+          source: 'API',
+          type: 'chat',
           agent: selectedAgent,
           priority: 3,
         }),
