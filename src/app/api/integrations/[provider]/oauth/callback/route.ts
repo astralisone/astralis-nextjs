@@ -36,12 +36,16 @@ export async function GET(
   const provider = providerParam.toUpperCase().replace(/-/g, '_') as IntegrationProvider;
 
   try {
+    console.log(`[API /api/integrations/${provider}/oauth/callback GET] Starting request for provider: ${provider}`);
+
     // 1. Parse query parameters
     const { searchParams } = req.nextUrl;
     const code = searchParams.get('code');
     const stateParam = searchParams.get('state');
     const error = searchParams.get('error');
     const errorDescription = searchParams.get('error_description');
+
+    console.log(`[OAuth Callback] Query params - code: ${!!code}, state: ${!!stateParam}, error: ${error}`);
 
     // Provider-specific params
     const realmId = searchParams.get('realmId'); // QuickBooks
@@ -181,6 +185,8 @@ export async function GET(
     // 7. Exchange code for tokens using org credentials
     // Get code verifier from state data if available (for PKCE providers)
     const codeVerifier = stateParam ? parseOAuthState(stateParam)?.codeVerifier : undefined;
+
+    console.log(`[OAuth Callback] About to exchange tokens - provider: ${provider}, hasCodeVerifier: ${!!codeVerifier}, userId: ${userId}, orgId: ${orgId}`);
 
     const tokenData = await exchangeCodeForTokensWithCredentials(
       provider,
