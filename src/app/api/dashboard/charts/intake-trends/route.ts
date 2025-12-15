@@ -87,7 +87,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Query intake data grouped by time period
-    const intakeData = await prisma.$queryRaw<Array<{ date: Date; count: bigint }>>`
+    const intakeData = await prisma.$queryRaw<Array<{ date: string | Date; count: bigint }>>`
       SELECT
         ${dateFormat} as date,
         COUNT(*) as count
@@ -99,11 +99,37 @@ export async function GET(req: NextRequest) {
     `;
 
     // Convert BigInt to number and format dates
-    const formattedData = intakeData.map(item => ({
-      date: item.date.toISOString().split('T')[0], // YYYY-MM-DD format
-      value: Number(item.count),
-      label: `${Number(item.count)} intake${Number(item.count) !== 1 ? 's' : ''}`,
-    }));
+    const formattedData = intakeData.map(item => {
+      try {
+        // Handle date conversion based on PostgreSQL return type
+        let dateValue: string;
+
+        if (typeof item.date === 'string') {
+          // DATE() function returns string - use as-is (YYYY-MM-DD format)
+          dateValue = item.date;
+        } else if (item.date instanceof Date) {
+          // DATE_TRUNC() returns Date object - convert to YYYY-MM-DD format
+          dateValue = item.date.toISOString().split('T')[0];
+        } else {
+          // Fallback for unexpected types - try to convert
+          dateValue = new Date(item.date as any).toISOString().split('T')[0];
+        }
+
+        return {
+          date: dateValue,
+          value: Number(item.count),
+          label: `${Number(item.count)} intake${Number(item.count) !== 1 ? 's' : ''}`,
+        };
+      } catch (error) {
+        console.error('Date conversion error in intake trends:', error, 'Raw item:', item);
+        // Return a fallback entry with current date if conversion fails
+        return {
+          date: new Date().toISOString().split('T')[0],
+          value: 0,
+          label: 'Error processing data',
+        };
+      }
+    });
 
     // Fill in missing dates with zero values
     const result = [];
