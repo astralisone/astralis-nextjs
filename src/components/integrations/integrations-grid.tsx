@@ -124,10 +124,38 @@ export function IntegrationsGrid({ initialConnections = [], isAdmin = false }: I
     }
   };
 
-  const handleConnect = (integration: IntegrationMetadata) => {
-    setConnectingProvider(integration.provider);
-    // Redirect to OAuth connect route
-    window.location.href = `/api/integrations/${integration.id}/connect`;
+  const handleConnect = async (integration: IntegrationMetadata) => {
+    try {
+      setConnectingProvider(integration.provider);
+
+      // Fetch OAuth URL from connect endpoint
+      const connectUrl = `/api/integrations/${integration.id}/connect`;
+      const response = await fetch(connectUrl);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.details || 'Failed to initiate OAuth');
+      }
+
+      const data = await response.json();
+
+      if (data.authUrl) {
+        // Redirect to OAuth provider
+        window.location.href = data.authUrl;
+      } else if (data.error) {
+        throw new Error(data.details || data.error);
+      } else {
+        throw new Error('No OAuth URL received');
+      }
+    } catch (error) {
+      console.error('[handleConnect] Error:', error);
+      toast({
+        title: 'Connection Error',
+        description: error instanceof Error ? error.message : 'Failed to initiate connection. Please try again.',
+        variant: 'destructive',
+      });
+      setConnectingProvider(null);
+    }
   };
 
   const handleDisconnect = async (credentialId: string) => {

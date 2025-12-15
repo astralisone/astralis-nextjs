@@ -14,18 +14,34 @@ export function useIntegrationsActions(onDataChange: () => void) {
 
   const handleConnect = useCallback(async (provider: IntegrationProvider) => {
     try {
-      // Navigate to OAuth connect endpoint
+      // Fetch OAuth URL from connect endpoint
       const connectUrl = `/api/integrations/${provider.toLowerCase().replace(/_/g, '-')}/connect`;
-      router.push(connectUrl);
+      const response = await fetch(connectUrl);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.details || 'Failed to initiate OAuth');
+      }
+
+      const data = await response.json();
+
+      if (data.authUrl) {
+        // Redirect to OAuth provider
+        window.location.href = data.authUrl;
+      } else if (data.error) {
+        throw new Error(data.details || data.error);
+      } else {
+        throw new Error('No OAuth URL received');
+      }
     } catch (error) {
       console.error('[handleConnect] Error:', error);
       toast({
         title: 'Connection Error',
-        description: 'Failed to initiate connection. Please try again.',
+        description: error instanceof Error ? error.message : 'Failed to initiate connection. Please try again.',
         variant: 'destructive',
       });
     }
-  }, [router]);
+  }, []);
 
   const handleTest = useCallback(async (provider: IntegrationProvider): Promise<TestResult> => {
     try {
