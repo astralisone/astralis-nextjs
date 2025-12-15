@@ -27,18 +27,18 @@ export default async function CalendarChatPage() {
   const orgId = (session.user as any).orgId || 'default-org';
 
   return (
-    <div className="container mx-auto py-8 px-4 h-[calc(100vh-200px)]">
-      <div className="max-w-5xl mx-auto h-full">
+    <div className="min-h-screen w-full p-6 bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+      <div className="max-w-6xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-astralis-navy mb-2">
-            Calendar Assistant
+          <h1 className="text-3xl font-bold text-astralis-navy dark:text-white mb-2">
+            Calendar Command Center
           </h1>
-          <p className="text-slate-600">
-            Chat with your calendar using natural language. Ask about your schedule, book meetings, or find available time slots.
+          <p className="text-slate-600 dark:text-slate-300">
+            Strategic scheduling intelligence and automated calendar orchestration
           </p>
         </div>
 
-        <div className="h-[calc(100%-100px)]">
+        <div className="h-[calc(100vh-200px)]">
           <CalendarChatPanel userId={userId} orgId={orgId} />
         </div>
       </div>

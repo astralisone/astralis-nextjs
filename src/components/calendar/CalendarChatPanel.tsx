@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Calendar, Loader2, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Send, Calendar, Loader2, CheckCircle, XCircle, AlertCircle, Brain, Activity, Clock, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,7 +52,7 @@ export function CalendarChatPanel({ userId, orgId, className, onEventCreated }: 
     {
       id: 'welcome',
       role: 'assistant',
-      content: "Hi! I'm your calendar assistant. I can help you:\n\n• View your schedule\n• Schedule new meetings\n• Find available time slots\n• Check your availability\n• Cancel events\n\nTry asking me something like:\n• \"What meetings do I have tomorrow?\"\n• \"Find me 2 hours of focus time this week\"\n• \"Schedule a meeting with john@example.com next Tuesday at 2pm\"",
+      content: "🎯 **Calendar Intelligence Active**\n\nI'm your strategic calendar command center. I can execute:\n\n⚡ **Schedule Optimization**\n• Intelligent meeting placement\n• Conflict detection & resolution\n• Time zone coordination\n\n📅 **Availability Management**\n• Real-time availability scanning\n• Automated booking workflows\n• Resource allocation\n\n🎪 **Event Orchestration**\n• Multi-party coordination\n• Recurring event management\n• Calendar synchronization\n\n**Ready Commands:**\n• `\"Deploy 2-hour strategy session next week\"`\n• `\"Scan my availability for client calls\"`\n• `\"Orchestrate team sync for Friday 2pm\"`",
       timestamp: new Date(),
     },
   ]);
@@ -265,87 +265,153 @@ export function CalendarChatPanel({ userId, orgId, className, onEventCreated }: 
   return (
     <div
       className={cn(
-        'flex flex-col h-full bg-white rounded-lg border border-slate-300 shadow-card',
+        'flex flex-col h-full bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-card-glass overflow-hidden',
         className
       )}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-300 bg-gradient-to-r from-astralis-blue to-blue-600">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-            <Calendar className="h-5 w-5 text-white" />
+      {/* Command Center Header */}
+      <div className="bg-gradient-to-r from-astralis-navy via-slate-800 to-astralis-navy p-6 border-b border-slate-200 dark:border-slate-700 relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-astralis-blue/5 via-transparent to-astralis-blue/5"></div>
+
+        <div className="relative z-10">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-astralis-blue/20 rounded-xl backdrop-blur-sm border border-astralis-blue/30 shadow-glow-blue">
+                <Activity className="h-8 w-8 text-astralis-blue" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-white mb-1">Calendar Command Center</h2>
+                <p className="text-slate-300 text-sm">Strategic scheduling intelligence and automated calendar orchestration</p>
+              </div>
+            </div>
+
+            {/* Status Indicator */}
+            <div className="flex items-center gap-2 px-3 py-2 bg-green-500/20 rounded-lg border border-green-500/30">
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <span className="text-xs font-medium text-green-300">CALENDAR ACTIVE</span>
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-semibold text-white">Calendar Assistant</h3>
-            <p className="text-xs text-white/80">Manage your schedule with natural language</p>
+
+          {/* Capabilities Display */}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 text-slate-300">
+              <Brain className="h-4 w-4" />
+              <span className="text-sm font-medium">Capabilities:</span>
+            </div>
+            <div className="flex gap-2">
+              <Badge className="bg-astralis-blue/20 text-astralis-blue border-astralis-blue/30 text-xs px-2 py-1">
+                <Clock className="h-3 w-3 mr-1" />
+                Scheduling
+              </Badge>
+              <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs px-2 py-1">
+                <Users className="h-3 w-3 mr-1" />
+                Coordination
+              </Badge>
+              <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs px-2 py-1">
+                <Activity className="h-3 w-3 mr-1" />
+                Intelligence
+              </Badge>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 bg-slate-50">
+      {/* Messages Command Interface */}
+      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 bg-gradient-to-b from-transparent to-slate-50/50 dark:to-slate-900/50">
         {messages.map(message => (
           <div
             key={message.id}
             className={cn(
-              'flex gap-3',
+              'flex gap-4 group',
               message.role === 'user' ? 'justify-end' : 'justify-start'
             )}
           >
-            <div
-              className={cn(
-                'flex flex-col max-w-[80%] gap-2',
-                message.role === 'user' ? 'items-end' : 'items-start'
-              )}
-            >
-              {/* Message Bubble */}
-              <Card
-                variant="default"
+            {message.role === 'assistant' && (
+              <div className="flex-shrink-0">
+                <div className="w-10 h-10 bg-gradient-to-br from-astralis-blue to-blue-600 rounded-xl flex items-center justify-center shadow-glow-blue">
+                  <Activity className="h-5 w-5 text-white" />
+                </div>
+              </div>
+            )}
+
+            <div className={`max-w-[75%] ${message.role === 'user' ? 'order-first' : ''}`}>
+              {/* Message Header */}
+              <div className={`flex items-center gap-2 mb-2 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <span className="text-xs font-medium text-slate-500">
+                  {message.role === 'user' ? 'You' : 'Calendar Intelligence'}
+                </span>
+                {message.requiresConfirmation && (
+                  <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20 text-xs px-2 py-1">
+                    <AlertCircle className="h-3 w-3 mr-1" />
+                    Confirmation Required
+                  </Badge>
+                )}
+              </div>
+
+              {/* Message Content */}
+              <div
                 className={cn(
-                  'px-4 py-3 shadow-sm',
+                  'rounded-2xl px-6 py-4 shadow-card border backdrop-blur-sm transition-all duration-200 group-hover:shadow-card-hover',
                   message.role === 'user'
-                    ? 'bg-astralis-blue text-white border-astralis-blue'
-                    : 'bg-white border-slate-300'
+                    ? 'bg-gradient-to-r from-astralis-blue to-blue-600 text-white border-astralis-blue/20 shadow-glow-blue'
+                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white'
                 )}
               >
-                <p
-                  className={cn(
-                    'text-sm leading-relaxed whitespace-pre-wrap',
-                    message.role === 'user' ? 'text-white' : 'text-slate-900'
-                  )}
-                >
-                  {message.content}
-                </p>
-              </Card>
+                <div className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</div>
+              </div>
 
               {/* Timestamp */}
-              <span className="text-xs text-slate-500">
+              <div className={`text-xs text-slate-500 mt-1 ${message.role === 'user' ? 'text-right' : 'text-left'}`}>
                 {formatTimestamp(message.timestamp)}
-              </span>
+              </div>
             </div>
+
+            {message.role === 'user' && (
+              <div className="flex-shrink-0">
+                <div className="w-10 h-10 bg-gradient-to-br from-slate-400 to-slate-600 rounded-xl flex items-center justify-center">
+                  <Users className="h-5 w-5 text-white" />
+                </div>
+              </div>
+            )}
           </div>
         ))}
 
-        {/* Loading Indicator */}
+        {/* Loading State */}
         {loading && (
-          <div className="flex justify-start">
-            <Card
-              variant="default"
-              className="px-4 py-3 bg-white border-slate-300 shadow-sm"
-            >
-              <div className="flex items-center gap-3">
-                <Loader2 className="h-5 w-5 text-astralis-blue animate-spin" />
-                <p className="text-sm text-slate-600 font-medium">Thinking...</p>
+          <div className="flex justify-start gap-4">
+            <div className="flex-shrink-0">
+              <div className="w-10 h-10 bg-gradient-to-br from-astralis-blue to-blue-600 rounded-xl flex items-center justify-center shadow-glow-blue">
+                <Loader2 className="h-5 w-5 text-white animate-spin" />
               </div>
-            </Card>
+            </div>
+            <div className="max-w-[75%]">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs font-medium text-slate-500">Calendar Intelligence</span>
+              </div>
+              <div className="bg-white dark:bg-slate-800 rounded-2xl px-6 py-4 shadow-card border border-slate-200 dark:border-slate-700">
+                <div className="flex items-center gap-3">
+                  <div className="flex space-x-1">
+                    <div className="w-2 h-2 bg-astralis-blue rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-astralis-blue rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                    <div className="w-2 h-2 bg-astralis-blue rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  </div>
+                  <span className="text-sm text-slate-600 dark:text-slate-300 font-medium">Processing calendar command...</span>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
         {/* Error Alert */}
         {error && (
-          <Alert variant="error" showIcon>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
+          <div className="flex justify-center">
+            <Alert className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950 max-w-[75%]">
+              <AlertCircle className="h-4 w-4 text-red-600" />
+              <AlertDescription className="text-red-800 dark:text-red-200">{error}</AlertDescription>
+            </Alert>
+          </div>
         )}
 
         <div ref={messagesEndRef} />
@@ -353,67 +419,82 @@ export function CalendarChatPanel({ userId, orgId, className, onEventCreated }: 
 
       {/* Confirmation UI */}
       {pendingAction && !loading && (
-        <div className="px-6 py-4 border-t border-amber-200 bg-amber-50">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-amber-900 mb-3">
-                Confirmation Required
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleConfirm}
-                  variant="primary"
-                  size="sm"
-                  className="flex items-center gap-2"
-                >
-                  <CheckCircle className="h-4 w-4" />
-                  Confirm
-                </Button>
-                <Button
-                  onClick={handleCancel}
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-2"
-                >
-                  <XCircle className="h-4 w-4" />
-                  Cancel
-                </Button>
+        <div className="border-t border-amber-200 dark:border-amber-800 bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950 dark:to-yellow-950 px-6 py-6">
+          <div className="max-w-2xl mx-auto">
+            <div className="flex items-start gap-4">
+              <div className="p-2 bg-amber-500/20 rounded-xl border border-amber-500/30">
+                <AlertCircle className="h-6 w-6 text-amber-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-amber-900 dark:text-amber-100 mb-2">
+                  Strategic Confirmation Required
+                </h3>
+                <p className="text-sm text-amber-800 dark:text-amber-200 mb-4">
+                  This action will modify your calendar schedule. Please confirm to proceed with the orchestration.
+                </p>
+                <div className="flex gap-3">
+                  <Button
+                    onClick={handleConfirm}
+                    className="bg-green-600 hover:bg-green-700 text-white shadow-glow-green hover:shadow-glow-green transition-all duration-200"
+                    size="sm"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Confirm Execution
+                  </Button>
+                  <Button
+                    onClick={handleCancel}
+                    variant="outline"
+                    size="sm"
+                    className="border-slate-300 hover:bg-slate-50"
+                  >
+                    <XCircle className="h-4 w-4 mr-2" />
+                    Cancel Operation
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Input Area */}
-      <div className="px-6 py-4 border-t border-slate-300 bg-white">
-        <div className="flex gap-2">
-          <Input
-            ref={inputRef}
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Ask about your calendar..."
-            disabled={loading}
-            className="flex-1"
-          />
+      {/* Command Input */}
+      <div className="border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6">
+        <div className="flex gap-3">
+          <div className="flex-1 relative">
+            <Input
+              ref={inputRef}
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Issue calendar command..."
+              disabled={loading}
+              className="pr-12 py-4 text-base border-2 border-slate-200 dark:border-slate-600 rounded-xl focus:border-astralis-blue focus:ring-astralis-blue bg-slate-50 dark:bg-slate-700 transition-all duration-200"
+            />
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+              <Send className="h-5 w-5" />
+            </div>
+          </div>
           <Button
             onClick={handleSendMessage}
-            variant="primary"
-            size="icon"
             disabled={!input.trim() || loading}
-            className="flex-shrink-0"
+            size="lg"
+            className="px-8 bg-gradient-to-r from-astralis-blue to-blue-600 hover:from-blue-600 hover:to-astralis-blue shadow-glow-blue hover:shadow-glow-blue-lg transition-all duration-200 font-semibold"
           >
             {loading ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
+              <Loader2 className="h-5 w-5 animate-spin mr-2" />
             ) : (
-              <Send className="h-5 w-5" />
+              <Send className="h-5 w-5 mr-2" />
             )}
+            Execute
           </Button>
         </div>
-        <p className="text-xs text-slate-500 mt-2">
-          Press Enter to send
-        </p>
+        <div className="flex items-center justify-between mt-3 text-xs text-slate-500">
+          <span>Press Enter to execute • Shift+Enter for new line</span>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+            <span>Calendar intelligence ready</span>
+          </div>
+        </div>
       </div>
     </div>
   );
