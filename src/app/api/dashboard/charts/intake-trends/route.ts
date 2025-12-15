@@ -91,7 +91,7 @@ export async function GET(req: NextRequest) {
       SELECT
         ${dateFormat} as date,
         COUNT(*) as count
-      FROM "IntakeRequest"
+      FROM "intakeRequest"
       WHERE "orgId" = ${orgId}
         AND "createdAt" >= ${startDate}
       GROUP BY ${groupClause}
