@@ -473,6 +473,89 @@ export class ActionExecutor {
     );
 
     // SEND_NOTIFICATION handler
+    // System email handler (uses internal email service)
+    this.registerHandler(
+      'SEND_SYSTEM_EMAIL' as DecisionType,
+      async (params: any, ctx) => {
+        this.logger.info('Executing SEND_SYSTEM_EMAIL', { params, dryRun: ctx.dryRun });
+
+        if (ctx.dryRun) {
+          return { success: true, data: { dryRun: true, channel: 'system', ...params } };
+        }
+
+        try {
+          // Use internal email service for system communications
+          const { sendEmail } = await import('@/lib/email');
+
+          await sendEmail({
+            to: params.to || params.recipient,
+            subject: params.subject,
+            html: params.body || params.html,
+            from: 'system@astralisone.com' // Official system sender
+          });
+
+          return {
+            success: true,
+            data: { channel: 'system', sent: true },
+            rollbackable: false,
+          };
+        } catch (error) {
+          return {
+            success: false,
+            error: `System email failed: ${(error as Error).message}`,
+            rollbackable: false,
+          };
+        }
+      }
+    );
+
+    // Business email handler (uses Gmail integration)
+    this.registerHandler(
+      'SEND_BUSINESS_EMAIL' as DecisionType,
+      async (params: any, ctx) => {
+        this.logger.info('Executing SEND_BUSINESS_EMAIL', { params, dryRun: ctx.dryRun });
+
+        if (ctx.dryRun) {
+          return { success: true, data: { dryRun: true, channel: 'business', ...params } };
+        }
+
+        try {
+          // Check if Gmail integration is available
+          const gmailService = await this.getIntegrationService('GMAIL', ctx.userId, ctx.orgId);
+
+          if (!gmailService) {
+            return {
+              success: false,
+              error: 'Gmail integration not available for business emails',
+              data: { suggestion: 'connect_gmail_integration' }
+            };
+          }
+
+          // Use Gmail integration for business emails
+          const result = await gmailService.sendEmail({
+            to: params.to || params.recipient,
+            subject: params.subject,
+            body: params.body || params.html,
+            isHtml: params.isHtml || true
+          });
+
+          return {
+            success: result.success,
+            data: { channel: 'business', ...result.data },
+            error: result.error,
+            rollbackable: false,
+          };
+        } catch (error) {
+          return {
+            success: false,
+            error: `Business email failed: ${(error as Error).message}`,
+            rollbackable: false,
+          };
+        }
+      }
+    );
+
+    // Legacy notification handler (kept for backward compatibility)
     this.registerHandler<SendNotificationParams>(
       DecisionTypeEnum.SEND_NOTIFICATION,
       async (params, ctx) => {
@@ -721,14 +804,20 @@ export class ActionExecutor {
     const startTime = Date.now();
     let lastError: Error | undefined;
 
-    // Get handler
-    const handler = this.handlers.get(action.type);
+    // First try to find a registered handler
+    let handler = this.handlers.get(action.type);
+
+    // If no handler found, try to load from admin actions repository
+    if (!handler) {
+      handler = await this.loadActionFromRepository(action.type);
+    }
+
     if (!handler) {
       return {
         action: action.type,
         success: false,
         executionTime: Date.now() - startTime,
-        message: `No handler registered for action type: ${action.type}`,
+        message: `No handler found for action type: ${action.type}`,
       };
     }
 
@@ -964,6 +1053,122 @@ export class ActionExecutor {
   setDryRun(enabled: boolean): void {
     this.config.dryRun = enabled;
     this.logger.info(`Dry-run mode ${enabled ? 'enabled' : 'disabled'}`);
+  }
+
+  /**
+   * Load action handler from the admin actions repository
+   */
+  private async loadActionFromRepository(actionType: DecisionType): Promise<ActionHandler | null> {
+    try {
+      // Fetch action definition from admin API
+      const response = await fetch(
+        `${process.env.NEXTAUTH_URL || 'http://localhost:3001'}/api/admin/actions?search=${actionType}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${process.env.INTERNAL_API_TOKEN || 'internal'}`,
+            'Content-Type': 'application/json',
+          }
+        }
+      );
+
+      if (!response.ok) {
+        return null;
+      }
+
+      const data = await response.json();
+      const actionDef = data.actions?.find((action: any) =>
+        action.actionKey === actionType || action.name.toLowerCase().includes(actionType.toLowerCase())
+      );
+
+      if (!actionDef || actionDef.status !== 'ACTIVE') {
+        return null;
+      }
+
+      // Create dynamic handler that calls the action execution API
+      return async (params: any, context: ActionExecutionContext) => {
+        this.logger.info(`Executing dynamic action: ${actionType}`, { params, dryRun: context.dryRun });
+
+        if (context.dryRun) {
+          return { success: true, data: { dryRun: true, actionType, ...params } };
+        }
+
+        try {
+          // Execute the action via the admin API
+          const executeResponse = await fetch(
+            `${process.env.NEXTAUTH_URL || 'http://localhost:3001'}/api/actions/execute`,
+            {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${process.env.INTERNAL_API_TOKEN || 'internal'}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                actionKey: actionDef.actionKey,
+                params,
+                orgId: context.orgId,
+              }),
+            }
+          );
+
+          if (!executeResponse.ok) {
+            const errorData = await executeResponse.json().catch(() => ({}));
+            throw new Error(errorData.error || `Action execution failed: ${executeResponse.status}`);
+          }
+
+          const result = await executeResponse.json();
+
+          return {
+            success: result.success,
+            data: result.data,
+            error: result.error,
+            rollbackable: false, // Admin actions don't support rollback yet
+          };
+        } catch (error) {
+          return {
+            success: false,
+            error: `Dynamic action execution failed: ${(error as Error).message}`,
+            rollbackable: false,
+          };
+        }
+      };
+    } catch (error) {
+      this.logger.warn(`Failed to load action from repository: ${actionType}`, { error });
+      return null;
+    }
+  }
+
+  /**
+   * Get integration service instance for the specified provider
+   */
+  private async getIntegrationService(provider: string, userId: string, orgId: string) {
+    try {
+      // Import integration services dynamically
+      const { integrationService } = await import('@/lib/services/integration.service');
+
+      // Get the credential for this integration
+      const credentials = await integrationService.listCredentials(userId, orgId, provider as any);
+
+      if (credentials.length === 0) {
+        return null;
+      }
+
+      const credential = credentials[0];
+
+      // Initialize the appropriate service based on provider
+      switch (provider) {
+        case 'GMAIL': {
+          const { gmailService } = await import('@/lib/integrations/communication/gmail.service');
+          await gmailService.initialize(credential.id, userId, orgId);
+          return gmailService;
+        }
+        // Add other integration services as needed
+        default:
+          return null;
+      }
+    } catch (error) {
+      this.logger.warn(`Failed to get integration service for ${provider}`, { error });
+      return null;
+    }
   }
 }
 

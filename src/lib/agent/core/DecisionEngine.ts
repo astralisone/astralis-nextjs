@@ -404,7 +404,14 @@ export class DecisionEngine {
 
     // Check if action is in available actions (from context)
     if (context?.availableActions && !context.availableActions.includes(actionType)) {
-      warnings.push(`Action ${index}: Action type "${action.type}" may not be available in current context`);
+      // Implement fallback logic for unavailable actions
+      const fallbackResult = this.implementFallbackLogic(action, actionType, context, index);
+      if (fallbackResult.fallbackApplied) {
+        warnings.push(fallbackResult.warning);
+        // Action has been modified to use fallback, continue validation
+      } else {
+        warnings.push(`Action ${index}: Action type "${action.type}" may not be available in current context`);
+      }
     }
 
     // Validate params
@@ -584,6 +591,71 @@ export class DecisionEngine {
   // ===========================================================================
   // Fallback Methods
   // ===========================================================================
+
+  /**
+   * Implement fallback logic when actions are not available due to missing integrations
+   */
+  private implementFallbackLogic(
+    action: AgentAction,
+    actionType: DecisionType,
+    context: DecisionContext,
+    index: number
+  ): { fallbackApplied: boolean; warning: string } {
+    // Check communication classification for fallback options
+    const classification = context.communicationClassification;
+
+    if (!classification) {
+      return { fallbackApplied: false, warning: '' };
+    }
+
+    // Business email fallback: Gmail → System email
+    if (actionType === 'SEND_BUSINESS_EMAIL' && classification.channel === 'business') {
+      const gmailAvailable = context.availableIntegrations?.some(
+        i => i.provider === 'GMAIL' && i.available
+      );
+
+      if (!gmailAvailable && classification.fallbackOptions?.includes('system')) {
+        // Modify action to use system email instead
+        action.type = 'SEND_SYSTEM_EMAIL';
+        action.params.from = 'noreply@astralisone.com'; // Different sender for business fallbacks
+
+        return {
+          fallbackApplied: true,
+          warning: `Action ${index}: Gmail not available, falling back to system email with different sender`
+        };
+      }
+    }
+
+    // Calendar integration fallback
+    if (actionType === 'CREATE_EVENT' && classification.channel === 'integration') {
+      const calendarAvailable = context.availableIntegrations?.some(
+        i => i.provider === 'GOOGLE_CALENDAR' && i.available
+      );
+
+      if (!calendarAvailable) {
+        return {
+          fallbackApplied: false,
+          warning: `Action ${index}: Google Calendar not connected. Consider connecting integration or scheduling manually.`
+        };
+      }
+    }
+
+    // CRM integration fallback
+    if (actionType === 'UPDATE_CRM' && classification.channel === 'integration') {
+      const crmAvailable = context.availableIntegrations?.some(
+        i => (i.provider === 'SALESFORCE' || i.provider === 'HUBSPOT') && i.available
+      );
+
+      if (!crmAvailable) {
+        return {
+          fallbackApplied: false,
+          warning: `Action ${index}: CRM integration not connected. Customer data will not be synced automatically.`
+        };
+      }
+    }
+
+    return { fallbackApplied: false, warning: '' };
+  }
 
   /**
    * Create a fallback decision when LLM fails or returns invalid response.

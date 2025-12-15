@@ -64,6 +64,9 @@ const ProcessInputSchema = z.object({
   type: z.string().min(1, 'type is required'),
   content: z.string().min(1, 'content is required'),
 
+  // Optional agent selection
+  agent: z.enum(['orchestration', 'scheduling', 'document']).optional().default('orchestration'),
+
   // Optional metadata
   metadata: z.object({
     senderEmail: z.string().email().optional(),
@@ -105,21 +108,45 @@ const agentCache = new Map<string, OrchestrationAgent>();
 /**
  * Get or create an agent instance for the organization
  */
-function getOrCreateAgent(orgId: string, options?: ProcessInputRequest['options']): OrchestrationAgent {
-  const cacheKey = `${orgId}-${options?.dryRun ? 'dry' : 'live'}`;
+function getOrCreateAgent(
+  orgId: string,
+  options?: ProcessInputRequest['options'],
+  agentType: 'orchestration' | 'scheduling' | 'document' = 'orchestration'
+): OrchestrationAgent {
+  const cacheKey = `${orgId}-${agentType}-${options?.dryRun ? 'dry' : 'live'}`;
 
   if (agentCache.has(cacheKey)) {
     return agentCache.get(cacheKey)!;
+  }
+
+  // Configure agent based on type (for future expansion)
+  let temperature = 0.3;
+  let enabledActions = Object.values(DecisionType);
+
+  switch (agentType) {
+    case 'scheduling':
+      // Scheduling agent might be more focused on calendar/time actions
+      temperature = 0.2; // More deterministic for scheduling
+      break;
+    case 'document':
+      // Document agent might focus on file processing actions
+      temperature = 0.4; // Slightly more creative for document analysis
+      break;
+    case 'orchestration':
+    default:
+      // Full orchestration capabilities
+      temperature = 0.3;
+      break;
   }
 
   const config: OrchestrationAgentConfig = {
     orgId,
     llmProvider: LLMProvider[LLM_PROVIDER] || LLMProvider.CLAUDE,
     llmModel: LLM_MODEL,
-    temperature: 0.3,
+    temperature,
     autoExecuteThreshold: options?.autoExecuteThreshold ?? AUTO_EXECUTE_THRESHOLD,
     requireApprovalThreshold: options?.requireApprovalThreshold ?? REQUIRE_APPROVAL_THRESHOLD,
-    enabledActions: Object.values(DecisionType),
+    enabledActions,
     maxActionsPerMinute: 60,
     maxActionsPerHour: 500,
     notifyOnHighPriority: true,
@@ -132,7 +159,12 @@ function getOrCreateAgent(orgId: string, options?: ProcessInputRequest['options'
   const agent = createOrchestrationAgent(config);
   agentCache.set(cacheKey, agent);
 
-  logger.info('Created new agent instance', { orgId, cacheKey, dryRun: options?.dryRun });
+  logger.info('Created new agent instance', {
+    orgId,
+    agentType,
+    cacheKey,
+    dryRun: options?.dryRun
+  });
 
   return agent;
 }
@@ -262,7 +294,7 @@ export async function POST(req: NextRequest) {
     });
 
     // 3. Get or create agent instance
-    const agent = getOrCreateAgent(orgId, request.options);
+    const agent = getOrCreateAgent(orgId, request.options, request.agent);
 
     // 4. Convert request to AgentInput
     const agentInput = requestToAgentInput(request, correlationId);

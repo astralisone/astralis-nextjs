@@ -18,6 +18,7 @@ import {
   LogOut,
   User,
   Puzzle,
+  Shield,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { OrgSwitcher } from './OrgSwitcher';
@@ -37,6 +38,7 @@ interface DashboardSidebarProps {
     email?: string | null;
     image?: string | null;
     orgId: string;
+    role?: string;
   };
   /** Whether this sidebar is in a mobile drawer */
   isMobile?: boolean;
@@ -53,6 +55,10 @@ const navigation = [
   { name: 'Automations', href: '/automations', icon: Zap },
   { name: 'Integrations', href: '/integrations', icon: Puzzle },
   { name: 'Settings', href: '/settings', icon: Settings },
+];
+
+const adminNavigation = [
+  { name: 'Actions', href: '/admin/actions', icon: Shield },
 ];
 
 /**
@@ -142,6 +148,38 @@ export function DashboardSidebar({ user, isMobile = false, onClose }: DashboardS
             </Link>
           );
         })}
+
+        {/* Admin Navigation */}
+        {user.role === 'ADMIN' && (
+          <>
+            <div className="px-3 py-2">
+              <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                {(!sidebarCollapsed || isMobile) ? 'Admin' : 'A'}
+              </div>
+            </div>
+            {adminNavigation.map((item) => {
+              const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+              const Icon = item.icon;
+
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  onClick={handleLinkClick}
+                  className={cn(
+                    'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors',
+                    isActive
+                      ? 'bg-astralis-blue text-white'
+                      : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                  )}
+                >
+                  <Icon className="w-5 h-5 flex-shrink-0" />
+                  {(!sidebarCollapsed || isMobile) && <span className="font-medium">{item.name}</span>}
+                </Link>
+              );
+            })}
+          </>
+        )}
       </nav>
 
       {/* Bottom Section: Notifications & User Profile */}

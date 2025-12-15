@@ -124,6 +124,10 @@ export enum DecisionType {
   CANCEL_EVENT = 'CANCEL_EVENT',
   /** Send a notification (email, in-app, etc.) */
   SEND_NOTIFICATION = 'SEND_NOTIFICATION',
+  /** Send system email using internal service */
+  SEND_SYSTEM_EMAIL = 'SEND_SYSTEM_EMAIL',
+  /** Send business email using Gmail integration */
+  SEND_BUSINESS_EMAIL = 'SEND_BUSINESS_EMAIL',
   /** Trigger an n8n automation workflow */
   TRIGGER_AUTOMATION = 'TRIGGER_AUTOMATION',
   /** Escalate to human review or management */
@@ -630,6 +634,16 @@ export interface DecisionContext {
   /** Actions available to the agent for this request */
   availableActions: DecisionType[];
 
+  /** Available integrations for the organization */
+  availableIntegrations?: Array<{
+    provider: string;
+    available: boolean;
+    reason?: string;
+  }>;
+
+  /** Communication classification for channel determination */
+  communicationClassification?: import('../communication-classifier').CommunicationClassification;
+
   /** Current timestamp for the decision */
   decisionTimestamp?: Date;
 
@@ -683,6 +697,22 @@ export interface AlternativeDecision {
 }
 
 /**
+ * Suggestion to connect or configure an integration
+ */
+export interface IntegrationSuggestion {
+  /** Type of suggestion */
+  type: 'connect_integration' | 'configure_integration' | 'upgrade_plan';
+  /** Integration provider (e.g., 'GMAIL', 'GOOGLE_CALENDAR') */
+  provider?: string;
+  /** Reason why this integration would be beneficial */
+  reason: string;
+  /** Expected benefit of connecting this integration */
+  benefit: string;
+  /** Priority level (1-5, 5 being highest) */
+  priority?: number;
+}
+
+/**
  * Result of the agent's decision-making process.
  * Contains the classification, reasoning, and actions to execute.
  */
@@ -703,6 +733,8 @@ export interface AgentDecisionResult {
   warnings?: string[];
   /** Alternative decisions considered but not chosen */
   alternatives?: AlternativeDecision[];
+  /** Integration setup suggestions */
+  suggestions?: IntegrationSuggestion[];
 }
 
 /**

@@ -1,6 +1,7 @@
 import { auth } from '@/lib/auth/config';
 import { prisma } from '@/lib/prisma';
 import { StatsWidget } from '@/components/dashboard/StatsWidget';
+import { AgentChatInterface } from '@/components/dashboard/AgentChatInterface';
 import { Inbox, GitBranch, FileText, CheckCircle, AlertCircle } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -173,6 +174,25 @@ export default async function DashboardPage() {
           icon={<CheckCircle className="w-6 h-6" />}
           variant="default"
         />
+      </div>
+
+      {/* Agent Chat Interface */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <AgentChatInterface />
+        </div>
+        <div className="space-y-6">
+          {/* Quick Actions or Tips could go here */}
+          <div className="bg-white p-6 rounded-lg border border-slate-200">
+            <h3 className="text-lg font-semibold text-astralis-navy mb-3">💡 Quick Tips</h3>
+            <ul className="text-sm text-slate-600 space-y-2">
+              <li>• Ask to "send welcome email to new customer"</li>
+              <li>• Request "schedule onboarding call for next week"</li>
+              <li>• Say "create customer folder in Google Drive"</li>
+              <li>• Try "process this document and extract key info"</li>
+            </ul>
+          </div>
+        </div>
       </div>
 
       {/* Recent Activity placeholder */}
