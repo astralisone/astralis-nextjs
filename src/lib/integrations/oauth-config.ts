@@ -8,6 +8,7 @@
 import type { IntegrationProvider } from '@prisma/client';
 import { generateSecureToken, decrypt } from '@/lib/utils/crypto';
 import { prisma } from '@/lib/prisma';
+import { createHash } from 'crypto';
 
 /**
  * OAuth credentials for a specific organization
@@ -34,6 +35,8 @@ export interface OAuthProviderConfig {
   additionalTokenParams?: Record<string, string>;
   // How to send client credentials in token request
   tokenAuthMethod: 'body' | 'header';
+  // PKCE support
+  usePKCE?: boolean;
   // Provider-specific response handling
   parseTokenResponse?: (response: Record<string, unknown>) => TokenResponseData;
 }
@@ -64,6 +67,8 @@ export interface OAuthStateData {
   orgId: string;
   timestamp: number;
   nonce: string;
+  // PKCE data
+  codeVerifier?: string;
 }
 
 /**
@@ -109,7 +114,8 @@ export function generateAuthorizationUrlWithCredentials(
   provider: IntegrationProvider,
   redirectUri: string,
   state: string,
-  credentials: OrgOAuthCredentials
+  credentials: OrgOAuthCredentials,
+  pkceData?: PKCEData
 ): string | null {
   const config = getOAuthConfig(provider);
   if (!config) return null;
@@ -131,18 +137,31 @@ export function generateAuthorizationUrlWithCredentials(
     ...config.additionalAuthParams,
   });
 
+  // Add PKCE parameters if required
+  if (config.usePKCE && pkceData) {
+    params.set('code_challenge', pkceData.codeChallenge);
+    params.set('code_challenge_method', pkceData.codeChallengeMethod);
+  }
+
   return `${config.authorizationUrl}?${params.toString()}`;
 }
 
 /**
  * Generate secure state parameter
  */
-export function generateOAuthState(data: Omit<OAuthStateData, 'timestamp' | 'nonce'>): string {
+export function generateOAuthState(data: Omit<OAuthStateData, 'timestamp' | 'nonce' | 'codeVerifier'>): string {
   const stateData: OAuthStateData = {
     ...data,
     timestamp: Date.now(),
     nonce: generateSecureToken(16),
   };
+
+  // Add PKCE data if provider requires it
+  const config = getOAuthConfig(data.provider);
+  if (config?.usePKCE) {
+    stateData.codeVerifier = generateCodeVerifier();
+  }
+
   return Buffer.from(JSON.stringify(stateData)).toString('base64url');
 }
 
@@ -170,6 +189,24 @@ export function validateOAuthState(
     return false;
   }
   return true;
+}
+
+/**
+ * PKCE (Proof Key for Code Exchange) utilities for OAuth 2.0
+ */
+export function generateCodeVerifier(): string {
+  return generateSecureToken(32); // 32 bytes = 43 characters when base64url encoded
+}
+
+export function generateCodeChallenge(verifier: string): string {
+  const hash = createHash('sha256').update(verifier).digest('base64url');
+  return hash;
+}
+
+export interface PKCEData {
+  codeVerifier: string;
+  codeChallenge: string;
+  codeChallengeMethod: 'S256';
 }
 
 /**
@@ -409,7 +446,8 @@ export async function exchangeCodeForTokensWithCredentials(
   provider: IntegrationProvider,
   code: string,
   redirectUri: string,
-  credentials: OrgOAuthCredentials
+  credentials: OrgOAuthCredentials,
+  codeVerifier?: string
 ): Promise<TokenResponseData> {
   const config = getOAuthConfig(provider);
   if (!config) {
@@ -426,6 +464,11 @@ export async function exchangeCodeForTokensWithCredentials(
     ...config.additionalTokenParams,
   });
 
+  // Add code verifier for PKCE
+  if (config.usePKCE && codeVerifier) {
+    body.append('code_verifier', codeVerifier);
+  }
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/x-www-form-urlencoded',
   };
@@ -438,7 +481,7 @@ export async function exchangeCodeForTokensWithCredentials(
     body.append('client_secret', credentials.clientSecret);
   }
 
-  console.log(`[OAuth] Exchanging code for tokens: ${provider}`);
+  console.log(`[OAuth] Exchanging code for tokens: ${provider}${config.usePKCE ? ' (with PKCE)' : ''}`);
 
   const response = await fetch(config.tokenUrl, {
     method: 'POST',
@@ -699,28 +742,29 @@ const OAUTH_CONFIGS: Partial<Record<IntegrationProvider, OAuthProviderConfig>> =
     }),
   },
 
-  MICROSOFT_TEAMS: {
-    provider: 'MICROSOFT_TEAMS',
-    authorizationUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
-    tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
-    revokeUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/logout',
-    userInfoUrl: 'https://graph.microsoft.com/v1.0/me',
-    scopes: [
-      'User.Read',
-      'Team.ReadBasic.All',
-      'Channel.ReadBasic.All',
-      'ChannelMessage.Send',
-      'offline_access',
-    ],
-    tokenAuthMethod: 'body',
-    parseTokenResponse: (tokens) => ({
-      accessToken: tokens.access_token as string,
-      refreshToken: tokens.refresh_token as string,
-      expiresIn: tokens.expires_in as number,
-      scope: tokens.scope as string,
-      tokenType: tokens.token_type as string,
-    }),
-  },
+   MICROSOFT_TEAMS: {
+     provider: 'MICROSOFT_TEAMS',
+     authorizationUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
+     tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
+     revokeUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/logout',
+     userInfoUrl: 'https://graph.microsoft.com/v1.0/me',
+     scopes: [
+       'User.Read',
+       'Team.ReadBasic.All',
+       'Channel.ReadBasic.All',
+       'ChannelMessage.Send',
+       'offline_access',
+     ],
+     usePKCE: true, // Microsoft requires PKCE for cross-origin requests
+     tokenAuthMethod: 'body',
+     parseTokenResponse: (tokens) => ({
+       accessToken: tokens.access_token as string,
+       refreshToken: tokens.refresh_token as string,
+       expiresIn: tokens.expires_in as number,
+       scope: tokens.scope as string,
+       tokenType: tokens.token_type as string,
+     }),
+   },
 
   // -------------------------------------------------------------------------
   // Storage

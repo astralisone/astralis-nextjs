@@ -5,6 +5,10 @@ import {
   generateOAuthState,
   getOrgOAuthCredentials,
   supportsOAuth,
+  getOAuthConfig,
+  generateCodeChallenge,
+  generateCodeVerifier,
+  type PKCEData,
 } from '@/lib/integrations/oauth-config';
 import type { IntegrationProvider } from '@prisma/client';
 
@@ -165,13 +169,37 @@ export async function GET(
     const { searchParams } = req.nextUrl;
     const returnUrl = searchParams.get('returnUrl') || '/integrations';
 
-    // 5. Generate OAuth state for CSRF protection
-    const state = generateOAuthState({
-      provider,
-      returnUrl,
-      userId: session.user.id,
-      orgId: session.user.orgId,
-    });
+    // 5. Check if provider requires PKCE and generate data
+    const config = getOAuthConfig(provider);
+    let pkceData: PKCEData | undefined;
+    let state: string;
+
+    if (config?.usePKCE) {
+      // Generate PKCE data
+      const codeVerifier = generateCodeVerifier();
+      pkceData = {
+        codeVerifier,
+        codeChallenge: generateCodeChallenge(codeVerifier),
+        codeChallengeMethod: 'S256',
+      };
+
+      // Generate OAuth state with PKCE data included
+      state = generateOAuthState({
+        provider,
+        returnUrl,
+        userId: session.user.id,
+        orgId: session.user.orgId,
+        codeVerifier, // Include PKCE verifier in state for callback
+      });
+    } else {
+      // Generate OAuth state for CSRF protection (non-PKCE providers)
+      state = generateOAuthState({
+        provider,
+        returnUrl,
+        userId: session.user.id,
+        orgId: session.user.orgId,
+      });
+    }
 
     // 6. Build redirect URI (callback URL)
     const callbackUrl = new URL(
@@ -179,12 +207,13 @@ export async function GET(
       req.nextUrl.origin
     );
 
-    // 7. Generate authorization URL with org credentials
+    // 7. Generate authorization URL with org credentials and PKCE if needed
     const authUrl = generateAuthorizationUrlWithCredentials(
       provider,
       callbackUrl.toString(),
       state,
-      credentials
+      credentials,
+      pkceData
     );
 
     if (!authUrl) {

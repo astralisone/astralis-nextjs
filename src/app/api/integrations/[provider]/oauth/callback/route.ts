@@ -169,7 +169,8 @@ export async function GET(
       provider,
       code,
       redirectUri,
-      credentials
+      credentials,
+      stateData.codeVerifier // Include code verifier for PKCE if present
     );
 
     // 8. Add provider-specific data
