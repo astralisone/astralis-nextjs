@@ -11,9 +11,9 @@ import {
   ActionDefinition,
   ActionSearchFilters,
   ActionStats,
-  ActionStatus,
   IntegrationProvider
 } from '@/lib/types/action';
+import { ActionStatus } from '@prisma/client';
 
 export class ActionRepository implements IActionRepository {
   /**

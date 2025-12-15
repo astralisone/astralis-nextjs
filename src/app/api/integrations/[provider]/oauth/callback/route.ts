@@ -302,7 +302,7 @@ export async function GET(
 
     return NextResponse.redirect(
       new URL(
-        `/app/integrations?error=${encodeURIComponent(
+        `/integrations?error=${encodeURIComponent(
           error instanceof Error ? error.message : 'OAuth callback failed'
         )}`,
         req.url
