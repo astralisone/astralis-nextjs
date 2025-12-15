@@ -821,20 +821,19 @@ const OAUTH_CONFIGS: Partial<Record<IntegrationProvider, OAuthProviderConfig>> =
    //   }),
    // },
 
-   // Temporarily disabled - Facebook OAuth requires proper app review and configuration
-   // FACEBOOK: {
-   //   provider: 'FACEBOOK',
-   //   authorizationUrl: 'https://www.facebook.com/v19.0/dialog/oauth',
-   //   tokenUrl: 'https://graph.facebook.com/v19.0/oauth/access_token',
-   //   userInfoUrl: 'https://graph.facebook.com/v19.0/me',
-   //   scopes: ['public_profile', 'email'], // Note: email is included in user data, not a separate scope
-   //   tokenAuthMethod: 'body',
-   //   parseTokenResponse: (tokens) => ({
-   //     accessToken: tokens.access_token as string,
-   //     tokenType: tokens.token_type as string,
-   //     expiresIn: tokens.expires_in as number,
-   //   }),
-   // },
+   FACEBOOK: {
+     provider: 'FACEBOOK',
+     authorizationUrl: 'https://www.facebook.com/v19.0/dialog/oauth',
+     tokenUrl: 'https://graph.facebook.com/v19.0/oauth/access_token',
+     userInfoUrl: 'https://graph.facebook.com/v19.0/me?fields=id,name,email',
+     scopes: ['public_profile'],
+     tokenAuthMethod: 'body',
+     parseTokenResponse: (tokens) => ({
+       accessToken: tokens.access_token as string,
+       tokenType: tokens.token_type as string,
+       expiresIn: tokens.expires_in as number,
+     }),
+   },
 
   SHOPIFY: {
     provider: 'SHOPIFY',
