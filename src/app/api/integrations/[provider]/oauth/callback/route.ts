@@ -102,14 +102,24 @@ export async function GET(
     let returnUrl = '/integrations';
 
     if (stateParam) {
+      console.log('[OAuth Callback] Received state parameter:', stateParam);
       const stateData = parseOAuthState(stateParam);
 
       if (!stateData) {
-        console.error('[OAuth Callback] Invalid state parameter');
+        console.error('[OAuth Callback] Failed to parse state parameter, raw state:', stateParam);
+        // Try to debug what went wrong with parsing
+        try {
+          const decoded = Buffer.from(stateParam, 'base64url').toString('utf-8');
+          console.error('[OAuth Callback] Decoded state:', decoded);
+        } catch (decodeError) {
+          console.error('[OAuth Callback] Failed to decode state:', decodeError);
+        }
         return NextResponse.redirect(
           new URL('/integrations?error=InvalidState', req.url)
         );
       }
+
+      console.log('[OAuth Callback] Parsed state data:', { provider: stateData.provider, hasCodeVerifier: !!stateData.codeVerifier });
 
       if (!validateOAuthState(stateData)) {
         console.error('[OAuth Callback] State expired');
@@ -122,16 +132,19 @@ export async function GET(
       orgId = stateData.orgId;
       returnUrl = stateData.returnUrl || returnUrl;
     } else {
+      console.log('[OAuth Callback] No state parameter, using session fallback');
       // Fallback to session authentication
       const session = await auth();
 
       if (!session?.user?.id) {
+        console.error('[OAuth Callback] No session found');
         return NextResponse.redirect(
           new URL('/auth/signin?error=Unauthorized', req.url)
         );
       }
 
       if (!session.user.orgId) {
+        console.error('[OAuth Callback] No orgId in session');
         return NextResponse.redirect(
           new URL('/auth/signin?error=OrganizationRequired', req.url)
         );
@@ -139,6 +152,7 @@ export async function GET(
 
       userId = session.user.id;
       orgId = session.user.orgId;
+      console.log('[OAuth Callback] Using session auth:', { userId, orgId });
     }
 
     // 4. Validate provider
@@ -170,7 +184,7 @@ export async function GET(
       code,
       redirectUri,
       credentials,
-      stateData.codeVerifier // Include code verifier for PKCE if present
+      stateData?.codeVerifier // Include code verifier for PKCE if present
     );
 
     // 8. Add provider-specific data
