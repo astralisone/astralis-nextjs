@@ -105,6 +105,43 @@ export function ActionRepositoryAdmin({ orgId }: ActionRepositoryAdminProps) {
     }
   };
 
+  const handleDiscoverActions = async () => {
+    if (!confirm('This will scan all available integrations and discover new actions using AI. This may take a few minutes. Continue?')) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch('/api/admin/actions/discover', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || errorData.error || 'Failed to discover actions');
+      }
+
+      const result = await response.json();
+
+      // Show results
+      const successCount = result.results.filter((r: any) => r.status === 'success').length;
+      const totalActions = result.totalDiscovered;
+
+      alert(`Action discovery completed!\n\n${successCount} integrations processed\n${totalActions} new actions discovered\n\nCheck the action list below for the newly discovered actions.`);
+
+      // Refresh the actions list
+      loadActions();
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to discover actions');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleExecute = async (action: ActionDefinition) => {
     // Open execution modal or inline form
     const params = prompt(`Enter parameters for ${action.name} (JSON format):`, '{}');
@@ -201,7 +238,7 @@ export function ActionRepositoryAdmin({ orgId }: ActionRepositoryAdminProps) {
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          <Button>
+          <Button onClick={handleDiscoverActions} disabled={loading}>
             <Plus className="h-4 w-4 mr-2" />
             Discover Actions
           </Button>
@@ -302,6 +339,17 @@ export function ActionRepositoryAdmin({ orgId }: ActionRepositoryAdminProps) {
                 <SelectItem value="GMAIL">Gmail</SelectItem>
                 <SelectItem value="GOOGLE_DRIVE">Google Drive</SelectItem>
                 <SelectItem value="GOOGLE_DOCS">Google Docs</SelectItem>
+                <SelectItem value="GOOGLE_SHEETS">Google Sheets</SelectItem>
+                <SelectItem value="GOOGLE_CALENDAR">Google Calendar</SelectItem>
+                <SelectItem value="SLACK">Slack</SelectItem>
+                <SelectItem value="DROPBOX">Dropbox</SelectItem>
+                <SelectItem value="HUBSPOT">HubSpot</SelectItem>
+                <SelectItem value="SALESFORCE">Salesforce</SelectItem>
+                <SelectItem value="QUICKBOOKS">QuickBooks</SelectItem>
+                <SelectItem value="XERO">Xero</SelectItem>
+                <SelectItem value="SHOPIFY">Shopify</SelectItem>
+                <SelectItem value="FACEBOOK">Facebook</SelectItem>
+                <SelectItem value="MICROSOFT_TEAMS">Microsoft Teams</SelectItem>
               </SelectContent>
             </Select>
           </div>
