@@ -179,12 +179,15 @@ export async function GET(
     ).toString();
 
     // 7. Exchange code for tokens using org credentials
+    // Get code verifier from state data if available (for PKCE providers)
+    const codeVerifier = stateParam ? parseOAuthState(stateParam)?.codeVerifier : undefined;
+
     const tokenData = await exchangeCodeForTokensWithCredentials(
       provider,
       code,
       redirectUri,
       credentials,
-      stateData?.codeVerifier // Include code verifier for PKCE if present
+      codeVerifier // Include code verifier for PKCE if present
     );
 
     // 8. Add provider-specific data
