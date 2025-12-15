@@ -148,13 +148,23 @@ export class DocumentService {
     // Only add agentProcessed if the column exists (migration has run)
     // This prevents errors when deploying before migrations complete
     try {
-      // Try to check if the column exists by attempting a simple query
-      await prisma.$queryRaw`SELECT "agentProcessed" FROM "Document" LIMIT 1`;
-      // If we get here, the column exists, so we can include it
-      createData.agentProcessed = false;
+      // Properly check if column exists using information_schema
+      const columnCheck = await prisma.$queryRaw<{ exists: boolean }[]>`
+        SELECT EXISTS (
+          SELECT 1
+          FROM information_schema.columns
+          WHERE table_schema = 'public'
+            AND table_name = 'Document'
+            AND column_name = 'agentProcessed'
+        ) as exists
+      `;
+
+      if (columnCheck[0].exists) {
+        createData.agentProcessed = false;
+      }
     } catch (error) {
-      // Column doesn't exist yet, skip it
-      console.log('[DocumentService] agentProcessed column not yet migrated, skipping');
+      // If schema query fails, assume column doesn't exist and skip
+      console.log('[DocumentService] Could not verify agentProcessed column, skipping');
     }
 
     const document = await prisma.document.create({
