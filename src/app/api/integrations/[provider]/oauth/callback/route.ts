@@ -45,13 +45,17 @@ export async function GET(
     const error = searchParams.get('error');
     const errorDescription = searchParams.get('error_description');
 
-    console.log(`[OAuth Callback] Query params - code: ${!!code}, state: ${!!stateParam}, error: ${error}`);
+    // Provider-specific params
+    realmId = searchParams.get('realmId'); // QuickBooks company ID
+
+    console.log(`[OAuth Callback] Query params - code: ${!!code}, state: ${!!stateParam}, error: ${error}, realmId: ${realmId}`);
 
     // Declare variables at function scope
     let stateData: OAuthStateData | null = null;
     let userId: string;
     let orgId: string;
     let returnUrl = '/integrations';
+    let realmId: string | null = null;
 
     // 2. Handle OAuth errors
     if (error) {
@@ -221,6 +225,8 @@ export async function GET(
     });
 
     // 8. Add provider-specific data
+    console.log(`[OAuth Callback] Building credential data for ${provider}, realmId: ${realmId}, tokenData.realmId: ${tokenData.realmId}`);
+
     const credentialData: Record<string, unknown> = {
       accessToken: tokenData.accessToken,
       refreshToken: tokenData.refreshToken,
@@ -231,9 +237,11 @@ export async function GET(
 
     // Add provider-specific fields
     if (realmId) {
+      console.log(`[OAuth Callback] Adding realmId from query params: ${realmId}`);
       credentialData.realmId = realmId; // QuickBooks company ID
     }
     if (tokenData.realmId) {
+      console.log(`[OAuth Callback] Adding realmId from token response: ${tokenData.realmId}`);
       credentialData.realmId = tokenData.realmId;
     }
     if (tokenData.tenantId) {
@@ -258,6 +266,8 @@ export async function GET(
         instanceUrl: credentialData.instanceUrl,
       }
     });
+
+    console.log(`[OAuth Callback] About to save credential for ${provider}`);
 
     // 9. Fetch additional info if available (e.g., Xero tenant ID)
     if (provider === 'XERO' && !credentialData.tenantId) {
