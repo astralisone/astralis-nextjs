@@ -104,16 +104,32 @@ export interface FallbackDecision {
 
 /**
  * Raw LLM response before validation
+ * Matches the JSON schema defined in the system prompt
  */
 interface RawLLMResponse {
-  intent?: string;
+  intent?: {
+    primary: string;
+    secondary?: string | null;
+    keywords?: string[];
+    entities?: {
+      names?: string[];
+      companies?: string[];
+      products?: string[];
+      dates?: string[];
+      amounts?: string[];
+    };
+  };
   confidence?: number;
   reasoning?: string;
+  urgency?: number; // 1-5 scale as defined in system prompt
   actions?: unknown[];
   requiresApproval?: boolean;
-  priority?: number;
-  warnings?: string[];
-  alternatives?: unknown[];
+  approvalReason?: string | null;
+  suggestedFollowUp?: string | null;
+  metadata?: {
+    processingNotes?: string | null;
+    alternativeActions?: unknown[];
+  };
 }
 
 // =============================================================================
@@ -279,8 +295,8 @@ export class DecisionEngine {
     const warnings: string[] = [];
 
     // Basic structure validation
-    if (typeof raw.intent !== 'string' || !raw.intent.trim()) {
-      errors.push('Missing or empty "intent" field');
+    if (!raw.intent || typeof raw.intent !== 'object' || !raw.intent.primary || typeof raw.intent.primary !== 'string' || !raw.intent.primary.trim()) {
+      errors.push('Missing or empty "intent.primary" field');
     }
 
     if (typeof raw.confidence !== 'number' || isNaN(raw.confidence)) {
@@ -332,18 +348,18 @@ export class DecisionEngine {
 
     // Build sanitized decision
     const sanitizedDecision: AgentDecisionResult = {
-      intent: raw.intent!.trim(),
+      intent: raw.intent!.primary.trim(),
       confidence: raw.confidence!,
       reasoning: raw.reasoning ?? 'No reasoning provided',
       actions: validatedActions,
       requiresApproval: raw.requiresApproval ?? false,
-      priority: typeof raw.priority === 'number' ? Math.min(5, Math.max(1, raw.priority)) : undefined,
-      warnings: [...(raw.warnings as string[] || []), ...warnings],
+      priority: typeof raw.urgency === 'number' ? Math.min(5, Math.max(1, raw.urgency)) : undefined,
+      warnings: [...(raw.metadata?.processingNotes ? [raw.metadata.processingNotes] : []), ...warnings],
     };
 
-    // Validate alternatives if present
-    if (Array.isArray(raw.alternatives) && raw.alternatives.length > 0) {
-      sanitizedDecision.alternatives = raw.alternatives
+    // Validate alternatives if present (from metadata.alternativeActions)
+    if (Array.isArray(raw.metadata?.alternativeActions) && raw.metadata.alternativeActions.length > 0) {
+      sanitizedDecision.alternatives = raw.metadata.alternativeActions
         .filter((alt): alt is Record<string, unknown> =>
           typeof alt === 'object' && alt !== null &&
           typeof (alt as Record<string, unknown>).intent === 'string' &&
@@ -596,7 +612,7 @@ export class DecisionEngine {
    * Implement fallback logic when actions are not available due to missing integrations
    */
   private implementFallbackLogic(
-    action: AgentAction,
+    action: Record<string, unknown>,
     actionType: DecisionType,
     context: DecisionContext,
     index: number
@@ -616,8 +632,8 @@ export class DecisionEngine {
 
       if (!gmailAvailable && classification.fallbackOptions?.includes('system')) {
         // Modify action to use system email instead
-        action.type = 'SEND_SYSTEM_EMAIL';
-        action.params.from = 'noreply@astralisone.com'; // Different sender for business fallbacks
+        (action as any).type = 'SEND_SYSTEM_EMAIL';
+        (action.params as any).from = 'noreply@astralisone.com'; // Different sender for business fallbacks
 
         return {
           fallbackApplied: true,
@@ -640,8 +656,8 @@ export class DecisionEngine {
       }
     }
 
-    // CRM integration fallback
-    if (actionType === 'UPDATE_CRM' && classification.channel === 'integration') {
+    // CRM integration fallback - check if CRM actions are available
+    if ((actionType === 'SEND_NOTIFICATION' || actionType === 'TRIGGER_AUTOMATION') && classification.channel === 'integration') {
       const crmAvailable = context.availableIntegrations?.some(
         i => (i.provider === 'SALESFORCE' || i.provider === 'HUBSPOT') && i.available
       );
