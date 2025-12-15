@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/config';
-import { getOrgOAuthCredentials, supportsOAuth } from '@/lib/integrations/oauth-config';
+import { getOrgOAuthCredentials, supportsOAuth, validateOAuthCredentials, type ProviderStatus } from '@/lib/integrations/oauth-config';
 import type { IntegrationProvider } from '@prisma/client';
 
 const ALL_INTEGRATIONS: IntegrationProvider[] = [
@@ -50,8 +50,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Check which integrations have credentials configured
-    const availableProviders: IntegrationProvider[] = [];
+    // Check which integrations have credentials configured and validate them
+    const providerStatuses: ProviderStatus[] = [];
 
     for (const provider of ALL_INTEGRATIONS) {
       // Skip if provider doesn't support OAuth
@@ -60,21 +60,36 @@ export async function GET(request: NextRequest) {
       }
 
       try {
-        // Check if org has credentials for this provider
+        // Get credentials for this provider
         const credentials = await getOrgOAuthCredentials(provider, session.user.orgId);
-        if (credentials) {
-          availableProviders.push(provider);
-        }
+
+        // Validate the credentials
+        const status = validateOAuthCredentials(provider, credentials);
+
+        // Always include the provider in the response with its status
+        providerStatuses.push(status);
       } catch (error) {
-        // Skip providers with credential check errors
+        // Include providers with errors as unavailable
         console.warn(`Failed to check credentials for ${provider}:`, error);
+        providerStatuses.push({
+          provider,
+          available: false,
+          reason: 'Credential validation failed'
+        });
       }
     }
 
+    // Separate available and unavailable providers for backward compatibility
+    const availableProviders = providerStatuses.filter(s => s.available).map(s => s.provider);
+    const unavailableProviders = providerStatuses.filter(s => !s.available);
+
     return NextResponse.json({
       success: true,
-      providers: availableProviders,
+      providers: availableProviders, // Backward compatibility
+      allProviders: providerStatuses, // New detailed response
+      unavailableProviders,
       total: availableProviders.length,
+      totalAll: providerStatuses.length,
     });
   } catch (error) {
     console.error('[API /api/integrations/available GET] Error:', error);

@@ -25,6 +25,8 @@ interface IntegrationSetupProps {
   lastError?: string | null;
   lastUsedAt?: Date | null;
   expiresAt?: Date | null;
+  available?: boolean;
+  unavailableReason?: string;
   onConnect: () => Promise<void>;
   onDisconnect: () => Promise<void>;
   onTest?: () => Promise<boolean>;
@@ -208,6 +210,8 @@ export function IntegrationSetup({
   lastError,
   lastUsedAt,
   expiresAt,
+  available = true,
+  unavailableReason,
   onConnect,
   onDisconnect,
   onTest,
@@ -325,7 +329,7 @@ export function IntegrationSetup({
 
   return (
     <>
-    <Card variant="default" className="h-full">
+    <Card variant="default" className={cn("h-full", !available && "opacity-50")}>
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
@@ -373,6 +377,19 @@ export function IntegrationSetup({
             <AlertDescription>
               <strong>Expiring Soon:</strong> This connection will expire on{' '}
               {expiresAt && new Date(expiresAt).toLocaleDateString()}.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Unavailable Integration Alert */}
+        {!available && unavailableReason && (
+          <Alert variant="warning" showIcon>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Not Available:</strong> {unavailableReason}
+              <div className="mt-2">
+                <strong>Action Required:</strong> Contact your administrator to configure OAuth credentials for this integration.
+              </div>
             </AlertDescription>
           </Alert>
         )}
@@ -451,11 +468,11 @@ export function IntegrationSetup({
               variant="primary"
               size="sm"
               onClick={handleConnect}
-              disabled={isConnecting}
+              disabled={isConnecting || !available}
               className="w-full"
             >
               <LinkIcon className=" w-5 h-5 mr-2" />
-              {isConnecting ? 'Connecting...' : 'Connect'}
+              {isConnecting ? 'Connecting...' : !available ? 'Not Available' : 'Connect'}
             </Button>
           )}
         </div>

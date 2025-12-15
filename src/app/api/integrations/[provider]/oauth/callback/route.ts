@@ -297,16 +297,29 @@ export async function GET(
 
     return NextResponse.redirect(successUrl);
 
-  } catch (error) {
-    console.error(`[API /api/integrations/${provider}/oauth/callback GET] Error:`, error);
+    } catch (error) {
+      console.error(`[API /api/integrations/${provider}/oauth/callback GET] Error:`, error);
 
-    return NextResponse.redirect(
-      new URL(
-        `/integrations?error=${encodeURIComponent(
-          error instanceof Error ? error.message : 'OAuth callback failed'
-        )}`,
-        req.url
-      )
-    );
-  }
+      let userFriendlyError = 'OAuth callback failed';
+
+      if (error instanceof Error) {
+        // Check for specific error patterns
+        if (error.message.includes('Unexpected token')) {
+          userFriendlyError = 'OAuth credentials are misconfigured. The integration provider rejected the authentication request.';
+        } else if (error.message.includes('invalid_client')) {
+          userFriendlyError = 'Invalid OAuth client credentials. Please check that the client ID and secret are correct.';
+        } else if (error.message.includes('redirect_uri')) {
+          userFriendlyError = 'Redirect URI mismatch. The OAuth app configuration needs to be updated.';
+        } else {
+          userFriendlyError = error.message;
+        }
+      }
+
+      return NextResponse.redirect(
+        new URL(
+          `/integrations?error=${encodeURIComponent(userFriendlyError)}`,
+          req.url
+        )
+      );
+    }
 }

@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/useToast';
 import { Search, ArrowLeft, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import type { IntegrationProvider } from '@/types/automation';
 import type { CredentialData } from '@/lib/services/integration.service';
+import type { ProviderStatus } from '@/lib/integrations/oauth-config';
 
 // Get available integrations (only those with OAuth credentials configured)
 async function getAvailableIntegrations(orgId: string): Promise<IntegrationProvider[]> {
@@ -72,6 +73,8 @@ interface IntegrationStatus {
   provider: IntegrationProvider;
   isConnected: boolean;
   credential?: CredentialData;
+  available?: boolean;
+  unavailableReason?: string;
 }
 
 export default function IntegrationsPage() {
@@ -81,6 +84,7 @@ export default function IntegrationsPage() {
 
   const [integrations, setIntegrations] = useState<IntegrationStatus[]>([]);
   const [availableProviders, setAvailableProviders] = useState<IntegrationProvider[]>([]);
+  const [allProviderStatuses, setAllProviderStatuses] = useState<ProviderStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -150,8 +154,10 @@ export default function IntegrationsPage() {
       const availableRes = await fetch('/api/integrations/available');
       if (!availableRes.ok) throw new Error('Failed to fetch available integrations');
       const availableData = await availableRes.json();
-      const providers = availableData.providers || [];
+      const allProviders = availableData.allProviders || [];
+      const providers = availableData.providers || []; // Backward compatibility
       setAvailableProviders(providers);
+      setAllProviderStatuses(allProviders);
 
       // Then get connected integrations
       const res = await fetch('/api/integrations');
@@ -162,19 +168,22 @@ export default function IntegrationsPage() {
       const credentials: CredentialData[] = data.data || [];
       const statusMap = new Map<IntegrationProvider, IntegrationStatus>();
 
-      // Initialize only available integrations (those with credentials)
-      providers.forEach((provider) => {
-        statusMap.set(provider, {
-          provider,
+      // Initialize all providers (available and unavailable)
+      allProviders.forEach((providerStatus) => {
+        statusMap.set(providerStatus.provider, {
+          provider: providerStatus.provider,
           isConnected: false,
+          available: providerStatus.available,
+          unavailableReason: providerStatus.reason,
         });
       });
 
       // Update with connected integrations
       credentials.forEach((credential) => {
-        if (providers.includes(credential.provider)) {
+        const existingStatus = statusMap.get(credential.provider);
+        if (existingStatus) {
           statusMap.set(credential.provider, {
-            provider: credential.provider,
+            ...existingStatus,
             isConnected: credential.isActive,
             credential,
           });
@@ -413,6 +422,8 @@ export default function IntegrationsPage() {
                   lastError={integration.credential?.lastError}
                   lastUsedAt={integration.credential?.lastUsedAt}
                   expiresAt={integration.credential?.expiresAt}
+                  available={integration.available}
+                  unavailableReason={integration.unavailableReason}
                   onConnect={() => handleConnect(integration.provider)}
                   onDisconnect={() => handleDisconnect(integration.provider)}
                   onTest={() => handleTest(integration.provider)}

@@ -219,6 +219,103 @@ export async function getOrgOAuthCredentials(
 }
 
 /**
+ * Provider availability status
+ */
+export interface ProviderStatus {
+  provider: IntegrationProvider;
+  available: boolean;
+  reason?: string;
+}
+
+/**
+ * Validate OAuth credentials for a provider
+ */
+export function validateOAuthCredentials(
+  provider: IntegrationProvider,
+  credentials: OrgOAuthCredentials | null
+): ProviderStatus {
+  if (!credentials?.clientId || !credentials?.clientSecret) {
+    return {
+      provider,
+      available: false,
+      reason: 'No OAuth credentials configured'
+    };
+  }
+
+  // Check for obviously invalid patterns
+  if (credentials.clientId.toLowerCase().includes('null') ||
+      credentials.clientId.includes('personal-access-key') ||
+      credentials.clientId.length < 5) {
+    return {
+      provider,
+      available: false,
+      reason: 'Invalid credential format detected'
+    };
+  }
+
+  // Provider-specific validation
+  switch (provider) {
+    case 'GITHUB':
+      if (credentials.clientId.length < 20) {
+        return {
+          provider,
+          available: false,
+          reason: 'GitHub client ID appears incomplete (typically 20+ characters)'
+        };
+      }
+      break;
+
+    case 'GOOGLE':
+    case 'GMAIL':
+    case 'GOOGLE_DRIVE':
+    case 'GOOGLE_DOCS':
+      if (!credentials.clientId.includes('.apps.googleusercontent.com')) {
+        return {
+          provider,
+          available: false,
+          reason: 'Google client ID should end with .apps.googleusercontent.com'
+        };
+      }
+      break;
+
+    case 'HUBSPOT':
+      if (credentials.clientId === 'personal-access-key') {
+        return {
+          provider,
+          available: false,
+          reason: 'HubSpot requires OAuth app credentials, not API keys'
+        };
+      }
+      break;
+
+    case 'SLACK':
+      if (!credentials.clientId.includes('.')) {
+        return {
+          provider,
+          available: false,
+          reason: 'Slack client ID should contain a dot (app-id.bot-id format)'
+        };
+      }
+      break;
+
+    case 'DROPBOX':
+      if (credentials.clientId.length < 10) {
+        return {
+          provider,
+          available: false,
+          reason: 'Dropbox app key appears incomplete'
+        };
+      }
+      break;
+  }
+
+  return {
+    provider,
+    available: true
+  };
+}
+
+/**
  * Check if an organization has configured credentials for a provider
  */
 export async function hasOrgCredentials(
@@ -508,27 +605,28 @@ const OAUTH_CONFIGS: Partial<Record<IntegrationProvider, OAuthProviderConfig>> =
   // -------------------------------------------------------------------------
   // CRM / Sales
   // -------------------------------------------------------------------------
-  HUBSPOT: {
-    provider: 'HUBSPOT',
-    authorizationUrl: 'https://app.hubspot.com/oauth/authorize',
-    tokenUrl: 'https://api.hubapi.com/oauth/v1/token',
-    userInfoUrl: 'https://api.hubapi.com/oauth/v1/access-tokens',
-    scopes: [
-      'crm.objects.contacts.read',
-      'crm.objects.contacts.write',
-      'crm.objects.companies.read',
-      'crm.objects.companies.write',
-      'crm.objects.deals.read',
-      'crm.objects.deals.write',
-    ],
-    tokenAuthMethod: 'body',
-    parseTokenResponse: (tokens) => ({
-      accessToken: tokens.access_token as string,
-      refreshToken: tokens.refresh_token as string,
-      expiresIn: tokens.expires_in as number,
-      tokenType: tokens.token_type as string,
-    }),
-  },
+   // Temporarily disabled - invalid OAuth app configuration
+   // HUBSPOT: {
+   //   provider: 'HUBSPOT',
+   //   authorizationUrl: 'https://app.hubspot.com/oauth/authorize',
+   //   tokenUrl: 'https://api.hubapi.com/oauth/v1/token',
+   //   userInfoUrl: 'https://api.hubapi.com/oauth/v1/access-tokens',
+   //   scopes: [
+   //     'crm.objects.contacts.read',
+   //     'crm.objects.contacts.write',
+   //     'crm.objects.companies.read',
+   //     'crm.objects.companies.write',
+   //     'crm.objects.deals.read',
+   //     'crm.objects.deals.write',
+   //   ],
+   //   tokenAuthMethod: 'body',
+   //   parseTokenResponse: (tokens) => ({
+   //     accessToken: tokens.access_token as string,
+   //     refreshToken: tokens.refresh_token as string,
+   //     expiresIn: tokens.expires_in as number,
+   //     tokenType: tokens.token_type as string,
+   //   }),
+   // },
 
   SALESFORCE: {
     provider: 'SALESFORCE',
@@ -708,19 +806,20 @@ const OAUTH_CONFIGS: Partial<Record<IntegrationProvider, OAuthProviderConfig>> =
   // -------------------------------------------------------------------------
   // Developer Tools & Project Management
   // -------------------------------------------------------------------------
-  GITHUB: {
-    provider: 'GITHUB',
-    authorizationUrl: 'https://github.com/login/oauth/authorize',
-    tokenUrl: 'https://github.com/login/oauth/access_token',
-    userInfoUrl: 'https://api.github.com/user',
-    scopes: ['repo', 'user'],
-    tokenAuthMethod: 'body',
-    parseTokenResponse: (tokens) => ({
-      accessToken: tokens.access_token as string,
-      tokenType: tokens.token_type as string,
-      scope: tokens.scope as string,
-    }),
-  },
+   // Temporarily disabled - truncated client ID in credentials
+   // GITHUB: {
+   //   provider: 'GITHUB',
+   //   authorizationUrl: 'https://github.com/login/oauth/authorize',
+   //   tokenUrl: 'https://github.com/login/oauth/access_token',
+   //   userInfoUrl: 'https://api.github.com/user',
+   //   scopes: ['repo', 'user'],
+   //   tokenAuthMethod: 'body',
+   //   parseTokenResponse: (tokens) => ({
+   //     accessToken: tokens.access_token as string,
+   //     tokenType: tokens.token_type as string,
+   //     scope: tokens.scope as string,
+   //   }),
+   // },
 
   FACEBOOK: {
     provider: 'FACEBOOK',
