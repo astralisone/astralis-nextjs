@@ -30,7 +30,9 @@
     "prisma:migrate": "prisma migrate deploy",
     "prisma:seed": "node prisma/seed.js && yarn seed:pipelines && yarn seed:templates",
     "seed:pipelines": "npx tsx prisma/seeds/pipelines.seed.ts",
-    "seed:templates": "npx tsx prisma/seeds/task-templates.seed.ts"
+    "seed:templates": "npx tsx prisma/seeds/task-templates.seed.ts",
+    "redis:cleanup": "npx tsx scripts/redis-cleanup.ts",
+    "redis:cleanup:dry": "npx tsx scripts/redis-cleanup.ts --dry-run"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.70.1",

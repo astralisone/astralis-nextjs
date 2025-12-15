@@ -171,18 +171,33 @@ export class DocumentService {
       data: createData,
     });
 
-    // 5. Queue background processing
+    // 5. Queue background processing via HTTP webhook (prevents Redis connection leaks)
     try {
-      await queueDocumentProcessing({
-        documentId: document.id,
-        orgId,
-        performOCR: options.performOCR,
-        performVisionExtraction: options.performVisionExtraction,
-        documentType: options.documentType || undefined,
-        language: options.language,
+      const workerUrl = process.env.N8N_WEBHOOK_URL || 'http://localhost:5678';
+      const webhookUrl = `${workerUrl}/webhook/document-processing`;
+
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'Astralis-One/1.0',
+        },
+        body: JSON.stringify({
+          documentId: document.id,
+          orgId,
+          performOCR: options.performOCR,
+          performVisionExtraction: options.performVisionExtraction,
+          documentType: options.documentType || undefined,
+          language: options.language,
+        }),
       });
 
-      console.log(`[DocumentService] Queued processing for document ${document.id}`);
+      if (!response.ok) {
+        console.warn(`[DocumentService] Failed to queue processing via webhook: ${response.status}`);
+        // Don't fail the upload if webhook fails - processing can be retried later
+      } else {
+        console.log(`[DocumentService] Queued processing for document ${document.id} via webhook`);
+      }
     } catch (error) {
       console.error('[DocumentService] Failed to queue document processing:', error);
       // Don't fail the upload if queueing fails

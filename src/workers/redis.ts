@@ -28,6 +28,10 @@ function createRedisConnection(): Redis | null {
       maxRetriesPerRequest: null, // Required for BullMQ
       enableReadyCheck: false, // Required for BullMQ
       lazyConnect: true, // Don't connect immediately
+      // Connection management for better resource handling
+      keepAlive: 30000, // Send keep-alive every 30 seconds
+      commandTimeout: 5000, // Command timeout
+      connectTimeout: 10000, // Connection timeout
       retryStrategy: (times) => {
         if (times > 3) {
           console.warn('[Redis] Max retries reached, giving up');
@@ -44,23 +48,46 @@ function createRedisConnection(): Redis | null {
     });
 
     connection.on('connect', () => {
-      console.log('[Redis] Connected successfully');
+      console.log(`[Redis] Connected successfully (status: ${connection.status})`);
       redisAvailable = true;
     });
 
     connection.on('ready', () => {
-      console.log('[Redis] Ready to accept commands');
+      console.log(`[Redis] Ready to accept commands (status: ${connection.status})`);
       redisAvailable = true;
     });
 
     connection.on('close', () => {
-      console.log('[Redis] Connection closed');
+      console.log(`[Redis] Connection closed (status: ${connection.status})`);
       redisAvailable = false;
     });
 
     connection.on('reconnecting', () => {
-      console.log('[Redis] Reconnecting...');
+      console.log(`[Redis] Reconnecting... (status: ${connection.status})`);
     });
+
+    connection.on('error', (err) => {
+      console.error(`[Redis] Connection error (status: ${connection.status}):`, err.message);
+      redisAvailable = false;
+    });
+
+    // Monitor connection health and usage
+    setInterval(async () => {
+      if (redisAvailable && connection.status === 'ready') {
+        try {
+          // Get some basic Redis stats
+          const info = await connection.info();
+          const clients = info.match(/connected_clients:(\d+)/)?.[1] || 'unknown';
+          const memory = info.match(/used_memory_human:(.+)/)?.[1] || 'unknown';
+
+          console.log(`[Redis] Status: ${connection.status}, Clients: ${clients}, Memory: ${memory}`);
+        } catch (error) {
+          console.log(`[Redis] Status: ${connection.status} (stats unavailable)`);
+        }
+      } else {
+        console.log(`[Redis] Status: ${connection.status}, Available: ${redisAvailable}`);
+      }
+    }, 30000); // Log every 30 seconds
 
     // Try to connect
     connection.connect().catch((err) => {
@@ -90,6 +117,62 @@ export function isRedisAvailable(): boolean {
  */
 export function getRedisConnection(): Redis | null {
   return redisConnection;
+}
+
+/**
+ * Close Redis connection and cleanup resources
+ * Important for serverless environments to prevent connection leaks
+ */
+export async function closeRedisConnection(): Promise<void> {
+  if (redisConnection) {
+    try {
+      await redisConnection.quit();
+      console.log('[Redis] Connection closed successfully');
+    } catch (error) {
+      console.error('[Redis] Error closing connection:', error);
+    } finally {
+      redisConnection = null;
+      redisAvailable = false;
+    }
+  }
+}
+
+/**
+ * Get connection info for monitoring
+ */
+export async function getRedisConnectionInfo() {
+  if (!redisConnection) return null;
+
+  const baseInfo = {
+    connected: redisAvailable,
+    ready: redisConnection.status === 'ready',
+    status: redisConnection.status,
+    options: redisConnection.options,
+  };
+
+  // Try to get additional Redis server info
+  if (redisAvailable && redisConnection.status === 'ready') {
+    try {
+      const info = await redisConnection.info();
+      const clients = info.match(/connected_clients:(\d+)/)?.[1];
+      const memory = info.match(/used_memory_human:(.+)/)?.[1];
+      const uptime = info.match(/uptime_in_seconds:(\d+)/)?.[1];
+
+      return {
+        ...baseInfo,
+        serverInfo: {
+          connectedClients: clients,
+          usedMemory: memory,
+          uptimeSeconds: uptime,
+        }
+      };
+    } catch (error) {
+      // Return base info if we can't get server stats
+      return baseInfo;
+    }
+  }
+
+  return baseInfo;
 }
 
 // Export for backwards compatibility (BullMQ needs this)
