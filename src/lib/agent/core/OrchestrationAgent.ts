@@ -44,13 +44,6 @@ import { AgentEventBus, type EmitResult, type EventBusConfig } from '../inputs/E
 import { DecisionEngine, type DecisionEngineConfig } from './DecisionEngine';
 import { ActionExecutor, type ActionExecutorConfig } from './ActionExecutor';
 import { PromptBuilder, type OrgContext as PromptOrgContext } from '../prompts';
-import { communicationClassifier, type CommunicationClassification, type CommunicationChannel } from '../communication-classifier';
-
-interface IntegrationStatus {
-  provider: string;
-  available: boolean;
-  reason?: string;
-}
 import { prisma } from '@/lib/prisma';
 import type { BaseOperationalAgent } from '../operational/BaseOperationalAgent';
 import type { DocumentProcessedEvent as OperationalDocumentEvent } from '../operational/BaseOperationalAgent';
@@ -333,13 +326,7 @@ export class OrchestrationAgent {
     });
 
     // Initialize LLM client
-    this.llmClient = config.llmClient ?? createLLMClient({
-      provider: this.config.llmProvider,
-      model: this.config.llmModel,
-      defaultOptions: {
-        temperature: this.config.temperature,
-      },
-    });
+    this.llmClient = config.llmClient ?? this.createLLMClient();
 
     // Initialize event bus
     this.eventBus = AgentEventBus.getInstance(config.eventBusConfig);
@@ -563,11 +550,6 @@ export class OrchestrationAgent {
       throw new Error('Rate limit exceeded. Please try again later.');
     }
 
-    // Record rate limit timestamps
-    const now = Date.now();
-    this.rateLimiter.minuteTimestamps.push(now);
-    this.rateLimiter.hourTimestamps.push(now);
-
     try {
       // Build decision context
       const context = await this.buildDecisionContext(input);
@@ -581,9 +563,6 @@ export class OrchestrationAgent {
 
       // Process LLM response through decision engine
       const decision = this.decisionEngine.processLLMResponse(llmResponse, context);
-
-      // Add integration suggestions based on context
-      decision.suggestions = this.generateIntegrationSuggestions(decision, context);
 
       // Record decision time
       const decisionTime = Date.now() - startTime;
@@ -790,153 +769,599 @@ export class OrchestrationAgent {
   }
 
   // ===========================================================================
-  // Private: Integration & Communication Methods
+  // Configuration Methods
   // ===========================================================================
 
   /**
-   * Generate integration suggestions based on decision and context
+   * Update agent configuration.
    */
-  private generateIntegrationSuggestions(
-    decision: AgentDecisionResult,
-    context: DecisionContext
-  ): IntegrationSuggestion[] {
-    const suggestions: IntegrationSuggestion[] = [];
-    const availableProviders = new Set(
-      context.availableIntegrations?.map(i => i.provider) || []
-    );
+  updateConfig(config: Partial<OrchestrationAgentConfig>): void {
+    this.config = { ...this.config, ...config };
 
-    // Check each action for missing integration requirements
-    for (const action of decision.actions) {
-      switch (action.type) {
-        case 'SEND_BUSINESS_EMAIL':
-          if (!availableProviders.has('GMAIL')) {
-            suggestions.push({
-              type: 'connect_integration',
-              provider: 'GMAIL',
-              reason: 'Needed to send business emails automatically',
-              benefit: 'Send personalized business emails directly from your Gmail account',
-              priority: 4
-            });
-          }
-          break;
-
-        case 'CREATE_EVENT':
-          if (!availableProviders.has('GOOGLE_CALENDAR')) {
-            suggestions.push({
-              type: 'connect_integration',
-              provider: 'GOOGLE_CALENDAR',
-              reason: 'Needed to schedule meetings and appointments',
-              benefit: 'Automatically create calendar events and manage your schedule',
-              priority: 3
-            });
-          }
-          break;
-
-        case 'UPDATE_CRM':
-          if (!availableProviders.has('SALESFORCE') && !availableProviders.has('HUBSPOT')) {
-            suggestions.push({
-              type: 'connect_integration',
-              provider: 'SALESFORCE', // Prefer Salesforce as primary suggestion
-              reason: 'Needed to sync customer data and track sales activities',
-              benefit: 'Keep your CRM updated with new leads and customer interactions',
-              priority: 4
-            });
-          }
-          break;
-      }
-    }
-
-    // Check communication classification for additional suggestions
-    const classification = context.communicationClassification;
-    if (classification?.channel === 'business' && !availableProviders.has('GMAIL')) {
-      suggestions.push({
-        type: 'connect_integration',
-        provider: 'GMAIL',
-        reason: 'Your request involves business communication',
-        benefit: 'Send professional emails from your connected Gmail account',
-        priority: 5
+    // Update sub-components if needed
+    if (config.autoExecuteThreshold !== undefined || config.requireApprovalThreshold !== undefined) {
+      this.decisionEngine.updateConfig({
+        autoExecuteThreshold: this.config.autoExecuteThreshold,
+        requireApprovalThreshold: this.config.requireApprovalThreshold,
       });
     }
 
-    // Remove duplicates and sort by priority
-    const uniqueSuggestions = suggestions.filter((suggestion, index, array) =>
-      array.findIndex(s => s.provider === suggestion.provider && s.type === suggestion.type) === index
-    );
-
-    return uniqueSuggestions.sort((a, b) => (b.priority || 0) - (a.priority || 0));
-  }
-
-  /**
-   * Get available integrations for an organization
-   */
-  private async getAvailableIntegrations(orgId: string): Promise<IntegrationStatus[]> {
-    try {
-      const response = await fetch(
-        `${process.env.NEXTAUTH_URL || 'http://localhost:3001'}/api/integrations/available`,
-        {
-          headers: {
-            'Authorization': `Bearer ${process.env.INTERNAL_API_TOKEN || 'internal'}`,
-            'Content-Type': 'application/json',
-            'X-Org-ID': orgId
-          }
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        return data.allProviders || [];
-      }
-    } catch (error) {
-      this.logger.warn('Failed to fetch available integrations', { orgId, error });
+    if (config.dryRun !== undefined) {
+      this.actionExecutor.setDryRun(config.dryRun);
     }
 
-    return [];
+    this.logger.info('Configuration updated');
   }
 
   /**
-   * Filter actions based on communication classification and available integrations
+   * Get current configuration.
    */
-  private filterActionsByCommunicationType(
-    enabledActions: DecisionType[],
-    classification: CommunicationClassification,
-    integrations: IntegrationStatus[]
-  ): DecisionType[] {
-    const availableProviders = new Set(
-      integrations.filter(i => i.available).map(i => i.provider)
-    );
+  getConfig(): Readonly<OrchestrationAgentConfig> {
+    return { ...this.config };
+  }
 
-    return enabledActions.filter(action => {
-      switch (classification.channel) {
-        case 'system':
-          // System communications only use internal services
-          return ['SEND_SYSTEM_EMAIL', 'SEND_SYSTEM_NOTIFICATION'].includes(action);
+  // ===========================================================================
+  // Statistics Methods
+  // ===========================================================================
 
-        case 'business':
-          // Business emails require Gmail integration
-          if (action === 'SEND_BUSINESS_EMAIL') {
-            return availableProviders.has('GMAIL');
-          }
-          return true;
+  /**
+   * Get agent statistics.
+   */
+  getStats(): AgentStats {
+    const avgDecisionTime = this.stats.decisionTimes.length > 0
+      ? this.stats.decisionTimes.reduce((a, b) => a + b, 0) / this.stats.decisionTimes.length
+      : 0;
 
-        case 'integration':
-          // Integration actions require specific integrations
-          if (action === 'CREATE_EVENT') {
-            return availableProviders.has('GOOGLE_CALENDAR');
-          }
-          if (action === 'UPDATE_CRM') {
-            return availableProviders.has('SALESFORCE') || availableProviders.has('HUBSPOT');
-          }
-          return true;
+    const now = Date.now();
 
-        default:
-          return true;
-      }
+    return {
+      totalDecisions: this.stats.totalDecisions,
+      successfulDecisions: this.stats.successfulDecisions,
+      failedDecisions: this.stats.failedDecisions,
+      pendingApprovals: this.stats.pendingApprovals,
+      totalActionsExecuted: this.stats.totalActionsExecuted,
+      totalEventsProcessed: this.stats.totalEventsProcessed,
+      totalErrors: this.stats.totalErrors,
+      averageDecisionTimeMs: avgDecisionTime,
+      rateLimitStatus: {
+        actionsThisMinute: this.rateLimiter.minuteTimestamps.filter(t => now - t < 60000).length,
+        actionsThisHour: this.rateLimiter.hourTimestamps.filter(t => now - t < 3600000).length,
+        isLimited: this.isRateLimited(),
+      },
+      uptimeMs: this.startTime ? now - this.startTime.getTime() : 0,
+      timeSinceLastDecisionMs: this.stats.lastDecisionTime
+        ? now - this.stats.lastDecisionTime.getTime()
+        : null,
+    };
+  }
+
+  /**
+   * Get decision history.
+   */
+  getDecisionHistory(limit?: number): DecisionRecord[] {
+    if (limit) {
+      return this.decisionHistory.slice(-limit);
+    }
+    return [...this.decisionHistory];
+  }
+
+  // ===========================================================================
+  // Private: LLM Methods
+  // ===========================================================================
+
+  /**
+   * Create the LLM client based on configuration.
+   */
+  private createLLMClient(): ILLMClient {
+    return createLLMClient({
+      provider: this.config.llmProvider,
+      model: this.config.llmModel as LLMModel,
+      defaultOptions: {
+        temperature: this.config.temperature,
+        maxTokens: this.config.maxTokens,
+      },
     });
   }
 
+  /**
+   * Build the system prompt for LLM.
+   */
+  private buildSystemPrompt(org: OrgContext): string {
+    const promptOrg: PromptOrgContext = {
+      orgName: org.name,
+      pipelines: org.pipelines.map(p => ({
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        stages: p.stages.map((s, i) => ({ id: s, name: s, order: i })),
+      })),
+      teamMembers: org.users.map(u => ({
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        role: u.role,
+        isAvailable: u.isAvailable,
+      })),
+      timezone: org.settings.timezone,
+      currentDateTime: new Date(),
+    };
+
+    return PromptBuilder.buildSystemPrompt(promptOrg);
+  }
+
+  /**
+   * Build the user prompt for LLM.
+   */
+  private buildUserPrompt(input: AgentInput, context: DecisionContext): string {
+    let prompt = `## Input Information\n\n`;
+    prompt += `- **Source:** ${input.source}\n`;
+    prompt += `- **Type:** ${input.type}\n`;
+    prompt += `- **Timestamp:** ${input.timestamp.toISOString()}\n`;
+
+    if (input.metadata?.senderEmail) {
+      prompt += `- **Sender Email:** ${input.metadata.senderEmail}\n`;
+    }
+    if (input.metadata?.senderName) {
+      prompt += `- **Sender Name:** ${input.metadata.senderName}\n`;
+    }
+
+    prompt += `\n## Content\n\n${input.rawContent}\n`;
+
+    if (input.structuredData && Object.keys(input.structuredData).length > 0) {
+      prompt += `\n## Structured Data\n\n\`\`\`json\n${JSON.stringify(input.structuredData, null, 2)}\n\`\`\`\n`;
+    }
+
+    if (context.history && context.history.recentDecisions.length > 0) {
+      prompt += `\n## Recent Decisions\n\n`;
+      for (const decision of context.history.recentDecisions.slice(0, 5)) {
+        prompt += `- ${decision.decisionType} (${decision.inputType}): Confidence ${decision.confidence.toFixed(2)}, Status: ${decision.status}\n`;
+      }
+    }
+
+    prompt += `\n## Available Actions\n\n`;
+    prompt += context.availableActions.map(a => `- ${a}`).join('\n');
+
+    prompt += `\n\n---\n\nBased on the above information, analyze the input and provide your decision in the required JSON format.`;
+
+    return prompt;
+  }
+
+  /**
+   * Make LLM decision call with Claude→OpenAI fallback.
+   */
+  private async makeLLMDecision(systemPrompt: string, userPrompt: string): Promise<string> {
+    try {
+      // Try Claude first (or configured primary provider)
+      const response = await this.llmClient.complete([
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ]);
+
+      return response.content;
+    } catch (claudeError) {
+      this.logger.error('[OA] Primary LLM failed, attempting OpenAI fallback', claudeError as Error, {
+        primaryProvider: this.config.llmProvider,
+      });
+
+      try {
+        // Fallback to OpenAI
+        const openaiClient = createLLMClient({
+          provider: LLMProvider.OPENAI,
+          model: 'gpt-4o' as LLMModel,
+          defaultOptions: {
+            temperature: this.config.temperature,
+            maxTokens: this.config.maxTokens,
+          },
+        });
+
+        const fallbackResponse = await openaiClient.complete([
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ]);
+
+        this.logger.info('[OA] OpenAI fallback succeeded', {
+          primaryProvider: this.config.llmProvider,
+        });
+
+        return fallbackResponse.content;
+      } catch (openaiError) {
+        this.logger.error('[OA] OpenAI fallback also failed', openaiError as Error);
+
+        // Emit routing failure event for UI visibility
+        await this.eventBus.emit('intake:routing_failed', {
+          error: 'Both Claude and OpenAI LLM calls failed',
+          primaryError: claudeError instanceof Error ? claudeError.message : String(claudeError),
+          fallbackError: openaiError instanceof Error ? openaiError.message : String(openaiError),
+          timestamp: new Date(),
+        }, { source: 'agent' });
+
+        // Surface error with details
+        throw new Error(
+          `LLM routing failed - Primary (${this.config.llmProvider}): ${claudeError instanceof Error ? claudeError.message : String(claudeError)}, Fallback (OpenAI): ${openaiError instanceof Error ? openaiError.message : String(openaiError)}`
+        );
+      }
+    }
+  }
+
   // ===========================================================================
-  // Private: Configuration Methods
+  // Private: Context Methods
   // ===========================================================================
+
+  /**
+   * Build the full decision context.
+   */
+  private async buildDecisionContext(input: AgentInput): Promise<DecisionContext> {
+    const org = await this.getOrganizationContext();
+    const history = await this.getHistoricalContext(input);
+
+    return {
+      input,
+      org,
+      history,
+      availableActions: this.config.enabledActions,
+      decisionTimestamp: new Date(),
+      sessionId: this.agentId,
+    };
+  }
+
+  /**
+   * Get organization context (with caching).
+   * Fetches real pipelines, stages, and users from the database.
+   */
+  private async getOrganizationContext(): Promise<OrgContext> {
+    const now = new Date();
+
+    // Check cache
+    if (
+      this.orgContextCache &&
+      this.orgContextCacheTime &&
+      now.getTime() - this.orgContextCacheTime.getTime() < this.ORG_CONTEXT_CACHE_TTL
+    ) {
+      return this.orgContextCache;
+    }
+
+    try {
+      // Fetch organization details
+      const org = await prisma.organization.findUnique({
+        where: { id: this.config.orgId },
+        select: { id: true, name: true },
+      });
+
+      // Fetch real pipelines with stages from database
+      const pipelines = await prisma.pipeline.findMany({
+        where: { orgId: this.config.orgId, isActive: true },
+        include: {
+          stages: {
+            orderBy: { order: 'asc' },
+            select: { id: true, name: true, order: true },
+          },
+        },
+        orderBy: { createdAt: 'asc' },
+      });
+
+      // Fetch real users from database
+      const users = await prisma.users.findMany({
+        where: { orgId: this.config.orgId, isActive: true },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+        },
+      });
+
+      // Find default pipeline (prefer one named "General Intake" or first available)
+      const defaultPipeline = pipelines.find(p =>
+        p.name.toLowerCase().includes('general') ||
+        p.name.toLowerCase().includes('intake')
+      ) || pipelines[0];
+
+      const context: OrgContext = {
+        id: this.config.orgId,
+        name: org?.name || 'Organization',
+        pipelines: pipelines.map(p => ({
+          id: p.id,
+          name: p.name,
+          description: p.description ?? undefined,
+          stages: p.stages.map(s => s.name),
+          category: this.inferPipelineCategory(p.name),
+          isActive: true,
+        })),
+        users: users.map(u => ({
+          id: u.id,
+          name: u.name || 'Unknown',
+          email: u.email,
+          role: u.role,
+          currentLoad: 0, // Could be calculated from active assignments
+          isAvailable: true,
+        })),
+        settings: {
+          timezone: 'America/New_York',
+          workingHours: { start: '09:00', end: '17:00', workingDays: [1, 2, 3, 4, 5] },
+          defaultPipeline: defaultPipeline?.id || 'general',
+          escalationEmail: this.config.escalationEmail,
+          defaultEventDuration: 30,
+          lunchBreak: { start: '12:00', end: '13:00' },
+        },
+      };
+
+      this.logger.info('Loaded organization context from database', {
+        orgId: this.config.orgId,
+        pipelineCount: pipelines.length,
+        userCount: users.length,
+        pipelines: pipelines.map(p => ({ id: p.id, name: p.name })),
+      });
+
+      // Cache the context
+      this.orgContextCache = context;
+      this.orgContextCacheTime = now;
+
+      return context;
+
+    } catch (error) {
+      this.logger.error('Failed to load organization context from database, using fallback', error as Error);
+
+      // Fallback to minimal context if database fails
+      const fallbackContext: OrgContext = {
+        id: this.config.orgId,
+        name: 'Organization',
+        pipelines: [],
+        users: [],
+        settings: {
+          timezone: 'America/New_York',
+          workingHours: { start: '09:00', end: '17:00', workingDays: [1, 2, 3, 4, 5] },
+          defaultPipeline: 'general',
+          escalationEmail: this.config.escalationEmail,
+          defaultEventDuration: 30,
+          lunchBreak: { start: '12:00', end: '13:00' },
+        },
+      };
+
+      return fallbackContext;
+    }
+  }
+
+  /**
+   * Infer pipeline category from its name for routing hints.
+   */
+  private inferPipelineCategory(name: string): string {
+    const lowerName = name.toLowerCase();
+    if (lowerName.includes('sales') || lowerName.includes('lead') || lowerName.includes('opportunity')) {
+      return 'sales';
+    }
+    if (lowerName.includes('scheduling') || lowerName.includes('booking') || lowerName.includes('appointment') || lowerName.includes('calendar')) {
+      return 'scheduling';
+    }
+    if (lowerName.includes('support') || lowerName.includes('ticket') || lowerName.includes('help')) {
+      return 'support';
+    }
+    if (lowerName.includes('billing') || lowerName.includes('invoice') || lowerName.includes('payment')) {
+      return 'billing';
+    }
+    if (lowerName.includes('partner') || lowerName.includes('integration')) {
+      return 'partnership';
+    }
+    return 'general';
+  }
+
+  /**
+   * Get historical context for decision-making.
+   */
+  private async getHistoricalContext(_input: AgentInput): Promise<HistoricalContext> {
+    // Get recent decisions from history
+    const recentDecisions = this.decisionHistory.slice(-10).map(d => ({
+      id: d.id,
+      decisionType: d.decisionType,
+      inputType: d.inputType,
+      confidence: d.confidence,
+      status: d.status,
+      createdAt: d.createdAt,
+    }));
+
+    return {
+      recentDecisions,
+      relatedIntakes: [],
+      relatedEvents: [],
+    };
+  }
+
+  // ===========================================================================
+  // Private: Execution Methods
+  // ===========================================================================
+
+  /**
+   * Execute a decision's actions.
+   */
+  private async executeDecision(
+    decision: AgentDecisionResult,
+    correlationId: string
+  ): Promise<DecisionOutcome> {
+    const outcome = await this.actionExecutor.execute(decision.actions, {
+      executionId: correlationId,
+      correlationId,
+      dryRun: this.config.dryRun,
+    });
+
+    this.stats.totalActionsExecuted += decision.actions.length;
+
+    return outcome;
+  }
+
+  /**
+   * Store a pending decision for approval.
+   */
+  private storePendingDecision(
+    decision: AgentDecisionResult,
+    input: AgentInput,
+    context: DecisionContext
+  ): string {
+    const id = `pending-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    this.pendingDecisions.set(id, {
+      id,
+      decision,
+      input,
+      context,
+      createdAt: new Date(),
+      expiresAt,
+    });
+
+    return id;
+  }
+
+  /**
+   * Record a decision for audit trail.
+   */
+  private async recordDecision(
+    input: AgentInput,
+    decision: AgentDecisionResult,
+    outcome: DecisionOutcome,
+    llmPrompt: string,
+    llmResponse: string
+  ): Promise<void> {
+    const record: DecisionRecord = {
+      id: `dec-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      agentId: this.agentId,
+      orgId: this.config.orgId,
+      inputSource: input.source,
+      inputType: input.type,
+      inputData: { rawContent: input.rawContent, structuredData: input.structuredData },
+      llmPrompt,
+      llmResponse,
+      confidence: decision.confidence,
+      reasoning: decision.reasoning,
+      decisionType: decision.actions[0]?.type ?? DecisionTypeEnum.NO_ACTION,
+      actions: decision.actions,
+      status: outcome.status,
+      executionTime: outcome.executionTime,
+      errorMessage: outcome.errors[0]?.message,
+      createdAt: new Date(),
+      executedAt: outcome.status === DecisionStatusEnum.EXECUTED ? outcome.completedAt : undefined,
+    };
+
+    this.decisionHistory.push(record);
+
+    // Emit decision event
+    await this.eventBus.emit('agent:decision_made', {
+      id: record.id,
+      decisionId: record.id,
+      agentId: this.agentId,
+      decisionType: record.decisionType,
+      status: record.status,
+      confidence: record.confidence,
+      actions: record.actions,
+      timestamp: new Date(),
+      source: 'agent' as const,
+    }, { source: 'agent' });
+  }
+
+  // ===========================================================================
+  // Private: Rate Limiting
+  // ===========================================================================
+
+  /**
+   * Check if rate limited.
+   */
+  private isRateLimited(): boolean {
+    const now = Date.now();
+
+    // Clean old timestamps
+    this.rateLimiter.minuteTimestamps = this.rateLimiter.minuteTimestamps.filter(t => now - t < 60000);
+    this.rateLimiter.hourTimestamps = this.rateLimiter.hourTimestamps.filter(t => now - t < 3600000);
+
+    const perMinute = this.config.maxActionsPerMinute ?? DEFAULT_RATE_LIMIT_PER_MINUTE;
+    const perHour = this.config.maxActionsPerHour ?? DEFAULT_RATE_LIMIT_PER_HOUR;
+
+    return (
+      this.rateLimiter.minuteTimestamps.length >= perMinute ||
+      this.rateLimiter.hourTimestamps.length >= perHour
+    );
+  }
+
+  /**
+   * Record an action for rate limiting.
+   */
+  private recordRateLimitAction(): void {
+    const now = Date.now();
+    this.rateLimiter.minuteTimestamps.push(now);
+    this.rateLimiter.hourTimestamps.push(now);
+  }
+
+  // ===========================================================================
+  // Private: Notification Methods
+  // ===========================================================================
+
+  /**
+   * Send notification for pending approval.
+   */
+  private async sendApprovalNotification(decisionId: string, decision: AgentDecisionResult): Promise<void> {
+    this.logger.info('Sending approval notification', { decisionId, intent: decision.intent });
+
+    // In production, this would send email/notification
+    // For now, just log
+  }
+
+  /**
+   * Send error notification.
+   */
+  private async sendErrorNotification(error: Error, input: AgentInput): Promise<void> {
+    this.logger.info('Sending error notification', {
+      error: error.message,
+      inputSource: input.source,
+      inputType: input.type,
+    });
+
+    // In production, this would send email/notification to escalation address
+  }
+
+  // ===========================================================================
+  // Private: Utility Methods
+  // ===========================================================================
+
+  /**
+   * Convert an AgentEvent to AgentInput.
+   */
+  private eventToInput(event: AgentEvent): AgentInput {
+    const payload = event.payload as Record<string, unknown>;
+
+    // Build relatedEntityIds, only including eventId if defined
+    const relatedEntityIds: Record<string, string> = {};
+    if (event.eventId) {
+      relatedEntityIds.eventId = event.eventId;
+    }
+
+    return {
+      source: this.mapEventSourceToInputSource(event.source),
+      type: event.type,
+      rawContent: JSON.stringify(payload),
+      structuredData: payload,
+      metadata: {
+        relatedEntityIds,
+        ...event.metadata,
+      },
+      timestamp: event.timestamp,
+      correlationId: event.correlationId,
+    };
+  }
+
+  /**
+   * Map event source to input source.
+   */
+  private mapEventSourceToInputSource(source: string | AgentInputSource): AgentInputSource {
+    if (Object.values(AgentInputSource).includes(source as AgentInputSource)) {
+      return source as AgentInputSource;
+    }
+
+    // Map 'agent' and 'system' to appropriate source
+    switch (source) {
+      case 'agent':
+      case 'system':
+        return AgentInputSource.WORKER;
+      default:
+        return AgentInputSource.API;
+    }
+  }
 
   /**
    * Validate and merge configuration with defaults.
@@ -965,77 +1390,6 @@ export class OrchestrationAgent {
     };
 
     return merged;
-  }
-
-  /**
-   * Send error notification to escalation contacts
-   */
-  private async sendErrorNotification(error: Error, input: AgentInput): Promise<void> {
-    try {
-      const escalationEmail = this.config.escalationEmail;
-      if (!escalationEmail) {
-        this.logger.warn('No escalation email configured, skipping error notification');
-        return;
-      }
-
-      const subject = `Agent Error: ${error.message}`;
-      const body = `
-Agent Error Notification
-
-Agent: ${this.agentId}
-Organization: ${input.orgId}
-Correlation ID: ${input.correlationId}
-
-Error: ${error.message}
-Stack: ${error.stack}
-
-Input Details:
-- Source: ${input.source}
-- Type: ${input.type}
-- Content: ${input.content?.substring(0, 200)}${input.content && input.content.length > 200 ? '...' : ''}
-
-Timestamp: ${new Date().toISOString()}
-
-This is an automated notification from the Astralis Orchestration Agent.
-      `.trim();
-
-      // Use the internal email service to send the notification
-      const { sendEmail } = await import('@/lib/email');
-
-      await sendEmail({
-        to: escalationEmail,
-        subject,
-        text: body,
-        from: 'system@astralisone.com'
-      });
-
-      this.logger.info('Error notification sent', { escalationEmail, correlationId: input.correlationId });
-    } catch (notifyError) {
-      this.logger.error('Failed to send error notification', notifyError as Error);
-    }
-  }
-
-  /**
-   * Check if the agent is currently rate limited
-   */
-  private isRateLimited(): boolean {
-    const now = Date.now();
-
-    // Clean old timestamps
-    this.rateLimiter.minuteTimestamps = this.rateLimiter.minuteTimestamps.filter(
-      t => now - t < 60000 // 1 minute
-    );
-    this.rateLimiter.hourTimestamps = this.rateLimiter.hourTimestamps.filter(
-      t => now - t < 3600000 // 1 hour
-    );
-
-    const perMinute = this.config.maxActionsPerMinute ?? 60;
-    const perHour = this.config.maxActionsPerHour ?? 500;
-
-    return (
-      this.rateLimiter.minuteTimestamps.length >= perMinute ||
-      this.rateLimiter.hourTimestamps.length >= perHour
-    );
   }
 }
 

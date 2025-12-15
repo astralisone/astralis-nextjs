@@ -73,11 +73,11 @@ function ActivityFeedItem({ activity }: { activity: ActivityItem }) {
   const iconColor = getActivityIconColor(activity.type);
 
   return (
-    <div className="flex items-start gap-4 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-150">
+    <div className="group flex items-start gap-4 p-4 rounded-xl hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-25 dark:hover:from-slate-800/50 dark:hover:to-slate-800/25 border border-transparent hover:border-slate-200/60 dark:hover:border-slate-700/60 transition-all duration-300 hover:shadow-sm cursor-pointer">
       {/* Icon */}
       <div
         className={cn(
-          "flex-shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-lg",
+          "flex-shrink-0 inline-flex items-center justify-center w-12 h-12 rounded-xl shadow-sm border transition-all duration-300 group-hover:scale-110 group-hover:shadow-md",
           iconColor
         )}
       >
@@ -87,36 +87,38 @@ function ActivityFeedItem({ activity }: { activity: ActivityItem }) {
       {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-astralis-navy dark:text-white">
+          <div className="space-y-1.5">
+            <p className="text-sm font-semibold text-astralis-navy dark:text-white group-hover:text-astralis-blue transition-colors duration-200">
               {activity.title}
             </p>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
+            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
               {activity.description}
             </p>
           </div>
         </div>
 
         {/* Footer: User and Timestamp */}
-        <div className="flex items-center gap-2 mt-2 text-xs text-slate-500 dark:text-slate-400">
+        <div className="flex items-center gap-3 mt-3 text-xs text-slate-500 dark:text-slate-400">
           {activity.user && (
             <>
               {activity.user.avatar ? (
                 <img
                   src={activity.user.avatar}
                   alt={activity.user.name || "User"}
-                  className="w-5 h-5 rounded-full"
+                  className="w-6 h-6 rounded-full ring-2 ring-slate-200 dark:ring-slate-700 group-hover:ring-astralis-blue/30 transition-all duration-200"
                 />
               ) : (
-                <div className="w-5 h-5 rounded-full bg-astralis-blue/20 flex items-center justify-center text-astralis-blue text-xs font-semibold">
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-astralis-blue/20 to-blue-50 dark:from-astralis-blue/30 dark:to-blue-900/30 flex items-center justify-center text-astralis-blue text-xs font-bold ring-2 ring-slate-200 dark:ring-slate-700 group-hover:ring-astralis-blue/50 transition-all duration-200">
                   {activity.user.name?.charAt(0).toUpperCase() || "U"}
                 </div>
               )}
-              <span className="font-medium">{activity.user.name}</span>
-              <span>•</span>
+              <span className="font-semibold text-slate-700 dark:text-slate-300 group-hover:text-astralis-navy dark:group-hover:text-white transition-colors duration-200">
+                {activity.user.name}
+              </span>
+              <div className="w-1 h-1 bg-slate-400 rounded-full"></div>
             </>
           )}
-          <span>
+          <span className="font-medium">
             {formatDistanceToNow(new Date(activity.timestamp), {
               addSuffix: true,
             })}

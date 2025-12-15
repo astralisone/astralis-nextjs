@@ -350,17 +350,25 @@ export function CalendarChatPanel({ userId, orgId, className, onEventCreated }: 
                 )}
               </div>
 
-              {/* Message Content */}
-              <div
-                className={cn(
-                  'rounded-2xl px-6 py-4 shadow-card border backdrop-blur-sm transition-all duration-200 group-hover:shadow-card-hover',
-                  message.role === 'user'
-                    ? 'bg-gradient-to-r from-astralis-blue to-blue-600 text-white border-astralis-blue/20 shadow-glow-blue'
-                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white'
-                )}
-              >
-                <div className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</div>
-              </div>
+               {/* Message Content */}
+               <div
+                 className={cn(
+                   'rounded-2xl px-6 py-4 shadow-card border backdrop-blur-sm transition-all duration-300 group-hover:shadow-card-hover group-hover:scale-[1.02]',
+                   message.role === 'user'
+                     ? 'bg-gradient-to-r from-astralis-blue via-blue-600 to-astralis-blue text-white border-astralis-blue/30 shadow-glow-blue hover:shadow-glow-blue-lg'
+                     : 'bg-gradient-to-br from-white to-slate-50/50 dark:from-slate-800 dark:to-slate-700/50 border-slate-200/60 dark:border-slate-700/60 text-slate-900 dark:text-white hover:border-astralis-blue/20'
+                 )}
+               >
+                 <div className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</div>
+                 {message.data && (
+                   <div className="mt-4 p-3 bg-slate-50/50 dark:bg-slate-700/50 rounded-lg border border-slate-200/30">
+                     <div className="text-xs text-slate-600 dark:text-slate-300 font-medium mb-1">📅 Event Details</div>
+                     <div className="text-xs text-slate-500 dark:text-slate-400">
+                       {JSON.stringify(message.data, null, 2)}
+                     </div>
+                   </div>
+                 )}
+               </div>
 
               {/* Timestamp */}
               <div className={`text-xs text-slate-500 mt-1 ${message.role === 'user' ? 'text-right' : 'text-left'}`}>
