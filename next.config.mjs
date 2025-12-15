@@ -37,9 +37,6 @@ const nextConfig = {
     // Enable persistent caching for faster builds
     config.cache = {
       type: 'filesystem',
-      buildDependencies: {
-        config: [import.meta.url],
-      },
     };
 
     // Reduce parallelism in production builds to prevent OOM
@@ -94,7 +91,6 @@ const nextConfig = {
   ],
 
   experimental: {
-    instrumentationHook: true,
     serverActions: {
       bodySizeLimit: '5mb',
     },

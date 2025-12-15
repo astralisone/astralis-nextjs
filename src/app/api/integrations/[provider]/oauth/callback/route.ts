@@ -104,9 +104,6 @@ export async function GET(
     }
 
     // 3. Parse and validate state
-    let userId: string;
-    let orgId: string;
-    let returnUrl = '/integrations';
 
     if (stateParam) {
       console.log('[OAuth Callback] Processing state parameter');
