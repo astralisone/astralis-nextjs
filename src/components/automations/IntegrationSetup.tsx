@@ -225,25 +225,7 @@ export function IntegrationSetup({
 
   const info = providerInfo[provider];
 
-  // Only show "expiring soon" for tokens that expire within 24 hours (not normal OAuth refresh cycle)
-  const isExpiringSoon =
-    expiresAt && new Date(expiresAt).getTime() - Date.now() < 24 * 60 * 60 * 1000; // 24 hours
   const isExpired = expiresAt && new Date(expiresAt) < new Date();
-
-  // Debug logging for expiration logic
-  if (expiresAt) {
-    const expiresTime = new Date(expiresAt).getTime();
-    const now = Date.now();
-    const diffMs = expiresTime - now;
-    const diffDays = diffMs / (24 * 60 * 60 * 1000);
-    console.log(`[Integration ${provider}] Expiration check:`, {
-      expiresAt: new Date(expiresAt).toISOString(),
-      now: new Date(now).toISOString(),
-      diffDays: diffDays.toFixed(2),
-      isExpiringSoon,
-      isExpired
-    });
-  }
 
   // Status display logic
   const getStatusDisplay = () => {
@@ -388,14 +370,7 @@ export function IntegrationSetup({
           </Alert>
         )}
 
-        {isExpiringSoon && !isExpired && (
-          <Alert variant="warning" showIcon>
-            <AlertDescription>
-              <strong>Expiring Soon:</strong> This connection will expire on{' '}
-              {expiresAt && new Date(expiresAt).toLocaleDateString()}.
-            </AlertDescription>
-          </Alert>
-        )}
+
 
         {/* Unavailable Integration Alert */}
         {!available && unavailableReason && (
@@ -440,20 +415,7 @@ export function IntegrationSetup({
           </div>
         )}
 
-        {/* Connection Info */}
-        {isConnected && expiresAt && !isExpired && (
-          <div className="flex items-center gap-2 text-sm text-slate-600">
-            <AlertCircle className=" w-5 h-5" />
-            <span>
-              Expires on:{' '}
-              {new Date(expiresAt).toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-              })}
-            </span>
-          </div>
-        )}
+
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2 pt-2">
