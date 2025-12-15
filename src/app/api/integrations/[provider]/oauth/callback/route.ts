@@ -267,6 +267,8 @@ export async function GET(
 
     // 10. Check for existing credential and generate name
     console.log(`[OAuth Callback] Starting credential save process for ${provider}, userId: ${userId}, orgId: ${orgId}`);
+    console.log(`[OAuth Callback] UserId type: ${typeof userId}, OrgId type: ${typeof orgId}`);
+    console.log(`[OAuth Callback] UserId truthy: ${!!userId}, OrgId truthy: ${!!orgId}`);
 
     const providerName = provider.replace(/_/g, ' ').toLowerCase()
       .replace(/\b\w/g, (c) => c.toUpperCase());

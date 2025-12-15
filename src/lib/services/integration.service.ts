@@ -71,6 +71,7 @@ export class IntegrationService {
       console.log(`[Integration Service] saveCredential called: ${data.provider} for user ${userId}, org ${orgId}`);
 
       // Validate inputs
+      console.log('[Integration Service] Validating inputs:', { userId, orgId, provider: data.provider, credentialName: data.credentialName });
       if (!userId || !orgId) {
         throw new Error(`Invalid userId or orgId: userId=${userId}, orgId=${orgId}`);
       }
@@ -78,14 +79,17 @@ export class IntegrationService {
       if (!data.provider || !data.credentialName) {
         throw new Error(`Invalid provider or credentialName: provider=${data.provider}, credentialName=${data.credentialName}`);
       }
+      console.log('[Integration Service] Input validation passed');
 
       // 1. Encrypt credential data
+      console.log('[Integration Service] About to encrypt credential data...');
       const encryptedData = encrypt(JSON.stringify(data.credentialData));
-      console.log('[Integration Service] Credential data encrypted successfully');
+      console.log('[Integration Service] Credential data encrypted successfully, length:', encryptedData.length);
 
       // 2. Save to database
       console.log(`[Integration Service] Creating database record for ${data.provider}`);
 
+      console.log('[Integration Service] About to create database record...');
       const credential = await prisma.integrationCredential.create({
         data: {
           userId,
@@ -100,7 +104,15 @@ export class IntegrationService {
         },
       });
 
-       console.log('[Integration Service] Database record created successfully:', credential.id);
+      console.log('[Integration Service] Database record created successfully:', credential.id);
+      console.log('[Integration Service] Created credential details:', {
+        id: credential.id,
+        provider: credential.provider,
+        userId: credential.userId,
+        orgId: credential.orgId,
+        isActive: credential.isActive,
+        status: credential.status
+      });
 
        // 3. Log activity
        await prisma.activityLog.create({
