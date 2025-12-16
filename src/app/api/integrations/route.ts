@@ -24,6 +24,16 @@ export async function GET(req: NextRequest) {
     const session = await auth();
     console.log('[Integration API] Auth completed, session:', { hasSession: !!session, userId: session?.user?.id, orgId: session?.user?.orgId });
 
+    // DEBUG: Log full session context
+    console.log('[DEBUG SESSION] Full session details:', {
+      user: session?.user,
+      hasUserId: !!session?.user?.id,
+      hasOrgId: !!session?.user?.orgId,
+      orgId: session?.user?.orgId,
+      email: session?.user?.email,
+      expires: session?.expires
+    });
+
     if (!session?.user?.id) {
       console.log('[Integration API] No session or user ID');
       return NextResponse.json(
