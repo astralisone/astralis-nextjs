@@ -455,103 +455,165 @@ export default function DashboardPage() {
            className="animate-slide-in"
            style={{ animationDelay: '300ms' }}
          />
-       </div>
+        </div>
 
-       {/* Professional Charts Grid with Enhanced Styling */}
-       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <ChartContainer
-            title="Intake Trends"
-            loading={loading}
-            className="animate-slide-in"
-            style={{ animationDelay: '400ms' }}
-            onExport={() => handleExport('intakeTrends')}
-          >
-            <LineChart
-              data={chartData.intakeTrends}
-              height={300}
-              dataKey="value"
-              strokeColor="#2B6CB0"
-              showTooltip
-              animate
+        {/* Full-width Agent Chat at the top */}
+        <div className="animate-slide-in mb-8" style={{ animationDelay: '100ms' }}>
+          <AgentChatInterface />
+        </div>
+
+        {/* Navigation Menu */}
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 mb-6 shadow-card-glass animate-slide-in" style={{ animationDelay: '200ms' }}>
+          <div className="flex items-center gap-6 overflow-x-auto">
+            <span className="text-sm font-semibold text-astralis-navy dark:text-white whitespace-nowrap">Jump to:</span>
+            <a href="#overview" className="text-sm text-astralis-blue hover:text-astralis-blue/80 font-medium whitespace-nowrap transition-colors">
+              📊 Overview
+            </a>
+            <a href="#intake-trends" className="text-sm text-astralis-blue hover:text-astralis-blue/80 font-medium whitespace-nowrap transition-colors">
+              📈 Intake Trends
+            </a>
+            <a href="#document-processing" className="text-sm text-astralis-blue hover:text-astralis-blue/80 font-medium whitespace-nowrap transition-colors">
+              📄 Document Processing
+            </a>
+            <a href="#activity" className="text-sm text-astralis-blue hover:text-astralis-blue/80 font-medium whitespace-nowrap transition-colors">
+              📋 Recent Activity
+            </a>
+          </div>
+        </div>
+
+        {/* Overview Stats with Anchor */}
+        <div id="overview" className="scroll-mt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <StatsWidget
+              title="Total Intakes"
+              value={totalIntakes}
+              icon={<Inbox className="w-6 h-6" />}
+              sparklineData={[]} // Could add intake trends
+              className="animate-slide-in"
+              style={{ animationDelay: '300ms' }}
             />
-          </ChartContainer>
-
-          <ChartContainer
-            title="Document Processing"
-            loading={loading}
-            className="animate-slide-in"
-            style={{ animationDelay: '500ms' }}
-            onExport={() => handleExport('documentProcessing')}
-          >
-            <AreaChart
-              data={chartData.documentProcessing}
-              height={300}
-              dataKey="processed"
-              fillColor="#38A169"
-              strokeColor="#38A169"
-              fillOpacity={0.3}
-              showTooltip
-              animate
+            <StatsWidget
+              title="Documents Processed"
+              value={documentsProcessed}
+              icon={<FileText className="w-6 h-6" />}
+              sparklineData={[]} // Could add processing trends
+              className="animate-slide-in"
+              style={{ animationDelay: '400ms' }}
             />
-          </ChartContainer>
-       </div>
+            <StatsWidget
+              title="Active Workflows"
+              value={activeWorkflows}
+              icon={<GitBranch className="w-6 h-6" />}
+              sparklineData={[]} // Could add workflow trends
+              className="animate-slide-in"
+              style={{ animationDelay: '500ms' }}
+            />
+            <StatsWidget
+              title="Tasks Completed"
+              value={tasksCompleted}
+              icon={<CheckCircle className="w-6 h-6" />}
+              sparklineData={[]} // Could add task completion trends
+              className="animate-slide-in"
+              style={{ animationDelay: '600ms' }}
+            />
+          </div>
+        </div>
 
-       {/* Enhanced Bottom Row: Activity Feed + Agent Chat */}
-       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-         <div className="lg:col-span-2">
-           <Card className="animate-slide-in shadow-card-glass border-slate-200/60 backdrop-blur-sm" style={{ animationDelay: '600ms' }}>
-             <CardHeader className="pb-4">
-               <CardTitle className="text-xl font-bold text-astralis-navy flex items-center gap-3">
-                 <div className="p-2 bg-gradient-to-br from-astralis-blue/10 to-blue-50 rounded-lg border border-astralis-blue/20">
-                   <TrendingUp className="w-5 h-5 text-astralis-blue" />
-                 </div>
-                 Recent Activity
-               </CardTitle>
-             </CardHeader>
-             <CardContent className="pt-0">
-               <ActivityFeed activities={recentActivity} />
-             </CardContent>
-           </Card>
-         </div>
-
-         <div className="space-y-6">
-           <div className="animate-slide-in" style={{ animationDelay: '700ms' }}>
-             <AgentChatInterface />
+        {/* Professional Charts Grid with Enhanced Styling */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+           <div id="intake-trends" className="scroll-mt-6">
+             <ChartContainer
+               title="Intake Trends"
+               loading={loading}
+               className="animate-slide-in"
+               style={{ animationDelay: '700ms' }}
+               onExport={() => handleExport('intakeTrends')}
+             >
+               <LineChart
+                 data={chartData.intakeTrends}
+                 height={300}
+                 dataKey="value"
+                 strokeColor="#2B6CB0"
+                 showTooltip
+                 animate
+               />
+             </ChartContainer>
            </div>
 
-           {/* Enhanced Quick Tips with Professional Styling */}
-           <Card className="animate-slide-in shadow-card-glass border-slate-200/60 backdrop-blur-sm" style={{ animationDelay: '800ms' }}>
-             <CardHeader className="pb-4">
-               <CardTitle className="text-lg font-bold text-astralis-navy flex items-center gap-3">
-                 <div className="p-2 bg-gradient-to-br from-astralis-cyan/10 to-cyan-50 rounded-lg border border-astralis-cyan/20">
-                   <Lightbulb className="w-5 h-5 text-astralis-cyan" />
-                 </div>
-                 AI Command Examples
-               </CardTitle>
-             </CardHeader>
-             <CardContent className="pt-0">
-               <div className="space-y-3">
-                 <div className="p-3 bg-gradient-to-r from-astralis-blue/5 to-blue-50 rounded-lg border border-astralis-blue/10">
-                   <p className="text-sm font-medium text-astralis-navy mb-1">📧 Email Automation</p>
-                   <p className="text-xs text-slate-600">"Send welcome email to new customer"</p>
-                 </div>
-                 <div className="p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200/30">
-                   <p className="text-sm font-medium text-astralis-navy mb-1">📅 Scheduling</p>
-                   <p className="text-xs text-slate-600">"Schedule onboarding call for next week"</p>
-                 </div>
-                 <div className="p-3 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border border-purple-200/30">
-                   <p className="text-sm font-medium text-astralis-navy mb-1">📁 File Management</p>
-                   <p className="text-xs text-slate-600">"Create customer folder in Google Drive"</p>
-                 </div>
-                 <div className="p-3 bg-gradient-to-r from-astralis-cyan/5 to-cyan-50 rounded-lg border border-astralis-cyan/20">
-                   <p className="text-sm font-medium text-astralis-navy mb-1">📄 Document Processing</p>
-                   <p className="text-xs text-slate-600">"Process this document and extract key info"</p>
-                 </div>
-               </div>
-             </CardContent>
-           </Card>
-         </div>
-       </div>
-    </div>
-  );
-}
+           <div id="document-processing" className="scroll-mt-6">
+             <ChartContainer
+               title="Document Processing"
+               loading={loading}
+               className="animate-slide-in"
+               style={{ animationDelay: '800ms' }}
+               onExport={() => handleExport('documentProcessing')}
+             >
+               <AreaChart
+                 data={chartData.documentProcessing}
+                 height={300}
+                 dataKey="processed"
+                 fillColor="#38A169"
+                 strokeColor="#38A169"
+                 fillOpacity={0.3}
+                 showTooltip
+                 animate
+               />
+             </ChartContainer>
+           </div>
+        </div>
+
+        {/* Bottom Section: Activity Feed and Tips */}
+        <div id="activity" className="scroll-mt-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <Card className="animate-slide-in shadow-card-glass border-slate-200/60 backdrop-blur-sm" style={{ animationDelay: '900ms' }}>
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-xl font-bold text-astralis-navy flex items-center gap-3">
+                    <div className="p-2 bg-gradient-to-br from-astralis-blue/10 to-blue-50 rounded-lg border border-astralis-blue/20">
+                      <TrendingUp className="w-5 h-5 text-astralis-blue" />
+                    </div>
+                    Recent Activity
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <ActivityFeed activities={recentActivity} />
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Enhanced Quick Tips with Professional Styling */}
+            <Card className="animate-slide-in shadow-card-glass border-slate-200/60 backdrop-blur-sm" style={{ animationDelay: '1000ms' }}>
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-bold text-astralis-navy flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-br from-astralis-cyan/10 to-cyan-50 rounded-lg border border-astralis-cyan/20">
+                    <Lightbulb className="w-5 h-5 text-astralis-cyan" />
+                  </div>
+                  AI Command Examples
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="space-y-3">
+                  <div className="p-3 bg-gradient-to-r from-astralis-blue/5 to-blue-50 rounded-lg border border-astralis-blue/10">
+                    <p className="text-sm font-medium text-astralis-navy mb-1">📧 Email Automation</p>
+                    <p className="text-xs text-slate-600">"Send welcome email to new customer"</p>
+                  </div>
+                  <div className="p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200/30">
+                    <p className="text-sm font-medium text-astralis-navy mb-1">📅 Scheduling</p>
+                    <p className="text-xs text-slate-600">"Schedule onboarding call for next week"</p>
+                  </div>
+                  <div className="p-3 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border border-purple-200/30">
+                    <p className="text-sm font-medium text-astralis-navy mb-1">📁 File Management</p>
+                    <p className="text-xs text-slate-600">"Create customer folder in Google Drive"</p>
+                  </div>
+                  <div className="p-3 bg-gradient-to-r from-astralis-cyan/5 to-cyan-50 rounded-lg border border-astralis-cyan/20">
+                    <p className="text-sm font-medium text-astralis-navy mb-1">📄 Document Processing</p>
+                    <p className="text-xs text-slate-600">"Process this document and extract key info"</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }

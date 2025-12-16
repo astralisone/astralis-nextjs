@@ -55,6 +55,7 @@ export function AgentChatInterface() {
   const [selectedAgent, setSelectedAgent] = useState('orchestration');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [suggestionsCollapsed, setSuggestionsCollapsed] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -149,38 +150,50 @@ export function AgentChatInterface() {
 
     return (
       <div className="mt-4 space-y-3">
-        <div className="flex items-center gap-2 text-sm text-astralis-blue font-semibold">
-          <Lightbulb className="h-4 w-4" />
-          <span>Strategic Integration Recommendations</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm text-astralis-blue font-semibold">
+            <Lightbulb className="h-4 w-4" />
+            <span>Strategic Integration Recommendations</span>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSuggestionsCollapsed(!suggestionsCollapsed)}
+            className="text-astralis-blue hover:text-astralis-blue/80"
+          >
+            {suggestionsCollapsed ? 'Show' : 'Hide'}
+          </Button>
         </div>
-        <div className="space-y-3">
-          {suggestions.map((suggestion, index) => (
-            <div key={index} className="bg-gradient-to-r from-astralis-blue/5 to-blue-50 dark:from-astralis-blue/10 dark:to-blue-950/50 rounded-xl p-4 border border-astralis-blue/20">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="font-semibold text-astralis-navy dark:text-white mb-1">
-                    {suggestion.provider ? `🔗 Connect ${suggestion.provider}` : '⚙️ Integration Setup'}
+        {!suggestionsCollapsed && (
+          <div className="space-y-3 animate-in slide-in-from-top-2 duration-200">
+            {suggestions.map((suggestion, index) => (
+              <div key={index} className="bg-gradient-to-r from-astralis-blue/5 to-blue-50 dark:from-astralis-blue/10 dark:to-blue-950/50 rounded-xl p-4 border border-astralis-blue/20">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="font-semibold text-astralis-navy dark:text-white mb-1">
+                      {suggestion.provider ? `🔗 Connect ${suggestion.provider}` : '⚙️ Integration Setup'}
+                    </div>
+                    <div className="text-sm text-slate-600 dark:text-slate-300 mb-2">
+                      {suggestion.reason}
+                    </div>
+                    <div className="text-xs text-astralis-blue font-medium bg-astralis-blue/10 px-2 py-1 rounded-lg inline-block">
+                      💡 {suggestion.benefit}
+                    </div>
                   </div>
-                  <div className="text-sm text-slate-600 dark:text-slate-300 mb-2">
-                    {suggestion.reason}
-                  </div>
-                  <div className="text-xs text-astralis-blue font-medium bg-astralis-blue/10 px-2 py-1 rounded-lg inline-block">
-                    💡 {suggestion.benefit}
-                  </div>
+                  <Button
+                    size="sm"
+                    className="ml-4 bg-astralis-blue hover:bg-blue-600 text-white shadow-glow-blue hover:shadow-glow-blue-lg transition-all duration-200"
+                    onClick={() => {
+                      window.location.href = '/integrations';
+                    }}
+                  >
+                    Connect Now
+                  </Button>
                 </div>
-                <Button
-                  size="sm"
-                  className="ml-4 bg-astralis-blue hover:bg-blue-600 text-white shadow-glow-blue hover:shadow-glow-blue transition-all duration-200"
-                  onClick={() => {
-                    window.location.href = '/integrations';
-                  }}
-                >
-                  Connect Now
-                </Button>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   };
