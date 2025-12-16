@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 interface StatsWidgetProps {
   title: string;
   value: string | number;
+  className?: string;
   change?: {
     value: number;
     trend: 'up' | 'down';
@@ -15,6 +16,7 @@ interface StatsWidgetProps {
   };
   icon?: ReactNode;
   variant?: 'default' | 'success' | 'warning' | 'error';
+  style?: React.CSSProperties;
 }
 
 const variantStyles = {

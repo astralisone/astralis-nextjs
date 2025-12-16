@@ -353,6 +353,7 @@ interface MetricCardProps {
   sparklineData?: ChartDataPoint[];
   className?: string;
   onClick?: () => void;
+  style?: React.CSSProperties;
 }
 
 export function MetricCard({
@@ -466,6 +467,7 @@ interface ChartContainerProps {
   height?: number;
   loading?: boolean;
   onExport?: () => void;
+  style?: React.CSSProperties;
 }
 
 export function ChartContainer({

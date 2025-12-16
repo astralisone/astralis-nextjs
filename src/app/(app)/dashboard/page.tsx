@@ -140,6 +140,7 @@ export default function DashboardPage() {
     setTimeRange(range);
   };
 
+  const router = useRouter();
   // Handle metric card clicks for drill-down
   const handleMetricClick = (metricType: string) => {
     switch (metricType) {
@@ -494,7 +495,7 @@ export default function DashboardPage() {
               title="Total Intakes"
               value={totalIntakes}
               icon={<Inbox className="w-6 h-6" />}
-              sparklineData={[]} // Could add intake trends
+              //sparklineData={[]} // Could add intake trends
               className="animate-slide-in"
               style={{ animationDelay: '300ms' }}
             />
@@ -502,15 +503,15 @@ export default function DashboardPage() {
               title="Documents Processed"
               value={documentsProcessed}
               icon={<FileText className="w-6 h-6" />}
-              sparklineData={[]} // Could add processing trends
+              //sparklineData={[]} // Could add processing trends
               className="animate-slide-in"
               style={{ animationDelay: '400ms' }}
             />
             <StatsWidget
               title="Active Workflows"
-              value={activeWorkflows}
+              value={0} // todo calculate this oonce workflows Are iun
               icon={<GitBranch className="w-6 h-6" />}
-              sparklineData={[]} // Could add workflow trends
+              //sparklineData={[]} // Could add workflow trends
               className="animate-slide-in"
               style={{ animationDelay: '500ms' }}
             />
@@ -518,7 +519,7 @@ export default function DashboardPage() {
               title="Tasks Completed"
               value={tasksCompleted}
               icon={<CheckCircle className="w-6 h-6" />}
-              sparklineData={[]} // Could add task completion trends
+              //sparklineData={[]} // Could add task completion trends
               className="animate-slide-in"
               style={{ animationDelay: '600ms' }}
             />

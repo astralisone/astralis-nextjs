@@ -94,3 +94,25 @@ export interface DashboardData {
   recentActivity: ActivityItem[];
   recentPipelines: RecentPipeline[];
 }
+
+
+export interface ChartDataPoint {
+  date: string; // ISO date string
+  value: number;
+}
+
+/**
+ * Intake Over Time Data
+ */
+export interface IntakeOverTimeData {
+  source: IntakeSource;
+  dataPoints: ChartDataPoint[];
+}
+
+/**
+ * Intake Status Distribution Data
+ */
+export interface IntakeStatusDistribution {
+  status: IntakeStatus;
+  count: number;
+}
