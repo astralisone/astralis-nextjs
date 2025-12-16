@@ -198,6 +198,17 @@ export class ActionExecutor {
     // Register default handlers
     this.registerDefaultHandlers();
 
+    // Register Omniscient tools
+    try {
+      // Dynamic import to avoid circular dependencies if any
+      import('../actions/OmniscientTools').then(({ registerOmniscientHandlers }) => {
+        registerOmniscientHandlers(this);
+        this.logger.info('Omniscient tools registered');
+      });
+    } catch (e) {
+      this.logger.error('Failed to register Omniscient tools', e as Error);
+    }
+
     this.logger.info('ActionExecutor initialized', {
       dryRun: this.config.dryRun,
       maxExecutionTime: this.config.maxExecutionTime,
@@ -795,6 +806,68 @@ export class ActionExecutor {
   }
 
   /**
+   * Resolve parameters using context and previous results.
+   * Supports {{last.data.id}}, {{results.0.data.id}}, {{ActionType.data.id}}
+   */
+  private resolveParams(
+    params: Record<string, unknown>,
+    context: ActionExecutionContext
+  ): Record<string, unknown> {
+    const resolved: Record<string, unknown> = { ...params };
+    const { previousResults } = context;
+
+    for (const [key, value] of Object.entries(resolved)) {
+      if (typeof value === 'string' && value.startsWith('{{') && value.endsWith('}}')) {
+        const path = value.slice(2, -2).trim(); // Remove {{ }}
+        const parts = path.split('.');
+
+        let targetValue: any = undefined;
+
+        // Helper to access data safely
+        const getByPath = (obj: any, pathParts: string[]) => {
+          let current = obj;
+          for (const part of pathParts) {
+            if (current === undefined || current === null) return undefined;
+            current = current[part];
+          }
+          return current;
+        };
+
+        if (parts[0] === 'last' && previousResults.length > 0) {
+          // {{last.data.id}}
+          const lastResult = previousResults[previousResults.length - 1];
+          targetValue = getByPath(lastResult, parts.slice(1));
+        } else if (parts[0] === 'results' && !isNaN(parseInt(parts[1]))) {
+          // {{results.0.data.id}}
+          const index = parseInt(parts[1]);
+          if (index < previousResults.length) {
+            const result = previousResults[index];
+            targetValue = getByPath(result, parts.slice(2));
+          }
+        } else {
+          // {{CREATE_TASK.data.taskId}} - Find by action type
+          const matchingResult = previousResults.find(r => r.action === parts[0]);
+          if (matchingResult) {
+            targetValue = getByPath(matchingResult, parts.slice(1));
+          }
+        }
+
+        if (targetValue !== undefined) {
+          this.logger.debug(`Resolved param ${key}: ${value} -> ${targetValue}`);
+          resolved[key] = targetValue;
+        } else {
+          this.logger.warn(`Failed to resolve param ${key}: ${value}`);
+        }
+      } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+        // Recursive resolution for nested objects
+        resolved[key] = this.resolveParams(value as Record<string, unknown>, context);
+      }
+    }
+
+    return resolved;
+  }
+
+  /**
    * Execute a single action with retry logic.
    */
   private async executeAction(
@@ -803,6 +876,9 @@ export class ActionExecutor {
   ): Promise<ActionResult> {
     const startTime = Date.now();
     let lastError: Error | undefined;
+
+    // Resolve parameters with variable substitution
+    const resolvedParams = this.resolveParams(action.params, context);
 
     // First try to find a registered handler
     let handler = this.handlers.get(action.type);
@@ -831,7 +907,7 @@ export class ActionExecutor {
 
         // Execute with timeout
         const result = await this.executeWithTimeout(
-          () => handler(action.params, context),
+          () => handler!(resolvedParams, context),
           this.config.actionTimeout
         );
 

@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth/config';
 import { DashboardSidebar } from '@/components/layout/DashboardSidebar';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
+import { AgentChatWidget } from '@/components/agent/AgentChatWidget';
 import { DebugPanelProvider } from '@/components/debug/DebugPanelProvider';
 
 export default async function DashboardLayout({
@@ -27,6 +28,7 @@ export default async function DashboardLayout({
         </main>
       </div>
 
+      <AgentChatWidget />
       {/* Debug Panel - Available globally */}
       <DebugPanelProvider />
     </div>

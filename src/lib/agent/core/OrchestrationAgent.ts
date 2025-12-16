@@ -343,16 +343,16 @@ export class OrchestrationAgent {
     decisionTimes: number[];
     lastDecisionTime: Date | null;
   } = {
-    totalDecisions: 0,
-    successfulDecisions: 0,
-    failedDecisions: 0,
-    pendingApprovals: 0,
-    totalActionsExecuted: 0,
-    totalEventsProcessed: 0,
-    totalErrors: 0,
-    decisionTimes: [],
-    lastDecisionTime: null,
-  };
+      totalDecisions: 0,
+      successfulDecisions: 0,
+      failedDecisions: 0,
+      pendingApprovals: 0,
+      totalActionsExecuted: 0,
+      totalEventsProcessed: 0,
+      totalErrors: 0,
+      decisionTimes: [],
+      lastDecisionTime: null,
+    };
 
   // Organization context cache
   private orgContextCache: OrgContext | null = null;
@@ -642,7 +642,11 @@ export class OrchestrationAgent {
           this.stats.failedDecisions++;
         }
 
-        return decision;
+        // Attach results to decision so caller (ChatAgent) can see what happened
+        return {
+          ...decision,
+          executionResults: outcome.results,
+        };
 
       } else if (this.decisionEngine.requiresApproval(decision)) {
         // Requires approval
@@ -986,7 +990,7 @@ export class OrchestrationAgent {
   /**
    * Create the LLM client based on configuration.
    */
-  private createLLMClient(): ILLMClient {
+  protected createLLMClient(): ILLMClient {
     return createLLMClient({
       provider: this.config.llmProvider,
       model: this.config.llmModel as LLMModel,

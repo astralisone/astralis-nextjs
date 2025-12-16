@@ -134,6 +134,16 @@ export enum DecisionType {
   ESCALATE = 'ESCALATE',
   /** No action required for this input */
   NO_ACTION = 'NO_ACTION',
+
+  // Omniscient Tools
+  /** Get status of all integrations */
+  GET_INTEGRATIONS_STATUS = 'GET_INTEGRATIONS_STATUS',
+  /** List active automation workflows */
+  LIST_ACTIVE_AUTOMATIONS = 'LIST_ACTIVE_AUTOMATIONS',
+  /** Get current state of the Kanban board */
+  GET_KANBAN_STATE = 'GET_KANBAN_STATE',
+  /** Search documents in the knowledge base */
+  SEARCH_DOCUMENTS = 'SEARCH_DOCUMENTS',
 }
 
 /**
@@ -742,6 +752,8 @@ export interface AgentDecisionResult {
   alternatives?: AlternativeDecision[];
   /** Integration setup suggestions */
   suggestions?: IntegrationSuggestion[];
+  /** Results of auto-executed actions (added for Chat/ReAct loop) */
+  executionResults?: ActionResult[];
 }
 
 /**
@@ -1842,22 +1854,22 @@ export type DeepPartial<T> = {
  */
 export type ActionParamsFor<T extends DecisionType> =
   T extends DecisionType.ASSIGN_PIPELINE
-    ? AssignPipelineParams
-    : T extends DecisionType.CREATE_TASK
-      ? CreateTaskParams
-      : T extends DecisionType.CREATE_EVENT
-        ? CreateEventParams
-        : T extends DecisionType.UPDATE_EVENT
-          ? UpdateEventParams
-          : T extends DecisionType.CANCEL_EVENT
-            ? CancelEventParams
-            : T extends DecisionType.SEND_NOTIFICATION
-              ? SendNotificationParams
-              : T extends DecisionType.TRIGGER_AUTOMATION
-                ? TriggerAutomationParams
-                : T extends DecisionType.ESCALATE
-                  ? EscalateParams
-                  : Record<string, unknown>;
+  ? AssignPipelineParams
+  : T extends DecisionType.CREATE_TASK
+  ? CreateTaskParams
+  : T extends DecisionType.CREATE_EVENT
+  ? CreateEventParams
+  : T extends DecisionType.UPDATE_EVENT
+  ? UpdateEventParams
+  : T extends DecisionType.CANCEL_EVENT
+  ? CancelEventParams
+  : T extends DecisionType.SEND_NOTIFICATION
+  ? SendNotificationParams
+  : T extends DecisionType.TRIGGER_AUTOMATION
+  ? TriggerAutomationParams
+  : T extends DecisionType.ESCALATE
+  ? EscalateParams
+  : Record<string, unknown>;
 
 /**
  * Strongly-typed action with correct parameter type.
