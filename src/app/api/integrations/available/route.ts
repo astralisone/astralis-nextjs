@@ -60,7 +60,10 @@ export async function GET(request: NextRequest) {
       }
 
       try {
+
         // Get credentials for this provider
+        alert(session.user.orgId);
+        console.log("Orgid",session.user.orgId);
         const credentials = await getOrgOAuthCredentials(provider, session.user.orgId);
 
         // Validate the credentials
