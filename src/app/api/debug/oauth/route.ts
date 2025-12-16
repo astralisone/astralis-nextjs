@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
         select: {
           id: true,
           provider: true,
-          isConnected: true,
+          status: true,
           createdAt: true,
           updatedAt: true,
           // Don't expose actual tokens/secrets
@@ -67,7 +67,8 @@ export async function GET(req: NextRequest) {
 
       oauthSettings.databaseCredentials = credentials.map(cred => ({
         provider: cred.provider,
-        isConnected: cred.isConnected,
+        status: cred.status,
+        isConnected: cred.status === 'CONNECTED_ACTIVE',
         createdAt: cred.createdAt,
         updatedAt: cred.updatedAt,
       }));

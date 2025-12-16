@@ -270,7 +270,7 @@ export class DecisionEngine {
       return true;
     }
     return decision.confidence < this.config.autoExecuteThreshold &&
-           decision.confidence >= this.config.requireApprovalThreshold;
+      decision.confidence >= this.config.requireApprovalThreshold;
   }
 
   /**
@@ -538,7 +538,9 @@ export class DecisionEngine {
           errors.push(`${prefix} SEND_NOTIFICATION requires "recipientIds" or "recipientEmails"`);
         }
         if (typeof params.type !== 'string') {
-          errors.push(`${prefix} SEND_NOTIFICATION requires "type" string`);
+          // Auto-fix: Default to in_app if missing
+          params.type = 'in_app';
+          warnings.push(`${prefix} SEND_NOTIFICATION missing "type", defaulting to "in_app"`);
         }
         if (typeof params.subject !== 'string') {
           errors.push(`${prefix} SEND_NOTIFICATION requires "subject" string`);
@@ -797,7 +799,7 @@ export class DecisionEngine {
     const intentLower = intent.toLowerCase();
     for (const pipeline of pipelines) {
       if (pipeline.category.toLowerCase().includes(intentLower) ||
-          pipeline.name.toLowerCase().includes(intentLower)) {
+        pipeline.name.toLowerCase().includes(intentLower)) {
         return pipeline.id;
       }
     }
