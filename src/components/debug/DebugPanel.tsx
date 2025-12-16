@@ -5,8 +5,9 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useSession } from 'next-auth/react';
-import { User, Database, Bot, Settings, RefreshCw, Bug } from 'lucide-react';
+import { User, Database, Bot, Settings, RefreshCw, Bug, Key, Shield } from 'lucide-react';
 
 export function useDebugPanel() {
   const [isOpen, setIsOpen] = useState(false);
@@ -27,15 +28,32 @@ export function DebugPanel() {
   const { isOpen, setIsOpen } = useDebugPanel();
   const { data: session, status } = useSession();
   const [dbInfo, setDbInfo] = useState<any>(null);
+  const [secrets, setSecrets] = useState<any>(null);
+  const [oauthSettings, setOauthSettings] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const fetchDebugData = async () => {
     setIsLoading(true);
     try {
+      // Fetch database info
       const dbResponse = await fetch('/api/debug/database');
       if (dbResponse.ok) {
         const dbData = await dbResponse.json();
         setDbInfo(dbData);
+      }
+
+      // Fetch secrets (admin only)
+      const secretsResponse = await fetch('/api/debug/secrets');
+      if (secretsResponse.ok) {
+        const secretsData = await secretsResponse.json();
+        setSecrets(secretsData);
+      }
+
+      // Fetch OAuth settings
+      const oauthResponse = await fetch('/api/debug/oauth');
+      if (oauthResponse.ok) {
+        const oauthData = await oauthResponse.json();
+        setOauthSettings(oauthData);
       }
     } catch (error) {
       console.error('Failed to fetch debug data:', error);
@@ -142,6 +160,49 @@ export function DebugPanel() {
               <p className="text-slate-500 text-center py-4">Agent debugging coming soon...</p>
             </CardContent>
           </Card>
+
+          {/* Collapsible Sections */}
+          <Accordion type="multiple" className="w-full">
+            <AccordionItem value="secrets">
+              <AccordionTrigger className="text-left">
+                <div className="flex items-center gap-2">
+                  <Key className="h-5 w-5" />
+                  Environment Secrets
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-2">
+                  {secrets ? (
+                    <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded text-xs max-h-60 overflow-auto">
+                      <pre>{JSON.stringify(secrets, null, 2)}</pre>
+                    </div>
+                  ) : (
+                    <p className="text-slate-500 text-center py-4">No secrets data available or insufficient permissions</p>
+                  )}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="oauth">
+              <AccordionTrigger className="text-left">
+                <div className="flex items-center gap-2">
+                  <Shield className="h-5 w-5" />
+                  OAuth Settings
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-2">
+                  {oauthSettings ? (
+                    <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded text-xs max-h-60 overflow-auto">
+                      <pre>{JSON.stringify(oauthSettings, null, 2)}</pre>
+                    </div>
+                  ) : (
+                    <p className="text-slate-500 text-center py-4">No OAuth settings available</p>
+                  )}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
       </SheetContent>
     </Sheet>
