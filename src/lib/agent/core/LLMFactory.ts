@@ -266,14 +266,17 @@ export function createLLMClient(config: LLMFactoryConfig): ILLMClient {
   }
 
   if (config.provider === LLMProvider.OLLAMA) {
+    // Check for base URL in env if not provided
+    const baseUrl = config.baseUrl || process.env.OLLAMA_BASE_URL;
+
     const ollamaConfig: OllamaClientConfig = {
       model: config.model as OllamaModel,
-      baseUrl: config.baseUrl,
+      baseUrl,
       defaultOptions: mergedOptions,
       maxRetries: config.maxRetries,
       retryBaseDelay: config.retryBaseDelay,
     };
-    console.log(`[LLMFactory] Creating Ollama client`);
+    console.log(`[LLMFactory] Creating Ollama client${baseUrl ? ` at ${baseUrl}` : ''}`);
     return new OllamaClient(ollamaConfig);
   }
 

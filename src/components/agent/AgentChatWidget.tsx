@@ -5,9 +5,10 @@ import { Send, Bot, X, Maximize2, Minimize2, Loader2, Sparkles } from 'lucide-re
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
+// If ScrollArea doesn't exist, we'll swap to a simple div overflow-auto for now to fix build
+// import { ScrollArea } from '@/components/ui/scroll-area'; 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 
 interface Message {
     role: 'user' | 'assistant';
@@ -115,7 +116,7 @@ export function AgentChatWidget() {
             </CardHeader>
 
             <CardContent className="flex-1 p-0 overflow-hidden relative">
-                <ScrollArea className="h-full p-4">
+                <div className="h-full p-4 overflow-y-auto">
                     <div className="space-y-4">
                         {messages.map((message, i) => (
                             <div
@@ -156,7 +157,7 @@ export function AgentChatWidget() {
                         )}
                         <div ref={messagesEndRef} />
                     </div>
-                </ScrollArea>
+                </div>
             </CardContent>
 
             <CardFooter className="p-4 border-t border-border/50">
