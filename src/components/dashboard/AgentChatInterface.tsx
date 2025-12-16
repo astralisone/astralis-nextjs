@@ -61,10 +61,7 @@ export function AgentChatInterface() {
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (scrollAreaRef.current) {
-      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-      if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
-      }
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
     }
   }, [messages]);
 
@@ -191,9 +188,9 @@ export function AgentChatInterface() {
   const selectedAgentData = AVAILABLE_AGENTS.find(a => a.id === selectedAgent);
 
   return (
-    <div className="h-[700px] bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-card-glass overflow-hidden">
+    <div className="h-[700px] bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-card-glass overflow-hidden flex flex-col">
       {/* Command Center Header */}
-      <div className="bg-gradient-to-r from-astralis-navy via-slate-800 to-astralis-navy p-6 border-b border-slate-200 dark:border-slate-700 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-astralis-navy via-slate-800 to-astralis-navy p-6 border-b border-slate-200 dark:border-slate-700 relative overflow-hidden flex-shrink-0">
         {/* Background Pattern */}
         <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
         <div className="absolute inset-0 bg-gradient-to-r from-astralis-blue/5 via-transparent to-astralis-blue/5"></div>
@@ -248,7 +245,7 @@ export function AgentChatInterface() {
       </div>
 
       {/* Messages Command Interface */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-h-0">
         <div
           className="flex-1 overflow-y-auto px-6 py-6 space-y-6 bg-gradient-to-b from-transparent to-slate-50/50 dark:to-slate-900/50"
           ref={scrollAreaRef}
@@ -367,12 +364,11 @@ export function AgentChatInterface() {
             </div>
           )}
 
-          <div ref={scrollAreaRef} />
         </div>
 
         {/* Error Display */}
         {error && (
-          <div className="px-6 pb-4">
+          <div className="px-6 pb-4 flex-shrink-0">
             <Alert className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950">
               <AlertTriangle className="h-4 w-4 text-red-600" />
               <AlertDescription className="text-red-800 dark:text-red-200">{error}</AlertDescription>
@@ -381,7 +377,7 @@ export function AgentChatInterface() {
         )}
 
         {/* Command Input */}
-        <div className="border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6">
+        <div className="border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 flex-shrink-0">
           <div className="flex gap-3">
             <div className="flex-1 relative">
               <Input
