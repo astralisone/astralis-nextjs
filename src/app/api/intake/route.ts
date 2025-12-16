@@ -89,11 +89,12 @@ export async function POST(req: NextRequest) {
     }
 
     // OA (Orchestration Agent) now handles all routing via events
-    // Check if OpenAI is configured for backward compatibility
-    const useAIRouting = Boolean(process.env.OPENAI_API_KEY);
+    // Check if AI is configured (OpenAI, Gemini, Claude, or we assume Ollama/Fallback)
+    // We'll set this to true to always attempt routing via OA events, allowing the inner logic to fallback.
+    const useAIRouting = true;
 
     if (useAIRouting) {
-      console.log(`[Intake API] OpenAI configured - creating intake for OA routing (org: ${orgId})`);
+      console.log(`[Intake API] AI/Agent configured - creating intake for OA routing (org: ${orgId})`);
 
       // First create the intake request with NEW status
       const intakeRequest = await prisma.intakeRequest.create({
@@ -244,8 +245,12 @@ export async function POST(req: NextRequest) {
               const { initializeAgentSystem } = await import('@/lib/agent');
               const hasClaudeKey = !!process.env.ANTHROPIC_API_KEY;
               const hasOpenAIKey = !!process.env.OPENAI_API_KEY;
+              const hasGeminiKey = !!process.env.GOOGLE_API_KEY;
+              // Ollama is local, so we assume it might be available if no other keys are present
+              // but we'll at least require one of the above OR just always allow init now that we have fallbacks.
+              // For safety/strictness, let's allow if any key or just explicitly allow.
 
-              if (hasClaudeKey || hasOpenAIKey) {
+              if (hasClaudeKey || hasOpenAIKey || hasGeminiKey || true) { // Always allow initialization now due to Ollama/Fallbacks
                 await initializeAgentSystem({
                   enableWebhooks: true,
                   enableEmail: true,

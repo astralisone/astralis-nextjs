@@ -137,35 +137,28 @@ export function registerOmniscientHandlers(executor: ActionExecutor): void {
             if (!query) return { success: false, error: 'Missing query parameter' };
 
             try {
-                // Basic search using contains
-                // In a real implementation, this would use vector search or full-text search
-                const documents = await prisma.document.findMany({
-                    where: {
-                        orgId,
-                        OR: [
-                            { fileName: { contains: query, mode: 'insensitive' } },
-                            { summary: { contains: query, mode: 'insensitive' } }
-                        ]
-                    },
-                    take: 5,
-                    select: {
-                        id: true,
-                        fileName: true,
-                        documentType: true,
-                        summary: true,
-                        createdAt: true
-                    }
-                });
+                // Dynamic import to avoid circular interactions or load only when needed
+                const { getVectorSearchService } = await import('@/lib/services/vector-search.service');
+                const vectorService = getVectorSearchService();
+
+                // Use authentic vector search
+                const results = await vectorService.search(query, orgId, undefined, 5);
 
                 return {
                     success: true,
                     data: {
-                        documents,
-                        matches: documents.length
+                        documents: results.map(r => ({
+                            documentId: r.documentId,
+                            score: r.similarity,
+                            contentSnippet: r.content.substring(0, 200) + '...',
+                            metadata: r.metadata
+                        })),
+                        matches: results.length,
+                        provider: 'VectorSearchService'
                     }
                 };
             } catch (error) {
-                return { success: false, error: `Search failed: ${(error as Error).message}` };
+                return { success: false, error: `Vector search failed: ${(error as Error).message}` };
             }
         }
     );

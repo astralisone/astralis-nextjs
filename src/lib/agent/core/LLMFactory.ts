@@ -13,11 +13,16 @@
 import type { ILLMClient, LLMClientConfig } from './LLMClient';
 import { OpenAIClient, type OpenAIClientConfig } from './OpenAIClient';
 import { ClaudeClient, type ClaudeClientConfig } from './ClaudeClient';
+import { GeminiClient, type GeminiClientConfig } from './GeminiClient';
+import { OllamaClient, type OllamaClientConfig } from './OllamaClient';
+import { FallbackLLMClient } from './FallbackLLMClient';
 import { LLMProvider, LLMError } from '../types/agent.types';
 import type {
   LLMModel,
   OpenAIModel,
   ClaudeModel,
+  GeminiModel,
+  OllamaModel,
   LLMOptions,
 } from '../types/agent.types';
 
@@ -58,7 +63,7 @@ export interface LLMEnvironmentConfig {
   /** Default provider if not specified */
   defaultProvider: LLMProvider;
   /** Default models per provider */
-  defaultModels: Record<LLMProvider, OpenAIModel | ClaudeModel>;
+  defaultModels: Record<LLMProvider, LLMModel>;
   /** Default options */
   defaultOptions: LLMOptions;
 }
@@ -79,6 +84,8 @@ function getEnvironmentConfig(): LLMEnvironmentConfig {
     defaultModels: {
       [LLMProvider.OPENAI]: (process.env.AGENT_DEFAULT_OPENAI_MODEL as OpenAIModel) || 'gpt-4-turbo',
       [LLMProvider.CLAUDE]: (process.env.AGENT_DEFAULT_CLAUDE_MODEL as ClaudeModel) || 'claude-sonnet-4-20250514',
+      [LLMProvider.GEMINI]: (process.env.AGENT_DEFAULT_GEMINI_MODEL as GeminiModel) || 'gemini-2.0-flash',
+      [LLMProvider.OLLAMA]: (process.env.AGENT_DEFAULT_OLLAMA_MODEL as OllamaModel) || 'llama3',
     },
     defaultOptions: {
       temperature: parseFloat(process.env.AGENT_DEFAULT_TEMPERATURE || '0.3'),
@@ -246,6 +253,30 @@ export function createLLMClient(config: LLMFactoryConfig): ILLMClient {
     return new ClaudeClient(claudeConfig);
   }
 
+  if (config.provider === LLMProvider.GEMINI) {
+    const geminiConfig: GeminiClientConfig = {
+      model: config.model as GeminiModel,
+      apiKey: config.apiKey,
+      defaultOptions: mergedOptions,
+      maxRetries: config.maxRetries,
+      retryBaseDelay: config.retryBaseDelay,
+    };
+    console.log(`[LLMFactory] Creating Gemini client`);
+    return new GeminiClient(geminiConfig);
+  }
+
+  if (config.provider === LLMProvider.OLLAMA) {
+    const ollamaConfig: OllamaClientConfig = {
+      model: config.model as OllamaModel,
+      baseUrl: config.baseUrl,
+      defaultOptions: mergedOptions,
+      maxRetries: config.maxRetries,
+      retryBaseDelay: config.retryBaseDelay,
+    };
+    console.log(`[LLMFactory] Creating Ollama client`);
+    return new OllamaClient(ollamaConfig);
+  }
+
   // This should never happen due to TypeScript, but handle it anyway
   throw new LLMError(
     `Unknown provider: ${config.provider}`,
@@ -346,6 +377,14 @@ export function createClaude(
     model,
     ...options,
   });
+}
+
+/**
+ * Create a Fallback client that tries multiple clients in order.
+ */
+export function createFallbackClient(clients: ILLMClient[]): ILLMClient {
+  console.log(`[LLMFactory] Creating Fallback client with ${clients.length} clients`);
+  return new FallbackLLMClient(clients);
 }
 
 // =============================================================================

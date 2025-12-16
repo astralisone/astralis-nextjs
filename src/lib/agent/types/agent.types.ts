@@ -69,9 +69,30 @@ export type ClaudeModel =
   | 'claude-3-5-sonnet-20241022';
 
 /**
+ * Google Gemini model identifiers
+ */
+export type GeminiModel =
+  | 'gemini-1.5-flash'
+  | 'gemini-1.5-pro'
+  | 'gemini-1.0-pro'
+  | 'gemini-2.0-flash';
+
+/**
+ * Ollama model identifiers (common ones, string allows others)
+ */
+export type OllamaModel =
+  | 'llama3'
+  | 'llama3:8b'
+  | 'llama3:70b'
+  | 'mistral'
+  | 'gemma'
+  | 'phi3'
+  | (string & {});
+
+/**
  * All supported LLM models
  */
-export type LLMModel = OpenAIModel | ClaudeModel;
+export type LLMModel = OpenAIModel | ClaudeModel | GeminiModel | OllamaModel;
 
 // =============================================================================
 // CORE ENUMS
@@ -86,6 +107,10 @@ export enum LLMProvider {
   OPENAI = 'OPENAI',
   /** Anthropic Claude models (Claude 3, Claude Sonnet, etc.) */
   CLAUDE = 'CLAUDE',
+  /** Google Gemini models */
+  GEMINI = 'GEMINI',
+  /** Local Ollama models */
+  OLLAMA = 'OLLAMA',
 }
 
 /**
@@ -313,6 +338,9 @@ export interface AgentConfig {
   orgId: string;
   /** Display name for the agent */
   name?: string;
+
+  /** Whether to run in dry-run mode (no side effects) */
+  dryRun?: boolean;
 
   // LLM Settings
   /** The LLM provider to use (OpenAI or Claude) */
@@ -597,6 +625,55 @@ export interface AgentDecisionRecord {
   status: DecisionStatus;
   /** When the decision was made */
   createdAt: Date;
+}
+
+/**
+ * Statistics for the agent
+ */
+export interface AgentStats {
+  totalDecisions: number;
+  successfulDecisions: number;
+  failedDecisions: number;
+  pendingApprovals: number;
+  totalActionsExecuted: number;
+  totalEventsProcessed: number;
+  totalErrors: number;
+  averageDecisionTimeMs: number;
+  decisionTimes: number[];
+  lastDecisionTime: Date | null;
+  uptimeMs: number;
+  timeSinceLastDecisionMs?: number | null;
+  rateLimitStatus: {
+    actionsThisMinute: number;
+    actionsThisHour: number;
+    isLimited: boolean;
+  };
+}
+
+/**
+ * Detailed record of a decision for audit
+ */
+export interface DecisionRecord {
+  id: string;
+  agentId: string;
+  orgId: string;
+  inputSource: AgentInputSource;
+  inputType: string;
+  inputData: {
+    rawContent: string;
+    structuredData?: Record<string, unknown>;
+  };
+  llmPrompt: string;
+  llmResponse: string;
+  confidence: number;
+  reasoning: string;
+  decisionType: DecisionType;
+  actions: AgentAction[];
+  status: DecisionStatus;
+  executionTime: number;
+  errorMessage?: string;
+  createdAt: Date;
+  executedAt?: Date;
 }
 
 /**
@@ -982,6 +1059,7 @@ export interface CreateTaskParams {
  */
 export type AgentEventType =
   // Intake events
+  | 'intake:received'
   | 'intake:created'
   | 'intake:updated'
   | 'intake:assigned'

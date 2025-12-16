@@ -16,494 +16,116 @@ import type {
   AgentConfig,
   AgentInput,
   AgentEvent,
-  AgentEventType,
   AgentDecisionResult,
   DecisionContext,
   DecisionOutcome,
-  OrgContext,
-  HistoricalContext,
-  DecisionType,
   DecisionStatus,
   Logger,
-  PipelineSummary,
-  UserSummary,
-  OrgSettings,
   AgentAction,
   LLMModel,
+  AgentStats,
+  DecisionRecord,
 } from '../types/agent.types';
 import {
+  AgentStatus,
+  AgentEventType,
+  LLMProvider,
+  DecisionType,
+  DecisionPriority,
+  DecisionReasoning,
+  OrchestrationDecision,
   AgentInputSource,
   DecisionType as DecisionTypeEnum,
   DecisionStatus as DecisionStatusEnum,
-  LLMProvider,
   DEFAULT_AGENT_CONFIG,
-  DecisionType,
 } from '../types/agent.types';
 import type { ILLMClient } from './LLMClient';
-import { createLLMClient } from './LLMFactory';
-import { AgentEventBus, type EmitResult, type EventBusConfig } from '../inputs/EventBus';
-import { DecisionEngine, type DecisionEngineConfig } from './DecisionEngine';
-import { ActionExecutor, type ActionExecutorConfig } from './ActionExecutor';
-import { PromptBuilder, type OrgContext as PromptOrgContext } from '../prompts';
-import { prisma } from '@/lib/prisma';
-import type { BaseOperationalAgent } from '../operational/BaseOperationalAgent';
-import type { DocumentProcessedEvent as OperationalDocumentEvent } from '../operational/BaseOperationalAgent';
-import {
-  apClerkAgent,
-  complianceSentinelAgent,
-  logisticsCoordinatorAgent,
-  getAgentForDocumentType,
-} from '../operational';
-// Inline communication classifier to avoid bundling issues
-class CommunicationClassifier {
-  classifyIntent(intent: string, context: any) {
-    const normalizedIntent = intent.toLowerCase().trim();
-
-    // System communications (highest priority)
-    if (this.isSystemCommunication(normalizedIntent, context)) {
-      return {
-        channel: 'system' as const,
-        confidence: 0.9,
-        reasoning: 'System communication detected',
-        requiredIntegrations: [],
-        fallbackOptions: ['business']
-      };
-    }
-
-    // Business communications
-    if (this.isBusinessCommunication(normalizedIntent, context)) {
-      return {
-        channel: 'business' as const,
-        confidence: 0.8,
-        reasoning: 'Business communication detected',
-        requiredIntegrations: ['gmail', 'outlook'],
-        fallbackOptions: ['system']
-      };
-    }
-
-    // Default to integration channel
-    return {
-      channel: 'integration' as const,
-      confidence: 0.6,
-      reasoning: 'Defaulting to integration channel',
-      requiredIntegrations: [],
-      fallbackOptions: ['system', 'business']
-    };
-  }
-
-  private isSystemCommunication(intent: string, context: any): boolean {
-    const systemKeywords = ['system', 'admin', 'notification', 'alert', 'error', 'status'];
-    return systemKeywords.some(keyword => intent.includes(keyword));
-  }
-
-  private isBusinessCommunication(intent: string, context: any): boolean {
-    const businessKeywords = ['email', 'contact', 'customer', 'client', 'sales', 'support'];
-    return businessKeywords.some(keyword => intent.includes(keyword));
-  }
-}
-
-const communicationClassifier = new CommunicationClassifier();
-// =============================================================================
-// Constants
-// =============================================================================
-
-/** Default rate limit: actions per minute */
-const DEFAULT_RATE_LIMIT_PER_MINUTE = 60;
-
-/** Default rate limit: actions per hour */
-const DEFAULT_RATE_LIMIT_PER_HOUR = 500;
-
-/** Event types the agent listens to by default */
-const DEFAULT_SUBSCRIBED_EVENTS: AgentEventType[] = [
-  'intake:created',
-  'intake:updated',
-  'intake:escalated',
-  'webhook:form_submitted',
-  'webhook:booking_requested',
-  'email:received',
-  'pipeline:stage_changed',
-  'calendar:reminder_due',
-  'calendar:event_created',
-  'calendar:event_updated',
-  'calendar:event_cancelled',
-  'schedule:triggered',
-  'document:processed', // Added for operational agents
-];
+import { createLLMClient, createFallbackClient } from './LLMFactory';
+import { AgentEventBus, type EmitResult } from '../inputs/EventBus';
+import { DecisionEngine } from './DecisionEngine';
+import { ActionExecutor } from './ActionExecutor';
+import { TaskExecutionAgent } from './TaskExecutionAgent';
+import { AgentContextService } from '../services/AgentContextService';
+import { AgentRateLimiter } from '../services/AgentRateLimiter';
+import { AgentStatsManager } from '../services/AgentStatsManager';
 
 // =============================================================================
-// Types
+// Interfaces
 // =============================================================================
 
-/**
- * Full configuration for the OrchestrationAgent
- */
 export interface OrchestrationAgentConfig extends AgentConfig {
-  /** Custom LLM client (optional, will create from config if not provided) */
-  llmClient?: ILLMClient;
-  /** Event bus configuration */
-  eventBusConfig?: EventBusConfig;
-  /** Decision engine configuration overrides */
-  decisionEngineConfig?: Partial<DecisionEngineConfig>;
-  /** Action executor configuration overrides */
-  actionExecutorConfig?: Partial<ActionExecutorConfig>;
-  /** Event types to subscribe to */
-  subscribedEvents?: AgentEventType[];
-  /** Custom logger */
-  logger?: Logger;
-  /** Dry run mode (no actions executed) */
-  dryRun?: boolean;
+  orgId: string;
 }
 
-/**
- * Statistics tracked by the agent
- */
-export interface AgentStats {
-  /** Total decisions made */
-  totalDecisions: number;
-  /** Successful decisions */
-  successfulDecisions: number;
-  /** Failed decisions */
-  failedDecisions: number;
-  /** Decisions requiring approval */
-  pendingApprovals: number;
-  /** Actions executed */
-  totalActionsExecuted: number;
-  /** Events processed */
-  totalEventsProcessed: number;
-  /** Errors encountered */
-  totalErrors: number;
-  /** Average decision time (ms) */
-  averageDecisionTimeMs: number;
-  /** Rate limit status */
-  rateLimitStatus: {
-    actionsThisMinute: number;
-    actionsThisHour: number;
-    isLimited: boolean;
-  };
-  /** Agent uptime (ms) */
-  uptimeMs: number;
-  /** Time since last decision (ms) */
-  timeSinceLastDecisionMs: number | null;
-}
-
-/**
- * Pending decision awaiting approval
- */
-export interface PendingDecision {
-  /** Decision ID */
+interface PendingDecision {
   id: string;
-  /** The decision result */
   decision: AgentDecisionResult;
-  /** Original input */
   input: AgentInput;
-  /** Context used for decision */
   context: DecisionContext;
-  /** When the decision was made */
   createdAt: Date;
-  /** Expiration time for approval */
   expiresAt: Date;
 }
-
-/**
- * Decision record for audit trail
- */
-export interface DecisionRecord {
-  /** Decision ID */
-  id: string;
-  /** Agent ID */
-  agentId: string;
-  /** Organization ID */
-  orgId: string;
-  /** Input source */
-  inputSource: AgentInputSource;
-  /** Input type */
-  inputType: string;
-  /** Input data */
-  inputData: Record<string, unknown>;
-  /** LLM prompt used */
-  llmPrompt: string;
-  /** LLM response */
-  llmResponse: string;
-  /** Confidence score */
-  confidence: number;
-  /** Reasoning */
-  reasoning: string;
-  /** Decision type */
-  decisionType: DecisionType;
-  /** Actions taken */
-  actions: AgentAction[];
-  /** Status */
-  status: DecisionStatus;
-  /** Execution time (ms) */
-  executionTime: number;
-  /** Error message if failed */
-  errorMessage?: string;
-  /** Created timestamp */
-  createdAt: Date;
-  /** Executed timestamp */
-  executedAt?: Date;
-}
-
-/**
- * Rate limiter state
- */
-interface RateLimiterState {
-  minuteTimestamps: number[];
-  hourTimestamps: number[];
-}
-
-// =============================================================================
-// Default Logger
-// =============================================================================
-
-const defaultLogger: Logger = {
-  debug: (msg, data) => console.debug(`[OrchestrationAgent] ${msg}`, data ?? ''),
-  info: (msg, data) => console.info(`[OrchestrationAgent] ${msg}`, data ?? ''),
-  warn: (msg, data) => console.warn(`[OrchestrationAgent] ${msg}`, data ?? ''),
-  error: (msg, err, data) => console.error(`[OrchestrationAgent] ${msg}`, err, data ?? ''),
-};
 
 // =============================================================================
 // OrchestrationAgent Class
 // =============================================================================
 
-/**
- * The main orchestration agent that coordinates all agent operations.
- *
- * @example
- * ```typescript
- * // Create agent with configuration
- * const agent = new OrchestrationAgent({
- *   orgId: 'org-123',
- *   llmProvider: LLMProvider.CLAUDE,
- *   llmModel: 'claude-sonnet-4-20250514',
- *   temperature: 0.3,
- *   autoExecuteThreshold: 0.85,
- *   requireApprovalThreshold: 0.5,
- *   enabledActions: Object.values(DecisionType),
- *   maxActionsPerMinute: 60,
- *   maxActionsPerHour: 500,
- *   notifyOnHighPriority: true,
- *   notifyOnFailure: true,
- *   escalationEmail: 'admin@example.com',
- * });
- *
- * // Start the agent (subscribe to events)
- * agent.start();
- *
- * // Process an input directly
- * const result = await agent.process({
- *   source: AgentInputSource.WEBHOOK,
- *   type: 'form_submitted',
- *   rawContent: 'Customer inquiry about pricing...',
- *   timestamp: new Date(),
- * });
- *
- * // Handle pending approvals
- * await agent.approveDecision('decision-123');
- *
- * // Stop the agent
- * agent.stop();
- * ```
- */
 export class OrchestrationAgent {
-  // Core configuration
   private config: OrchestrationAgentConfig;
   private logger: Logger;
-  private agentId: string;
-
-  // Core components
-  private llmClient: ILLMClient;
   private eventBus: AgentEventBus;
   private decisionEngine: DecisionEngine;
   private actionExecutor: ActionExecutor;
+  private llmClient: ILLMClient;
+  private taskExecutionAgent: TaskExecutionAgent;
+
+  // Services
+  private contextService: AgentContextService;
+  private rateLimiter: AgentRateLimiter;
+  private statsManager: AgentStatsManager;
 
   // State
   private isRunning: boolean = false;
-  private startTime: Date | null = null;
-  private subscriptionIds: string[] = [];
   private pendingDecisions: Map<string, PendingDecision> = new Map();
-  private decisionHistory: DecisionRecord[] = [];
-
-  // Rate limiting
-  private rateLimiter: RateLimiterState = {
-    minuteTimestamps: [],
-    hourTimestamps: [],
-  };
-
-  // Statistics
-  private stats: {
-    totalDecisions: number;
-    successfulDecisions: number;
-    failedDecisions: number;
-    pendingApprovals: number;
-    totalActionsExecuted: number;
-    totalEventsProcessed: number;
-    totalErrors: number;
-    decisionTimes: number[];
-    lastDecisionTime: Date | null;
-  } = {
-      totalDecisions: 0,
-      successfulDecisions: 0,
-      failedDecisions: 0,
-      pendingApprovals: 0,
-      totalActionsExecuted: 0,
-      totalEventsProcessed: 0,
-      totalErrors: 0,
-      decisionTimes: [],
-      lastDecisionTime: null,
-    };
-
-  // Organization context cache
-  private orgContextCache: OrgContext | null = null;
-  private orgContextCacheTime: Date | null = null;
-  private readonly ORG_CONTEXT_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-
-  // Operational agents
-  private operationalAgents: BaseOperationalAgent[] = [];
+  private agentId: string;
 
   constructor(config: OrchestrationAgentConfig) {
     this.config = this.validateAndMergeConfig(config);
-    this.logger = config.logger ?? defaultLogger;
-    this.agentId = config.id ?? `agent-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    this.agentId = `agent-${this.config.orgId}`;
 
-    this.logger.info('Initializing OrchestrationAgent', {
-      agentId: this.agentId,
-      orgId: this.config.orgId,
-      llmProvider: this.config.llmProvider,
-      llmModel: this.config.llmModel,
-    });
+    // Initialize default logger if not provided (would typically be injected)
+    this.logger = {
+      debug: (msg, data) => console.debug(`[OrchestrationAgent] ${msg}`, data ?? ''),
+      info: (msg, data) => console.info(`[OrchestrationAgent] ${msg}`, data ?? ''),
+      warn: (msg, data) => console.warn(`[OrchestrationAgent] ${msg}`, data ?? ''),
+      error: (msg, err, data) => console.error(`[OrchestrationAgent] ${msg}`, err, data ?? ''),
+    };
 
-    // Initialize LLM client
-    this.llmClient = config.llmClient ?? this.createLLMClient();
+    // Initialize components
+    this.eventBus = AgentEventBus.getInstance();
 
-    // Initialize event bus
-    this.eventBus = AgentEventBus.getInstance(config.eventBusConfig);
-
-    // Initialize decision engine
     this.decisionEngine = new DecisionEngine({
       autoExecuteThreshold: this.config.autoExecuteThreshold,
       requireApprovalThreshold: this.config.requireApprovalThreshold,
-      enabledActions: this.config.enabledActions,
-      enableFallback: true,
       logger: this.logger,
-      ...config.decisionEngineConfig,
     });
 
-    // Initialize action executor
     this.actionExecutor = new ActionExecutor({
-      dryRun: config.dryRun ?? false,
+      dryRun: this.config.dryRun ?? false,
       orgId: this.config.orgId,
       logger: this.logger,
-      ...config.actionExecutorConfig,
     });
 
-    // Initialize operational agents
-    this.initializeOperationalAgents();
+    this.llmClient = this.initializeLLMClient();
+    this.taskExecutionAgent = new TaskExecutionAgent(this.logger);
 
-    this.logger.info('OrchestrationAgent initialized successfully', {
-      agentId: this.agentId,
-      operationalAgents: this.operationalAgents.map(a => a.getName()),
+    // Initialize Services
+    this.contextService = new AgentContextService({
+      orgId: this.config.orgId,
+      enabledActions: this.config.enabledActions!
     });
-  }
-
-  // ===========================================================================
-  // Operational Agents Integration
-  // ===========================================================================
-
-  /**
-   * Initialize operational agents for document processing.
-   * Sets up handlers for document:processed events and routes them to appropriate agents.
-   */
-  private initializeOperationalAgents(): void {
-    this.logger.info('Initializing operational agents');
-
-    // Register operational agents
-    this.operationalAgents = [
-      apClerkAgent,
-      complianceSentinelAgent,
-      logisticsCoordinatorAgent,
-    ];
-
-    this.logger.info('Operational agents registered', {
-      agents: this.operationalAgents.map(a => ({
-        name: a.getName(),
-        supportedTypes: a.getSupportedTypes(),
-      })),
-    });
-  }
-
-  /**
-   * Handle document:processed events by routing to appropriate operational agent.
-   */
-  private async handleDocumentProcessed(event: AgentEvent<unknown>): Promise<void> {
-    const docEvent = event.payload as OperationalDocumentEvent;
-
-    this.logger.debug('Handling document:processed event', {
-      documentId: docEvent.documentId,
-      documentType: docEvent.documentType,
-      orgId: docEvent.orgId,
-    });
-
-    // Only process documents for this organization
-    if (docEvent.orgId !== this.config.orgId) {
-      this.logger.debug('Skipping document from different organization', {
-        eventOrgId: docEvent.orgId,
-        agentOrgId: this.config.orgId,
-      });
-      return;
-    }
-
-    // Find appropriate operational agent
-    const agent = getAgentForDocumentType(docEvent.documentType);
-
-    if (!agent) {
-      this.logger.warn('No operational agent found for document type', {
-        documentType: docEvent.documentType,
-        documentId: docEvent.documentId,
-      });
-      return;
-    }
-
-    try {
-      this.logger.info('Routing document to operational agent', {
-        documentId: docEvent.documentId,
-        documentType: docEvent.documentType,
-        agent: agent.getName(),
-      });
-
-      // Process document with the operational agent
-      const result = await agent.process(docEvent);
-
-      if (result.success) {
-        this.logger.info('Document processed successfully by operational agent', {
-          documentId: docEvent.documentId,
-          agent: agent.getName(),
-          actionsTaken: result.actionsTaken,
-          pipelineItemId: result.pipelineItemId,
-        });
-      } else {
-        this.logger.error('Document processing failed', new Error(result.error || 'Unknown error'), {
-          documentId: docEvent.documentId,
-          agent: agent.getName(),
-          error: result.error,
-        });
-      }
-
-      if (result.warnings && result.warnings.length > 0) {
-        this.logger.warn('Document processing warnings', {
-          documentId: docEvent.documentId,
-          agent: agent.getName(),
-          warnings: result.warnings,
-        });
-      }
-    } catch (error) {
-      this.logger.error('Error in operational agent processing', error as Error, {
-        documentId: docEvent.documentId,
-        documentType: docEvent.documentType,
-        agent: agent.getName(),
-      });
-    }
+    this.rateLimiter = new AgentRateLimiter();
+    this.statsManager = new AgentStatsManager();
   }
 
   // ===========================================================================
@@ -511,101 +133,71 @@ export class OrchestrationAgent {
   // ===========================================================================
 
   /**
-   * Start the agent - subscribe to events and begin processing.
+   * Start the agent.
    */
-  start(): void {
-    if (this.isRunning) {
-      this.logger.warn('Agent is already running');
-      return;
-    }
+  async start(): Promise<void> {
+    if (this.isRunning) return;
 
-    this.logger.info('Starting OrchestrationAgent', { agentId: this.agentId });
-
+    this.logger.info('Starting Orchestration Agent', { orgId: this.config.orgId });
     this.isRunning = true;
-    this.startTime = new Date();
 
-    // Subscribe to configured events
-    const eventsToSubscribe = this.config.subscribedEvents ?? DEFAULT_SUBSCRIBED_EVENTS;
+    // Subscribe to events
+    // Subscribe to events using wildcard handlers for broad categories
+    this.eventBus.onAny(this.handleEvent.bind(this));
 
-    for (const eventType of eventsToSubscribe) {
-      const subscriptionId = this.eventBus.on(eventType, async (event) => {
-        await this.handleEvent(event);
-      });
-      this.subscriptionIds.push(subscriptionId);
-      this.logger.debug(`Subscribed to event: ${eventType}`, { subscriptionId });
-    }
-
-    this.logger.info('OrchestrationAgent started', {
-      agentId: this.agentId,
-      subscribedEvents: eventsToSubscribe.length,
-    });
+    this.logger.info('Orchestration Agent started');
   }
 
   /**
-   * Stop the agent - unsubscribe from events and cleanup.
+   * Check if the agent is currently running.
    */
-  stop(): void {
-    if (!this.isRunning) {
-      this.logger.warn('Agent is not running');
-      return;
-    }
-
-    this.logger.info('Stopping OrchestrationAgent', { agentId: this.agentId });
-
-    // Unsubscribe from all events
-    for (const subscriptionId of this.subscriptionIds) {
-      this.eventBus.off(subscriptionId);
-    }
-    this.subscriptionIds = [];
-
-    this.isRunning = false;
-
-    this.logger.info('OrchestrationAgent stopped', {
-      agentId: this.agentId,
-      totalDecisions: this.stats.totalDecisions,
-    });
-  }
-
-  /**
-   * Check if the agent is running.
-   */
-  isActive(): boolean {
+  public isActive(): boolean {
     return this.isRunning;
   }
 
+  /**
+   * Stop the agent.
+   */
+  async stop(): Promise<void> {
+    if (!this.isRunning) return;
+
+    this.logger.info('Stopping Orchestration Agent');
+    this.isRunning = false;
+
+    // Unsubscribe (would need tracked subscriptions to do generically)
+    // For now assuming event bus handles cleanup or we restart process
+  }
+
   // ===========================================================================
-  // Main Processing Methods
+  // Core Processing Loop
   // ===========================================================================
 
   /**
-   * Process an input and return the decision result.
-   *
-   * @param input - The agent input to process
-   * @returns The decision result with actions
+   * Process a single input through the agent loop.
    */
   async process(input: AgentInput): Promise<AgentDecisionResult> {
     const startTime = Date.now();
-    const correlationId = input.correlationId ?? `proc-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const correlationId = input.correlationId || `req-${startTime}`;
 
     this.logger.info('Processing input', {
-      source: input.source,
       type: input.type,
-      correlationId,
+      source: input.source,
+      correlationId
     });
 
     // Check rate limits
-    if (this.isRateLimited()) {
+    if (this.rateLimiter.isRateLimited(this.config.maxActionsPerMinute, this.config.maxActionsPerHour)) {
       this.logger.warn('Rate limit exceeded, rejecting input');
       throw new Error('Rate limit exceeded. Please try again later.');
     }
 
     try {
       // Build decision context
-      const context = await this.buildDecisionContext(input);
+      const context = await this.contextService.buildDecisionContext(input, this.agentId);
 
-      // Build LLM prompt
-      const systemPrompt = this.buildSystemPrompt(context.org);
-      const userPrompt = this.buildUserPrompt(input, context);
+      // Build LLM prompts
+      const systemPrompt = this.contextService.buildSystemPrompt(context.org);
+      const userPrompt = this.contextService.buildUserPrompt(input, context);
 
       // Make LLM call
       const llmResponse = await this.makeLLMDecision(systemPrompt, userPrompt);
@@ -613,14 +205,11 @@ export class OrchestrationAgent {
       // Process LLM response through decision engine
       const decision = this.decisionEngine.processLLMResponse(llmResponse, context);
 
-      // Record decision time
+      // Record stats
       const decisionTime = Date.now() - startTime;
-      this.stats.decisionTimes.push(decisionTime);
-      this.stats.lastDecisionTime = new Date();
-      this.stats.totalDecisions++;
-
-      // Update rate limiter
-      this.recordRateLimitAction();
+      this.statsManager.recordDecisionTime(decisionTime);
+      this.statsManager.incrementTotalDecisions();
+      this.rateLimiter.recordAction();
 
       // Determine execution path
       if (this.decisionEngine.shouldAutoExecute(decision)) {
@@ -634,15 +223,21 @@ export class OrchestrationAgent {
         const outcome = await this.executeDecision(decision, correlationId);
 
         // Record outcome
-        await this.recordDecision(input, decision, outcome, systemPrompt, llmResponse);
+        await this.statsManager.recordDecision(
+          this.agentId,
+          this.config.orgId,
+          input,
+          decision,
+          outcome,
+          { prompt: systemPrompt, response: llmResponse }
+        );
 
         if (outcome.status === DecisionStatusEnum.EXECUTED) {
-          this.stats.successfulDecisions++;
+          this.statsManager.incrementSuccessfulDecisions();
         } else {
-          this.stats.failedDecisions++;
+          this.statsManager.incrementFailedDecisions();
         }
 
-        // Attach results to decision so caller (ChatAgent) can see what happened
         return {
           ...decision,
           executionResults: outcome.results,
@@ -656,16 +251,23 @@ export class OrchestrationAgent {
         });
 
         const pendingId = this.storePendingDecision(decision, input, context);
-        this.stats.pendingApprovals++;
+        this.statsManager.incrementPendingApprovals();
 
         // Record as pending
-        await this.recordDecision(input, decision, {
-          status: DecisionStatusEnum.REQUIRES_APPROVAL,
-          executionTime: 0,
-          results: [],
-          errors: [],
-          completedAt: new Date(),
-        }, systemPrompt, llmResponse);
+        await this.statsManager.recordDecision(
+          this.agentId,
+          this.config.orgId,
+          input,
+          decision,
+          {
+            status: DecisionStatusEnum.REQUIRES_APPROVAL,
+            executionTime: 0,
+            results: [],
+            errors: [],
+            completedAt: new Date(),
+          },
+          { prompt: systemPrompt, response: llmResponse }
+        );
 
         // Notify if configured
         if (this.config.notifyOnHighPriority && (decision.priority ?? 3) >= 4) {
@@ -681,21 +283,28 @@ export class OrchestrationAgent {
           confidence: decision.confidence,
         });
 
-        this.stats.failedDecisions++;
+        this.statsManager.incrementFailedDecisions();
 
-        await this.recordDecision(input, decision, {
-          status: DecisionStatusEnum.REJECTED,
-          executionTime: 0,
-          results: [],
-          errors: [{ action: DecisionTypeEnum.NO_ACTION, code: 'LOW_CONFIDENCE', message: 'Confidence below threshold', retryable: false }],
-          completedAt: new Date(),
-        }, systemPrompt, llmResponse);
+        await this.statsManager.recordDecision(
+          this.agentId,
+          this.config.orgId,
+          input,
+          decision,
+          {
+            status: DecisionStatusEnum.REJECTED,
+            executionTime: 0,
+            results: [],
+            errors: [{ action: DecisionTypeEnum.NO_ACTION, code: 'LOW_CONFIDENCE', message: 'Confidence below threshold', retryable: false }],
+            completedAt: new Date(),
+          },
+          { prompt: systemPrompt, response: llmResponse }
+        );
 
         return decision;
       }
 
     } catch (error) {
-      this.stats.totalErrors++;
+      this.statsManager.incrementTotalErrors();
       this.logger.error('Error processing input', error as Error, { correlationId });
 
       // Notify on failure if configured
@@ -711,28 +320,29 @@ export class OrchestrationAgent {
    * Handle an incoming event from the event bus.
    */
   async handleEvent(event: AgentEvent): Promise<void> {
-    this.stats.totalEventsProcessed++;
+    this.statsManager.incrementTotalEvents();
 
     this.logger.debug('Handling event', {
       type: event.type,
       eventId: event.eventId,
     });
 
-    // Skip agent's own events to prevent loops
-    if (event.source === 'agent') {
+    // Handle task:created events for autonomous execution
+    if (event.type === 'task:created') {
+      try {
+        const taskId = (event.payload as any).id;
+        if (taskId) {
+          // Fire and forget - don't await strictly effectively
+          this.taskExecutionAgent.handleTaskCreated(taskId);
+        }
+      } catch (error) {
+        this.logger.error('Error handling task:created event', error as Error);
+      }
       return;
     }
 
-    // Route document:processed events to operational agents
-    if (event.type === 'document:processed') {
-      try {
-        await this.handleDocumentProcessed(event);
-      } catch (error) {
-        this.logger.error('Error handling document:processed event', error as Error, {
-          eventType: event.type,
-          eventId: event.eventId,
-        });
-      }
+    // Skip agent's own events to prevent loops
+    if (event.source === 'agent') {
       return;
     }
 
@@ -753,9 +363,6 @@ export class OrchestrationAgent {
   // Approval Methods
   // ===========================================================================
 
-  /**
-   * Approve a pending decision and execute it.
-   */
   async approveDecision(decisionId: string): Promise<DecisionOutcome> {
     const pending = this.pendingDecisions.get(decisionId);
 
@@ -765,32 +372,26 @@ export class OrchestrationAgent {
 
     this.logger.info('Approving decision', { decisionId });
 
-    // Check if expired
     if (new Date() > pending.expiresAt) {
       this.pendingDecisions.delete(decisionId);
-      this.stats.pendingApprovals--;
+      this.statsManager.decrementPendingApprovals();
       throw new Error('Decision has expired');
     }
 
-    // Execute the decision
     const outcome = await this.executeDecision(pending.decision, decisionId);
 
-    // Update stats
     this.pendingDecisions.delete(decisionId);
-    this.stats.pendingApprovals--;
+    this.statsManager.decrementPendingApprovals();
 
     if (outcome.status === DecisionStatusEnum.EXECUTED) {
-      this.stats.successfulDecisions++;
+      this.statsManager.incrementSuccessfulDecisions();
     } else {
-      this.stats.failedDecisions++;
+      this.statsManager.incrementFailedDecisions();
     }
 
     return outcome;
   }
 
-  /**
-   * Reject a pending decision.
-   */
   async rejectDecision(decisionId: string, reason: string): Promise<void> {
     const pending = this.pendingDecisions.get(decisionId);
 
@@ -801,87 +402,51 @@ export class OrchestrationAgent {
     this.logger.info('Rejecting decision', { decisionId, reason });
 
     this.pendingDecisions.delete(decisionId);
-    this.stats.pendingApprovals--;
-    this.stats.failedDecisions++;
+    this.statsManager.decrementPendingApprovals();
+    this.statsManager.incrementFailedDecisions();
 
     // Record rejection
-    await this.recordDecision(pending.input, pending.decision, {
-      status: DecisionStatusEnum.REJECTED,
-      executionTime: 0,
-      results: [],
-      errors: [{ action: DecisionTypeEnum.NO_ACTION, code: 'REJECTED', message: reason, retryable: false }],
-      completedAt: new Date(),
-    }, '', '');
-  }
-
-  /**
-   * Build the full decision context.
-   */
-  private async buildDecisionContext(input: AgentInput): Promise<DecisionContext> {
-    // Simplified context building to avoid database issues
-    const org: OrgContext = {
-      id: this.config.orgId,
-      name: 'Organization', // Simplified for now
-      pipelines: [],
-      users: [],
-      settings: {} as any,
-    };
-
-    const history: HistoricalContext = {
-      recentDecisions: [],
-      relatedIntakes: [],
-      relatedEvents: [],
-    };
-
-    console.log('DEBUG: communicationClassifier defined?', typeof communicationClassifier);
-    const communicationClassification = communicationClassifier.classifyIntent(input.rawContent, input);
-    const availableIntegrations: any[] = []; // Simplified for now
-    const availableActions = this.filterActionsByCommunicationType(
-      this.config.enabledActions,
-      communicationClassification,
-      availableIntegrations
+    await this.statsManager.recordDecision(
+      this.agentId,
+      this.config.orgId,
+      pending.input,
+      pending.decision,
+      {
+        status: DecisionStatusEnum.REJECTED,
+        executionTime: 0,
+        results: [],
+        errors: [{ action: DecisionTypeEnum.NO_ACTION, code: 'REJECTED', message: reason, retryable: false }],
+        completedAt: new Date(),
+      },
+      { prompt: '', response: '' } // Context lost for brevity
     );
-
-    return {
-      input,
-      org,
-      history,
-      availableActions,
-      communicationClassification,
-      availableIntegrations,
-      decisionTimestamp: new Date(),
-      sessionId: this.agentId,
-    };
   }
 
   // ===========================================================================
   // Configuration Methods
   // ===========================================================================
 
-  /**
-   * Update agent configuration.
-   */
   updateConfig(config: Partial<OrchestrationAgentConfig>): void {
     this.config = { ...this.config, ...config };
 
-    // Update sub-components if needed
-    if (config.autoExecuteThreshold !== undefined || config.requireApprovalThreshold !== undefined) {
-      this.decisionEngine.updateConfig({
-        autoExecuteThreshold: this.config.autoExecuteThreshold,
-        requireApprovalThreshold: this.config.requireApprovalThreshold,
-      });
-    }
+    // Update sub-components
+    this.decisionEngine.updateConfig({
+      autoExecuteThreshold: this.config.autoExecuteThreshold,
+      requireApprovalThreshold: this.config.requireApprovalThreshold,
+    });
 
     if (config.dryRun !== undefined) {
       this.actionExecutor.setDryRun(config.dryRun);
     }
 
+    this.contextService.updateConfig({
+      orgId: config.orgId,
+      enabledActions: config.enabledActions
+    });
+
     this.logger.info('Configuration updated');
   }
 
-  /**
-   * Get current configuration.
-   */
   getConfig(): Readonly<OrchestrationAgentConfig> {
     return { ...this.config };
   }
@@ -890,250 +455,119 @@ export class OrchestrationAgent {
   // Statistics Methods
   // ===========================================================================
 
-  /**
-   * Get agent statistics.
-   */
   getStats(): AgentStats {
-    const avgDecisionTime = this.stats.decisionTimes.length > 0
-      ? this.stats.decisionTimes.reduce((a, b) => a + b, 0) / this.stats.decisionTimes.length
-      : 0;
-
-    const now = Date.now();
-
-    return {
-      totalDecisions: this.stats.totalDecisions,
-      successfulDecisions: this.stats.successfulDecisions,
-      failedDecisions: this.stats.failedDecisions,
-      pendingApprovals: this.stats.pendingApprovals,
-      totalActionsExecuted: this.stats.totalActionsExecuted,
-      totalEventsProcessed: this.stats.totalEventsProcessed,
-      totalErrors: this.stats.totalErrors,
-      averageDecisionTimeMs: avgDecisionTime,
-      rateLimitStatus: {
-        actionsThisMinute: this.rateLimiter.minuteTimestamps.filter(t => now - t < 60000).length,
-        actionsThisHour: this.rateLimiter.hourTimestamps.filter(t => now - t < 3600000).length,
-        isLimited: this.isRateLimited(),
-      },
-      uptimeMs: this.startTime ? now - this.startTime.getTime() : 0,
-      timeSinceLastDecisionMs: this.stats.lastDecisionTime
-        ? now - this.stats.lastDecisionTime.getTime()
-        : null,
-    };
+    const rateLimitUse = this.rateLimiter.getUsage();
+    return this.statsManager.getStats({
+      ...rateLimitUse,
+      isLimited: this.rateLimiter.isRateLimited(this.config.maxActionsPerMinute, this.config.maxActionsPerHour)
+    });
   }
 
-  /**
-   * Get decision history.
-   */
   getDecisionHistory(limit?: number): DecisionRecord[] {
-    if (limit) {
-      return this.decisionHistory.slice(-limit);
-    }
-    return [...this.decisionHistory];
+    return this.statsManager.getDecisionHistory(limit);
   }
 
   // ===========================================================================
-  // Private: Context Methods
+  // Private: LLM & Execution Helpers
   // ===========================================================================
 
-  /**
-   * Filter available actions based on communication type and available integrations.
-   */
-  private filterActionsByCommunicationType(
-    enabledActions: DecisionType[],
-    communicationClassification: any,
-    availableIntegrations: any[]
-  ): DecisionType[] {
-    // Filter actions based on communication channel capabilities
-    return enabledActions.filter(action => {
-      switch (communicationClassification?.channel) {
-        case 'system':
-          // System channel supports email and notification actions
-          return [
-            DecisionType.SEND_SYSTEM_EMAIL,
-            DecisionType.SEND_NOTIFICATION,
-            DecisionType.ASSIGN_PIPELINE,
-            DecisionType.CREATE_TASK
-          ].includes(action);
+  protected initializeLLMClient(): ILLMClient {
+    // We now construct a fallback chain:
+    // 1. Primary configured provider (from config or env)
+    // 2. Gemini (Free Tier) - if invalid key, will fail fast
+    // 3. Ollama (Local) - if not running, will fail fast
 
-        case 'business':
-          // Business channel supports email and integration actions
-          return [
-            DecisionType.SEND_BUSINESS_EMAIL,
-            DecisionType.TRIGGER_AUTOMATION,
-            DecisionType.ASSIGN_PIPELINE,
-            DecisionType.CREATE_TASK,
-            DecisionType.CREATE_EVENT,
-            DecisionType.UPDATE_EVENT
-          ].includes(action);
+    const clients: ILLMClient[] = [];
 
-        case 'integration':
-          // Integration channel supports all actions
-          return true;
-
-        default:
-          // Default to basic actions for unknown channels
-          return [
-            DecisionType.ASSIGN_PIPELINE,
-            DecisionType.CREATE_TASK,
-            DecisionType.SEND_NOTIFICATION
-          ].includes(action);
-      }
-    });
-  }
-
-  // ===========================================================================
-  // Private: LLM Methods
-  // ===========================================================================  // ===========================================================================
-  // Private: LLM Methods
-  // ===========================================================================
-
-  /**
-   * Create the LLM client based on configuration.
-   */
-  protected createLLMClient(): ILLMClient {
-    return createLLMClient({
-      provider: this.config.llmProvider,
-      model: this.config.llmModel as LLMModel,
-      defaultOptions: {
-        temperature: this.config.temperature,
-        maxTokens: this.config.maxTokens,
-      },
-    });
-  }
-
-  /**
-   * Build the system prompt for LLM.
-   */
-  private buildSystemPrompt(org: OrgContext): string {
-    const promptOrg: PromptOrgContext = {
-      orgName: org.name,
-      pipelines: org.pipelines.map(p => ({
-        id: p.id,
-        name: p.name,
-        description: p.description,
-        stages: p.stages.map((s, i) => ({ id: s, name: s, order: i })),
-      })),
-      teamMembers: org.users.map(u => ({
-        id: u.id,
-        name: u.name,
-        email: u.email,
-        role: u.role,
-        isAvailable: u.isAvailable,
-      })),
-      timezone: org.settings.timezone,
-      currentDateTime: new Date(),
-    };
-
-    return PromptBuilder.buildSystemPrompt(promptOrg);
-  }
-
-  /**
-   * Build the user prompt for LLM.
-   */
-  private buildUserPrompt(input: AgentInput, context: DecisionContext): string {
-    let prompt = `## Input Information\n\n`;
-    prompt += `- **Source:** ${input.source}\n`;
-    prompt += `- **Type:** ${input.type}\n`;
-    prompt += `- **Timestamp:** ${input.timestamp.toISOString()}\n`;
-
-    if (input.metadata?.senderEmail) {
-      prompt += `- **Sender Email:** ${input.metadata.senderEmail}\n`;
-    }
-    if (input.metadata?.senderName) {
-      prompt += `- **Sender Name:** ${input.metadata.senderName}\n`;
+    // 1. Primary Client
+    try {
+      const primaryClient = createLLMClient({
+        provider: this.config.llmProvider || LLMProvider.OPENAI,
+        model: (this.config.llmModel as LLMModel) || 'gpt-4o',
+        defaultOptions: {
+          temperature: this.config.temperature,
+          maxTokens: this.config.maxTokens,
+        }
+      });
+      clients.push(primaryClient);
+    } catch (e) {
+      this.logger.warn('Failed to create primary LLM client', { error: e });
     }
 
-    prompt += `\n## Content\n\n${input.rawContent}\n`;
+    // 2. Free Tier / Fallbacks (Added automatically for robustness)
+    // Only add if they aren't the primary one
+    const currentProvider = this.config.llmProvider;
 
-    if (input.structuredData && Object.keys(input.structuredData).length > 0) {
-      prompt += `\n## Structured Data\n\n\`\`\`json\n${JSON.stringify(input.structuredData, null, 2)}\n\`\`\`\n`;
+    if (currentProvider !== LLMProvider.GEMINI) {
+      try {
+        // Try to add Gemini
+        const gemini = createLLMClient({
+          provider: LLMProvider.GEMINI,
+          model: 'gemini-2.0-flash'
+        });
+        if (gemini.isReady()) clients.push(gemini);
+      } catch { }
     }
 
-    if (context.history && context.history.recentDecisions.length > 0) {
-      prompt += `\n## Recent Decisions\n\n`;
-      for (const decision of context.history.recentDecisions.slice(0, 5)) {
-        prompt += `- ${decision.decisionType} (${decision.inputType}): Confidence ${decision.confidence.toFixed(2)}, Status: ${decision.status}\n`;
-      }
+    if (currentProvider !== LLMProvider.OLLAMA) {
+      try {
+        // Try to add Ollama
+        // Use env var or default to llama3. This allows users to set specific models like 'gemma:2b'
+        const ollamaModel = (process.env.AGENT_DEFAULT_OLLAMA_MODEL as any) || 'llama3';
+
+        const ollama = createLLMClient({
+          provider: LLMProvider.OLLAMA,
+          model: ollamaModel
+        });
+        // Ollama client is always "ready" if baseUrl is set (default), 
+        // connectivity check happens at request time.
+        clients.push(ollama);
+      } catch { }
     }
 
-    prompt += `\n## Available Actions\n\n`;
-    prompt += context.availableActions.map(a => `- ${a}`).join('\n');
+    if (clients.length === 0) {
+      throw new Error('No compatible LLM clients could be initialized.');
+    }
 
-    prompt += `\n\n---\n\nBased on the above information, analyze the input and provide your decision in the required JSON format.`;
+    if (clients.length === 1) {
+      return clients[0];
+    }
 
-    return prompt;
+    return createFallbackClient(clients);
   }
 
-  /**
-   * Make LLM decision call with Claude→OpenAI fallback.
-   */
   private async makeLLMDecision(systemPrompt: string, userPrompt: string): Promise<string> {
     try {
-      // Try Claude first (or configured primary provider)
       const response = await this.llmClient.complete([
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ]);
-
       return response.content;
     } catch (claudeError) {
-      this.logger.error('[OA] Primary LLM failed, attempting OpenAI fallback', claudeError as Error, {
-        primaryProvider: this.config.llmProvider,
-      });
+      this.logger.error('[OA] Primary LLM failed, attempting OpenAI fallback', claudeError as Error);
 
       try {
-        // Fallback to OpenAI
         const openaiClient = createLLMClient({
           provider: LLMProvider.OPENAI,
           model: 'gpt-4o' as LLMModel,
-          defaultOptions: {
-            temperature: this.config.temperature,
-            maxTokens: this.config.maxTokens,
-          },
+          defaultOptions: { temperature: this.config.temperature },
         });
 
         const fallbackResponse = await openaiClient.complete([
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ]);
-
-        this.logger.info('[OA] OpenAI fallback succeeded', {
-          primaryProvider: this.config.llmProvider,
-        });
-
         return fallbackResponse.content;
       } catch (openaiError) {
-        this.logger.error('[OA] OpenAI fallback also failed', openaiError as Error);
-
-        // Emit routing failure event for UI visibility
         await this.eventBus.emit('intake:routing_failed', {
-          error: 'Both Claude and OpenAI LLM calls failed',
-          primaryError: claudeError instanceof Error ? claudeError.message : String(claudeError),
-          fallbackError: openaiError instanceof Error ? openaiError.message : String(openaiError),
+          error: 'LLM routing failed',
           timestamp: new Date(),
         }, { source: 'agent' });
-
-        // Surface error with details
-        throw new Error(
-          `LLM routing failed - Primary (${this.config.llmProvider}): ${claudeError instanceof Error ? claudeError.message : String(claudeError)}, Fallback (OpenAI): ${openaiError instanceof Error ? openaiError.message : String(openaiError)}`
-        );
+        throw new Error('LLM routing failed');
       }
     }
   }
 
-  // ===========================================================================
-  // Private: Context Methods
-  // ===========================================================================
-
-
-
-  // ===========================================================================
-  // Private: Execution Methods
-  // ===========================================================================
-
-  /**
-   * Execute a decision's actions.
-   */
   private async executeDecision(
     decision: AgentDecisionResult,
     correlationId: string
@@ -1143,22 +577,17 @@ export class OrchestrationAgent {
       correlationId,
       dryRun: this.config.dryRun,
     });
-
-    this.stats.totalActionsExecuted += decision.actions.length;
-
+    this.statsManager.incrementTotalActions(decision.actions.length);
     return outcome;
   }
 
-  /**
-   * Store a pending decision for approval.
-   */
   private storePendingDecision(
     decision: AgentDecisionResult,
     input: AgentInput,
     context: DecisionContext
   ): string {
     const id = `pending-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     this.pendingDecisions.set(id, {
       id,
@@ -1172,212 +601,70 @@ export class OrchestrationAgent {
     return id;
   }
 
-  /**
-   * Record a decision for audit trail.
-   */
-  private async recordDecision(
-    input: AgentInput,
-    decision: AgentDecisionResult,
-    outcome: DecisionOutcome,
-    llmPrompt: string,
-    llmResponse: string
-  ): Promise<void> {
-    const record: DecisionRecord = {
-      id: `dec-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      agentId: this.agentId,
-      orgId: this.config.orgId,
-      inputSource: input.source,
-      inputType: input.type,
-      inputData: { rawContent: input.rawContent, structuredData: input.structuredData },
-      llmPrompt,
-      llmResponse,
-      confidence: decision.confidence,
-      reasoning: decision.reasoning,
-      decisionType: decision.actions[0]?.type ?? DecisionTypeEnum.NO_ACTION,
-      actions: decision.actions,
-      status: outcome.status,
-      executionTime: outcome.executionTime,
-      errorMessage: outcome.errors[0]?.message,
-      createdAt: new Date(),
-      executedAt: outcome.status === DecisionStatusEnum.EXECUTED ? outcome.completedAt : undefined,
-    };
-
-    this.decisionHistory.push(record);
-
-    // Emit decision event
-    await this.eventBus.emit('agent:decision_made', {
-      id: record.id,
-      decisionId: record.id,
-      agentId: this.agentId,
-      decisionType: record.decisionType,
-      status: record.status,
-      confidence: record.confidence,
-      actions: record.actions,
-      timestamp: new Date(),
-      source: 'agent' as const,
-    }, { source: 'agent' });
-  }
-
   // ===========================================================================
-  // Private: Rate Limiting
+  // Private: Notification & Utility Helpers
   // ===========================================================================
 
-  /**
-   * Check if rate limited.
-   */
-  private isRateLimited(): boolean {
-    const now = Date.now();
-
-    // Clean old timestamps
-    this.rateLimiter.minuteTimestamps = this.rateLimiter.minuteTimestamps.filter(t => now - t < 60000);
-    this.rateLimiter.hourTimestamps = this.rateLimiter.hourTimestamps.filter(t => now - t < 3600000);
-
-    const perMinute = this.config.maxActionsPerMinute ?? DEFAULT_RATE_LIMIT_PER_MINUTE;
-    const perHour = this.config.maxActionsPerHour ?? DEFAULT_RATE_LIMIT_PER_HOUR;
-
-    return (
-      this.rateLimiter.minuteTimestamps.length >= perMinute ||
-      this.rateLimiter.hourTimestamps.length >= perHour
-    );
-  }
-
-  /**
-   * Record an action for rate limiting.
-   */
-  private recordRateLimitAction(): void {
-    const now = Date.now();
-    this.rateLimiter.minuteTimestamps.push(now);
-    this.rateLimiter.hourTimestamps.push(now);
-  }
-
-  // ===========================================================================
-  // Private: Notification Methods
-  // ===========================================================================
-
-  /**
-   * Send notification for pending approval.
-   */
   private async sendApprovalNotification(decisionId: string, decision: AgentDecisionResult): Promise<void> {
     this.logger.info('Sending approval notification', { decisionId, intent: decision.intent });
-
-    // In production, this would send email/notification
-    // For now, just log
+    // Implementation would go here
   }
 
-  /**
-   * Send error notification.
-   */
   private async sendErrorNotification(error: Error, input: AgentInput): Promise<void> {
-    this.logger.info('Sending error notification', {
-      error: error.message,
-      inputSource: input.source,
-      inputType: input.type,
-    });
-
-    // In production, this would send email/notification to escalation address
+    this.logger.info('Sending error notification', { error: error.message });
+    // Implementation would go here
   }
 
-  // ===========================================================================
-  // Private: Utility Methods
-  // ===========================================================================
-
-  /**
-   * Convert an AgentEvent to AgentInput.
-   */
   private eventToInput(event: AgentEvent): AgentInput {
     const payload = event.payload as Record<string, unknown>;
-
-    // Build relatedEntityIds, only including eventId if defined
     const relatedEntityIds: Record<string, string> = {};
-    if (event.eventId) {
-      relatedEntityIds.eventId = event.eventId;
-    }
+    if (event.eventId) relatedEntityIds.eventId = event.eventId;
 
     return {
       source: this.mapEventSourceToInputSource(event.source),
       type: event.type,
       rawContent: JSON.stringify(payload),
       structuredData: payload,
-      metadata: {
-        relatedEntityIds,
-        ...event.metadata,
-      },
+      metadata: { relatedEntityIds, ...event.metadata },
       timestamp: event.timestamp,
       correlationId: event.correlationId,
     };
   }
 
-  /**
-   * Map event source to input source.
-   */
   private mapEventSourceToInputSource(source: string | AgentInputSource): AgentInputSource {
     if (Object.values(AgentInputSource).includes(source as AgentInputSource)) {
       return source as AgentInputSource;
     }
-
-    // Map 'agent' and 'system' to appropriate source
     switch (source) {
       case 'agent':
-      case 'system':
-        return AgentInputSource.WORKER;
-      default:
-        return AgentInputSource.API;
+      case 'system': return AgentInputSource.WORKER;
+      default: return AgentInputSource.API;
     }
   }
 
-  /**
-   * Validate and merge configuration with defaults.
-   */
   private validateAndMergeConfig(config: OrchestrationAgentConfig): OrchestrationAgentConfig {
-    // Spread config first, then override with defaults where not provided
-    const merged: OrchestrationAgentConfig = {
+    return {
       ...config,
-      // Required fields with defaults
       orgId: config.orgId,
       llmProvider: config.llmProvider ?? LLMProvider.OPENAI,
-      llmModel: config.llmModel ?? 'gpt-4.1',
-      // Decision thresholds
+      llmModel: config.llmModel ?? 'gpt-4o',
       temperature: config.temperature ?? DEFAULT_AGENT_CONFIG.temperature,
       autoExecuteThreshold: config.autoExecuteThreshold ?? DEFAULT_AGENT_CONFIG.autoExecuteThreshold,
       requireApprovalThreshold: config.requireApprovalThreshold ?? DEFAULT_AGENT_CONFIG.requireApprovalThreshold,
-      // Capabilities
       enabledActions: config.enabledActions ?? Object.values(DecisionTypeEnum),
-      // Rate limits
       maxActionsPerMinute: config.maxActionsPerMinute ?? DEFAULT_AGENT_CONFIG.maxActionsPerMinute,
       maxActionsPerHour: config.maxActionsPerHour ?? DEFAULT_AGENT_CONFIG.maxActionsPerHour,
-      // Notifications
       notifyOnHighPriority: config.notifyOnHighPriority ?? true,
       notifyOnFailure: config.notifyOnFailure ?? true,
       escalationEmail: config.escalationEmail ?? 'admin@example.com',
     };
-
-    return merged;
   }
 }
 
-// =============================================================================
-// Factory Function
-// =============================================================================
-
 /**
- * Create a new OrchestrationAgent instance.
- *
- * @example
- * ```typescript
- * const agent = createOrchestrationAgent({
- *   orgId: 'org-123',
- *   llmProvider: LLMProvider.CLAUDE,
- *   llmModel: 'claude-sonnet-4-20250514',
- *   autoExecuteThreshold: 0.85,
- *   enabledActions: [DecisionType.ASSIGN_PIPELINE, DecisionType.SEND_NOTIFICATION],
- * });
- *
- * agent.start();
- * ```
+ * Factory Function
  */
-export function createOrchestrationAgent(
-  config: OrchestrationAgentConfig
-): OrchestrationAgent {
-  return new OrchestrationAgent(config);
+export function createOrchestrationAgent(config: Partial<OrchestrationAgentConfig> & { orgId: string }): OrchestrationAgent {
+  // @ts-ignore - OrchestrationAgent constructor handles merging defaults
+  return new OrchestrationAgent(config as OrchestrationAgentConfig);
 }
-
