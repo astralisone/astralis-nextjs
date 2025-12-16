@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -281,6 +282,64 @@ export function IntegrationCard({
               )
             )}
           </div>
+
+          {/* Debug Information */}
+          <Accordion type="single" collapsible className="mt-4 border-t pt-4">
+            <AccordionItem value="debug">
+              <AccordionTrigger className="text-xs text-slate-500 hover:text-slate-700">
+                🔧 Debug Info
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-3 text-xs">
+                  <div>
+                    <h4 className="font-semibold text-slate-700 mb-1">Props:</h4>
+                    <div className="bg-slate-50 dark:bg-slate-900 p-2 rounded max-h-32 overflow-auto">
+                      <pre>{JSON.stringify({
+                        integration: {
+                          name: integration.name,
+                          provider: integration.provider,
+                          category: integration.category,
+                          color: integration.color,
+                          description: integration.description?.substring(0, 50) + '...'
+                        },
+                        connection: connection ? {
+                          id: connection.id,
+                          status: connection.status,
+                          lastUsedAt: connection.lastUsedAt,
+                          expiresAt: connection.expiresAt,
+                          errorCount: connection.errorCount,
+                          lastError: connection.lastError?.substring(0, 50) + '...'
+                        } : null,
+                        isConnecting,
+                        isTesting,
+                        isConfigured,
+                        isVerified
+                      }, null, 2)}</pre>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold text-slate-700 mb-1">State:</h4>
+                    <div className="bg-slate-50 dark:bg-slate-900 p-2 rounded">
+                      <pre>{JSON.stringify({
+                        showDisconnectDialog,
+                        isConnected,
+                        isExpired,
+                        hasError
+                      }, null, 2)}</pre>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold text-slate-700 mb-1">Connection Object:</h4>
+                    <div className="bg-slate-50 dark:bg-slate-900 p-2 rounded max-h-32 overflow-auto">
+                      <pre>{JSON.stringify(connection, null, 2)}</pre>
+                    </div>
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </CardContent>
       </Card>
 
