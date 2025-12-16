@@ -7,8 +7,18 @@ import { Redis } from 'ioredis';
  * Made non-blocking so the app can function without Redis
  */
 
-let redisConnection: Redis | null = null;
+// Extended global type
+declare global {
+  var redisConnection: Redis | undefined;
+}
+
+let redisConnection: Redis | null = global.redisConnection || null;
 let redisAvailable = false;
+
+// If we already have a connection, check its status
+if (redisConnection) {
+  redisAvailable = redisConnection.status === 'ready' || redisConnection.status === 'connect';
+}
 
 /**
  * Create Redis connection with graceful error handling
@@ -103,7 +113,12 @@ function createRedisConnection(): Redis | null {
 }
 
 // Initialize connection
-redisConnection = createRedisConnection();
+if (!redisConnection) {
+  redisConnection = createRedisConnection();
+  if (process.env.NODE_ENV !== 'production') {
+    global.redisConnection = redisConnection || undefined;
+  }
+}
 
 /**
  * Check if Redis is available for use
