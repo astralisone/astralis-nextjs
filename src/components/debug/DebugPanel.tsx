@@ -6,13 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSession } from 'next-auth/react';
-import { User, Database, Bot, Settings, RefreshCw } from 'lucide-react';
+import { User, Database, Bot, Settings, RefreshCw, Bug } from 'lucide-react';
 
 export function useDebugPanel() {
   const [isOpen, setIsOpen] = useState(false);
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+      if (e.altKey && e.shiftKey && e.key === 'D') {
         e.preventDefault();
         setIsOpen(prev => !prev);
       }
@@ -49,15 +49,29 @@ export function DebugPanel() {
   }, [isOpen]);
 
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetContent side="right" className="w-[600px]">
-        <SheetHeader>
-          <SheetTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            Debug Panel
-            <Badge variant="outline" className="text-xs">Ctrl+Shift+D</Badge>
-          </SheetTitle>
-        </SheetHeader>
+    <>
+      {/* Floating Debug Icon */}
+      <button
+        onClick={() => setIsOpen(true)}
+        className="fixed bottom-4 right-4 z-50 bg-astralis-blue hover:bg-astralis-navy text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-110 group"
+        title="Open Debug Panel (Option+Shift+D)"
+        aria-label="Open Debug Panel"
+      >
+        <Bug className="h-5 w-5" />
+        <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-slate-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+          Debug Panel
+        </div>
+      </button>
+
+      <Sheet open={isOpen} onOpenChange={setIsOpen}>
+        <SheetContent side="right" className="w-[600px]">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              Debug Panel
+              <Badge variant="outline" className="text-xs">Option+Shift+D</Badge>
+            </SheetTitle>
+          </SheetHeader>
 
         <div className="mt-6 space-y-6">
           <Button variant="outline" size="sm" onClick={fetchDebugData} disabled={isLoading}>
@@ -131,5 +145,6 @@ export function DebugPanel() {
         </div>
       </SheetContent>
     </Sheet>
+    </>
   );
 }
