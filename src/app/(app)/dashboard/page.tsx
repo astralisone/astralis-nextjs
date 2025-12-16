@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { StatsWidget } from '@/components/dashboard/StatsWidget';
+import { RecentDocuments } from '@/components/dashboard/RecentDocuments';
+import { RoiMetricsWidget } from '@/components/dashboard/RoiMetricsWidget';
 
 import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
 import { MetricCard, LineChart, BarChart, AreaChart, ChartContainer } from '@/components/dashboard/charts';
@@ -358,7 +359,7 @@ export default function DashboardPage() {
     );
   }
 
-  const { stats, recentActivity, recentPipelines } = dashboardData;
+  const { stats, recentActivity, recentPipelines, recentDocuments, roiMetrics } = dashboardData;
 
   // Calculate tasks completed from pipeline items
   const tasksCompleted = recentPipelines.reduce((sum, pipeline) => sum + pipeline.itemCount, 0);
@@ -404,6 +405,13 @@ export default function DashboardPage() {
           <div className="text-sm text-slate-500">
             Last updated: {lastRefresh.toLocaleTimeString()}
           </div>
+
+          <Button asChild variant="ghost" size="sm" className="hidden md:flex items-center gap-2">
+            <Link href="/docs">
+              <FileText className="w-4 h-4" />
+              Documentation
+            </Link>
+          </Button>
         </div>
       </div>
 
@@ -470,9 +478,7 @@ export default function DashboardPage() {
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 mb-6 shadow-card-glass animate-slide-in" style={{ animationDelay: '200ms' }}>
         <div className="flex items-center gap-6 overflow-x-auto">
           <span className="text-sm font-semibold text-astralis-navy dark:text-white whitespace-nowrap">Jump to:</span>
-          <a href="#overview" className="text-sm text-astralis-blue hover:text-astralis-blue/80 font-medium whitespace-nowrap transition-colors">
-            📊 Overview
-          </a>
+
           <a href="#intake-trends" className="text-sm text-astralis-blue hover:text-astralis-blue/80 font-medium whitespace-nowrap transition-colors">
             📈 Intake Trends
           </a>
@@ -485,42 +491,11 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Overview Stats with Anchor */}
-      <div id="overview" className="scroll-mt-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatsWidget
-            title="Total Intakes"
-            value={totalIntakes}
-            icon={<Inbox className="w-6 h-6" />}
-            //sparklineData={[]} // Could add intake trends
-            className="animate-slide-in"
-            style={{ animationDelay: '300ms' }}
-          />
-          <StatsWidget
-            title="Documents Processed"
-            value={documentsProcessed}
-            icon={<FileText className="w-6 h-6" />}
-            //sparklineData={[]} // Could add processing trends
-            className="animate-slide-in"
-            style={{ animationDelay: '400ms' }}
-          />
-          <StatsWidget
-            title="Active Workflows"
-            value={0} // todo calculate this oonce workflows Are iun
-            icon={<GitBranch className="w-6 h-6" />}
-            //sparklineData={[]} // Could add workflow trends
-            className="animate-slide-in"
-            style={{ animationDelay: '500ms' }}
-          />
-          <StatsWidget
-            title="Tasks Completed"
-            value={tasksCompleted}
-            icon={<CheckCircle className="w-6 h-6" />}
-            //sparklineData={[]} // Could add task completion trends
-            className="animate-slide-in"
-            style={{ animationDelay: '600ms' }}
-          />
-        </div>
+
+
+      {/* Advanced ROI Metrics */}
+      <div className="mb-6 animate-slide-in" style={{ animationDelay: '650ms' }}>
+        <RoiMetricsWidget metrics={roiMetrics} />
       </div>
 
       {/* Professional Charts Grid with Enhanced Styling */}
@@ -585,39 +560,13 @@ export default function DashboardPage() {
             </Card>
           </div>
 
-          {/* Enhanced Quick Tips with Professional Styling */}
-          <Card className="animate-slide-in shadow-card-glass border-slate-200/60 backdrop-blur-sm" style={{ animationDelay: '1000ms' }}>
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-bold text-astralis-navy flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-br from-astralis-cyan/10 to-cyan-50 rounded-lg border border-astralis-cyan/20">
-                  <Lightbulb className="w-5 h-5 text-astralis-cyan" />
-                </div>
-                AI Command Examples
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="space-y-3">
-                <div className="p-3 bg-gradient-to-r from-astralis-blue/5 to-blue-50 rounded-lg border border-astralis-blue/10">
-                  <p className="text-sm font-medium text-astralis-navy mb-1">📧 Email Automation</p>
-                  <p className="text-xs text-slate-600">"Send welcome email to new customer"</p>
-                </div>
-                <div className="p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200/30">
-                  <p className="text-sm font-medium text-astralis-navy mb-1">📅 Scheduling</p>
-                  <p className="text-xs text-slate-600">"Schedule onboarding call for next week"</p>
-                </div>
-                <div className="p-3 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border border-purple-200/30">
-                  <p className="text-sm font-medium text-astralis-navy mb-1">📁 File Management</p>
-                  <p className="text-xs text-slate-600">"Create customer folder in Google Drive"</p>
-                </div>
-                <div className="p-3 bg-gradient-to-r from-astralis-cyan/5 to-cyan-50 rounded-lg border border-astralis-cyan/20">
-                  <p className="text-sm font-medium text-astralis-navy mb-1">📄 Document Processing</p>
-                  <p className="text-xs text-slate-600">"Process this document and extract key info"</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+
+          {/* Recent Documents Widget */}
+          <div className="animate-slide-in" style={{ animationDelay: '1000ms' }}>
+            <RecentDocuments documents={recentDocuments} />
+          </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 }

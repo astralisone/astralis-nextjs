@@ -65,6 +65,7 @@ export async function GET(req: NextRequest) {
       eventsLast30Days,
       eventsPrev30Days,
       recentPipelines,
+      recentDocuments,
       activityLogs,
     ] = await Promise.all([
       // Pipeline stats
@@ -133,6 +134,23 @@ export async function GET(req: NextRequest) {
         },
       }),
 
+      // Recent documents
+      prisma.document.findMany({
+        where: { orgId },
+        take: 5,
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          fileName: true,
+          mimeType: true,
+          fileSize: true, // Renamed from size in schema
+          status: true,
+          processedAt: true,
+          createdAt: true,
+          cdnUrl: true, // Renamed from url in schema
+        },
+      }),
+
       // Recent activity from ActivityLog
       prisma.activityLog.findMany({
         where: { orgId },
@@ -148,7 +166,39 @@ export async function GET(req: NextRequest) {
           },
         },
       }),
+
+      // Advanced Metrics - ROI & Performance
+      prisma.task.count({ where: { orgId } }),
+      prisma.task.count({ where: { orgId, agentProcessed: true } }),
+      prisma.task.count({ where: { orgId, status: "FAILED" } }),
+      prisma.decisionLog.count({ where: { orgId } }),
     ]);
+
+    // Calculate Advanced Metrics
+    // Destructure new results
+    const totalTasks = results[19] as number;
+    const automatedTasks = results[20] as number;
+    const failedTasks = results[21] as number;
+    const totalDecisions = results[22] as number;
+
+    const automationRate = totalTasks > 0 ? Math.round((automatedTasks / totalTasks) * 100) : 0;
+    const errorRate = totalTasks > 0 ? Number(((failedTasks / totalTasks) * 100).toFixed(1)) : 0;
+    const timeSavedHours = Number((automatedTasks * 0.5).toFixed(1)); // Assume 30 mins saved per automated task
+    const estimatedCost = Number((totalDecisions * 0.04).toFixed(2)); // Approx $0.04 per decision
+
+    // Mock token breakdown based on decisions
+    const modelUsage = {
+      input: totalDecisions * 450, // Approx 450 tokens in per decision
+      output: totalDecisions * 150, // Approx 150 tokens out per decision
+    };
+
+    const roiMetrics = {
+      automationRate,
+      timeSavedHours,
+      estimatedCost,
+      errorRate,
+      modelUsage,
+    };
 
     // Calculate percentage changes (last 30 days vs previous 30 days)
     const calculateChange = (last30Days: number, prev30Days: number): number => {
@@ -226,14 +276,26 @@ export async function GET(req: NextRequest) {
         timestamp: log.createdAt,
         user: log.user
           ? {
-              id: log.user.id,
-              name: log.user.name,
-              avatar: log.user.avatar,
-            }
+            id: log.user.id,
+            name: log.user.name,
+            avatar: log.user.avatar,
+          }
           : undefined,
         metadata: log.metadata as Record<string, unknown> | undefined,
       };
     });
+
+    // Map recent documents
+    const mappedDocuments = recentDocuments.map((doc) => ({
+      id: doc.id,
+      name: doc.fileName,
+      type: doc.mimeType,
+      size: Number(doc.fileSize),
+      status: doc.status as any,
+      processedAt: doc.processedAt,
+      createdAt: doc.createdAt,
+      url: doc.cdnUrl,
+    }));
 
     // Construct response
     const dashboardData: DashboardData = {
@@ -261,6 +323,8 @@ export async function GET(req: NextRequest) {
       },
       recentActivity: mappedActivity,
       recentPipelines: mappedPipelines,
+      recentDocuments: mappedDocuments,
+      roiMetrics,
     };
 
     return NextResponse.json(dashboardData, {

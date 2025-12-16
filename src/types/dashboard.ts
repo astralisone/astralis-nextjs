@@ -87,12 +87,37 @@ export interface MetricCardProps {
 }
 
 /**
+ * Recent Document Item
+ */
+export interface RecentDocument {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  status: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
+  processedAt: Date | null;
+  createdAt: Date;
+  url: string | null;
+}
+
+/**
  * Dashboard Data Response (combined)
  */
 export interface DashboardData {
   stats: DashboardStats;
   recentActivity: ActivityItem[];
   recentPipelines: RecentPipeline[];
+  recentDocuments: RecentDocument[];
+  roiMetrics: {
+    automationRate: number;      // Percentage (0-100)
+    timeSavedHours: number;      // Total hours saved
+    estimatedCost: number;       // Dollar amount (tokens)
+    errorRate: number;           // Percentage of failed ops
+    modelUsage: {                // Token breakdown
+      input: number;
+      output: number;
+    };
+  };
 }
 
 
