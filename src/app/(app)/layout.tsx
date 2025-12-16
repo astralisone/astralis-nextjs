@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth/config';
 import { DashboardSidebar } from '@/components/layout/DashboardSidebar';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
+import { DebugPanelProvider } from '@/components/debug/DebugPanelProvider';
 
 export default async function DashboardLayout({
   children,
@@ -25,6 +26,9 @@ export default async function DashboardLayout({
           {children}
         </main>
       </div>
+
+      {/* Debug Panel - Available globally */}
+      <DebugPanelProvider />
     </div>
   );
 }
