@@ -302,15 +302,15 @@ export function CalendarChatPanel({ userId, orgId, className, onEventCreated }: 
             </div>
             <div className="flex gap-2">
               <Badge className="bg-astralis-blue/20 text-astralis-blue border-astralis-blue/30 text-xs px-2 py-1">
-                <Clock className="h-3 w-3 mr-1" />
+                <Clock className="h-5 w-5 mr-1" />
                 Scheduling
               </Badge>
               <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs px-2 py-1">
-                <Users className="h-3 w-3 mr-1" />
+                <Users className="h-5 w-5 mr-1" />
                 Coordination
               </Badge>
               <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs px-2 py-1">
-                <Activity className="h-3 w-3 mr-1" />
+                <Activity className="h-5 w-5 mr-1" />
                 Intelligence
               </Badge>
             </div>
@@ -344,7 +344,7 @@ export function CalendarChatPanel({ userId, orgId, className, onEventCreated }: 
                 </span>
                 {message.requiresConfirmation && (
                   <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20 text-xs px-2 py-1">
-                    <AlertCircle className="h-3 w-3 mr-1" />
+                    <AlertCircle className="h-5 w-5 mr-1" />
                     Confirmation Required
                   </Badge>
                 )}

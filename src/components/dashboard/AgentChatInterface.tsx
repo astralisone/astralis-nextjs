@@ -318,9 +318,9 @@ export function AgentChatInterface() {
                         }`}
                       >
                         {message.confidence > 0.8 ? (
-                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                          <CheckCircle2 className="h-5 w-5 mr-1" />
                         ) : (
-                          <AlertTriangle className="h-3 w-3 mr-1" />
+                          <AlertTriangle className="h-5 w-5 mr-1" />
                         )}
                         {Math.round(message.confidence * 100)}% confidence
                       </Badge>

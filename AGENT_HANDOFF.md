@@ -15,7 +15,7 @@
    - `OperationalAgentType` enum: AP_CLERK, COMPLIANCE_SENTINEL, LOGISTICS_COORDINATOR
    - New Document columns: `documentType`, `classificationConfidence`, `agentProcessed`, `agentProcessedAt`, `originalName`
 
-2. **Icon Sizes Standardized** - All `h-3 w-3` icons updated to `h-5 w-5` across 11 component files for better visibility.
+2. **Icon Sizes Standardized** - All `h-5 w-5` icons updated to `h-5 w-5` across 11 component files for better visibility.
 
 3. **Production Working** - The documents page error (missing `documentType` column) is resolved. The app is live at https://astralisone.com
 

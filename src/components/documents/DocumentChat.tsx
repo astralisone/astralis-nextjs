@@ -114,15 +114,15 @@ export function DocumentChat({ documentId, className }: DocumentChatProps) {
             </div>
             <div className="flex gap-2">
               <Badge className="bg-astralis-blue/20 text-astralis-blue border-astralis-blue/30 text-xs px-2 py-1">
-                <Search className="h-3 w-3 mr-1" />
+                <Search className="h-5 w-5 mr-1" />
                 Analysis
               </Badge>
               <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs px-2 py-1">
-                <Database className="h-3 w-3 mr-1" />
+                <Database className="h-5 w-5 mr-1" />
                 Processing
               </Badge>
               <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs px-2 py-1">
-                <Zap className="h-3 w-3 mr-1" />
+                <Zap className="h-5 w-5 mr-1" />
                 Intelligence
               </Badge>
             </div>
