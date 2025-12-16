@@ -107,9 +107,10 @@ function IntegrationsPageContent() {
                 expiresAt={integration.credential?.expiresAt}
                 available={integration.available}
                 unavailableReason={integration.unavailableReason}
+                credentialId={integration.credential?.id}
                 onConnect={() => handleConnect(integration.provider)}
                 onDisconnect={() => handleDisconnect(integration.provider)}
-                onTest={() => handleTest(integration.provider)}
+                onTest={(credentialId) => handleTest(integration.provider, credentialId)}
               />
             ))}
           </div>

@@ -27,9 +27,10 @@ interface IntegrationSetupProps {
   expiresAt?: Date | null;
   available?: boolean;
   unavailableReason?: string;
+  credentialId?: string;
   onConnect: () => Promise<void>;
   onDisconnect: () => Promise<void>;
-  onTest?: () => Promise<{ success: boolean; message?: string; needsReconnect?: boolean }>;
+  onTest?: (credentialId?: string) => Promise<{ success: boolean; message?: string; needsReconnect?: boolean }>;
 }
 
 const providerInfo: Record<
@@ -315,10 +316,10 @@ export function IntegrationSetup({
 
   const handleTest = async () => {
     if (!onTest) return;
-    setIsTesting(true);
-    setTestResult(null);
+
+    setTesting(true);
     try {
-      const result = await onTest();
+      const result = await onTest(credentialId);
       setTestResult(result);
     } finally {
       setIsTesting(false);

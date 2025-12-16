@@ -43,14 +43,22 @@ export function useIntegrationsActions(onDataChange: () => void) {
     }
   }, []);
 
-  const handleTest = useCallback(async (provider: IntegrationProvider): Promise<TestResult> => {
+  const handleTest = useCallback(async (provider: IntegrationProvider, credentialId?: string): Promise<TestResult> => {
     try {
+      if (!credentialId) {
+        return {
+          success: false,
+          message: 'No credential ID provided for testing',
+          needsReconnect: false,
+        };
+      }
+
       const res = await fetch(
         `/api/integrations/${provider.toLowerCase().replace(/_/g, '-')}/test`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ credentialId: 'auto-detect' }), // Will be improved
+          body: JSON.stringify({ credentialId }),
         }
       );
 
