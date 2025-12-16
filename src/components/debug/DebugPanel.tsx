@@ -82,8 +82,8 @@ export function DebugPanel() {
       </button>
 
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetContent side="right" className="w-[600px]">
-          <SheetHeader>
+        <SheetContent side="right" className="w-[600px] flex flex-col">
+          <SheetHeader className="flex-shrink-0">
             <SheetTitle className="flex items-center gap-2">
               <Settings className="h-5 w-5" />
               Debug Panel
@@ -91,7 +91,7 @@ export function DebugPanel() {
             </SheetTitle>
           </SheetHeader>
 
-        <div className="mt-6 space-y-6">
+        <div className="mt-6 space-y-6 flex-1 overflow-y-auto">
           <Button variant="outline" size="sm" onClick={fetchDebugData} disabled={isLoading}>
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             Refresh Data
