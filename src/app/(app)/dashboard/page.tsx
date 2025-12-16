@@ -362,6 +362,12 @@ export default function DashboardPage() {
   // Calculate tasks completed from pipeline items
   const tasksCompleted = recentPipelines.reduce((sum, pipeline) => sum + pipeline.itemCount, 0);
 
+  // Extract individual stats for widgets
+  const totalIntakes = stats.intake.total;
+  const documentsProcessed = stats.documents.total;
+  const activePipelines = stats.pipelines.active;
+  const upcomingEvents = stats.events.upcoming;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
