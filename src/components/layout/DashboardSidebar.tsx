@@ -19,6 +19,7 @@ import {
   User,
   Puzzle,
   Shield,
+  Activity,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { OrgSwitcher } from './OrgSwitcher';
@@ -48,6 +49,7 @@ interface DashboardSidebarProps {
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Actions', href: '/admin/actions', icon: Activity },
   { name: 'Pipelines', href: '/pipelines', icon: GitBranch },
   { name: 'Intake', href: '/intake', icon: Inbox },
   { name: 'Documents', href: '/documents', icon: FileText },
@@ -58,7 +60,7 @@ const navigation = [
 ];
 
 const adminNavigation = [
-  { name: 'Actions', href: '/admin/actions', icon: Shield },
+  // Actions moved to main navigation
 ];
 
 /**
@@ -150,7 +152,7 @@ export function DashboardSidebar({ user, isMobile = false, onClose }: DashboardS
         })}
 
         {/* Admin Navigation */}
-        {user.role === 'ADMIN' && (
+        {user.role === 'ADMIN' && adminNavigation.length > 0 && (
           <>
             <div className="px-3 py-2">
               <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
