@@ -49,13 +49,10 @@ const marketingNavItems: NavItem[] = [
   { label: 'Blog', href: '/blog' },
 ];
 
-// App navigation for authenticated users
+// App navigation for authenticated users (non-duplicate links)
 const appNavItems: NavItem[] = [
-  { label: 'Dashboard', href: '/dashboard' },
-  { label: 'Pipelines', href: '/pipelines' },
-  { label: 'Documents', href: '/documents' },
-  { label: 'Scheduling', href: '/scheduling' },
-  { label: 'Settings', href: '/settings' },
+  { label: 'Documentation', href: '/docs' },
+  { label: 'Contact Us', href: '/contact' },
 ];
 
 export function Navigation() {
