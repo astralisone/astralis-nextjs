@@ -12,7 +12,7 @@ interface RecentDocumentsProps {
     style?: React.CSSProperties;
 }
 
-export function RecentDocuments({ documents, className, style }: RecentDocumentsProps) {
+export function RecentDocuments({ documents = [], className, style }: RecentDocumentsProps) {
     const getStatusIcon = (status: string) => {
         switch (status) {
             case 'COMPLETED':

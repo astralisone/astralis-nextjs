@@ -359,10 +359,10 @@ export default function DashboardPage() {
     );
   }
 
-  const { stats, recentActivity, recentPipelines, recentDocuments, roiMetrics } = dashboardData;
+  const { stats, recentActivity, recentPipelines = [], recentDocuments = [], roiMetrics } = dashboardData;
 
   // Calculate tasks completed from pipeline items
-  const tasksCompleted = recentPipelines.reduce((sum, pipeline) => sum + pipeline.itemCount, 0);
+  const tasksCompleted = (recentPipelines || []).reduce((sum, pipeline) => sum + pipeline.itemCount, 0);
 
   // Extract individual stats for widgets
   const totalIntakes = stats.intake.total;
