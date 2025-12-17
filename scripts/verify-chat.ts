@@ -1,7 +1,7 @@
 
 import { OrchestrationAgent } from '../src/lib/agent/core/OrchestrationAgent';
 import { ChatAgent } from '../src/lib/agent/core/ChatAgent';
-import { LLMProvider, DecisionType, AgentDecisionResult, DecisionStatusEnum } from '../src/lib/agent/types/agent.types';
+import { LLMProvider, DecisionType, AgentDecisionResult } from '../src/lib/agent/types/agent.types';
 
 // Mock LLM Response for testing without API keys if needed
 class MockOrchestrationAgent extends OrchestrationAgent {
@@ -17,6 +17,7 @@ class MockOrchestrationAgent extends OrchestrationAgent {
         };
     }
 
+    // @ts-ignore - Overriding private method for testing
     async makeLLMDecision(systemPrompt: string, userPrompt: string): Promise<string> {
         console.log('[MockAgent] Received Prompt:', userPrompt.substring(0, 100) + '...');
 
@@ -72,6 +73,12 @@ async function main() {
             DecisionType.LIST_ACTIVE_AUTOMATIONS,
             DecisionType.NO_ACTION
         ],
+        // Missing props
+        maxActionsPerMinute: 60,
+        maxActionsPerHour: 1000,
+        notifyOnHighPriority: false,
+        notifyOnFailure: true,
+        escalationEmail: 'test@example.com'
     });
 
     // We need to initialize it to register handlers
@@ -93,7 +100,9 @@ async function main() {
     const response1 = await chatAgent.chat("Check my integrations status");
 
     console.log('Response:', response1.message);
-    console.log('Steps:', JSON.stringify(response1.steps, null, 2));
+    if (response1.message.includes('User wants to check integration status')) {
+        console.log('✅ Agent responded nicely.');
+    }
 
     if (response1.steps && response1.steps.length > 0) {
         console.log('✅ Tool execution detected.');
@@ -105,6 +114,17 @@ async function main() {
         }
     } else {
         console.log('❌ No tool execution steps.');
+    }
+
+    // Test 2: Capability Discovery
+    console.log('\n--- Test 2: "What can you do?" ---');
+    const response2 = await chatAgent.chat("What can you do?");
+    console.log('Response:', response2.message);
+
+    if (response2.message.includes('Agent Capabilities') && response2.message.includes('Trigger n8n workflows')) {
+        console.log('✅ Capability discovery response detected.');
+    } else {
+        console.log('❌ Capability discovery response NOT detected.');
     }
 
     process.exit(0);

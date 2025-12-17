@@ -41,9 +41,15 @@ export class ChatAgent {
 
         // Construct the context for the conversation
         // In a real implementation, we would summarize history or pass it to the LLM
-        // For now, we'll treat the simplest ReAct loop: current message + tools
+        // 0. Check for "Capability Discovery" / Help intent
+        const isCapabilityQuery = /^(what|how) (can|do) (you|i)|help|capabilities|features/i.test(message);
+        if (isCapabilityQuery) {
+            return this.handleCapabilityQuery(userId);
+        }
 
-        let currentInput = message;
+        // 1. Build conversation context with history
+        const conversationContext = ConversationContext.buildContext(message, history, steps);
+        let currentInput = conversationContext;
         let turnCount = 0;
 
         while (turnCount < this.maxTurns) {
@@ -173,6 +179,42 @@ Based on this information, provide a clear, helpful answer to the user's questio
         return {
             message: "I reached the maximum number of steps without a final answer.",
             steps
+        };
+    }
+
+
+    /**
+     * Handle detailed capability queries (e.g. "What can you do?").
+     */
+    private async handleCapabilityQuery(userId?: string): Promise<ChatResponse> {
+        const capabilities = [
+            "## 🤖 Agent Capabilities",
+            "I am your Astralis AI assistant. Here is what I can help you with:",
+            "",
+            "### ⚡️ Automations & Workflows",
+            "- **Trigger n8n workflows** (e.g., \"Run the onboarding workflow\")",
+            "- **List active automations** (e.g., \"Show my automations\")",
+            "",
+            "### 📋 Task & Project Management",
+            "- **Create and assign tasks** (e.g., \"Create a task to review Q3 report\")",
+            "- **Update Kanban items**",
+            "- **Check Kanban board state** (e.g., \"What's in progress?\")",
+            "",
+            "### 📅 Scheduling",
+            "- **Create and manage calendar events** (e.g., \"Schedule a meeting with Greg tomorrow at 2pm\")",
+            "- **Check availability**",
+            "",
+            "### 📚 Knowledge & Documents",
+            "- **Search internal documentation** (e.g., \"Search docs for API keys\")",
+            "",
+            "### 📧 Communication",
+            "- **Send emails and notifications**",
+            "- **Check integration status**",
+        ];
+
+        return {
+            message: capabilities.join('\n'),
+            steps: []
         };
     }
 }
