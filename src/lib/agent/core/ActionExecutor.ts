@@ -406,6 +406,72 @@ export class ActionExecutor {
       }
     );
 
+    // GET_KANBAN_STATE handler
+    this.registerHandler(
+      DecisionTypeEnum.GET_KANBAN_STATE,
+      async (params, ctx) => {
+        this.logger.info('Executing GET_KANBAN_STATE', { params, dryRun: ctx.dryRun });
+
+        if (ctx.dryRun) {
+          return {
+            success: true,
+            data: {
+              columns: {
+                NEW: [],
+                IN_PROGRESS: [{ id: 'mock-1', title: 'Mock Task', priority: 3 }],
+                DONE: [],
+              },
+            },
+          };
+        }
+
+        try {
+          // Get all non-archived tasks, grouped by status
+          const tasks = await prisma.task.findMany({
+            where: {
+              orgId: ctx.orgId,
+              status: { in: ['NEW', 'IN_PROGRESS', 'NEEDS_REVIEW', 'BLOCKED'] },
+            },
+            select: {
+              id: true,
+              title: true,
+              status: true,
+              priority: true,
+              updatedAt: true,
+              assignedToUserId: true,
+              pipelineKey: true,
+            },
+            orderBy: { updatedAt: 'desc' },
+            take: 100,
+          });
+
+          // Group by status
+          const kanban = tasks.reduce((acc, task) => {
+            const status = task.status;
+            if (!acc[status]) acc[status] = [];
+            acc[status].push(task);
+            return acc;
+          }, {} as Record<string, typeof tasks>);
+
+          return {
+            success: true,
+            data: {
+              columns: kanban,
+              counts: {
+                NEW: kanban['NEW']?.length || 0,
+                IN_PROGRESS: kanban['IN_PROGRESS']?.length || 0,
+                NEEDS_REVIEW: kanban['NEEDS_REVIEW']?.length || 0,
+                BLOCKED: kanban['BLOCKED']?.length || 0,
+              },
+            },
+          };
+        } catch (error) {
+          this.logger.error('Failed to get kanban state', error);
+          return { success: false, error: (error as Error).message };
+        }
+      }
+    );
+
     // CREATE_EVENT handler
     this.registerHandler<CreateEventParams>(
       DecisionTypeEnum.CREATE_EVENT,
@@ -647,9 +713,9 @@ export class ActionExecutor {
       return { success: true, data: { noActionReason: (params as Record<string, unknown>).reason } };
     });
 
-    // =========================================================================
+    // ===========================================================================
     // Supplemental Handlers (Gmail)
-    // =========================================================================
+    // ===========================================================================
 
     this.registerHandler(DecisionTypeEnum.SEARCH_EMAILS, async (params: any, ctx) => {
       if (ctx.dryRun) return { success: true, data: { dryRun: true, ...params } };
@@ -668,9 +734,9 @@ export class ActionExecutor {
       return { success: true, data: { sent: true } };
     });
 
-    // =========================================================================
+    // ===========================================================================
     // Supplemental Handlers (Google Calendar)
-    // =========================================================================
+    // ===========================================================================
 
     this.registerHandler(DecisionTypeEnum.LIST_EVENTS, async (params: any, ctx) => {
       if (ctx.dryRun) return { success: true, data: { dryRun: true, ...params } };
@@ -706,8 +772,9 @@ export class ActionExecutor {
             return { success: true, data: { eventId: event.id, provider: 'GOOGLE' }, rollbackable: true };
           } catch (e) {
             this.logger.error('Google Calendar creation failed', e as Error);
-            // Fallback to original handler? Or fail? 
-            // Let's fail for now to be explicit, or maybe we just continue
+            // Fall through to default if failed? Or return error?
+            // Returning error is safer to avoid duplicate actions or phantom success
+            return { success: false, error: (e as Error).message };
           }
         }
       }
@@ -717,8 +784,6 @@ export class ActionExecutor {
     });
 
   }
-
-  // ===========================================================================
   // Main Execution Methods
   // ===========================================================================
 

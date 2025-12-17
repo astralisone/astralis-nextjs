@@ -689,6 +689,33 @@ export class DecisionEngine {
     // Build basic actions based on detected intent
     const actions: AgentAction[] = [];
 
+    // IMPROVED FALLBACK: If reason is validation failure (missing info), return NO_ACTION instead of creating a task.
+    // This allows the agent/chat interface to simply ask for clarification.
+    if (reason.includes('Validation failed') || reason.includes('Parse error')) {
+      actions.push({
+        type: DecisionTypeEnum.NO_ACTION,
+        params: { reason: `Clarification needed: ${reason}` },
+        priority: 3,
+        requiresConfirmation: false,
+      });
+
+      const decision: AgentDecisionResult = {
+        intent,
+        confidence: 1.0, // High confidence that we are taking NO ACTION
+        reasoning: this.createUserFriendlyFallbackMessage(reason, intent),
+        actions,
+        requiresApproval: false,
+        priority: urgency,
+        warnings: [`Validation failed, asking for clarification: ${reason}`],
+      };
+
+      return {
+        decision,
+        reason,
+        isPartialFailure: true,
+      };
+    }
+
     // Default action: assign to pipeline with escalation note
     if (this.config.enabledActions.includes(DecisionTypeEnum.ASSIGN_PIPELINE)) {
       const pipelineId = this.selectFallbackPipeline(context, intent);

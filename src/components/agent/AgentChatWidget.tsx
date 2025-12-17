@@ -83,7 +83,7 @@ export function AgentChatWidget() {
         return (
             <Button
                 onClick={() => setIsOpen(true)}
-                className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50 bg-[#0A1B2B] hover:bg-[#1a2f42] border border-[#2B6CB0]/20"
+                className="fixed bottom-8 right-8 h-14 w-14 rounded-full shadow-lg z-[100000] bg-[#0A1B2B] hover:bg-[#1a2f42] border border-[#2B6CB0]/20"
             >
                 <Bot className="h-8 w-8 text-[#2B6CB0]" />
             </Button>
@@ -92,7 +92,7 @@ export function AgentChatWidget() {
 
     return (
         <Card className={cn(
-            "fixed bottom-6 right-6 z-50 shadow-2xl transition-all duration-300 flex flex-col border-[#2B6CB0]/20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+            "fixed bottom-8 right-8 z-[100000] shadow-2xl transition-all duration-300 flex flex-col border-[#2B6CB0]/20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
             isExpanded ? "w-[600px] h-[80vh]" : "w-[400px] h-[600px]"
         )}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 border-b border-border/50">
