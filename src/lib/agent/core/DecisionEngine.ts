@@ -735,7 +735,7 @@ export class DecisionEngine {
     const decision: AgentDecisionResult = {
       intent,
       confidence: DEFAULT_FALLBACK_CONFIDENCE,
-      reasoning: `[FALLBACK] ${reason}. Rule-based detection used.`,
+      reasoning: this.createUserFriendlyFallbackMessage(reason, intent),
       actions,
       requiresApproval: true, // Always require approval for fallback
       priority: urgency,
@@ -747,6 +747,22 @@ export class DecisionEngine {
       reason,
       isPartialFailure: true,
     };
+  }
+
+  /**
+   * Create a user-friendly message for fallback scenarios.
+   */
+  private createUserFriendlyFallbackMessage(technicalReason: string, intent: string): string {
+    // Map technical reasons to user-friendly messages
+    if (technicalReason.includes('Validation failed')) {
+      return "I understood your request but need a bit more specific information to proceed safely. I've drafted a task for this, but please provide more details if possible.";
+    }
+    if (technicalReason.includes('Parse error')) {
+      return "I'm having a little trouble processing that exact request. I've created a task to track this, but you might want to try rephrasing your request.";
+    }
+
+    // Default friendly message
+    return `I've detected that you're interested in ${intent.toLowerCase().replace('_', ' ')}. I've created a task for review, but I'd like to better understand your specific needs.`;
   }
 
   /**

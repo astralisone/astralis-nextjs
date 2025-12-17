@@ -1,5 +1,7 @@
 import { OrchestrationAgent } from './OrchestrationAgent';
 import { AgentInputSource, ChatMessage, DecisionType } from '../types/agent.types';
+import { ResultFormatter } from '../utils/ResultFormatter';
+import { ConversationContext } from '../utils/ConversationContext';
 import { v4 as uuidv4 } from 'uuid';
 
 export interface ChatAgentConfig {
@@ -94,6 +96,7 @@ export class ChatAgent {
                 ].includes(a.type)
             );
 
+            // 3. Update the isInformationGathering block to format observations, update steps, and perform a synthesis turn with the LLM.
             if (isInformationGathering) {
                 // Execute the actions
                 // The process() method in OrchestrationAgent ALREADY executes auto-executable actions
@@ -102,33 +105,68 @@ export class ChatAgent {
                 const executionResults = result.executionResults || [];
 
                 if (executionResults.length > 0) {
-                    // Format the observation from real results
-                    const observation = executionResults.map(r =>
-                        `Action: ${r.action}\nResult: ${JSON.stringify(r.data, null, 2)}`
+                    // Format observations for the LLM
+                    const observations = executionResults.map(r =>
+                        `Action: ${r.action || 'Unknown'}\nResult: ${JSON.stringify(r.data, null, 2)}`
                     ).join('\n\n');
 
                     steps.push({
                         turn: turnCount,
                         actions: realActions,
-                        observation
+                        observation: observations
                     });
 
-                    // Construct next input with the observation
-                    currentInput = `${currentInput}\n\n[SYSTEM] Observation from previous actions:\n${observation}\n\nBased on this, please provide a final answer or take further actions.`;
-                    continue;
+                    // Ask LLM to synthesize final answer based on observations
+                    const synthesisPrompt = `User asked: "${message}"
+
+I have gathered the following information:
+${observations}
+
+Based on this information, provide a clear, helpful answer to the user's question. Be specific and reference the data gathered.`;
+
+                    // Perform synthesis turn
+                    const synthesisResult = await this.agent.process({
+                        source: AgentInputSource.API,
+                        type: 'chat_synthesis',
+                        rawContent: synthesisPrompt,
+                        timestamp: new Date(),
+                        correlationId: uuidv4(),
+                        metadata: {
+                            senderName: userId || 'User',
+                        }
+                    });
+
+                    return {
+                        message: synthesisResult.reasoning || "Based on the information gathered, I can help you with that.",
+                        steps,
+                        toolCalls: realActions
+                    };
                 } else {
                     // If no results returned (maybe auto-execute failed or was disabled), providing feedback
                     const observation = "Actions were proposed but no execution results were returned. They might require approval or failed.";
                     steps.push({ turn: turnCount, actions: realActions, observation });
-                    currentInput = `${currentInput}\n\n[SYSTEM] ${observation}`;
+                    currentInput = `${currentInput} \n\n[SYSTEM] ${observation} `;
                     continue;
                 }
             }
 
-            // If actions were side-effects (Create Task), we are done.
+            // If actions were side-effects or we are done with the loop
+            // We return the final answer.
+            // But we should format the results nicely for the user
+
+            let finalMessage = result.reasoning;
+
+            if (result.executionResults && result.executionResults.length > 0) {
+                const formattedResults = ResultFormatter.formatResultsBlock(realActions, result.executionResults);
+                finalMessage += `\n\n${formattedResults} `;
+            } else if (realActions.length > 0) {
+                finalMessage += "\n\nI have initiated the requested actions, but no immediate results were returned.";
+            }
+
             return {
-                message: result.reasoning + "\n\nI have executed the requested actions.",
-                steps
+                message: finalMessage,
+                steps,
+                toolCalls: realActions,
             };
         }
 
