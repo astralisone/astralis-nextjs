@@ -305,8 +305,8 @@ export function validateOAuthCredentials(
 
   // Check for obviously invalid patterns
   if (credentials.clientId.toLowerCase().includes('null') ||
-      credentials.clientId.includes('personal-access-key') ||
-      credentials.clientId.length < 5) {
+    credentials.clientId.includes('personal-access-key') ||
+    credentials.clientId.length < 5) {
     return {
       provider,
       available: false,
@@ -330,11 +330,12 @@ export function validateOAuthCredentials(
     case 'GMAIL':
     case 'GOOGLE_DRIVE':
     case 'GOOGLE_DOCS':
-      if (!credentials.clientId.includes('.apps.googleusercontent.com')) {
+      // Google client IDs can have various formats, just check minimum length
+      if (credentials.clientId.length < 20) {
         return {
           provider,
           available: false,
-          reason: 'Google client ID should end with .apps.googleusercontent.com'
+          reason: 'Google client ID appears incomplete (typically 40+ characters)'
         };
       }
       break;
@@ -696,28 +697,28 @@ const OAUTH_CONFIGS: Partial<Record<IntegrationProvider, OAuthProviderConfig>> =
   // -------------------------------------------------------------------------
   // CRM / Sales
   // -------------------------------------------------------------------------
-   // Temporarily disabled - invalid OAuth app configuration
-   // HUBSPOT: {
-   //   provider: 'HUBSPOT',
-   //   authorizationUrl: 'https://app.hubspot.com/oauth/authorize',
-   //   tokenUrl: 'https://api.hubapi.com/oauth/v1/token',
-   //   userInfoUrl: 'https://api.hubapi.com/oauth/v1/access-tokens',
-   //   scopes: [
-   //     'crm.objects.contacts.read',
-   //     'crm.objects.contacts.write',
-   //     'crm.objects.companies.read',
-   //     'crm.objects.companies.write',
-   //     'crm.objects.deals.read',
-   //     'crm.objects.deals.write',
-   //   ],
-   //   tokenAuthMethod: 'body',
-   //   parseTokenResponse: (tokens) => ({
-   //     accessToken: tokens.access_token as string,
-   //     refreshToken: tokens.refresh_token as string,
-   //     expiresIn: tokens.expires_in as number,
-   //     tokenType: tokens.token_type as string,
-   //   }),
-   // },
+  // Temporarily disabled - invalid OAuth app configuration
+  // HUBSPOT: {
+  //   provider: 'HUBSPOT',
+  //   authorizationUrl: 'https://app.hubspot.com/oauth/authorize',
+  //   tokenUrl: 'https://api.hubapi.com/oauth/v1/token',
+  //   userInfoUrl: 'https://api.hubapi.com/oauth/v1/access-tokens',
+  //   scopes: [
+  //     'crm.objects.contacts.read',
+  //     'crm.objects.contacts.write',
+  //     'crm.objects.companies.read',
+  //     'crm.objects.companies.write',
+  //     'crm.objects.deals.read',
+  //     'crm.objects.deals.write',
+  //   ],
+  //   tokenAuthMethod: 'body',
+  //   parseTokenResponse: (tokens) => ({
+  //     accessToken: tokens.access_token as string,
+  //     refreshToken: tokens.refresh_token as string,
+  //     expiresIn: tokens.expires_in as number,
+  //     tokenType: tokens.token_type as string,
+  //   }),
+  // },
 
   SALESFORCE: {
     provider: 'SALESFORCE',
@@ -745,12 +746,12 @@ const OAUTH_CONFIGS: Partial<Record<IntegrationProvider, OAuthProviderConfig>> =
     tokenUrl: 'https://slack.com/api/oauth.v2.access',
     revokeUrl: 'https://slack.com/api/auth.revoke',
     userInfoUrl: 'https://slack.com/api/auth.test',
-     scopes: [
-       'channels:read',
-       'chat:write',
-       'users:read',
-       'team:read',
-     ],
+    scopes: [
+      'channels:read',
+      'chat:write',
+      'users:read',
+      'team:read',
+    ],
     tokenAuthMethod: 'body',
     parseTokenResponse: (tokens) => ({
       accessToken: tokens.access_token as string,
@@ -788,29 +789,29 @@ const OAUTH_CONFIGS: Partial<Record<IntegrationProvider, OAuthProviderConfig>> =
     }),
   },
 
-   MICROSOFT_TEAMS: {
-     provider: 'MICROSOFT_TEAMS',
-     authorizationUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
-     tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
-     revokeUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/logout',
-     userInfoUrl: 'https://graph.microsoft.com/v1.0/me',
-     scopes: [
-       'User.Read',
-       'Team.ReadBasic.All',
-       'Channel.ReadBasic.All',
-       'ChannelMessage.Send',
-       'offline_access',
-     ],
-     usePKCE: true, // Microsoft requires PKCE for cross-origin requests
-     tokenAuthMethod: 'body',
-     parseTokenResponse: (tokens) => ({
-       accessToken: tokens.access_token as string,
-       refreshToken: tokens.refresh_token as string,
-       expiresIn: tokens.expires_in as number,
-       scope: tokens.scope as string,
-       tokenType: tokens.token_type as string,
-     }),
-   },
+  MICROSOFT_TEAMS: {
+    provider: 'MICROSOFT_TEAMS',
+    authorizationUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
+    tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
+    revokeUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/logout',
+    userInfoUrl: 'https://graph.microsoft.com/v1.0/me',
+    scopes: [
+      'User.Read',
+      'Team.ReadBasic.All',
+      'Channel.ReadBasic.All',
+      'ChannelMessage.Send',
+      'offline_access',
+    ],
+    usePKCE: true, // Microsoft requires PKCE for cross-origin requests
+    tokenAuthMethod: 'body',
+    parseTokenResponse: (tokens) => ({
+      accessToken: tokens.access_token as string,
+      refreshToken: tokens.refresh_token as string,
+      expiresIn: tokens.expires_in as number,
+      scope: tokens.scope as string,
+      tokenType: tokens.token_type as string,
+    }),
+  },
 
   // -------------------------------------------------------------------------
   // Storage
@@ -896,34 +897,34 @@ const OAUTH_CONFIGS: Partial<Record<IntegrationProvider, OAuthProviderConfig>> =
   // -------------------------------------------------------------------------
   // Developer Tools & Project Management
   // -------------------------------------------------------------------------
-   // Temporarily disabled - truncated client ID in credentials
-   // GITHUB: {
-   //   provider: 'GITHUB',
-   //   authorizationUrl: 'https://github.com/login/oauth/authorize',
-   //   tokenUrl: 'https://github.com/login/oauth/access_token',
-   //   userInfoUrl: 'https://api.github.com/user',
-   //   scopes: ['repo', 'user'],
-   //   tokenAuthMethod: 'body',
-   //   parseTokenResponse: (tokens) => ({
-   //     accessToken: tokens.access_token as string,
-   //     tokenType: tokens.token_type as string,
-   //     scope: tokens.scope as string,
-   //   }),
-   // },
+  // Temporarily disabled - truncated client ID in credentials
+  // GITHUB: {
+  //   provider: 'GITHUB',
+  //   authorizationUrl: 'https://github.com/login/oauth/authorize',
+  //   tokenUrl: 'https://github.com/login/oauth/access_token',
+  //   userInfoUrl: 'https://api.github.com/user',
+  //   scopes: ['repo', 'user'],
+  //   tokenAuthMethod: 'body',
+  //   parseTokenResponse: (tokens) => ({
+  //     accessToken: tokens.access_token as string,
+  //     tokenType: tokens.token_type as string,
+  //     scope: tokens.scope as string,
+  //   }),
+  // },
 
-   FACEBOOK: {
-     provider: 'FACEBOOK',
-     authorizationUrl: 'https://www.facebook.com/v19.0/dialog/oauth',
-     tokenUrl: 'https://graph.facebook.com/v19.0/oauth/access_token',
-     userInfoUrl: 'https://graph.facebook.com/v19.0/me?fields=id,name,email',
-     scopes: ['public_profile'],
-     tokenAuthMethod: 'body',
-     parseTokenResponse: (tokens) => ({
-       accessToken: tokens.access_token as string,
-       tokenType: tokens.token_type as string,
-       expiresIn: tokens.expires_in as number,
-     }),
-   },
+  FACEBOOK: {
+    provider: 'FACEBOOK',
+    authorizationUrl: 'https://www.facebook.com/v19.0/dialog/oauth',
+    tokenUrl: 'https://graph.facebook.com/v19.0/oauth/access_token',
+    userInfoUrl: 'https://graph.facebook.com/v19.0/me?fields=id,name,email',
+    scopes: ['public_profile'],
+    tokenAuthMethod: 'body',
+    parseTokenResponse: (tokens) => ({
+      accessToken: tokens.access_token as string,
+      tokenType: tokens.token_type as string,
+      expiresIn: tokens.expires_in as number,
+    }),
+  },
 
   SHOPIFY: {
     provider: 'SHOPIFY',

@@ -60,10 +60,8 @@ export async function GET(request: NextRequest) {
       }
 
       try {
-
         // Get credentials for this provider
-        alert(session.user.orgId);
-        console.log("Orgid",session.user.orgId);
+        console.log("Checking credentials for", provider, "orgId:", session.user.orgId);
         const credentials = await getOrgOAuthCredentials(provider, session.user.orgId);
 
         // Validate the credentials
@@ -73,11 +71,11 @@ export async function GET(request: NextRequest) {
         providerStatuses.push(status);
       } catch (error) {
         // Include providers with errors as unavailable
-        console.warn(`Failed to check credentials for ${provider}:`, error);
+        console.error(`Failed to check credentials for ${provider}:`, error);
         providerStatuses.push({
           provider,
           available: false,
-          reason: 'Credential validation failed'
+          reason: error instanceof Error ? error.message : 'Credential validation failed'
         });
       }
     }
