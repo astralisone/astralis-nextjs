@@ -140,6 +140,8 @@ export interface OrgContext {
   currentDateTime?: Date;
   /** Organization timezone (defaults to UTC) */
   timezone?: string;
+  /** JSON string of available action schemas */
+  actionSchemas: string;
 }
 
 /**
@@ -214,23 +216,23 @@ export interface SchedulingRequest {
 export interface NotificationEvent {
   /** Type of event triggering notification */
   eventType:
-    | 'INTAKE_CREATED'
-    | 'INTAKE_ASSIGNED'
-    | 'INTAKE_ESCALATED'
-    | 'PIPELINE_STAGE_CHANGED'
-    | 'PIPELINE_ITEM_OVERDUE'
-    | 'PIPELINE_ITEM_COMPLETED'
-    | 'EVENT_REMINDER'
-    | 'EVENT_CANCELLED'
-    | 'EVENT_RESCHEDULED'
-    | 'SYSTEM_ALERT'
-    | 'AUTOMATION_FAILED'
-    | 'AUTOMATION_COMPLETED'
-    | 'USER_MENTIONED'
-    | 'TASK_ASSIGNED'
-    | 'APPROVAL_REQUESTED'
-    | 'APPROVAL_GRANTED'
-    | 'APPROVAL_DENIED';
+  | 'INTAKE_CREATED'
+  | 'INTAKE_ASSIGNED'
+  | 'INTAKE_ESCALATED'
+  | 'PIPELINE_STAGE_CHANGED'
+  | 'PIPELINE_ITEM_OVERDUE'
+  | 'PIPELINE_ITEM_COMPLETED'
+  | 'EVENT_REMINDER'
+  | 'EVENT_CANCELLED'
+  | 'EVENT_RESCHEDULED'
+  | 'SYSTEM_ALERT'
+  | 'AUTOMATION_FAILED'
+  | 'AUTOMATION_COMPLETED'
+  | 'USER_MENTIONED'
+  | 'TASK_ASSIGNED'
+  | 'APPROVAL_REQUESTED'
+  | 'APPROVAL_GRANTED'
+  | 'APPROVAL_DENIED';
   /** Event-specific data */
   eventData: Record<string, unknown>;
   /** Source context description */
@@ -352,7 +354,12 @@ export class PromptBuilder {
    * ```
    */
   static buildSystemPrompt(context: OrgContext): string {
-    return buildSystemPromptFn(context);
+    // Ensure actionSchemas is present, defaulting to empty JSON array if not
+    const safeContext = {
+      ...context,
+      actionSchemas: context.actionSchemas || '[]'
+    };
+    return buildSystemPromptFn(safeContext);
   }
 
   /**

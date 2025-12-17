@@ -8,6 +8,9 @@ import {
     AgentConfig
 } from '../types/agent.types';
 import { PromptBuilder, OrgContext as PromptOrgContext } from '../prompts';
+import { integrationService } from '../../services/integration.service';
+import { getAllowedActions } from '../core/ActionRegistry';
+import { IntegrationProvider } from '@prisma/client';
 
 // Inline communication classifier to simplify dependencies
 class CommunicationClassifier {
@@ -31,7 +34,7 @@ class CommunicationClassifier {
                 channel: 'business' as const,
                 confidence: 0.8,
                 reasoning: 'Business communication detected',
-                requiredIntegrations: ['gmail', 'outlook'],
+                requiredIntegrations: ['GMAIL', 'OUTLOOK'],
                 fallbackOptions: ['system']
             };
         }
@@ -71,7 +74,32 @@ export class AgentContextService {
      * Build the full decision context.
      */
     public async buildDecisionContext(input: AgentInput, agentId: string): Promise<DecisionContext> {
-        // Simplified context building to avoid database issues
+        // Fetch active integrations for the user
+        // Assuming input.userId or input.metadata.userId is available
+        const userId = (input as any).userId || input.metadata?.userId;
+        let activeProviders: IntegrationProvider[] = [];
+
+        if (userId) {
+            try {
+                const credentials = await integrationService.listCredentials(userId, this.config.orgId);
+                activeProviders = credentials
+                    .filter(c => c.isActive && c.status === 'CONNECTED_ACTIVE')
+                    .map(c => c.provider);
+            } catch (error) {
+                console.warn('[AgentContextService] Failed to fetch credentials:', error);
+            }
+        }
+
+        // Determine allowed supplemental actions based on active integrations
+        const supplementalActions = getAllowedActions(activeProviders).map(def => def.action);
+
+        // Merge core enabled actions with supplemental actions
+        // Use Set to avoid duplicates
+        const allEnabledActions = Array.from(new Set([
+            ...this.config.enabledActions,
+            ...supplementalActions
+        ]));
+
         const org: OrgContext = {
             id: this.config.orgId,
             name: 'Organization', // Simplified for now
@@ -86,12 +114,18 @@ export class AgentContextService {
             relatedEvents: [],
         };
 
+        // Map active providers to the expected context shape
+        const availableIntegrationsList = activeProviders.map(provider => ({
+            provider,
+            available: true
+        }));
+
         const communicationClassification = this.communicationClassifier.classifyIntent(input.rawContent, input);
-        const availableIntegrations: any[] = []; // Simplified for now
+
         const availableActions = this.filterActionsByCommunicationType(
-            this.config.enabledActions,
+            allEnabledActions,
             communicationClassification,
-            availableIntegrations
+            activeProviders
         );
 
         return {
@@ -100,7 +134,7 @@ export class AgentContextService {
             history,
             availableActions,
             communicationClassification,
-            availableIntegrations,
+            availableIntegrations: availableIntegrationsList,
             decisionTimestamp: new Date(),
             sessionId: agentId,
         };
@@ -112,50 +146,41 @@ export class AgentContextService {
     public filterActionsByCommunicationType(
         enabledActions: DecisionType[],
         communicationClassification: any,
-        availableIntegrations: any[]
+        availableIntegrations: IntegrationProvider[]
     ): DecisionType[] {
-        // Filter actions based on communication channel capabilities
+        // If it's a specific channel, we prioritize those actions, but we should always allow
+        // actions that are explicitly enabled by active integrations if they make sense contextually.
+        // For now, we'll be permissive: if it's in enabledActions (which now includes supplemental),
+        // we allow it unless it's strictly a system-only context.
+
         return enabledActions.filter(action => {
-            switch (communicationClassification?.channel) {
-                case 'system':
-                    // System channel supports email and notification actions
-                    return [
-                        DecisionTypeEnum.SEND_SYSTEM_EMAIL,
-                        DecisionTypeEnum.SEND_NOTIFICATION,
-                        DecisionTypeEnum.ASSIGN_PIPELINE,
-                        DecisionTypeEnum.CREATE_TASK
-                    ].includes(action);
+            // Always allow core internal actions
+            const coreActions = [
+                DecisionTypeEnum.ASSIGN_PIPELINE,
+                DecisionTypeEnum.CREATE_TASK,
+                DecisionTypeEnum.ESCALATE,
+                DecisionTypeEnum.NO_ACTION,
+                DecisionTypeEnum.SEND_NOTIFICATION
+            ];
 
-                case 'business':
-                    // Business channel supports email and integration actions
-                    return [
-                        DecisionTypeEnum.SEND_BUSINESS_EMAIL,
-                        DecisionTypeEnum.TRIGGER_AUTOMATION,
-                        DecisionTypeEnum.ASSIGN_PIPELINE,
-                        DecisionTypeEnum.CREATE_TASK,
-                        DecisionTypeEnum.CREATE_EVENT,
-                        DecisionTypeEnum.UPDATE_EVENT
-                    ].includes(action);
+            if (coreActions.includes(action)) return true;
 
-                case 'integration':
-                    // Integration channel supports all actions
-                    return true;
-
-                default:
-                    // Default to basic actions for unknown channels
-                    return [
-                        DecisionTypeEnum.ASSIGN_PIPELINE,
-                        DecisionTypeEnum.CREATE_TASK,
-                        DecisionTypeEnum.SEND_NOTIFICATION
-                    ].includes(action);
-            }
+            // For other actions, check if they are supplemental actions supported by active integrations
+            // The fact that they are in 'enabledActions' means they are either configured core or 
+            // added via buildDecisionContext's supplemental logic.
+            // We can refine this filtering later based on strict channel rules if needed.
+            return true;
         });
     }
 
     /**
      * Build the system prompt for LLM.
      */
-    public buildSystemPrompt(org: OrgContext): string {
+    public buildSystemPrompt(org: OrgContext, activeProviders: IntegrationProvider[] = []): string {
+        // Generate schemas for authorized tools
+        const authorizedTools = getAllowedActions(activeProviders);
+        const actionSchemas = JSON.stringify(authorizedTools.map(t => t.schema), null, 2);
+
         const promptOrg: PromptOrgContext = {
             orgName: org.name,
             pipelines: org.pipelines.map(p => ({
@@ -173,6 +198,7 @@ export class AgentContextService {
             })),
             timezone: org.settings.timezone,
             currentDateTime: new Date(),
+            actionSchemas // Inject the dynamic schemas
         };
 
         return PromptBuilder.buildSystemPrompt(promptOrg);

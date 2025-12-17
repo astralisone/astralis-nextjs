@@ -234,81 +234,7 @@ You MUST respond with valid JSON matching this exact schema:
 \`\`\`
 
 ### Action Parameter Schemas
-
-**ASSIGN_PIPELINE:**
-\`\`\`json
-{
-  "type": "ASSIGN_PIPELINE",
-  "params": {
-    "pipelineId": "string",
-    "stageId": "string",
-    "assigneeId": "string | null",
-    "priority": 0-4,
-    "title": "string",
-    "description": "string | null",
-    "tags": ["string"],
-    "dueDate": "ISO date string | null"
-  }
-}
-\`\`\`
-
-**CREATE_EVENT:**
-\`\`\`json
-{
-  "type": "CREATE_EVENT",
-  "params": {
-    "title": "string",
-    "description": "string | null",
-    "startTime": "ISO datetime string",
-    "endTime": "ISO datetime string",
-    "attendees": [{"id": "string", "email": "string", "name": "string"}],
-    "location": "string | null",
-    "reminders": [{"minutes": 60, "method": "email|popup"}],
-    "conferenceLink": true | false
-  }
-}
-\`\`\`
-
-**SEND_NOTIFICATION:**
-\`\`\`json
-{
-  "type": "SEND_NOTIFICATION",
-  "params": {
-    "recipientIds": ["string"],
-    "channel": "EMAIL|IN_APP|SMS|PUSH",
-    "template": "string | null",
-    "subject": "string",
-    "body": "string",
-    "urgency": "CRITICAL|HIGH|MEDIUM|LOW",
-    "actionUrl": "string | null"
-  }
-}
-\`\`\`
-
-**TRIGGER_AUTOMATION:**
-\`\`\`json
-{
-  "type": "TRIGGER_AUTOMATION",
-  "params": {
-    "workflowId": "string",
-    "webhookUrl": "string | null",
-    "payload": {}
-  }
-}
-\`\`\`
-
-**ESCALATE:**
-\`\`\`json
-{
-  "type": "ESCALATE",
-  "params": {
-    "reason": "string",
-    "escalateTo": ["string"],
-    "originalInput": {},
-    "suggestedAction": "string | null"
-  }
-}
-\`\`\`
+{actionSchemas}
 
 ---
 
@@ -535,6 +461,7 @@ export function buildSystemPrompt(context: {
   }>;
   currentDateTime?: Date;
   timezone?: string;
+  actionSchemas: string;
 }): string {
   const {
     orgName,
@@ -542,6 +469,7 @@ export function buildSystemPrompt(context: {
     teamMembers,
     currentDateTime = new Date(),
     timezone = 'UTC',
+    actionSchemas
   } = context;
 
   const pipelinesJson = JSON.stringify(
@@ -571,7 +499,8 @@ export function buildSystemPrompt(context: {
     .replace('{pipelinesJson}', pipelinesJson)
     .replace('{teamMembersJson}', teamMembersJson)
     .replace('{currentDateTime}', currentDateTime.toISOString())
-    .replace('{timezone}', timezone);
+    .replace('{timezone}', timezone)
+    .replace('{actionSchemas}', actionSchemas);
 }
 
 export default ORCHESTRATION_SYSTEM_PROMPT;

@@ -169,6 +169,43 @@ export enum DecisionType {
   GET_KANBAN_STATE = 'GET_KANBAN_STATE',
   /** Search documents in the knowledge base */
   SEARCH_DOCUMENTS = 'SEARCH_DOCUMENTS',
+
+  // Gmail / Google Workspace
+  REPLY_TO_EMAIL = 'REPLY_TO_EMAIL',
+  SEARCH_EMAILS = 'SEARCH_EMAILS',
+  GET_EMAIL_THREAD = 'GET_EMAIL_THREAD',
+  DRAFT_EMAIL = 'DRAFT_EMAIL',
+
+  // Google Calendar (Extended)
+  DELETE_EVENT = 'DELETE_EVENT',
+  LIST_EVENTS = 'LIST_EVENTS',
+  FIND_COMMON_SLOTS = 'FIND_COMMON_SLOTS',
+  GET_EVENT_DETAILS = 'GET_EVENT_DETAILS',
+
+  // Google Drive & Docs
+  SEARCH_FILES = 'SEARCH_FILES',
+  READ_DOC_CONTENT = 'READ_DOC_CONTENT',
+  CREATE_DOC = 'CREATE_DOC',
+  APPEND_TO_DOC = 'APPEND_TO_DOC',
+  SHARE_FILE = 'SHARE_FILE',
+
+  // Slack
+  SEND_SLACK_MESSAGE = 'SEND_SLACK_MESSAGE',
+  LIST_CHANNELS = 'LIST_CHANNELS',
+  GET_CHANNEL_HISTORY = 'GET_CHANNEL_HISTORY',
+  ADD_REACTION = 'ADD_REACTION',
+
+  // CRM (Salesforce/HubSpot)
+  CREATE_RECORD = 'CREATE_RECORD',
+  UPDATE_RECORD = 'UPDATE_RECORD',
+  SEARCH_RECORDS = 'SEARCH_RECORDS',
+  ADD_NOTE = 'ADD_NOTE',
+  GET_RECORD_DETAILS = 'GET_RECORD_DETAILS',
+
+  // Accounting
+  GET_FINANCIAL_SNAPSHOT = 'GET_FINANCIAL_SNAPSHOT',
+  CREATE_INVOICE = 'CREATE_INVOICE',
+  SEARCH_CUSTOMERS = 'SEARCH_CUSTOMERS',
 }
 
 /**
@@ -405,6 +442,8 @@ export interface AgentConfig {
 export interface AgentInputMetadata {
   /** Email address of the sender (for email inputs) */
   senderEmail?: string;
+  /** User ID of the requester */
+  userId?: string;
   /** Name of the sender */
   senderName?: string;
   /** IP address of the requester */
