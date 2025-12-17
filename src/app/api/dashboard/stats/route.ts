@@ -175,21 +175,26 @@ export async function GET(req: NextRequest) {
           agentDecisionIds: { isEmpty: false } // Tasks with AI decisions
         }
       }),
-      prisma.task.count({ where: { orgId, status: "FAILED" } }),
       prisma.decisionLog.count({ where: { orgId } }),
     ]);
 
     // Calculate Advanced Metrics
     // Destructure new results
-    const totalTasks = results[19] as number;
-    const automatedTasks = results[20] as number;
-    const failedTasks = results[21] as number;
-    const totalDecisions = results[22] as number;
+    // The variables totalTasks, automatedTasks, totalDecisions are now directly assigned from Promise.all
+    // const totalTasks = results[19] as number;
+    // const automatedTasks = results[20] as number;
+    // const failedTasks = results[21] as number; // This query was removed
+    // const totalDecisions = results[21] as number; // Index adjusted
 
     const automationRate = totalTasks > 0 ? Math.round((automatedTasks / totalTasks) * 100) : 0;
-    const errorRate = totalTasks > 0 ? Number(((failedTasks / totalTasks) * 100).toFixed(1)) : 0;
     const timeSavedHours = Number((automatedTasks * 0.5).toFixed(1)); // Assume 30 mins saved per automated task
     const estimatedCost = Number((totalDecisions * 0.04).toFixed(2)); // Approx $0.04 per decision
+
+    // Calculate error rate from decision logs (decisions with ERROR status)
+    const failedDecisions = await prisma.decisionLog.count({
+      where: { orgId, status: "ERROR" }
+    });
+    const errorRate = totalDecisions > 0 ? Number(((failedDecisions / totalDecisions) * 100).toFixed(1)) : 0;
 
     // Mock token breakdown based on decisions
     const modelUsage = {
