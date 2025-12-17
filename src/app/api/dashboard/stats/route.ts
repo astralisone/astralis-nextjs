@@ -67,6 +67,9 @@ export async function GET(req: NextRequest) {
       recentPipelines,
       recentDocuments,
       activityLogs,
+      totalTasks,
+      automatedTasks,
+      totalDecisions,
     ] = await Promise.all([
       // Pipeline stats
       prisma.pipeline.count({ where: { orgId } }),
@@ -178,13 +181,8 @@ export async function GET(req: NextRequest) {
       prisma.decisionLog.count({ where: { orgId } }),
     ]);
 
-    // Calculate Advanced Metrics
-    // Destructure new results
-    // The variables totalTasks, automatedTasks, totalDecisions are now directly assigned from Promise.all
-    // const totalTasks = results[19] as number;
-    // const automatedTasks = results[20] as number;
-    // const failedTasks = results[21] as number; // This query was removed
-    // const totalDecisions = results[21] as number; // Index adjusted
+
+    // Calculate Advanced Metrics (variables already destructured from Promise.all above)
 
     const automationRate = totalTasks > 0 ? Math.round((automatedTasks / totalTasks) * 100) : 0;
     const timeSavedHours = Number((automatedTasks * 0.5).toFixed(1)); // Assume 30 mins saved per automated task
