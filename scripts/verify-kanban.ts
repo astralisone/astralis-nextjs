@@ -4,7 +4,7 @@ import { DecisionType } from '../src/lib/agent/types/agent.types';
 
 async function main() {
     console.log('Initializing ActionExecutor...');
-    const executor = new ActionExecutor({ dryRun: true, orgId: 'test-org', userId: 'test-user' });
+    const executor = new ActionExecutor({ dryRun: true, orgId: 'test-org' });
 
     console.log('Testing GET_KANBAN_STATE with dryRun: true');
     try {
@@ -12,8 +12,10 @@ async function main() {
             {
                 type: DecisionType.GET_KANBAN_STATE,
                 params: {},
+                priority: 3,
+                requiresConfirmation: false,
             }
-        ]);
+        ], { userId: 'test-user' });
 
         console.log('Result:', JSON.stringify(result, null, 2));
 
