@@ -169,7 +169,12 @@ export async function GET(req: NextRequest) {
 
       // Advanced Metrics - ROI & Performance
       prisma.task.count({ where: { orgId } }),
-      prisma.task.count({ where: { orgId, agentProcessed: true } }),
+      prisma.task.count({
+        where: {
+          orgId,
+          agentDecisionIds: { isEmpty: false } // Tasks with AI decisions
+        }
+      }),
       prisma.task.count({ where: { orgId, status: "FAILED" } }),
       prisma.decisionLog.count({ where: { orgId } }),
     ]);
