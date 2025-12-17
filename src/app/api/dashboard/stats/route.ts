@@ -188,11 +188,9 @@ export async function GET(req: NextRequest) {
     const timeSavedHours = Number((automatedTasks * 0.5).toFixed(1)); // Assume 30 mins saved per automated task
     const estimatedCost = Number((totalDecisions * 0.04).toFixed(2)); // Approx $0.04 per decision
 
-    // Calculate error rate from decision logs (decisions with ERROR status)
-    const failedDecisions = await prisma.decisionLog.count({
-      where: { orgId, status: "ERROR" }
-    });
-    const errorRate = totalDecisions > 0 ? Number(((failedDecisions / totalDecisions) * 100).toFixed(1)) : 0;
+    // Error rate: DecisionLog doesn't have a status field, so we can't track failures yet
+    // TODO: Add error tracking to DecisionLog schema
+    const errorRate = 0;
 
     // Mock token breakdown based on decisions
     const modelUsage = {
