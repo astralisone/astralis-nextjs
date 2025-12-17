@@ -15,6 +15,8 @@ import {
   Unlink,
   Clock,
   AlertCircle,
+  Loader2,
+  ExternalLink,
 } from 'lucide-react';
 import type { IntegrationProvider } from '@/types/automation';
 
@@ -240,14 +242,14 @@ export function IntegrationSetup({
         };
       case 'CONNECTED_ERROR':
         return {
-          variant: 'destructive' as const,
+          variant: 'error' as const,
           icon: AlertCircle,
           text: 'Connection Error',
           color: 'text-red-600',
         };
       case 'NEEDS_REAUTH':
         return {
-          variant: 'destructive' as const,
+          variant: 'error' as const,
           icon: AlertCircle,
           text: 'Re-authentication Required',
           color: 'text-orange-600',
@@ -261,21 +263,21 @@ export function IntegrationSetup({
         };
       case 'DISABLED':
         return {
-          variant: 'outline' as const,
+          variant: 'default' as const,
           icon: XCircle,
           text: 'Disabled',
           color: 'text-gray-600',
         };
       case 'SUSPENDED':
         return {
-          variant: 'destructive' as const,
+          variant: 'error' as const,
           icon: AlertCircle,
           text: 'Suspended',
           color: 'text-red-600',
         };
       default:
         return {
-          variant: 'outline' as const,
+          variant: 'default' as const,
           icon: XCircle,
           text: 'Not Connected',
           color: 'text-gray-600',
@@ -317,9 +319,9 @@ export function IntegrationSetup({
   const handleTest = async () => {
     if (!onTest) return;
 
-    setTesting(true);
+    setIsTesting(true);
     try {
-      const result = await onTest(credentialId);
+      const result = await onTest();
       setTestResult(result);
     } finally {
       setIsTesting(false);
@@ -328,209 +330,209 @@ export function IntegrationSetup({
 
   return (
     <>
-    <Card variant="default" className={cn("h-full", !available && "opacity-50")}>
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <div className="text-3xl">{info.icon || '🔌'}</div>
-            <div>
-              <CardTitle className="text-lg">{info.name}</CardTitle>
-              <CardDescription className="text-sm mt-1">{info.description}</CardDescription>
-            </div>
-          </div>
-          <Badge variant={statusDisplay.variant} className={statusDisplay.color}>
-            <StatusIcon className="w-3 h-3 mr-1" />
-            {statusDisplay.text}
-          </Badge>
-        </div>
-      </CardHeader>
-
-      <CardContent className="space-y-4">
-        {/* Status Alerts */}
-        {lastError && (status === 'CONNECTED_ERROR' || status === 'NEEDS_REAUTH') && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              <strong>Connection Issue:</strong> {lastError}
-              {status === 'NEEDS_REAUTH' && (
-                <div className="mt-2">
-                  <strong>Action Required:</strong> Please reconnect this integration.
-                </div>
-              )}
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {isExpired && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              <strong>Expired:</strong> This connection has expired. Please reconnect to continue
-              using it.
-            </AlertDescription>
-          </Alert>
-        )}
-
-
-
-        {/* Unavailable Integration Alert */}
-        {!available && unavailableReason && (
-          <Alert variant="warning" showIcon>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              <strong>Not Available:</strong> {unavailableReason}
-              <div className="mt-2">
-                <strong>Action Required:</strong> Contact your administrator to configure OAuth credentials for this integration.
+      <Card variant="default" className={cn("h-full", !available && "opacity-50")}>
+        <CardHeader>
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3">
+              <div className="text-3xl">{info.icon || '🔌'}</div>
+              <div>
+                <CardTitle className="text-lg">{info.name}</CardTitle>
+                <CardDescription className="text-sm mt-1">{info.description}</CardDescription>
               </div>
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Test Result */}
-        {testResult !== null && (
-          <Alert variant={testResult.success ? 'success' : 'error'} showIcon>
-            <AlertDescription>
-              {testResult.success
-                ? (testResult.message || 'Connection test successful!')
-                : (testResult.needsReconnect
-                    ? 'Connection expired. Please reconnect this integration.'
-                    : (testResult.message || 'Connection test failed. Please check your credentials.'))}
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Last Used */}
-        {isConnected && lastUsedAt && (
-          <div className="flex items-center gap-2 text-sm text-slate-600">
-            <Clock className=" w-5 h-5" />
-            <span>
-              Last used:{' '}
-              {new Date(lastUsedAt).toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </span>
+            </div>
+            <Badge variant={statusDisplay.variant} className={statusDisplay.color}>
+              <StatusIcon className="w-3 h-3 mr-1" />
+              {statusDisplay.text}
+            </Badge>
           </div>
-        )}
+        </CardHeader>
 
-
-
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2 pt-2">
-          {isConnected ? (
-            <>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleDisconnect}
-                disabled={isDisconnecting}
-                className="flex-1"
-              >
-                <Unlink className=" w-5 h-5 mr-2" />
-                {isDisconnecting ? 'Disconnecting...' : 'Disconnect'}
-              </Button>
-              {onTest && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleTest}
-                  disabled={isTesting}
-                  className="flex-1"
-                >
-                  {isTesting ? 'Testing...' : 'Test Connection'}
-                </Button>
-              )}
-            </>
-          ) : (
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={handleConnect}
-              disabled={isConnecting || !available}
-              className="w-full"
-            >
-              <LinkIcon className=" w-5 h-5 mr-2" />
-              {isConnecting ? 'Connecting...' : !available ? 'Not Available' : 'Connect'}
-            </Button>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-
-    {/* Setup Guide Dialog */}
-    {showSetupGuide && setupGuide && (
-      <Dialog open={showSetupGuide} onOpenChange={setShowSetupGuide}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Setup {setupGuide.name} Integration</DialogTitle>
-            <DialogDescription>
-              {setupGuide.description}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <Alert>
+        <CardContent className="space-y-4">
+          {/* Status Alerts */}
+          {lastError && (status === 'CONNECTED_ERROR' || status === 'NEEDS_REAUTH') && (
+            <Alert variant="error">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                <strong>OAuth Setup Required:</strong> This integration requires OAuth credentials to be configured for your organization.
+                <strong>Connection Issue:</strong> {lastError}
+                {status === 'NEEDS_REAUTH' && (
+                  <div className="mt-2">
+                    <strong>Action Required:</strong> Please reconnect this integration.
+                  </div>
+                )}
               </AlertDescription>
             </Alert>
+          )}
 
-             <div>
-               <h4 className="font-semibold text-astralis-navy mb-2">Setup Steps:</h4>
-               {setupGuide.steps ? (
-                 <ol className="list-decimal list-inside text-sm text-slate-600 space-y-2">
-                   {setupGuide.steps.map((step: string, index: number) => (
-                     <li key={index}>
-                       {step.includes('redirect URI') ? (
-                         <>
-                           Configure the redirect URI: <code className="bg-slate-100 px-1 py-0.5 rounded text-xs break-all">{setupGuide.redirectUri || `https://astralisone.com/api/integrations/${provider.toLowerCase().replace(/_/g, '-')}/oauth/callback`}</code>
-                         </>
-                       ) : (
-                         step
-                       )}
-                     </li>
-                   ))}
-                 </ol>
-               ) : (
-                 <ol className="list-decimal list-inside text-sm text-slate-600 space-y-2">
-                   <li>Go to the {setupGuide.name} developer portal</li>
-                   <li>Create a new OAuth application</li>
-                   <li>Configure the redirect URI: <code className="bg-slate-100 px-1 py-0.5 rounded text-xs break-all">{setupGuide.redirectUri || `https://astralisone.com/api/integrations/${provider.toLowerCase().replace(/_/g, '-')}/oauth/callback`}</code></li>
-                   <li>Copy the Client ID and Client Secret</li>
-                   <li>Enter the credentials in your organization settings</li>
-                 </ol>
-               )}
-             </div>
+          {isExpired && (
+            <Alert variant="error">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Expired:</strong> This connection has expired. Please reconnect to continue
+                using it.
+              </AlertDescription>
+            </Alert>
+          )}
 
-            {setupGuide.setupUrl && setupGuide.setupUrl !== '#' && (
-              <div className="flex gap-2">
-                <Button asChild variant="outline">
-                  <a href={setupGuide.setupUrl} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    Open {setupGuide.name} Developer Portal
-                  </a>
+
+
+          {/* Unavailable Integration Alert */}
+          {!available && unavailableReason && (
+            <Alert variant="warning" showIcon>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Not Available:</strong> {unavailableReason}
+                <div className="mt-2">
+                  <strong>Action Required:</strong> Contact your administrator to configure OAuth credentials for this integration.
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Test Result */}
+          {testResult !== null && (
+            <Alert variant={testResult.success ? 'success' : 'error'} showIcon>
+              <AlertDescription>
+                {testResult.success
+                  ? (testResult.message || 'Connection test successful!')
+                  : (testResult.needsReconnect
+                    ? 'Connection expired. Please reconnect this integration.'
+                    : (testResult.message || 'Connection test failed. Please check your credentials.'))}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Last Used */}
+          {isConnected && lastUsedAt && (
+            <div className="flex items-center gap-2 text-sm text-slate-600">
+              <Clock className=" w-5 h-5" />
+              <span>
+                Last used:{' '}
+                {new Date(lastUsedAt).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </span>
+            </div>
+          )}
+
+
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2 pt-2">
+            {isConnected ? (
+              <>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDisconnect}
+                  disabled={isDisconnecting}
+                  className="flex-1"
+                >
+                  <Unlink className=" w-5 h-5 mr-2" />
+                  {isDisconnecting ? 'Disconnecting...' : 'Disconnect'}
                 </Button>
-                <Button asChild>
-                  <Link href="/settings">
-                    Go to Settings
-                  </Link>
-                </Button>
-              </div>
+                {onTest && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleTest}
+                    disabled={isTesting}
+                    className="flex-1"
+                  >
+                    {isTesting ? 'Testing...' : 'Test Connection'}
+                  </Button>
+                )}
+              </>
+            ) : (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleConnect}
+                disabled={isConnecting || !available}
+                className="w-full"
+              >
+                <LinkIcon className=" w-5 h-5 mr-2" />
+                {isConnecting ? 'Connecting...' : !available ? 'Not Available' : 'Connect'}
+              </Button>
             )}
           </div>
+        </CardContent>
+      </Card>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowSetupGuide(false)}>
-              Close
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    )}
+      {/* Setup Guide Dialog */}
+      {showSetupGuide && setupGuide && (
+        <Dialog open={showSetupGuide} onOpenChange={setShowSetupGuide}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Setup {setupGuide.name} Integration</DialogTitle>
+              <DialogDescription>
+                {setupGuide.description}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>OAuth Setup Required:</strong> This integration requires OAuth credentials to be configured for your organization.
+                </AlertDescription>
+              </Alert>
+
+              <div>
+                <h4 className="font-semibold text-astralis-navy mb-2">Setup Steps:</h4>
+                {setupGuide.steps ? (
+                  <ol className="list-decimal list-inside text-sm text-slate-600 space-y-2">
+                    {setupGuide.steps.map((step: string, index: number) => (
+                      <li key={index}>
+                        {step.includes('redirect URI') ? (
+                          <>
+                            Configure the redirect URI: <code className="bg-slate-100 px-1 py-0.5 rounded text-xs break-all">{setupGuide.redirectUri || `https://astralisone.com/api/integrations/${provider.toLowerCase().replace(/_/g, '-')}/oauth/callback`}</code>
+                          </>
+                        ) : (
+                          step
+                        )}
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  <ol className="list-decimal list-inside text-sm text-slate-600 space-y-2">
+                    <li>Go to the {setupGuide.name} developer portal</li>
+                    <li>Create a new OAuth application</li>
+                    <li>Configure the redirect URI: <code className="bg-slate-100 px-1 py-0.5 rounded text-xs break-all">{setupGuide.redirectUri || `https://astralisone.com/api/integrations/${provider.toLowerCase().replace(/_/g, '-')}/oauth/callback`}</code></li>
+                    <li>Copy the Client ID and Client Secret</li>
+                    <li>Enter the credentials in your organization settings</li>
+                  </ol>
+                )}
+              </div>
+
+              {setupGuide.setupUrl && setupGuide.setupUrl !== '#' && (
+                <div className="flex gap-2">
+                  <Button asChild variant="outline">
+                    <a href={setupGuide.setupUrl} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      Open {setupGuide.name} Developer Portal
+                    </a>
+                  </Button>
+                  <Button asChild>
+                    <Link href="/settings">
+                      Go to Settings
+                    </Link>
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowSetupGuide(false)}>
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
 }

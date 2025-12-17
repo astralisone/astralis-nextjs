@@ -232,6 +232,7 @@ export abstract class BaseLLMClient implements ILLMClient {
   ): Promise<LLMResponse> {
     const startTime = Date.now();
     const requestId = this.generateRequestId();
+    const debugLogging = process.env.LLM_DEBUG_LOGGING === 'true';
 
     console.log(`[LLMClient] [${requestId}] Starting completion request`);
     console.log(`[LLMClient] [${requestId}] Messages: ${messages.length}, Model: ${this.model}`);
@@ -244,6 +245,20 @@ export abstract class BaseLLMClient implements ILLMClient {
 
     // Merge options with defaults
     const mergedOptions = this.mergeOptions(options);
+
+    // Detailed request logging
+    if (debugLogging) {
+      console.log(`[LLMClient] [${requestId}] ========== REQUEST DETAILS ==========`);
+      console.log(`[LLMClient] [${requestId}] Provider: ${this.provider}`);
+      console.log(`[LLMClient] [${requestId}] Model: ${this.model}`);
+      console.log(`[LLMClient] [${requestId}] Options:`, JSON.stringify(mergedOptions, null, 2));
+      console.log(`[LLMClient] [${requestId}] Messages (${messages.length} total):`);
+      messages.forEach((msg, idx) => {
+        console.log(`[LLMClient] [${requestId}]   [${idx}] Role: ${msg.role}`);
+        console.log(`[LLMClient] [${requestId}]   [${idx}] Content: ${this.truncateForLog(msg.content, 500)}`);
+      });
+      console.log(`[LLMClient] [${requestId}] =====================================`);
+    }
 
     // Execute with retry logic
     let lastError: Error | undefined;
@@ -269,6 +284,22 @@ export abstract class BaseLLMClient implements ILLMClient {
 
         console.log(`[LLMClient] [${requestId}] Completed successfully in ${latencyMs}ms`);
         console.log(`[LLMClient] [${requestId}] Tokens used: ${response.usage?.totalTokens ?? 'unknown'}`);
+
+        // Detailed response logging
+        if (debugLogging) {
+          console.log(`[LLMClient] [${requestId}] ========== RESPONSE DETAILS ==========`);
+          console.log(`[LLMClient] [${requestId}] Finish Reason: ${response.finishReason}`);
+          console.log(`[LLMClient] [${requestId}] Latency: ${latencyMs}ms`);
+          if (response.usage) {
+            console.log(`[LLMClient] [${requestId}] Token Usage:`);
+            console.log(`[LLMClient] [${requestId}]   - Prompt Tokens: ${response.usage.promptTokens}`);
+            console.log(`[LLMClient] [${requestId}]   - Completion Tokens: ${response.usage.completionTokens}`);
+            console.log(`[LLMClient] [${requestId}]   - Total Tokens: ${response.usage.totalTokens}`);
+          }
+          console.log(`[LLMClient] [${requestId}] Response Content:`);
+          console.log(`[LLMClient] [${requestId}] ${this.truncateForLog(response.content, 2000)}`);
+          console.log(`[LLMClient] [${requestId}] ======================================`);
+        }
 
         return response;
       } catch (error) {
@@ -325,7 +356,7 @@ export abstract class BaseLLMClient implements ILLMClient {
 
     const requestsInWindow = this.rateLimiter.requestTimestamps.length;
     const isLimited = requestsInWindow >= this.MAX_REQUESTS_PER_WINDOW ||
-                      this.rateLimiter.tokensUsed >= this.MAX_TOKENS_PER_WINDOW;
+      this.rateLimiter.tokensUsed >= this.MAX_TOKENS_PER_WINDOW;
 
     const oldestRequest = this.rateLimiter.requestTimestamps[0] ?? Date.now();
     const resetInMs = Math.max(0, oldestRequest + this.RATE_LIMIT_WINDOW_MS - Date.now());
@@ -621,6 +652,20 @@ export abstract class BaseLLMClient implements ILLMClient {
    */
   private sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Truncate content for logging to prevent excessive output.
+   * Preserves readability while limiting log size.
+   */
+  private truncateForLog(content: string, maxLength: number = 500): string {
+    if (content.length <= maxLength) {
+      return content;
+    }
+
+    const truncated = content.substring(0, maxLength);
+    const remaining = content.length - maxLength;
+    return `${truncated}... [truncated ${remaining} more characters]`;
   }
 }
 
