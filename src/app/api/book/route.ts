@@ -24,6 +24,8 @@ import {
   generateHostNotificationEmail,
 } from '@/lib/email';
 import { addReminderJob } from '@/workers/queues/schedulingReminders.queue';
+import { getEventBus } from '@/lib/agent';
+
 
 /**
  * Booking request validation schema
@@ -287,7 +289,50 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Step 6: Return success with event details
+    // Step 6: Create intake request for the agent/pipeline
+    const DEFAULT_ORG_ID = process.env.DEFAULT_ORG_ID;
+    if (DEFAULT_ORG_ID) {
+      try {
+        const intakeRequest = await prisma.intakeRequest.create({
+          data: {
+            source: 'FORM',
+            status: 'NEW',
+            title: `Public Booking: ${guestName} - ${title}`,
+            description: description || `Public booking for ${title}`,
+            requestData: {
+              bookingId: event.id,
+              guestName,
+              guestEmail,
+              startTime: startTime.toISOString(),
+              endTime: endTime.toISOString(),
+              meetingType,
+            },
+            priority: 2,
+            orgId: DEFAULT_ORG_ID,
+          },
+        });
+
+        // Emit agent event
+        getEventBus().emit('webhook:booking_requested', {
+          bookingId: event.id,
+          date: startTime.toISOString().split('T')[0],
+          time: startTime.toISOString().split('T')[1].substring(0, 5),
+          guestEmail,
+          guestName,
+          purpose: title,
+          hostId: userId,
+          requestedAt: new Date(),
+          intakeRequestId: intakeRequest.id,
+        });
+
+        console.log(`Intake request created and agent event emitted for booking ${event.id}`);
+      } catch (intakeError) {
+        console.error('Failed to create intake request or emit agent event:', intakeError);
+      }
+    }
+
+    // Step 7: Return success with event details
+
     return NextResponse.json(
       {
         success: true,

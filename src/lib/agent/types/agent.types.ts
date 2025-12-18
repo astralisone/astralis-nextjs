@@ -159,6 +159,8 @@ export enum DecisionType {
   ESCALATE = 'ESCALATE',
   /** No action required for this input */
   NO_ACTION = 'NO_ACTION',
+  /** Schedule a new public booking between guest and host */
+  CREATE_BOOKING = 'CREATE_BOOKING',
 
   // Omniscient Tools
   /** Get status of all integrations */

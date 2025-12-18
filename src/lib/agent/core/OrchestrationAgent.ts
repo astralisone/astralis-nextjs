@@ -192,7 +192,7 @@ export class OrchestrationAgent {
       const context = await this.contextService.buildDecisionContext(input, this.agentId);
 
       // Build LLM prompts
-      const systemPrompt = this.contextService.buildSystemPrompt(context.org);
+      const systemPrompt = await this.contextService.buildSystemPrompt(context.org);
       const userPrompt = this.contextService.buildUserPrompt(input, context);
 
       // Make LLM call

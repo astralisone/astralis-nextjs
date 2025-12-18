@@ -574,6 +574,18 @@ export class DecisionEngine {
       case DecisionTypeEnum.NO_ACTION:
         // No params required
         break;
+
+      case DecisionTypeEnum.CREATE_BOOKING:
+        if (typeof params.hostId !== 'string') {
+          errors.push(`${prefix} CREATE_BOOKING requires "hostId" string`);
+        }
+        if (typeof params.guestEmail !== 'string') {
+          errors.push(`${prefix} CREATE_BOOKING requires "guestEmail" string`);
+        }
+        if (typeof params.startTime !== 'string') {
+          errors.push(`${prefix} CREATE_BOOKING requires "startTime" string`);
+        }
+        break;
     }
 
     return { errors, warnings };

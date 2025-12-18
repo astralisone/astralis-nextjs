@@ -11,6 +11,8 @@ import { prisma } from "@/lib/prisma";
 import { detectConflicts } from "@/lib/services/conflict.service";
 import { getEventBus, getAgentInstance } from "@/lib/agent";
 import { addReminderJob } from "@/workers/queues/schedulingReminders.queue";
+import { auth } from "@/lib/auth/config";
+
 
 // Extend global type to include our custom property
 declare global {
@@ -105,157 +107,179 @@ export async function POST(req: NextRequest) {
     // Parse date and time to create proper Date objects
     const { startTime, endTime } = createDateTimeRange(date, time);
 
-    // Get default user ID for conflict detection and event creation
-    const DEFAULT_USER_ID = process.env.DEFAULT_USER_ID;
+    // -------------------------------------------------------------------------
+    // Resolve Host User and Organization
+    // -------------------------------------------------------------------------
+    const session = await auth();
+    let hostUser = null;
+
+    // 1. Try logged-in admin
+    if (session?.user?.id && session.user.role === 'ADMIN') {
+      hostUser = await prisma.users.findUnique({
+        where: { id: session.user.id },
+        select: { id: true, name: true, email: true, isActive: true, orgId: true }
+      });
+    }
+
+    // 2. Try DEFAULT_USER_ID from env
+    if (!hostUser && process.env.DEFAULT_USER_ID) {
+      hostUser = await prisma.users.findUnique({
+        where: { id: process.env.DEFAULT_USER_ID },
+        select: { id: true, name: true, email: true, isActive: true, orgId: true }
+      });
+    }
+
+    // 3. Fallback: Any active ADMIN
+    if (!hostUser) {
+      hostUser = await prisma.users.findFirst({
+        where: { role: 'ADMIN', isActive: true },
+        select: { id: true, name: true, email: true, isActive: true, orgId: true }
+      });
+    }
+
+    if (!hostUser) {
+      console.error(`[Booking] No valid host user found for booking`);
+      return NextResponse.json(
+        { error: "Booking system configuration error", details: "No active host admin found" },
+        { status: 500 }
+      );
+    }
+
+    const HOST_ID = hostUser.id;
+    const ORG_ID = hostUser.orgId || process.env.DEFAULT_ORG_ID;
+
+    if (!ORG_ID) {
+      console.error(`[Booking] Host user ${HOST_ID} has no associated organization`);
+      return NextResponse.json(
+        { error: "Booking system configuration error", details: "Host has no organization" },
+        { status: 500 }
+      );
+    }
+
     let schedulingEventId: string | null = null;
 
-    // Step 1: Check for scheduling conflicts (if DEFAULT_USER_ID is configured)
-    if (DEFAULT_USER_ID) {
-      // Verify user exists before checking conflicts
-      const user = await prisma.users.findUnique({
-        where: { id: DEFAULT_USER_ID },
-        select: { id: true, name: true, email: true, isActive: true },
+    // Step 1: Check for scheduling conflicts
+    const conflictResult = await detectConflicts(HOST_ID, startTime, endTime);
+
+
+    if (conflictResult.hasConflict) {
+      const conflictDetails = conflictResult.conflicts.map((c) => ({
+        eventId: c.eventId,
+        eventTitle: c.eventTitle,
+        startTime: c.startTime.toISOString(),
+        endTime: c.endTime.toISOString(),
+        conflictType: c.conflictType,
+      }));
+
+      const availabilityIssueDetails = conflictResult.availabilityIssues.map((a) => ({
+        message: a.message,
+        affectedTime: a.affectedTime,
+      }));
+
+      console.log(`[Booking] Conflict detected for ${date} at ${time}:`, {
+        severity: conflictResult.severity,
+        conflicts: conflictDetails,
+        availabilityIssues: availabilityIssueDetails,
       });
 
-      if (!user) {
-        console.error(`[Booking] Default user not found: ${DEFAULT_USER_ID}`);
-        return NextResponse.json(
-          { error: "Booking system configuration error", details: "Default host user not found" },
-          { status: 500 }
-        );
-      }
-
-      if (!user.isActive) {
-        console.error(`[Booking] Default user is inactive: ${DEFAULT_USER_ID}`);
-        return NextResponse.json(
-          { error: "Booking system unavailable", details: "The booking host is not accepting bookings" },
-          { status: 503 }
-        );
-      }
-
-      // Check for conflicts using the conflict detection service
-      const conflictResult = await detectConflicts(DEFAULT_USER_ID, startTime, endTime);
-
-      if (conflictResult.hasConflict) {
-        const conflictDetails = conflictResult.conflicts.map((c) => ({
-          eventId: c.eventId,
-          eventTitle: c.eventTitle,
-          startTime: c.startTime.toISOString(),
-          endTime: c.endTime.toISOString(),
-          conflictType: c.conflictType,
-        }));
-
-        const availabilityIssueDetails = conflictResult.availabilityIssues.map((a) => ({
-          message: a.message,
-          affectedTime: a.affectedTime,
-        }));
-
-        console.log(`[Booking] Conflict detected for ${date} at ${time}:`, {
+      return NextResponse.json(
+        {
+          error: "Scheduling conflict detected",
           severity: conflictResult.severity,
           conflicts: conflictDetails,
           availabilityIssues: availabilityIssueDetails,
-        });
+          message:
+            conflictResult.severity === "high"
+              ? "The requested time slot is not available. Please choose a different time."
+              : "There are potential conflicts with this time slot. Please choose a different time.",
+        },
+        { status: 409 }
+      );
+    }
 
-        return NextResponse.json(
-          {
-            error: "Scheduling conflict detected",
-            severity: conflictResult.severity,
-            conflicts: conflictDetails,
-            availabilityIssues: availabilityIssueDetails,
-            message:
-              conflictResult.severity === "high"
-                ? "The requested time slot is not available. Please choose a different time."
-                : "There are potential conflicts with this time slot. Please choose a different time.",
+    // Step 2: Create SchedulingEvent record
+    try {
+      const schedulingEvent = await prisma.schedulingEvent.create({
+        data: {
+          userId: HOST_ID,
+          title: `Consultation: ${name}${company ? ` (${company})` : ""}`,
+          description: message || `${meetingType} consultation requested`,
+          startTime,
+          endTime,
+          timezone: "America/New_York", // Default timezone for consultations
+          participantEmails: [email],
+          status: "SCHEDULED",
+          aiSuggestionMeta: {
+            guestName: name,
+            guestEmail: email,
+            guestPhone: phone,
+            company: company || null,
+            meetingType,
+            bookedAt: new Date().toISOString(),
+            source: "booking_modal",
           },
-          { status: 409 }
+        },
+      });
+
+      schedulingEventId = schedulingEvent.id;
+      console.log(`[Booking] SchedulingEvent created: ${schedulingEvent.id}`);
+
+      // Create EventReminder entries (24h and 1h before)
+      const now = new Date();
+      const reminders = [];
+
+      const reminder24h = new Date(startTime);
+      reminder24h.setHours(reminder24h.getHours() - 24);
+
+      const reminder1h = new Date(startTime);
+      reminder1h.setHours(reminder1h.getHours() - 1);
+
+      if (reminder24h > now) {
+        reminders.push(
+          prisma.eventReminder.create({
+            data: {
+              eventId: schedulingEvent.id,
+              reminderTime: reminder24h,
+              status: "PENDING",
+            },
+          })
         );
       }
 
-      // Step 2: Create SchedulingEvent record
-      try {
-        const schedulingEvent = await prisma.schedulingEvent.create({
-          data: {
-            userId: DEFAULT_USER_ID,
-            title: `Consultation: ${name}${company ? ` (${company})` : ""}`,
-            description: message || `${meetingType} consultation requested`,
-            startTime,
-            endTime,
-            timezone: "America/New_York", // Default timezone for consultations
-            participantEmails: [email],
-            status: "SCHEDULED",
-            aiSuggestionMeta: {
-              guestName: name,
-              guestEmail: email,
-              guestPhone: phone,
-              company: company || null,
-              meetingType,
-              bookedAt: new Date().toISOString(),
-              source: "booking_modal",
+      if (reminder1h > now) {
+        reminders.push(
+          prisma.eventReminder.create({
+            data: {
+              eventId: schedulingEvent.id,
+              reminderTime: reminder1h,
+              status: "PENDING",
             },
-          },
-        });
+          })
+        );
+      }
 
-        schedulingEventId = schedulingEvent.id;
-        console.log(`[Booking] SchedulingEvent created: ${schedulingEvent.id}`);
+      if (reminders.length > 0) {
+        const createdReminders = await Promise.all(reminders);
+        console.log(`[Booking] Created ${reminders.length} reminders for event ${schedulingEvent.id}`);
 
-        // Create EventReminder entries (24h and 1h before)
-        const now = new Date();
-        const reminders = [];
-
-        const reminder24h = new Date(startTime);
-        reminder24h.setHours(reminder24h.getHours() - 24);
-
-        const reminder1h = new Date(startTime);
-        reminder1h.setHours(reminder1h.getHours() - 1);
-
-        if (reminder24h > now) {
-          reminders.push(
-            prisma.eventReminder.create({
-              data: {
-                eventId: schedulingEvent.id,
-                reminderTime: reminder24h,
-                status: "PENDING",
-              },
-            })
-          );
-        }
-
-        if (reminder1h > now) {
-          reminders.push(
-            prisma.eventReminder.create({
-              data: {
-                eventId: schedulingEvent.id,
-                reminderTime: reminder1h,
-                status: "PENDING",
-              },
-            })
-          );
-        }
-
-        if (reminders.length > 0) {
-          const createdReminders = await Promise.all(reminders);
-          console.log(`[Booking] Created ${reminders.length} reminders for event ${schedulingEvent.id}`);
-
-          // Queue each reminder for processing
-          for (const reminder of createdReminders) {
-            try {
-              await addReminderJob({
-                reminderId: reminder.id,
-                eventId: reminder.eventId,
-              });
-            } catch (queueError) {
-              console.error(`[Booking] Failed to queue reminder ${reminder.id}:`, queueError);
-              // Don't fail the booking if queueing fails
-            }
+        // Queue each reminder for processing
+        for (const reminder of createdReminders) {
+          try {
+            await addReminderJob({
+              reminderId: reminder.id,
+              eventId: reminder.eventId,
+            });
+          } catch (queueError) {
+            console.error(`[Booking] Failed to queue reminder ${reminder.id}:`, queueError);
+            // Don't fail the booking if queueing fails
           }
         }
-      } catch (eventError) {
-        console.error("[Booking] Failed to create SchedulingEvent:", eventError);
-        // Continue without SchedulingEvent - the booking can still proceed via intake
       }
-    } else {
-      console.warn("[Booking] DEFAULT_USER_ID not configured, skipping conflict detection and event creation");
+    } catch (eventError) {
+      console.error("[Booking] Failed to create SchedulingEvent:", eventError);
+      // Continue without SchedulingEvent - the booking can still proceed via intake
     }
+
 
     // Generate a unique booking ID
     const bookingId = `BK-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
@@ -340,15 +364,11 @@ export async function POST(req: NextRequest) {
       // Continue processing even if email fails, but log prominently
     }
 
-    // Create intake request for the booking to appear in the intake pipeline
-    const DEFAULT_ORG_ID = process.env.DEFAULT_ORG_ID;
-    let intakeRequestId: string | null = null;
-
-    if (DEFAULT_ORG_ID) {
+    if (ORG_ID) {
       try {
         // Verify organization exists before creating intake request
         const org = await prisma.organization.findUnique({
-          where: { id: DEFAULT_ORG_ID },
+          where: { id: ORG_ID },
         });
 
         if (org) {
@@ -372,7 +392,7 @@ export async function POST(req: NextRequest) {
                 submittedAt: new Date().toISOString(),
               },
               priority: 2, // Medium priority
-              orgId: DEFAULT_ORG_ID,
+              orgId: ORG_ID,
             },
           });
 
@@ -443,14 +463,14 @@ export async function POST(req: NextRequest) {
             },
           });
         } else {
-          console.error(`[Booking] Organization not found: ${DEFAULT_ORG_ID}`);
+          console.error(`[Booking] Organization not found: ${ORG_ID}`);
         }
       } catch (intakeError) {
         // Log error but don't fail the booking - email/calendar is more important
         console.error("[Booking] Failed to create intake request:", intakeError);
       }
     } else {
-      console.warn("[Booking] DEFAULT_ORG_ID not configured, skipping intake request creation");
+      console.warn("[Booking] No ORG_ID resolved, skipping intake request creation");
     }
 
     // Log final status summary

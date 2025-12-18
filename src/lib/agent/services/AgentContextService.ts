@@ -10,7 +10,10 @@ import {
 import { PromptBuilder, OrgContext as PromptOrgContext } from '../prompts';
 import { integrationService } from '../../services/integration.service';
 import { getAllowedActions } from '../core/ActionRegistry';
+import { getCoreActions } from '../core/CoreActions';
 import { IntegrationProvider } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
+
 
 // Inline communication classifier to simplify dependencies
 class CommunicationClassifier {
@@ -160,8 +163,10 @@ export class AgentContextService {
                 DecisionTypeEnum.CREATE_TASK,
                 DecisionTypeEnum.ESCALATE,
                 DecisionTypeEnum.NO_ACTION,
-                DecisionTypeEnum.SEND_NOTIFICATION
+                DecisionTypeEnum.SEND_NOTIFICATION,
+                DecisionTypeEnum.CREATE_BOOKING
             ];
+
 
             if (coreActions.includes(action)) return true;
 
@@ -176,10 +181,31 @@ export class AgentContextService {
     /**
      * Build the system prompt for LLM.
      */
-    public buildSystemPrompt(org: OrgContext, activeProviders: IntegrationProvider[] = []): string {
-        // Generate schemas for authorized tools
-        const authorizedTools = getAllowedActions(activeProviders);
+    public async buildSystemPrompt(org: OrgContext, activeProviders: IntegrationProvider[] = []): Promise<string> {
+        // 1. Fetch Core Actions (Internal system tools)
+        const coreActions = getCoreActions();
+
+        // 2. Fetch Supplemental Actions (Integration tools)
+        const supplementalActions = getAllowedActions(activeProviders);
+
+        // 3. Merge all authorized tools
+        const authorizedTools = [...coreActions, ...supplementalActions];
         const actionSchemas = JSON.stringify(authorizedTools.map(t => t.schema), null, 2);
+
+        // 4. Fetch dynamic context from DB for specific actions
+        // Fetch active automations for TRIGGER_AUTOMATION
+        const activeAutomations = await prisma.automation.findMany({
+            where: { orgId: org.id, isActive: true },
+            select: { id: true, name: true, description: true }
+        });
+
+        // Fetch upcoming bookings for CREATE_BOOKING referencing
+        const upcomingBookings = await prisma.schedulingEvent.findMany({
+            where: { userId: { in: org.users.map(u => u.id) }, status: 'SCHEDULED' },
+            take: 10,
+            orderBy: { startTime: 'asc' },
+            select: { id: true, title: true, startTime: true, userId: true }
+        });
 
         const promptOrg: PromptOrgContext = {
             orgName: org.name,
@@ -201,8 +227,22 @@ export class AgentContextService {
             actionSchemas // Inject the dynamic schemas
         };
 
-        return PromptBuilder.buildSystemPrompt(promptOrg);
+        let systemPrompt = PromptBuilder.buildSystemPrompt(promptOrg);
+
+        // 5. Inject Dynamic Reference Lists
+        if (activeAutomations.length > 0) {
+            systemPrompt += `\n\n## Available Automations (for TRIGGER_AUTOMATION)\n`;
+            systemPrompt += activeAutomations.map(a => `- ID: ${a.id} | Name: ${a.name} | Description: ${a.description}`).join('\n');
+        }
+
+        if (upcomingBookings.length > 0) {
+            systemPrompt += `\n\n## Upcoming Scheduled Bookings\n`;
+            systemPrompt += upcomingBookings.map(b => `- ID: ${b.id} | Title: ${b.title} | Time: ${b.startTime.toISOString()} | Host: ${b.userId}`).join('\n');
+        }
+
+        return systemPrompt;
     }
+
 
     /**
      * Build the user prompt for LLM.

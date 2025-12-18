@@ -2131,6 +2131,7 @@ enum DecisionType {
   DATE_CALCULATION
   ARRAY_COMPARISON
   CREATE_TASK
+  CREATE_BOOKING
 }
 
 enum DecisionStatus {
