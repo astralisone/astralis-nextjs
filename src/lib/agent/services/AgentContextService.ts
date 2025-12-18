@@ -164,7 +164,8 @@ export class AgentContextService {
                 DecisionTypeEnum.ESCALATE,
                 DecisionTypeEnum.NO_ACTION,
                 DecisionTypeEnum.SEND_NOTIFICATION,
-                DecisionTypeEnum.CREATE_BOOKING
+                DecisionTypeEnum.CREATE_BOOKING,
+                DecisionTypeEnum.TRIGGER_AUTOMATION
             ];
 
 

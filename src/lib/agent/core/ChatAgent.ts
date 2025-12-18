@@ -42,7 +42,8 @@ export class ChatAgent {
         // Construct the context for the conversation
         // In a real implementation, we would summarize history or pass it to the LLM
         // 0. Check for "Capability Discovery" / Help intent
-        const isCapabilityQuery = /^(what|how) (can|do) (you|i)|help|capabilities|features/i.test(message);
+        const isCapabilityQuery = /^(what|how) (can|do) (you|i)|help|capabilities|features/i.test(message) &&
+            !/(schedule|task|booking|meeting|calendar|in progress|todo|kanban)/i.test(message);
         if (isCapabilityQuery) {
             return this.handleCapabilityQuery(userId);
         }

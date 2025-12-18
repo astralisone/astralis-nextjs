@@ -494,15 +494,22 @@ export class DecisionEngine {
         break;
 
       case DecisionTypeEnum.CREATE_TASK:
-        if (typeof params.templateId !== 'string') {
-          errors.push(`${prefix} CREATE_TASK requires "templateId" string`);
+        // Relaxing validation for autonomous agent creation
+        if (params.templateId !== undefined && typeof params.templateId !== 'string') {
+          errors.push(`${prefix} CREATE_TASK "templateId" must be a string`);
         }
-        if (typeof params.orgId !== 'string') {
-          errors.push(`${prefix} CREATE_TASK requires "orgId" string`);
+        if (params.orgId !== undefined && typeof params.orgId !== 'string') {
+          errors.push(`${prefix} CREATE_TASK "orgId" must be a string`);
         }
-        if (typeof params.source !== 'string' || !['FORM', 'EMAIL', 'CHAT', 'API', 'CALL'].includes(params.source as string)) {
+
+        // Default source to CHAT if missing
+        if (!params.source) {
+          params.source = 'CHAT';
+          warnings.push(`${prefix} CREATE_TASK missing "source", defaulting to "CHAT"`);
+        } else if (typeof params.source !== 'string' || !['FORM', 'EMAIL', 'CHAT', 'API', 'CALL'].includes(params.source as string)) {
           errors.push(`${prefix} CREATE_TASK requires "source" to be one of: FORM, EMAIL, CHAT, API, CALL`);
         }
+
         if (typeof params.title !== 'string') {
           errors.push(`${prefix} CREATE_TASK requires "title" string`);
         }
@@ -584,6 +591,26 @@ export class DecisionEngine {
         }
         if (typeof params.startTime !== 'string') {
           errors.push(`${prefix} CREATE_BOOKING requires "startTime" string`);
+        }
+        break;
+
+      case DecisionTypeEnum.GET_INTEGRATIONS_STATUS:
+      case DecisionTypeEnum.LIST_ACTIVE_AUTOMATIONS:
+        // No required params
+        break;
+
+      case DecisionTypeEnum.GET_KANBAN_STATE:
+        if (params.status !== undefined && typeof params.status !== 'string') {
+          errors.push(`${prefix} GET_KANBAN_STATE "status" must be a string`);
+        }
+        if (params.limit !== undefined && typeof params.limit !== 'number') {
+          errors.push(`${prefix} GET_KANBAN_STATE "limit" must be a number`);
+        }
+        break;
+
+      case DecisionTypeEnum.SEARCH_DOCUMENTS:
+        if (typeof params.query !== 'string') {
+          errors.push(`${prefix} SEARCH_DOCUMENTS requires "query" string`);
         }
         break;
     }

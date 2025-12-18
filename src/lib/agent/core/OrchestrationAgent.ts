@@ -338,7 +338,7 @@ export class OrchestrationAgent {
     }
 
     // Skip agent's own events to prevent loops
-    if (event.source === 'agent') {
+    if (event.source === 'agent' || event.type === 'agent:action_executed') {
       return;
     }
 

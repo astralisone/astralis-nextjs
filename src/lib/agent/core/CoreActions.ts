@@ -104,6 +104,47 @@ export const CORE_ACTIONS: ActionDefinition[] = [
                 meetingType: '"VIDEO_CALL" | "PHONE_CALL" | "IN_PERSON"'
             }
         }
+    },
+    {
+        action: DecisionType.GET_INTEGRATIONS_STATUS,
+        provider: 'INTERNAL' as any,
+        description: 'Check the status and health of all connected third-party integrations (Gmail, Slack, etc.)',
+        schema: {
+            type: 'GET_INTEGRATIONS_STATUS',
+            params: {}
+        }
+    },
+    {
+        action: DecisionType.LIST_ACTIVE_AUTOMATIONS,
+        provider: 'INTERNAL' as any,
+        description: 'List all currently active n8n automation workflows and their triggers',
+        schema: {
+            type: 'LIST_ACTIVE_AUTOMATIONS',
+            params: {}
+        }
+    },
+    {
+        action: DecisionType.GET_KANBAN_STATE,
+        provider: 'INTERNAL' as any,
+        description: 'Get the current state of the Kanban board, including tasks by stage/status',
+        schema: {
+            type: 'GET_KANBAN_STATE',
+            params: {
+                status: 'string | null (Filter by status like "todo", "in_progress", "done")',
+                limit: 'number (Number of tasks to return, default 50)'
+            }
+        }
+    },
+    {
+        action: DecisionType.SEARCH_DOCUMENTS,
+        provider: 'INTERNAL' as any,
+        description: 'Perform a semantic search across internal documentation and uploaded files',
+        schema: {
+            type: 'SEARCH_DOCUMENTS',
+            params: {
+                query: 'string (The search query)'
+            }
+        }
     }
 ];
 

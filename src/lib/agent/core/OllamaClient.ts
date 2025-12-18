@@ -68,7 +68,7 @@ export class OllamaClient extends BaseLLMClient {
         const body = {
             model: this.model,
             messages: ollamaMessages,
-            stream: false, // We use non-streaming for simplicity in this implementation
+            stream: false,
             options: {
                 temperature: options.temperature,
                 num_predict: options.maxTokens,
@@ -76,6 +76,9 @@ export class OllamaClient extends BaseLLMClient {
                 stop: options.stopSequences,
             }
         };
+
+        // Diagnostic logging for local model debugging
+        console.log(`[OllamaClient] Request Body:`, JSON.stringify(body, null, 2));
 
         try {
             const response = await fetch(`${this.baseUrl}/api/chat`, {
