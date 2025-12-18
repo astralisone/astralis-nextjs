@@ -465,7 +465,8 @@ export function BookingModal({ isOpen, onClose, userId, availabilityRules: propA
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to submit booking');
+        const errorMessage = data.message || data.error || 'Failed to submit booking';
+        throw new Error(errorMessage);
       }
 
       setIsSuccess(true);

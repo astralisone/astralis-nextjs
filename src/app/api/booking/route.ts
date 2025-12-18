@@ -157,6 +157,7 @@ export async function POST(req: NextRequest) {
     }
 
     let schedulingEventId: string | null = null;
+    let intakeRequestId: string | null = null;
 
     // Step 1: Check for scheduling conflicts
     const conflictResult = await detectConflicts(HOST_ID, startTime, endTime);

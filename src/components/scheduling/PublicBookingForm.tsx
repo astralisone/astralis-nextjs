@@ -264,7 +264,7 @@ export function PublicBookingForm({
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to create booking");
+        throw new Error(data.message || data.error || "Failed to create booking");
       }
 
       setSubmitStatus({
