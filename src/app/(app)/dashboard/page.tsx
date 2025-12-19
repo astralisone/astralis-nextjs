@@ -372,15 +372,15 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-astralis-navy">Dashboard</h1>
-          <p className="text-slate-600 mt-1">Welcome back, {session?.user?.name || 'User'}</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-astralis-navy">Dashboard</h1>
+          <p className="text-sm md:text-base text-slate-600 mt-1">Welcome back, {session?.user?.name || 'User'}</p>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-3">
           <Select value={timeRange} onValueChange={handleTimeRangeChange}>
-            <SelectTrigger className="w-32">
+            <SelectTrigger className="w-full sm:w-32">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -391,27 +391,29 @@ export default function DashboardPage() {
             </SelectContent>
           </Select>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={loading}
-            className="flex items-center gap-2"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={loading}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              <span className="sm:inline">Refresh</span>
+            </Button>
 
-          <div className="text-sm text-slate-500">
-            Last updated: {lastRefresh.toLocaleTimeString()}
+            <Button asChild variant="ghost" size="sm" className="hidden md:flex items-center gap-2">
+              <Link href="/docs">
+                <FileText className="w-4 h-4" />
+                Docs
+              </Link>
+            </Button>
           </div>
 
-          <Button asChild variant="ghost" size="sm" className="hidden md:flex items-center gap-2">
-            <Link href="/docs">
-              <FileText className="w-4 h-4" />
-              Documentation
-            </Link>
-          </Button>
+          <div className="text-xs text-slate-500 w-full sm:w-auto text-right sm:text-left">
+            Last updated: {lastRefresh.toLocaleTimeString()}
+          </div>
         </div>
       </div>
 

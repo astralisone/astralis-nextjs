@@ -297,6 +297,7 @@ export class OrgSettingsService {
       organizationName,
       role,
       inviteToken,
+      inviterUserId, // Add this to allow using the inviter's Gmail integration
     });
 
     if (!emailSent) {

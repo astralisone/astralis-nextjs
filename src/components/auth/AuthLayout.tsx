@@ -55,10 +55,10 @@ export function AuthLayout({
       </div>
 
       <div className="relative mx-auto flex min-h-screen w-full flex-col lg:flex-row">
-        <aside className="relative flex w-full flex-col justify-between gap-10 px-8 py-10 text-white lg:w-[46%] lg:px-16">
+        <aside className="relative flex w-full flex-col justify-between gap-8 px-6 py-8 text-white lg:w-[46%] lg:px-16 lg:py-12">
           <Link
             href="/"
-            className="flex items-center gap-3 text-white transition-colors duration-200 hover:text-astralis-blue"
+            className="flex items-center gap-3 text-white transition-all duration-200 hover:text-astralis-blue hover:scale-105 active:scale-95 origin-left"
             aria-label="Back to Astralis home"
           >
             <span className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/10 backdrop-blur-md">
@@ -78,10 +78,10 @@ export function AuthLayout({
             <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-white/80 backdrop-blur-md">
               {badge}
             </span>
-            <h1 className="text-3xl font-semibold leading-tight text-white md:text-4xl">
+            <h1 className="text-2xl font-bold leading-tight text-white md:text-4xl lg:text-5xl">
               Automation built for teams who ship fast.
             </h1>
-            <p className="max-w-lg text-sm text-slate-200/85 md:text-base">
+            <p className="max-w-lg text-sm text-slate-200/85 md:text-base leading-relaxed">
               Pair thoughtful human support with dependable automation workflows. From identity and scheduling to document intelligence, Astralis keeps your entire team operating in sync.
             </p>
 
@@ -98,29 +98,29 @@ export function AuthLayout({
             </div>
           </div>
 
-          <div className="hidden items-center gap-3 text-xs text-white/60 lg:flex">
+          <div className="hidden items-center gap-3 text-xs text-white/60 lg:flex mt-auto">
             <span>&copy; {new Date().getFullYear()} Astralis Operations Platform</span>
             <span aria-hidden="true">•</span>
-            <Link href="/privacy-policy" className="hover:text-white">
+            <Link href="/privacy-policy" className="hover:text-white transition-colors">
               Privacy Policy
             </Link>
             <span aria-hidden="true">•</span>
-            <Link href="/terms-of-service" className="hover:text-white">
+            <Link href="/terms-of-service" className="hover:text-white transition-colors">
               Terms
             </Link>
           </div>
         </aside>
 
-        <main className="flex w-full items-center justify-center px-6 py-12 sm:px-10 lg:w-[54%] lg:pl-20 lg:pr-16">
+        <main className="flex w-full items-center justify-center px-4 py-8 sm:px-10 lg:w-[54%] lg:pl-20 lg:pr-16 lg:py-12">
           <div className="mx-auto w-full max-w-[480px]">
-            <div className="rounded-2xl border border-white/20 bg-white/95 p-8 shadow-[0_20px_60px_-12px_rgba(9,24,45,0.25)] backdrop-blur-xl transition-all duration-300 hover:shadow-[0_24px_72px_-12px_rgba(9,24,45,0.35)] md:p-10">
+            <div className="relative rounded-2xl border border-white/20 bg-white/95 p-6 shadow-[0_20px_60px_-12px_rgba(9,24,45,0.25)] backdrop-blur-xl transition-all duration-300 hover:shadow-[0_24px_72px_-12px_rgba(9,24,45,0.35)] md:p-10">
               {illustration && (
                 <div className="mb-6 flex justify-center">{illustration}</div>
               )}
               <div className="space-y-3 text-center md:text-left">
                 <h2 className="text-2xl font-bold tracking-tight text-astralis-navy md:text-3xl">{title}</h2>
                 {subtitle && (
-                  <p className="text-base font-medium text-slate-700">{subtitle}</p>
+                  <p className="text-base font-medium text-slate-700 leading-relaxed">{subtitle}</p>
                 )}
                 {description && (
                   <p className="text-sm text-slate-500">{description}</p>
@@ -130,13 +130,21 @@ export function AuthLayout({
               <div className="mt-8 space-y-6">{children}</div>
 
               {footer && (
-                <div className="mt-6 border-t border-slate-200 pt-6 text-center text-sm text-slate-500 md:text-left">
+                <div className="mt-8 border-t border-slate-200 pt-6 text-center text-sm text-slate-500 md:text-left">
                   {footer}
                 </div>
               )}
             </div>
 
-            <div className="mt-6 flex items-center justify-center text-xs text-slate-400 lg:hidden">
+            <div className="mt-8 flex flex-col items-center justify-center gap-4 text-xs text-slate-400 lg:hidden">
+              <div className="flex gap-4">
+                <Link href="/privacy-policy" className="hover:text-astralis-blue underline-offset-4 hover:underline">
+                  Privacy Policy
+                </Link>
+                <Link href="/terms-of-service" className="hover:text-astralis-blue underline-offset-4 hover:underline">
+                  Terms
+                </Link>
+              </div>
               <span>&copy; {new Date().getFullYear()} Astralis Operations Platform</span>
             </div>
           </div>

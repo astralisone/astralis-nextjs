@@ -50,7 +50,7 @@ function DashboardPreview() {
       </div>
 
       {/* Stat Cards Grid */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         {/* New Leads Card */}
         <div className="glass-card rounded-lg border border-slate-800 bg-slate-900/60 p-4">
           <div className="text-xs text-slate-400 mb-2">New leads</div>
@@ -104,31 +104,30 @@ function DashboardPreview() {
  */
 function WhatWeDoSection() {
   return (
-    <div></div>
-    // <section className="w-full px-6 py-20 md:px-12 md:py-24 lg:px-20 lg:py-32 bg-white border-b border-slate-200 relative overflow-hidden">
-    //   {/* Background Image with Overlay */}
-    //   <div className="absolute inset-0 opacity-5">
-    //     <Image
-    //       src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=1920&q=60"
-    //       alt="Modern office workspace"
-    //       fill
-    //       className="object-cover"
-    //       loading="lazy"
-    //       sizes="100vw"
-    //     />
-    //   </div>
+    <section className="w-full px-6 py-20 md:px-12 md:py-24 lg:px-20 lg:py-32 bg-white border-b border-slate-200 relative overflow-hidden">
+      {/* Subtle Background Pattern/Image */}
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
+        <Image
+          src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=1920&q=60"
+          alt="Modern office workspace"
+          fill
+          className="object-cover"
+          loading="lazy"
+          sizes="100vw"
+        />
+      </div>
 
-    //   <div className="mx-auto max-w-[1280px] relative z-10">
-    //     <div className="max-w-3xl mx-auto text-center space-y-4 md:space-y-6">
-    //       <h2 className="text-4xl md:text-5xl lg:text-6xl font-semibold text-white tracking-tight">
-    //         {homepageContent.overview.title}
-    //       </h2>
-    //       <p className="text-base md:text-lg lg:text-xl text-white leading-relaxed">
-    //         {homepageContent.overview.description}
-    //       </p>
-    //     </div>
-    //   </div>
-    // </section>
+      <div className="mx-auto max-w-[1280px] relative z-10">
+        <div className="max-w-3xl mx-auto text-center space-y-4 md:space-y-6">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-astralis-navy tracking-tight">
+            {homepageContent.overview.title}
+          </h2>
+          <p className="text-lg md:text-xl text-slate-700 leading-relaxed">
+            {homepageContent.overview.description}
+          </p>
+        </div>
+      </div>
+    </section>
   );
 }
 

@@ -109,10 +109,10 @@ const CTASection = React.forwardRef<HTMLElement, CTASectionProps>(
     const backgroundStyles = backgroundVariant === 'default'
       ? 'bg-white dark:bg-slate-900'
       : backgroundVariant === 'navy'
-      ? 'bg-astralis-navy text-white'
-      : backgroundVariant === 'gradient'
-      ? 'bg-gradient-to-br from-astralis-blue via-astralis-navy to-astralis-navy text-white'
-      : 'bg-slate-50 dark:bg-slate-800';
+        ? 'bg-astralis-navy text-white'
+        : backgroundVariant === 'gradient'
+          ? 'bg-gradient-to-br from-astralis-blue via-astralis-navy to-astralis-navy text-white'
+          : 'bg-slate-50 dark:bg-slate-800';
 
     // Text color adjustments for dark backgrounds
     const isDarkBackground = backgroundVariant === 'navy' || backgroundVariant === 'gradient';
@@ -173,7 +173,7 @@ const CTASection = React.forwardRef<HTMLElement, CTASectionProps>(
 
             {/* CTA Buttons */}
             {(primaryButton || secondaryButton) && (
-              <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4 w-full sm:w-auto">
                 {/* Primary Button */}
                 {primaryButton && (
                   <Button
@@ -181,7 +181,7 @@ const CTASection = React.forwardRef<HTMLElement, CTASectionProps>(
                     variant={getButtonVariant(primaryButton, true) as any}
                     size="lg"
                     className={cn(
-                      'min-w-[160px]',
+                      'min-w-[160px] w-full sm:w-auto',
                       isDarkBackground && 'border-white text-white hover:bg-white hover:text-astralis-navy'
                     )}
                   >
@@ -202,7 +202,7 @@ const CTASection = React.forwardRef<HTMLElement, CTASectionProps>(
                     variant={getButtonVariant(secondaryButton, false) as any}
                     size="lg"
                     className={cn(
-                      'min-w-[160px]',
+                      'min-w-[160px] w-full sm:w-auto',
                       isDarkBackground && 'border-slate-300 text-slate-300 hover:bg-slate-300 hover:text-astralis-navy'
                     )}
                   >

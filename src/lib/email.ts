@@ -4,17 +4,19 @@ import crypto from 'crypto';
 import { Resend } from 'resend';
 
 /**
- * Email Service using Resend (primary), Brevo HTTP API (fallback), or Nodemailer SMTP (last resort)
+ * Email Service using Resend (primary) or Nodemailer SMTP (fallback)
  *
  * Sends booking confirmation emails to customers and notifications to support team.
- * Priority: Resend > Brevo API > SMTP
+ * Priority: Gmail (if userId) > Resend > SMTP
  */
 
-interface EmailOptions {
+export interface EmailOptions {
   to: string;
   subject: string;
   html: string;
   text?: string;
+  from?: string; // Optional custom from email (e.g. "ceo@astralisone.com")
+  userId?: string; // Optional user ID to use their Gmail integration if available
   attachments?: Array<{
     filename: string;
     content: string | Buffer;
@@ -35,9 +37,8 @@ async function sendViaResend(options: EmailOptions): Promise<void> {
     throw new Error('RESEND_API_KEY not configured');
   }
 
-  // Use RESEND_FROM_EMAIL if set, otherwise use Resend's test domain
-  // To use your own domain, verify it in Resend dashboard first
-  const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+  // Use provided 'from', then RESEND_FROM_EMAIL, then default
+  const fromEmail = options.from || process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
   const fromName = process.env.SMTP_FROM_NAME || 'Astralis One';
 
   console.log(`[Email] Attempting to send via Resend`);
@@ -71,65 +72,6 @@ async function sendViaResend(options: EmailOptions): Promise<void> {
   }
 }
 
-/**
- * Send email via Brevo HTTP API
- * This bypasses SMTP ports which may be blocked by cloud providers
- */
-async function sendViaBrevoAPI(options: EmailOptions): Promise<void> {
-  const apiKey = process.env.BREVO_API_KEY;
-  if (!apiKey) {
-    console.error('[Email] BREVO_API_KEY not configured');
-    throw new Error('BREVO_API_KEY not configured');
-  }
-
-  const fromEmail = process.env.SMTP_FROM_EMAIL || 'no-reply@astralisone.com';
-  const fromName = process.env.SMTP_FROM_NAME || 'Astralis One';
-
-  console.log(`[Email] Attempting to send via Brevo API to ${options.to}`);
-  console.log(`[Email] Subject: ${options.subject}`);
-  console.log(`[Email] From: ${fromName} <${fromEmail}>`);
-  console.log(`[Email] Attachments: ${options.attachments?.length || 0}`);
-
-  const payload: Record<string, unknown> = {
-    sender: { email: fromEmail, name: fromName },
-    to: [{ email: options.to }],
-    subject: options.subject,
-    htmlContent: options.html,
-  };
-
-  if (options.text) {
-    payload.textContent = options.text;
-  }
-
-  // Handle attachments if present
-  if (options.attachments && options.attachments.length > 0) {
-    payload.attachment = options.attachments.map(att => ({
-      name: att.filename,
-      content: Buffer.isBuffer(att.content)
-        ? att.content.toString('base64')
-        : Buffer.from(att.content).toString('base64'),
-    }));
-  }
-
-  const response = await fetch('https://api.brevo.com/v3/smtp/email', {
-    method: 'POST',
-    headers: {
-      'accept': 'application/json',
-      'api-key': apiKey,
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify(payload),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.text();
-    console.error(`[Email] Brevo API error: ${response.status} - ${errorData}`);
-    throw new Error(`Brevo API error: ${response.status} - ${errorData}`);
-  }
-
-  const responseData = await response.json();
-  console.log(`[Email] ✅ SUCCESS - Sent via Brevo API to ${options.to} (Message ID: ${responseData.messageId || 'N/A'})`);
-}
 
 /**
  * Create nodemailer transporter (SMTP fallback)
@@ -137,7 +79,7 @@ async function sendViaBrevoAPI(options: EmailOptions): Promise<void> {
  */
 function createTransporter(): Transporter {
   const smtpConfig = {
-   host: process.env.SMTP_HOST,
+    host: process.env.SMTP_HOST,
     port: Number(process.env.SMTP_PORT),
     secure: false, // port 587 = STARTTLS, so false
     auth: {
@@ -162,8 +104,9 @@ async function sendViaSMTP(options: EmailOptions): Promise<void> {
 
   const transporter = createTransporter();
 
+  const fromEmail = options.from || process.env.SMTP_FROM_EMAIL || 'support@astralisone.com';
   const mailOptions = {
-    from: `"${process.env.SMTP_FROM_NAME || 'Astralis'}" <${process.env.SMTP_FROM_EMAIL || 'support@astralisone.com'}>`,
+    from: `"${process.env.SMTP_FROM_NAME || 'Astralis'}" <${fromEmail}>`,
     to: options.to,
     subject: options.subject,
     text: options.text,
@@ -176,14 +119,71 @@ async function sendViaSMTP(options: EmailOptions): Promise<void> {
 }
 
 /**
- * Send an email - tries Resend first (if configured with verified domain), then Brevo API, then SMTP
+ * Send an email - tries Gmail integration if userId provided, then Resend, then SMTP
  */
 export async function sendEmail(options: EmailOptions): Promise<void> {
   console.log(`[Email] ========== EMAIL SEND START ==========`);
   console.log(`[Email] To: ${options.to}`);
   console.log(`[Email] Subject: ${options.subject}`);
+  console.log(`[Email] UserID: ${options.userId || 'Not provided'}`);
 
-  // Try Resend first (best for Vercel) - but ONLY if we have a verified domain
+  // 1. Try Gmail integration if userId is provided
+  if (options.userId) {
+    try {
+      console.log(`[Email] UserID provided, checking for Gmail integration...`);
+      // Use dynamic imports to avoid circular dependencies and only load when needed
+      const { prisma } = await import('./prisma');
+      const { gmailService } = await import('./integrations/communication/gmail.service');
+      const { IntegrationProvider } = await import('@prisma/client');
+
+      const credential = await prisma.integrationCredential.findFirst({
+        where: {
+          userId: options.userId,
+          provider: IntegrationProvider.GMAIL,
+          isActive: true,
+        },
+      });
+
+      if (credential) {
+        console.log(`[Email] Found active Gmail integration for user ${options.userId}, attempting to send...`);
+
+        // Use integrationService to get decrypted data
+        const { integrationService } = await import('./services/integration.service');
+        const fullCredential = await integrationService.getCredentialWithData(
+          credential.id,
+          credential.userId,
+          credential.orgId
+        );
+
+        if (fullCredential) {
+          // Initialize service with full credential
+          gmailService.setCredential(fullCredential);
+
+          const result = await gmailService.sendEmail({
+            to: [options.to],
+            subject: options.subject,
+            body: options.html,
+            isHtml: true,
+          });
+
+          if (result.success) {
+            console.log(`[Email] ✅ SUCCESS - Sent via Gmail integration (ID: ${result.data?.id})`);
+            console.log(`[Email] ========== EMAIL SEND COMPLETE (GMAIL) ==========`);
+            return;
+          } else {
+            console.warn(`[Email] Gmail integration send failed: ${result.error?.message}. Falling back...`);
+          }
+        } else {
+          console.log(`[Email] No active Gmail integration found for user ${options.userId}.`);
+        }
+      }
+    } catch (error) {
+      console.error(`[Email] Error attempting Gmail fallback:`, error);
+      // Continue to other providers
+    }
+  }
+
+  // 2. Try Resend (best for Vercel) - but ONLY if we have a verified domain
   // Without RESEND_FROM_EMAIL, Resend uses sandbox mode which only sends to account owner
   if (process.env.RESEND_API_KEY && process.env.RESEND_FROM_EMAIL) {
     console.log('[Email] Resend API key and verified domain found, attempting Resend send...');
@@ -199,20 +199,7 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
     console.log('[Email] Resend API key found but RESEND_FROM_EMAIL not set - skipping Resend (sandbox mode only sends to account owner)');
   }
 
-  // Try Brevo API second (bypasses SMTP port blocks)
-  if (process.env.BREVO_API_KEY) {
-    console.log('[Email] Brevo API key found, attempting Brevo API send...');
-    try {
-      await sendViaBrevoAPI(options);
-      console.log(`[Email] ========== EMAIL SEND COMPLETE (BREVO) ==========`);
-      return;
-    } catch (error) {
-      console.error('[Email] ❌ FAILED - Brevo API send failed, attempting SMTP fallback...');
-      console.error('[Email] Brevo error details:', error instanceof Error ? error.message : String(error));
-    }
-  }
-
-  // Fall back to SMTP (may not work on Vercel due to port blocking)
+  // 3. Fall back to SMTP (may not work on Vercel due to port blocking)
   try {
     await sendViaSMTP(options);
     console.log(`[Email] ========== EMAIL SEND COMPLETE (SMTP) ==========`);
@@ -761,6 +748,7 @@ export interface TeamInviteEmailOptions {
   organizationName: string;
   role: string;
   inviteToken: string;
+  inviterUserId?: string; // Optional user ID for Gmail fallback
 }
 
 /**
@@ -961,6 +949,7 @@ export async function sendTeamInviteEmail(options: TeamInviteEmailOptions): Prom
       subject: `You've been invited to join ${options.organizationName} on Astralis`,
       html,
       text,
+      userId: options.inviterUserId,
     });
 
     console.log(`[Email] Team invite sent successfully to ${options.inviteeEmail}`);
@@ -1218,16 +1207,16 @@ export function generateSchedulingAgentCancellationEmail(options: SchedulingAgen
                 <tr>
                   <td style="padding:4px 0; color:#991b1b; font-size:13px;">
                     ${meetingDetails.startTime.toLocaleDateString('en-US', {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      timeZone: meetingDetails.timezone,
-                    })} at ${meetingDetails.startTime.toLocaleTimeString('en-US', {
-                      hour: 'numeric',
-                      minute: '2-digit',
-                      timeZone: meetingDetails.timezone,
-                    })}
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: meetingDetails.timezone,
+  })} at ${meetingDetails.startTime.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: meetingDetails.timezone,
+  })}
                   </td>
                 </tr>
               </tbody>

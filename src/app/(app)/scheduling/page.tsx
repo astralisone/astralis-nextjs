@@ -238,34 +238,34 @@ export default function SchedulingPage() {
     <PageContainer>
       <div className={cn(
         'transition-all duration-300',
-        showChatPanel ? 'mr-[400px]' : ''
+        showChatPanel ? 'lg:mr-[400px]' : ''
       )}>
         {/* Header */}
         <PageHeader
           title="Scheduling"
           description="Manage your calendar events and meetings"
           actions={
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <Button
                 variant="outline"
-                className="gap-2"
+                className="gap-2 w-full sm:w-auto"
                 onClick={fetchEvents}
                 disabled={loading}
               >
                 <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
-                Refresh
+                <span>Refresh</span>
               </Button>
-              <Button variant="primary" className="gap-2" onClick={() => setShowCreateSheet(true)}>
+              <Button variant="primary" className="gap-2 w-full sm:w-auto" onClick={() => setShowCreateSheet(true)}>
                 <Plus className="h-5 w-5" />
-                Create Event
+                <span>Create Event</span>
               </Button>
               <Button
                 variant={showChatPanel ? 'primary' : 'outline'}
-                className="gap-2"
+                className="gap-2 w-full sm:w-auto"
                 onClick={() => setShowChatPanel(!showChatPanel)}
               >
                 <MessageSquare className="h-5 w-5" />
-                {showChatPanel ? 'Hide Chat' : 'Chat Assistant'}
+                <span>{showChatPanel ? 'Hide Chat' : 'Chat Assistant'}</span>
               </Button>
             </div>
           }
@@ -277,11 +277,13 @@ export default function SchedulingPage() {
         {/* Tabs for filtering */}
         <div className="mt-6">
           <Tabs value={filter} onValueChange={(value) => setFilter(value as EventFilter)}>
-            <TabsList>
-              <TabsTrigger value="all">All Events</TabsTrigger>
-              <TabsTrigger value="my">My Events</TabsTrigger>
-              <TabsTrigger value="team">Team Events</TabsTrigger>
-            </TabsList>
+            <div className="w-full overflow-x-auto pb-1 scrollbar-hide">
+              <TabsList className="inline-flex w-max sm:w-full sm:justify-start">
+                <TabsTrigger value="all">All Events</TabsTrigger>
+                <TabsTrigger value="my">My Events</TabsTrigger>
+                <TabsTrigger value="team">Team Events</TabsTrigger>
+              </TabsList>
+            </div>
 
             <TabsContent value={filter}>
               {/* Error State */}

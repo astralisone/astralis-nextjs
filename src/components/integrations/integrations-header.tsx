@@ -18,24 +18,24 @@ export function IntegrationsHeader({
 }: IntegrationsHeaderProps) {
   return (
     <div className="mb-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Integrations</h1>
-          <p className="text-slate-600 mt-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-astralis-navy">Integrations</h1>
+          <p className="text-sm md:text-base text-slate-600 mt-1">
             Connect your configured tools and services
           </p>
         </div>
       </div>
 
       {!loading && (
-        <div className="flex gap-4 mt-6">
-          <Badge variant="secondary" className="px-3 py-1">
+        <div className="flex flex-wrap gap-2 mt-4 sm:mt-6">
+          <Badge variant="secondary" className="px-3 py-1 text-xs">
             {connectedCount} Connected
           </Badge>
-          <Badge variant="outline" className="px-3 py-1">
+          <Badge variant="default" className="px-3 py-1 text-xs">
             {availableCount} Available
           </Badge>
-          <Badge variant="outline" className="px-3 py-1 text-slate-500">
+          <Badge variant="default" className="px-3 py-1 text-xs text-slate-500">
             {totalCount} Total
           </Badge>
         </div>

@@ -122,10 +122,10 @@ const Hero = React.forwardRef<HTMLElement, HeroProps>(
     const textColClass = !rightContent
       ? 'lg:col-span-12'
       : textColumnWidth === 'full'
-      ? 'lg:col-span-12'
-      : textColumnWidth === 'two-thirds'
-      ? 'lg:col-span-8'
-      : 'lg:col-span-6';
+        ? 'lg:col-span-12'
+        : textColumnWidth === 'two-thirds'
+          ? 'lg:col-span-8'
+          : 'lg:col-span-6';
 
     const rightColClass = textColumnWidth === 'two-thirds'
       ? 'lg:col-span-4'
@@ -181,14 +181,14 @@ const Hero = React.forwardRef<HTMLElement, HeroProps>(
 
               {/* CTA Buttons */}
               {(primaryButton || secondaryButton) && (
-                <div className={cn('flex flex-col sm:flex-row gap-4 pt-4', buttonJustifyClass)}>
+                <div className={cn('flex flex-col sm:flex-row gap-4 pt-4 w-full sm:w-auto', buttonJustifyClass)}>
                   {/* Primary Button - Astralis Blue background */}
                   {primaryButton && (
                     <Button
                       asChild
                       variant="primary"
                       size="lg"
-                      className="min-w-[160px]"
+                      className="min-w-[160px] w-full sm:w-auto"
                     >
                       <Link href={primaryButton.href}>
                         {primaryButton.text}
@@ -202,7 +202,7 @@ const Hero = React.forwardRef<HTMLElement, HeroProps>(
                       asChild
                       variant="secondary"
                       size="lg"
-                      className="min-w-[160px]"
+                      className="min-w-[160px] w-full sm:w-auto"
                     >
                       <Link href={secondaryButton.href}>
                         {secondaryButton.text}

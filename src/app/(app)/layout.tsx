@@ -1,9 +1,6 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth/config';
-import { DashboardSidebar } from '@/components/layout/DashboardSidebar';
-import { DashboardHeader } from '@/components/layout/DashboardHeader';
-import { AgentChatWidget } from '@/components/agent/AgentChatWidget';
-import { DebugPanelProvider } from '@/components/debug/DebugPanelProvider';
+import { DashboardLayoutClient } from '@/components/layout/DashboardLayoutClient';
 
 export default async function DashboardLayout({
   children,
@@ -17,20 +14,8 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="fixed inset-0 top-[70px] flex bg-slate-50">
-      <DashboardSidebar user={session.user} />
-
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <DashboardHeader user={session.user} />
-
-        <main className="flex-1 overflow-y-auto p-6">
-          {children}
-        </main>
-      </div>
-
-      <AgentChatWidget />
-      {/* Debug Panel - Available globally */}
-      <DebugPanelProvider />
-    </div>
+    <DashboardLayoutClient user={session.user}>
+      {children}
+    </DashboardLayoutClient>
   );
 }

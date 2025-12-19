@@ -32,6 +32,8 @@ export interface SaveCredentialData {
 
 export interface CredentialData {
   id: string;
+  userId: string;
+  orgId: string;
   provider: IntegrationProvider;
   credentialName: string;
   scope: string | null;
@@ -114,40 +116,40 @@ export class IntegrationService {
         status: credential.status
       });
 
-       // 3. Log activity
-       await prisma.activityLog.create({
-         data: {
-           userId,
-           orgId,
-           action: 'CREATE',
-           entity: 'INTEGRATION_CREDENTIAL',
-           entityId: credential.id,
-           metadata: {
-             provider: data.provider,
-             credentialName: data.credentialName,
-           },
-         },
-       });
+      // 3. Log activity
+      await prisma.activityLog.create({
+        data: {
+          userId,
+          orgId,
+          action: 'CREATE',
+          entity: 'INTEGRATION_CREDENTIAL',
+          entityId: credential.id,
+          metadata: {
+            provider: data.provider,
+            credentialName: data.credentialName,
+          },
+        },
+      });
 
-       console.log('[Integration Service] Credential saved successfully:', credential.id);
+      console.log('[Integration Service] Credential saved successfully:', credential.id);
 
-       return {
-         id: credential.id,
-         provider: credential.provider as IntegrationProvider,
-         credentialName: credential.credentialName,
-         scope: credential.scope,
-         expiresAt: credential.expiresAt,
-         isActive: credential.isActive,
-         status: credential.status,
-         lastError: credential.lastError,
-         errorCount: credential.errorCount,
-         lastErrorAt: credential.lastErrorAt,
-         lastHealthCheck: credential.lastHealthCheck,
-         healthCheckInterval: credential.healthCheckInterval,
-         lastUsedAt: credential.lastUsedAt,
-         createdAt: credential.createdAt,
-         updatedAt: credential.updatedAt,
-       };
+      return {
+        id: credential.id,
+        provider: credential.provider as IntegrationProvider,
+        credentialName: credential.credentialName,
+        scope: credential.scope,
+        expiresAt: credential.expiresAt,
+        isActive: credential.isActive,
+        status: credential.status,
+        lastError: credential.lastError,
+        errorCount: credential.errorCount,
+        lastErrorAt: credential.lastErrorAt,
+        lastHealthCheck: credential.lastHealthCheck,
+        healthCheckInterval: credential.healthCheckInterval,
+        lastUsedAt: credential.lastUsedAt,
+        createdAt: credential.createdAt,
+        updatedAt: credential.updatedAt,
+      };
     } catch (error) {
       console.error('[Integration Service] Failed to save credential:', error);
 
@@ -192,6 +194,8 @@ export class IntegrationService {
         orderBy: { createdAt: 'desc' },
         select: {
           id: true,
+          userId: true,
+          orgId: true,
           provider: true,
           credentialName: true,
           scope: true,
@@ -263,6 +267,8 @@ export class IntegrationService {
 
       return {
         id: credential.id,
+        userId: credential.userId,
+        orgId: credential.orgId,
         provider: credential.provider as IntegrationProvider,
         credentialName: credential.credentialName,
         scope: credential.scope,

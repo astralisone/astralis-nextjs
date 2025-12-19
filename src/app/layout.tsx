@@ -21,14 +21,12 @@ export const metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={inter.variable}>
-      <body className="min-h-screen bg-background text-foreground antialiased font-sans">
+      <body className="min-h-screen bg-background text-foreground antialiased font-sans flex flex-col">
         <GoogleAnalytics />
         <Providers>
-          <div className="flex min-h-screen flex-col">
-            <Navigation />
-            <main className="flex-1">{children}</main>
-            <Footer />
-          </div>
+          <Navigation />
+          <main className="flex-1 flex flex-col">{children}</main>
+          <Footer />
         </Providers>
       </body>
     </html>

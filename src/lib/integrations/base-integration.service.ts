@@ -82,6 +82,13 @@ export abstract class BaseIntegrationService<TCredentialData = Record<string, un
   }
 
   /**
+   * Set the credential manually
+   */
+  setCredential(credential: CredentialWithData): void {
+    this.credential = credential;
+  }
+
+  /**
    * Get the typed credential data
    */
   protected getCredentialData(): TCredentialData {
@@ -129,7 +136,7 @@ export abstract class BaseIntegrationService<TCredentialData = Record<string, un
       } else {
         return {
           success: false,
-          message: result.error || 'Connection test failed',
+          message: result.error?.message || 'Connection test failed',
           needsReconnect: this.isTokenExpired()
         };
       }

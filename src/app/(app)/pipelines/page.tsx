@@ -80,18 +80,18 @@ export default function PipelinesPage() {
   return (
     <>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-astralis-navy">Pipelines</h1>
-            <p className="text-slate-600 mt-1">Manage your workflow pipelines</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-astralis-navy">Pipelines</h1>
+            <p className="text-sm md:text-base text-slate-600 mt-1">Manage your workflow pipelines</p>
           </div>
           <Button
             variant="primary"
-            className="gap-2"
+            className="gap-2 w-full sm:w-auto"
             onClick={() => setIsCreateModalOpen(true)}
           >
             <Plus className="w-5 h-5" />
-            New Pipeline
+            <span>New Pipeline</span>
           </Button>
         </div>
 

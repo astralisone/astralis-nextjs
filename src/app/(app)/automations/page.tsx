@@ -111,30 +111,30 @@ export default function AutomationsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
+    <div className="space-y-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-astralis-navy">Automations</h1>
-            <p className="text-slate-600 mt-1">
+            <h1 className="text-2xl md:text-3xl font-bold text-astralis-navy">Automations</h1>
+            <p className="text-sm md:text-base text-slate-600 mt-1">
               Manage your business automation workflows
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
             <Button
               variant="outline"
-              className="gap-2"
+              className="gap-2 w-full sm:w-auto"
               onClick={fetchAutomations}
               disabled={loading}
             >
               <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
-              Refresh
+              <span>Refresh</span>
             </Button>
-            <Button variant="primary" className="gap-2" asChild>
+            <Button variant="primary" className="gap-2 w-full sm:w-auto" asChild>
               <Link href="/automations/new">
                 <Plus className="h-5 w-5" />
-                Create Automation
+                <span>Create Automation</span>
               </Link>
             </Button>
           </div>

@@ -142,8 +142,8 @@ export default function ProfilePage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-astralis-navy">Profile</h1>
-        <p className="text-slate-600 mt-1">Manage your personal information</p>
+        <h1 className="text-2xl md:text-3xl font-bold text-astralis-navy">Profile</h1>
+        <p className="text-sm md:text-base text-slate-600 mt-1">Manage your personal information</p>
       </div>
 
       {success && (

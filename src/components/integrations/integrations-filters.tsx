@@ -35,19 +35,21 @@ export function IntegrationsFilters({
         />
       </div>
 
-      <Tabs value={filter} onValueChange={onFilterChange}>
-        <TabsList>
-          <TabsTrigger value="all">
-            All ({totalCount})
-          </TabsTrigger>
-          <TabsTrigger value="connected">
-            Connected ({connectedCount})
-          </TabsTrigger>
-          <TabsTrigger value="available">
-            Available ({availableCount})
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
+      <div className="w-full sm:w-auto overflow-x-auto pb-1 scrollbar-hide">
+        <Tabs value={filter} onValueChange={(val) => onFilterChange(val as any)} className="w-full">
+          <TabsList className="inline-flex w-max sm:w-full">
+            <TabsTrigger value="all">
+              All ({totalCount})
+            </TabsTrigger>
+            <TabsTrigger value="connected">
+              Connected ({connectedCount})
+            </TabsTrigger>
+            <TabsTrigger value="available">
+              Available ({availableCount})
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
     </div>
   );
 }

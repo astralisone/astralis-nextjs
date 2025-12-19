@@ -99,28 +99,28 @@ export default function TemplatesPage() {
     });
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
+    <div className="space-y-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" asChild>
+            <Button variant="ghost" size="icon" asChild className="flex-shrink-0">
               <Link href="/automations">
                 <ArrowLeft className="w-5 h-5" />
               </Link>
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-astralis-navy">
+              <h1 className="text-2xl md:text-3xl font-bold text-astralis-navy">
                 Automation Templates
               </h1>
-              <p className="text-slate-600 mt-1">
+              <p className="text-sm md:text-base text-slate-600 mt-1">
                 Browse and deploy pre-built automation workflows
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-astralis-blue" />
-            <span className="text-sm font-semibold text-astralis-blue">
+          <div className="flex items-center gap-2 bg-astralis-blue/5 px-3 py-1.5 rounded-full w-fit">
+            <Sparkles className="w-4 h-4 text-astralis-blue" />
+            <span className="text-xs font-semibold text-astralis-blue">
               {templates.filter((t) => t.isOfficial).length} Official Templates
             </span>
           </div>

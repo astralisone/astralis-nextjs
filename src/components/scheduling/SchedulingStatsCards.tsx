@@ -8,7 +8,7 @@ interface SchedulingStatsCardsProps {
 
 export function SchedulingStatsCards({ stats }: SchedulingStatsCardsProps) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mt-6">
       <Card>
         <CardContent className="p-5">
           <div className="flex items-center gap-3">

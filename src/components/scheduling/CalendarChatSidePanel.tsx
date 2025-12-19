@@ -20,7 +20,7 @@ export function CalendarChatSidePanel({
   if (!show) return null;
 
   return (
-    <div className="fixed right-0 top-16 bottom-0 w-[400px] border-l border-slate-200 bg-white shadow-lg z-40">
+    <div className="fixed right-0 top-16 bottom-0 w-full sm:w-[400px] border-l border-slate-200 bg-white shadow-lg z-40">
       <div className="flex items-center justify-between p-4 border-b border-slate-200">
         <span className="text-lg font-semibold text-astralis-navy">Calendar Assistant</span>
         <Button variant="ghost" size="icon" onClick={onClose}>
