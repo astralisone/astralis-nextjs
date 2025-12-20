@@ -70,13 +70,13 @@ export async function GET(req: NextRequest) {
       `
       WITH decisions AS (
         SELECT DATE("createdAt") as d, COUNT(*) as c
-        FROM "AgentDecision"
+        FROM "agent_decisions"
         WHERE "orgId" = $1 AND "createdAt" >= $2
         GROUP BY DATE("createdAt")
       ),
       executions AS (
         SELECT DATE("createdAt") as d, COUNT(*) as total, SUM(CASE WHEN "status" = 'COMPLETED' THEN 1 ELSE 0 END) as success
-        FROM "WorkflowExecution"
+        FROM "workflow_executions"
         WHERE "orgId" = $1 AND "createdAt" >= $2
         GROUP BY DATE("createdAt")
       )

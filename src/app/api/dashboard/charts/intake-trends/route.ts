@@ -76,14 +76,14 @@ export async function GET(req: NextRequest) {
     let groupClause: string;
 
     if (groupBy === 'day') {
-      dateFormat = "DATE(createdAt)";
-      groupClause = "DATE(createdAt)";
+      dateFormat = "DATE(\"createdAt\")";
+      groupClause = "DATE(\"createdAt\")";
     } else if (groupBy === 'week') {
-      dateFormat = "DATE_TRUNC('week', createdAt)";
-      groupClause = "DATE_TRUNC('week', createdAt)";
+      dateFormat = "DATE_TRUNC('week', \"createdAt\")";
+      groupClause = "DATE_TRUNC('week', \"createdAt\")";
     } else {
-      dateFormat = "DATE_TRUNC('month', createdAt)";
-      groupClause = "DATE_TRUNC('month', createdAt)";
+      dateFormat = "DATE_TRUNC('month', \"createdAt\")";
+      groupClause = "DATE_TRUNC('month', \"createdAt\")";
     }
 
     // Query intake data grouped by time period
