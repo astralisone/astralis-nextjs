@@ -86,10 +86,25 @@ export function useIntegrationsActions(onDataChange: () => void) {
     }
   }, []);
 
-  const handleDisconnect = useCallback(async (provider: IntegrationProvider) => {
+  const handleDisconnect = useCallback(async (provider: IntegrationProvider, credentialId?: string) => {
     try {
-      // This would need to be implemented in the API
-      // For now, just refresh the data
+      if (!credentialId) {
+        throw new Error('No credential ID provided for disconnection');
+      }
+
+      const response = await fetch(
+        `/api/integrations/${provider.toLowerCase().replace(/_/g, '-')}/${credentialId}`,
+        {
+          method: 'DELETE',
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.details || 'Failed to disconnect');
+      }
+
+      // Success - refresh the data
       await onDataChange();
 
       toast({
@@ -100,7 +115,7 @@ export function useIntegrationsActions(onDataChange: () => void) {
       console.error('[handleDisconnect] Error:', error);
       toast({
         title: 'Disconnect Error',
-        description: 'Failed to disconnect integration. Please try again.',
+        description: error instanceof Error ? error.message : 'Failed to disconnect integration. Please try again.',
         variant: 'destructive',
       });
     }

@@ -109,7 +109,7 @@ function IntegrationsPageContent() {
                 unavailableReason={integration.unavailableReason}
                 credentialId={integration.credential?.id}
                 onConnect={() => handleConnect(integration.provider)}
-                onDisconnect={() => handleDisconnect(integration.provider)}
+                onDisconnect={() => handleDisconnect(integration.provider, integration.credential?.id)}
                 onTest={(credentialId) => handleTest(integration.provider, credentialId)}
               />
             ))}

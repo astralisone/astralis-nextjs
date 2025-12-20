@@ -5,6 +5,7 @@
 import {
   BaseIntegrationService,
   type OAuthCredentialData,
+  type ConnectionTestResult,
 } from '../base-integration.service';
 import type { IntegrationApiResponse } from '@/types/integrations';
 
@@ -26,7 +27,7 @@ export class FacebookService extends BaseIntegrationService<FacebookCredentialDa
 
   async getAccountInfo(): Promise<IntegrationApiResponse<Record<string, unknown>>> {
     return this.apiRequest('/me', {
-        params: { fields: 'id,name,email' },
+      params: { fields: 'id,name,email' },
     });
   }
 }

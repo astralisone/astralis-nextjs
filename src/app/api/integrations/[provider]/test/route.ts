@@ -11,6 +11,7 @@ import {
   teamsService,
   googleDriveService,
   dropboxService,
+  facebookService,
 } from '@/lib/integrations';
 import type { IntegrationProvider } from '@prisma/client';
 import type { BaseIntegrationService } from '@/lib/integrations/base-integration.service';
@@ -111,8 +112,8 @@ export async function POST(
 /**
  * Get the service instance for a provider
  */
-function getServiceForProvider(provider: IntegrationProvider): BaseIntegrationService | null {
-  const serviceMap: Partial<Record<IntegrationProvider, BaseIntegrationService>> = {
+function getServiceForProvider(provider: IntegrationProvider): BaseIntegrationService<any> | null {
+  const serviceMap: Partial<Record<IntegrationProvider, BaseIntegrationService<any>>> = {
     QUICKBOOKS: quickBooksService,
     XERO: xeroService,
     HUBSPOT: hubSpotService,
@@ -122,6 +123,7 @@ function getServiceForProvider(provider: IntegrationProvider): BaseIntegrationSe
     MICROSOFT_TEAMS: teamsService,
     GOOGLE_DRIVE: googleDriveService,
     DROPBOX: dropboxService,
+    FACEBOOK: facebookService,
   };
 
   return serviceMap[provider] || null;
