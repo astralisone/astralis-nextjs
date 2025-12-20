@@ -331,6 +331,7 @@ export async function POST(req: NextRequest) {
             contentType: 'text/calendar',
           },
         ],
+        userId: HOST_ID,
       });
       customerEmailSent = true;
       console.log(`[Booking] ✅ Customer confirmation email sent successfully to ${email}`);
@@ -356,6 +357,7 @@ export async function POST(req: NextRequest) {
             contentType: 'text/calendar',
           },
         ],
+        userId: HOST_ID,
       });
       internalEmailSent = true;
       console.log(`[Booking] ✅ Internal notification email sent successfully to ${systemNotificationEmail}`);

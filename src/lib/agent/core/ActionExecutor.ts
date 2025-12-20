@@ -653,7 +653,8 @@ export class ActionExecutor {
             to: params.to || params.recipient,
             subject: params.subject,
             html: params.body || params.html,
-            from: 'system@astralisone.com' // Official system sender
+            from: 'system@astralisone.com', // Official system sender
+            userId: ctx.userId,
           });
 
           return {

@@ -265,12 +265,12 @@ support@astralisone.com
 
     const attachments = icsContent
       ? [
-          {
-            filename: `${event.title.replace(/[^a-z0-9]/gi, '_')}.ics`,
-            content: icsContent,
-            contentType: 'text/calendar',
-          },
-        ]
+        {
+          filename: `${event.title.replace(/[^a-z0-9]/gi, '_')}.ics`,
+          content: icsContent,
+          contentType: 'text/calendar',
+        },
+      ]
       : undefined;
 
     await sendEmail({
@@ -279,6 +279,7 @@ support@astralisone.com
       html: htmlContent,
       text: textContent,
       attachments,
+      userId: event.userId,
     });
 
     console.log(`[Worker:Reminder] Email sent to ${event.user.email}`);

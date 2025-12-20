@@ -439,6 +439,7 @@ async function sendEmailResponse(
     recipientName: task.user.name || 'there',
     taskId: task.id,
     responseType: emailResponseType,
+    hostUserId: userId,
   };
 
   // Fetch scheduling event details if available

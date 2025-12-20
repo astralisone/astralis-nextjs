@@ -988,6 +988,7 @@ export interface SchedulingAgentEmailOptions {
     endTime: string;
     confidence?: number;
   }>;
+  hostUserId?: string;
   clarificationNeeded?: string;
   cancellationReason?: string;
 }
@@ -1404,6 +1405,7 @@ export async function sendSchedulingAgentEmail(options: SchedulingAgentEmailOpti
     subject,
     html,
     text,
+    userId: options.hostUserId,
   });
 
   console.log(`[Email] Scheduling agent ${options.responseType} email sent to ${options.recipientEmail}`);
