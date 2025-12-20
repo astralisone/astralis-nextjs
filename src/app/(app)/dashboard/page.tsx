@@ -17,51 +17,6 @@ import Link from 'next/link';
 import { DashboardData, ChartDataPoint } from '@/types/dashboard';
 
 // Fallback data generators for when APIs fail
-const getFallbackIntakeData = () => {
-  const data = [];
-  const now = new Date();
-  for (let i = 29; i >= 0; i--) {
-    const date = new Date(now);
-    date.setDate(date.getDate() - i);
-    data.push({
-      date: date.toISOString().split('T')[0],
-      value: Math.floor(Math.random() * 10) + 1,
-      label: `${Math.floor(Math.random() * 10) + 1} intakes`
-    });
-  }
-  return data;
-};
-
-const getFallbackDocumentData = () => {
-  const data = [];
-  const now = new Date();
-  for (let i = 29; i >= 0; i--) {
-    const date = new Date(now);
-    date.setDate(date.getDate() - i);
-    data.push({
-      date: date.toISOString().split('T')[0],
-      uploaded: Math.floor(Math.random() * 8) + 1,
-      processed: Math.floor(Math.random() * 6) + 1,
-    });
-  }
-  return data;
-};
-
-const getFallbackAgentData = () => {
-  const data = [];
-  const now = new Date();
-  for (let i = 29; i >= 0; i--) {
-    const date = new Date(now);
-    date.setDate(date.getDate() - i);
-    data.push({
-      date: date.toISOString().split('T')[0],
-      decisions: Math.floor(Math.random() * 15) + 1,
-      executions: Math.floor(Math.random() * 12) + 1,
-      successRate: Math.floor(Math.random() * 30) + 70,
-    });
-  }
-  return data;
-};
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -97,14 +52,14 @@ export default function DashboardPage() {
         fetch(`/api/dashboard/charts/agent-metrics?range=${timeRange}`),
       ]);
 
-      if (!statsResponse.ok) {
-        throw new Error('Failed to fetch dashboard stats');
+      if (!statsResponse.ok || !intakeResponse.ok || !documentResponse.ok || !agentResponse.ok) {
+        throw new Error('Failed to fetch one or more dashboard data sources');
       }
 
       const statsData: DashboardData = await statsResponse.json();
-      const intakeData = intakeResponse.ok ? await intakeResponse.json() : getFallbackIntakeData();
-      const documentData = documentResponse.ok ? await documentResponse.json() : getFallbackDocumentData();
-      const agentData = agentResponse.ok ? await agentResponse.json() : getFallbackAgentData();
+      const intakeData = await intakeResponse.json();
+      const documentData = await documentResponse.json();
+      const agentData = await agentResponse.json();
 
       setDashboardData(statsData);
       setChartData({
@@ -536,6 +491,25 @@ export default function DashboardPage() {
               fillColor="#38A169"
               strokeColor="#38A169"
               fillOpacity={0.3}
+              showTooltip
+              animate
+            />
+          </ChartContainer>
+        </div>
+
+        <div id="agent-performance" className="scroll-mt-6">
+          <ChartContainer
+            title="Agent Performance"
+            loading={loading}
+            className="animate-slide-in"
+            style={{ animationDelay: '900ms' }}
+            onExport={() => handleExport('agentMetrics')}
+          >
+            <LineChart
+              data={chartData.agentMetrics}
+              height={300}
+              dataKey="decisions"
+              strokeColor={CHART_THEME.colors.accent}
               showTooltip
               animate
             />

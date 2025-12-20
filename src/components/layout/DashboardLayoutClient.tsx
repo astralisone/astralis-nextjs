@@ -6,6 +6,8 @@ import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import { AgentChatWidget } from '@/components/agent/AgentChatWidget';
 import { DebugPanelProvider } from '@/components/debug/DebugPanelProvider';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { useUIStore } from '@/stores/useUIStore';
+import { cn } from '@/lib/utils';
 
 export function DashboardLayoutClient({
   user,
@@ -15,6 +17,7 @@ export function DashboardLayoutClient({
   children: React.ReactNode
 }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { rightPanelOpen } = useUIStore();
 
   return (
     <div className="fixed inset-0 top-[70px] flex bg-slate-50">
@@ -30,7 +33,10 @@ export function DashboardLayoutClient({
         </SheetContent>
       </Sheet>
 
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className={cn(
+        "flex-1 flex flex-col overflow-hidden transition-all duration-300",
+        rightPanelOpen ? "mr-[400px]" : "mr-0"
+      )}>
         <DashboardHeader user={user} onMobileMenuOpen={() => setIsMobileMenuOpen(true)} />
 
         <main className="flex-1 overflow-y-auto p-4 md:p-6 transition-all duration-200">

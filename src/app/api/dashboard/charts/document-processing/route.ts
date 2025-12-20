@@ -65,40 +65,40 @@ export async function GET(req: NextRequest) {
         startDate.setDate(now.getDate() - 30);
     }
 
-    // Get document data grouped by date
-    const uploadedData = await prisma.document.groupBy({
-      by: ['createdAt'],
-      where: {
-        orgId,
-        createdAt: { gte: startDate },
-      },
-      _count: true,
-      orderBy: { createdAt: 'asc' },
-    });
+    // Query document data grouped by date using raw SQL for proper date truncation
+    const documentTrends = await prisma.$queryRawUnsafe<Array<{ date: string; uploaded: bigint; processed: bigint }>>(
+      `
+      WITH uploads AS (
+        SELECT DATE("createdAt") as d, COUNT(*) as c
+        FROM "Document"
+        WHERE "orgId" = $1 AND "createdAt" >= $2
+        GROUP BY DATE("createdAt")
+      ),
+      completions AS (
+        SELECT DATE("updatedAt") as d, COUNT(*) as c
+        FROM "Document"
+        WHERE "orgId" = $1 AND "status" = 'COMPLETED' AND "updatedAt" >= $2
+        GROUP BY DATE("updatedAt")
+      )
+      SELECT 
+        COALESCE(u.d, c.d)::text as date,
+        COALESCE(u.c, 0) as uploaded,
+        COALESCE(c.c, 0) as processed
+      FROM uploads u
+      FULL OUTER JOIN completions c ON u.d = c.d
+      ORDER BY date ASC
+      `,
+      orgId,
+      startDate
+    );
 
-    const processedData = await prisma.document.groupBy({
-      by: ['updatedAt'],
-      where: {
-        orgId,
-        status: 'COMPLETED',
-        updatedAt: { gte: startDate },
-      },
-      _count: true,
-      orderBy: { updatedAt: 'asc' },
-    });
-
-    // Group by date
-    const dailyUploaded: Record<string, number> = {};
-    const dailyProcessed: Record<string, number> = {};
-
-    uploadedData.forEach((item) => {
-      const date = item.createdAt.toISOString().split('T')[0];
-      dailyUploaded[date] = (dailyUploaded[date] || 0) + item._count;
-    });
-
-    processedData.forEach((item) => {
-      const date = item.updatedAt.toISOString().split('T')[0];
-      dailyProcessed[date] = (dailyProcessed[date] || 0) + item._count;
+    // Create record for fast lookup
+    const dailyData: Record<string, { uploaded: number; processed: number }> = {};
+    documentTrends.forEach((item) => {
+      dailyData[item.date] = {
+        uploaded: Number(item.uploaded),
+        processed: Number(item.processed),
+      };
     });
 
     // Fill in missing dates and create result
@@ -109,8 +109,8 @@ export async function GET(req: NextRequest) {
       const dateStr = currentDate.toISOString().split('T')[0];
       result.push({
         date: dateStr,
-        uploaded: dailyUploaded[dateStr] || 0,
-        processed: dailyProcessed[dateStr] || 0,
+        uploaded: dailyData[dateStr]?.uploaded || 0,
+        processed: dailyData[dateStr]?.processed || 0,
       });
       currentDate.setDate(currentDate.getDate() + 1);
     }

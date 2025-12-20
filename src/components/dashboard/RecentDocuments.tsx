@@ -58,36 +58,53 @@ export function RecentDocuments({ documents = [], className, style }: RecentDocu
                 </CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
-                <div className="space-y-4">
+                <div className="space-y-1">
                     {documents.length === 0 ? (
                         <div className="text-center py-8 text-slate-500">
                             <p>No documents processed yet.</p>
                         </div>
                     ) : (
-                        documents.map((doc) => (
+                        documents.map((doc, index) => (
                             <div
                                 key={doc.id}
-                                className="group flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100"
+                                className={cn(
+                                    "group grid grid-cols-1 md:grid-cols-3 gap-4 items-center p-4 rounded-xl transition-all duration-300 border border-transparent hover:border-astralis-blue/20 hover:shadow-sm",
+                                    index % 2 === 1 ? "bg-slate-50/50" : "bg-white"
+                                )}
                             >
+                                {/* Column 1: Identity & Icon */}
                                 <div className="flex items-center gap-3 min-w-0">
-                                    <div className={cn("flex items-center justify-center w-10 h-10 rounded-lg flex-shrink-0 font-bold text-xs border", getStatusColor(doc.status))}>
-                                        {doc.type.toUpperCase()}
+                                    <div className={cn("flex items-center justify-center w-10 h-10 rounded-lg flex-shrink-0 font-bold text-[10px] tracking-tighter border shadow-sm", getStatusColor(doc.status))}>
+                                        {doc.type.split('/')[1]?.toUpperCase() || 'DOC'}
                                     </div>
                                     <div className="min-w-0">
-                                        <p className="font-medium text-slate-900 truncate group-hover:text-astralis-blue transition-colors">
+                                        <p className="font-semibold text-sm text-slate-900 truncate group-hover:text-astralis-blue transition-colors">
                                             {doc.name}
                                         </p>
-                                        <div className="flex items-center gap-2 text-xs text-slate-500">
-                                            <span>{(doc.size / 1024).toFixed(1)} KB</span>
-                                            <span>•</span>
-                                            <span>{new Date(doc.createdAt).toLocaleDateString()}</span>
-                                        </div>
+                                        <p className="text-[10px] text-slate-400 font-mono truncate">
+                                            ID: {doc.id.substring(0, 8)}...
+                                        </p>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <span className={cn("px-2 py-1 rounded-full text-xs font-medium border flex items-center gap-1.5", getStatusColor(doc.status))}>
+
+                                {/* Column 2: Meta Info (Size, Date) */}
+                                <div className="flex flex-col md:items-center text-xs text-slate-500">
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-medium text-slate-600">{(doc.size / 1024).toFixed(1)} KB</span>
+                                        <span className="text-slate-300">•</span>
+                                        <span>{new Date(doc.createdAt).toLocaleDateString()}</span>
+                                    </div>
+                                    <p className="text-[10px] opacity-70 mt-0.5">Uploaded via Web</p>
+                                </div>
+
+                                {/* Column 3: Status Badge */}
+                                <div className="flex items-center justify-end">
+                                    <span className={cn(
+                                        "px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border flex items-center gap-1.5 shadow-sm transition-all duration-300 group-hover:scale-105",
+                                        getStatusColor(doc.status)
+                                    )}>
                                         {getStatusIcon(doc.status)}
-                                        {doc.status.toLowerCase()}
+                                        {doc.status}
                                     </span>
                                 </div>
                             </div>

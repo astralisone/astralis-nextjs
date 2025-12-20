@@ -236,42 +236,58 @@ export async function GET(req: NextRequest) {
       let type: ActivityType = "pipeline_created";
       let title = "System Activity";
       let description = "";
+      const metadata = log.metadata as any;
 
       // Map action to activity type and generate readable descriptions
       switch (log.action) {
         case "CREATE":
           if (log.entity === "PIPELINE") {
             type = "pipeline_created";
-            title = "New Pipeline Created";
-            description = `Pipeline "${log.entityId}" was created`;
+            title = "New Pipeline Architecture";
+            description = `Organization pipeline "${metadata?.name || log.entityId}" was initialized.`;
           } else if (log.entity === "INTAKE") {
             type = "intake_received";
-            title = "New Intake Request";
-            description = "A new intake request was received";
+            title = "Inbound Intake Request";
+            description = `Received new intake from ${metadata?.source || 'external source'}: "${metadata?.title || 'Untitled'}".`;
           } else if (log.entity === "EVENT") {
             type = "event_scheduled";
-            title = "Event Scheduled";
-            description = "A new event was scheduled";
+            title = "Meeting / Event Scheduled";
+            description = `New calendar event "${metadata?.title || log.entityId}" was confirmed.`;
+          } else if (log.entity === "DOCUMENT") {
+            type = "document_processed";
+            title = "New Document Upload";
+            description = `Document "${metadata?.fileName || log.entityId}" was added to the secure repository.`;
           }
           break;
         case "UPDATE":
           if (log.entity === "INTAKE") {
             type = "intake_assigned";
-            title = "Intake Request Updated";
-            description = "An intake request was assigned to a pipeline";
+            title = "Intake Classified & Routed";
+            description = `Intake "${metadata?.title || log.entityId}" was successfully routed to the appropriate pipeline.`;
           } else if (log.entity === "PIPELINE") {
             type = "pipeline_created";
-            title = "Pipeline Updated";
-            description = `Pipeline was modified`;
+            title = "Pipeline State Updated";
+            description = `Structural changes were saved for pipeline "${metadata?.name || log.entityId}".`;
+          } else if (log.entity === "DOCUMENT") {
+            type = "document_processed";
+            const status = metadata?.status as string;
+            title = status === 'COMPLETED' ? "Document Fully Processed" : "Document status: " + status;
+            description = `AI extraction ${status === 'COMPLETED' ? 'completed successfully' : 'is in progress'} for "${metadata?.fileName || log.entityId}".`;
           }
           break;
         case "DELETE":
-          title = `${log.entity} Deleted`;
-          description = `A ${log.entity.toLowerCase()} was deleted`;
+          title = `${log.entity.charAt(0) + log.entity.slice(1).toLowerCase()} Removed`;
+          description = `The "${metadata?.name || metadata?.title || log.entityId}" ${log.entity.toLowerCase()} record was permanently deleted.`;
+          break;
+        case "GENERATE":
+          if (log.entity === "ANALYSIS") {
+            title = "AI Business Pulse Analysis";
+            description = "Astralis Agent generated a new proactive business analysis report.";
+          }
           break;
         default:
-          title = log.action;
-          description = `${log.entity} ${log.action.toLowerCase()}`;
+          title = `${log.entity.charAt(0) + log.entity.slice(1).toLowerCase()} ${log.action.toLowerCase()}`;
+          description = `System performed ${log.action.toLowerCase()} on ${log.entity.toLowerCase()} record.`;
       }
 
       return {

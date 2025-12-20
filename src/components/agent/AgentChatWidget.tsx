@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 // import { ScrollArea } from '@/components/ui/scroll-area'; 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
+import { useUIStore } from '@/stores/useUIStore';
 
 interface Message {
     role: 'user' | 'assistant';
@@ -17,7 +18,16 @@ interface Message {
 }
 
 export function AgentChatWidget() {
-    const [isOpen, setIsOpen] = useState(false);
+    const { rightPanelOpen, toggleRightPanel, activeRightPanel, setActiveRightPanel } = useUIStore();
+    const isOpen = rightPanelOpen && activeRightPanel === 'agent';
+    const setIsOpen = (open: boolean) => {
+        if (!open) {
+            useUIStore.getState().closeRightPanel();
+        } else {
+            setActiveRightPanel('agent');
+        }
+    };
+
     const [isExpanded, setIsExpanded] = useState(false);
     const [messages, setMessages] = useState<Message[]>([
         { role: 'assistant', content: 'Hi! I\'m your Astralis assistant. I can help you check integrations, tasks, or run automations. How can I help?' }
@@ -101,7 +111,7 @@ export function AgentChatWidget() {
         return (
             <Button
                 onClick={() => setIsOpen(true)}
-                className="fixed bottom-8 right-8 h-14 w-14 rounded-full shadow-lg z-[100000] bg-[#0A1B2B] hover:bg-[#1a2f42] border border-[#2B6CB0]/20"
+                className="fixed bottom-8 right-8 h-14 w-14 rounded-full shadow-lg z-[100000] bg-[#0A1B2B] hover:bg-[#1a2f42] border border-[#2B6CB0]/20 transition-all duration-300 hover:scale-110 active:scale-95"
             >
                 <Bot className="h-8 w-8 text-[#2B6CB0]" />
             </Button>
@@ -112,8 +122,8 @@ export function AgentChatWidget() {
         <Card
             ref={widgetRef}
             className={cn(
-                "fixed bottom-8 right-8 z-[100000] shadow-2xl transition-all duration-300 flex flex-col border-[#2B6CB0]/20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
-                isExpanded ? "w-[600px] h-[80vh]" : "w-[400px] h-[600px]"
+                "fixed top-[70px] bottom-0 right-0 z-[100000] shadow-2xl transition-all duration-300 flex flex-col border-l border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 animate-in slide-in-from-right",
+                isExpanded ? "w-[600px]" : "w-[400px]"
             )}
         >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 border-b border-border/50">

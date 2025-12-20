@@ -65,51 +65,42 @@ export async function GET(req: NextRequest) {
         startDate.setDate(now.getDate() - 30);
     }
 
-    // Get agent decision data
-    const agentDecisions = await prisma.agentDecision.groupBy({
-      by: ['createdAt'],
-      where: {
-        orgId,
-        createdAt: { gte: startDate },
-      },
-      _count: true,
-      orderBy: { createdAt: 'asc' },
-    });
+    // Query agent metrics grouped by date using raw SQL for proper date truncation
+    const agentTrends = await prisma.$queryRawUnsafe<Array<{ date: string; decisions: bigint; executions: bigint; successes: bigint }>>(
+      `
+      WITH decisions AS (
+        SELECT DATE("createdAt") as d, COUNT(*) as c
+        FROM "AgentDecision"
+        WHERE "orgId" = $1 AND "createdAt" >= $2
+        GROUP BY DATE("createdAt")
+      ),
+      executions AS (
+        SELECT DATE("createdAt") as d, COUNT(*) as total, SUM(CASE WHEN "status" = 'COMPLETED' THEN 1 ELSE 0 END) as success
+        FROM "WorkflowExecution"
+        WHERE "orgId" = $1 AND "createdAt" >= $2
+        GROUP BY DATE("createdAt")
+      )
+      SELECT 
+        COALESCE(d.d, e.d)::text as date,
+        COALESCE(d.c, 0) as decisions,
+        COALESCE(e.total, 0) as executions,
+        COALESCE(e.success, 0) as successes
+      FROM decisions d
+      FULL OUTER JOIN executions e ON d.d = e.d
+      ORDER BY date ASC
+      `,
+      orgId,
+      startDate
+    );
 
-    // Get workflow execution data
-    const workflowExecutions = await prisma.workflowExecution.groupBy({
-      by: ['createdAt', 'status'],
-      where: {
-        orgId,
-        createdAt: { gte: startDate },
-      },
-      _count: true,
-      orderBy: { createdAt: 'asc' },
-    });
-
-    // Group by date
-    const dailyDecisions: Record<string, number> = {};
-    const dailyExecutions: Record<string, number> = {};
-    const dailySuccesses: Record<string, number> = {};
-
-    agentDecisions.forEach((decision) => {
-      const date = decision.createdAt.toISOString().split('T')[0];
-      dailyDecisions[date] = (dailyDecisions[date] || 0) + decision._count;
-    });
-
-    // For now, use decisions as executions and assume 80% success rate
-    Object.keys(dailyDecisions).forEach(date => {
-      const decisions = dailyDecisions[date];
-      dailyExecutions[date] = decisions;
-      dailySuccesses[date] = Math.round(decisions * 0.8); // Assume 80% success rate
-    });
-
-    workflowExecutions.forEach((execution) => {
-      const date = execution.createdAt.toISOString().split('T')[0];
-      dailyExecutions[date] = (dailyExecutions[date] || 0) + execution._count;
-      if (execution.status === 'COMPLETED') {
-        dailySuccesses[date] = (dailySuccesses[date] || 0) + execution._count;
-      }
+    // Create record for fast lookup
+    const dailyData: Record<string, { decisions: number; executions: number; successes: number }> = {};
+    agentTrends.forEach((item) => {
+      dailyData[item.date] = {
+        decisions: Number(item.decisions),
+        executions: Number(item.executions),
+        successes: Number(item.successes),
+      };
     });
 
     // Fill in missing dates and create result
@@ -118,13 +109,13 @@ export async function GET(req: NextRequest) {
 
     while (currentDate <= now) {
       const dateStr = currentDate.toISOString().split('T')[0];
-      const executions = dailyExecutions[dateStr] || 0;
-      const successes = dailySuccesses[dateStr] || 0;
+      const executions = dailyData[dateStr]?.executions || 0;
+      const successes = dailyData[dateStr]?.successes || 0;
       const successRate = executions > 0 ? Math.round((successes / executions) * 100) : 0;
 
       result.push({
         date: dateStr,
-        decisions: dailyDecisions[dateStr] || 0,
+        decisions: dailyData[dateStr]?.decisions || 0,
         executions: executions,
         successRate: successRate,
       });

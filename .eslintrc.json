@@ -1,0 +1,18 @@
+{
+    "env": {
+        "jest": true,
+        "node": true,
+        "browser": true
+    },
+    "extends": [
+        "next/core-web-vitals",
+        "plugin:storybook/recommended"
+    ],
+    "parserOptions": {
+        "sourceType": "module",
+        "ecmaVersion": "latest"
+    },
+    "plugins": [
+        "@typescript-eslint"
+    ]
+}

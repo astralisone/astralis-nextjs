@@ -51,6 +51,10 @@ interface UIState {
 
   // Theme (for future dark mode support)
   theme: 'light' | 'dark' | 'system';
+
+  // Right Panels (Docked Chats)
+  rightPanelOpen: boolean;
+  activeRightPanel: 'agent' | 'document' | 'scheduler' | null;
 }
 
 interface UIActions {
@@ -58,6 +62,12 @@ interface UIActions {
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
   setSidebarWidth: (width: number) => void;
+
+  // Right Panel actions
+  toggleRightPanel: (panel?: 'agent' | 'document' | 'scheduler') => void;
+  setRightPanelOpen: (open: boolean) => void;
+  setActiveRightPanel: (panel: 'agent' | 'document' | 'scheduler' | null) => void;
+  closeRightPanel: () => void;
 
   // Modal actions
   openModal: (id: string, data?: any) => void;
@@ -94,6 +104,8 @@ const initialState: UIState = {
   viewMode: 'kanban',
   density: 'comfortable',
   theme: 'light',
+  rightPanelOpen: false,
+  activeRightPanel: null,
 };
 
 export const useUIStore = create<UIState & UIActions>()(
@@ -114,6 +126,34 @@ export const useUIStore = create<UIState & UIActions>()(
         setSidebarWidth: (width) =>
           set((state) => {
             state.sidebarWidth = width;
+          }),
+
+        // Right Panel
+        toggleRightPanel: (panel) =>
+          set((state) => {
+            if (panel) {
+              if (state.activeRightPanel === panel && state.rightPanelOpen) {
+                state.rightPanelOpen = false;
+              } else {
+                state.activeRightPanel = panel;
+                state.rightPanelOpen = true;
+              }
+            } else {
+              state.rightPanelOpen = !state.rightPanelOpen;
+            }
+          }),
+        setRightPanelOpen: (open) =>
+          set((state) => {
+            state.rightPanelOpen = open;
+          }),
+        setActiveRightPanel: (panel) =>
+          set((state) => {
+            state.activeRightPanel = panel;
+            if (panel) state.rightPanelOpen = true;
+          }),
+        closeRightPanel: () =>
+          set((state) => {
+            state.rightPanelOpen = false;
           }),
 
         // Modals

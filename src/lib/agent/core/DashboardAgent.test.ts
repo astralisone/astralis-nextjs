@@ -123,6 +123,7 @@ describe('DashboardAgent', () => {
  * To integrate DashboardAgent into AgentChatInterface:
  */
 
+/*
 export function integrateDashboardAgent() {
   // Replace current agent selection logic
   const AVAILABLE_AGENTS = [
@@ -185,4 +186,4 @@ export function integrateDashboardAgent() {
       // ... existing code
     }
   };
-}
+}*/

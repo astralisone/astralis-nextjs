@@ -53,9 +53,9 @@ export function ActivityFeed({ activities, maxItems = 20 }: ActivityFeedProps) {
             No recent activity
           </div>
         ) : (
-          <div className="space-y-4">
-            {displayedActivities.map((activity) => (
-              <ActivityFeedItem key={activity.id} activity={activity} />
+          <div className="space-y-1">
+            {displayedActivities.map((activity, index) => (
+              <ActivityFeedItem key={activity.id} activity={activity} index={index} />
             ))}
           </div>
         )}
@@ -68,12 +68,15 @@ export function ActivityFeed({ activities, maxItems = 20 }: ActivityFeedProps) {
  * ActivityFeedItem Component
  * Individual activity item with icon, description, and timestamp
  */
-function ActivityFeedItem({ activity }: { activity: ActivityItem }) {
+function ActivityFeedItem({ activity, index }: { activity: ActivityItem; index: number }) {
   const icon = getActivityIcon(activity.type);
   const iconColor = getActivityIconColor(activity.type);
 
   return (
-    <div className="group flex items-start gap-4 p-4 rounded-xl hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-25 dark:hover:from-slate-800/50 dark:hover:to-slate-800/25 border border-transparent hover:border-slate-200/60 dark:hover:border-slate-700/60 transition-all duration-300 hover:shadow-sm cursor-pointer">
+    <div className={cn(
+      "group flex items-start gap-4 p-4 rounded-xl hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-25 dark:hover:from-slate-800/50 dark:hover:to-slate-800/25 border border-transparent hover:border-slate-200/60 dark:hover:border-slate-700/60 transition-all duration-300 hover:shadow-sm cursor-pointer",
+      index % 2 === 1 ? "bg-slate-50/50" : "bg-white"
+    )}>
       {/* Icon */}
       <div
         className={cn(

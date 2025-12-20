@@ -13,6 +13,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Plus, RefreshCw, Calendar, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from '@/components/ui/use-toast';
+import { useUIStore } from '@/stores/useUIStore';
 
 // Scheduling components
 import { EventFilter, EventStats } from '@/components/scheduling/types';
@@ -39,8 +40,9 @@ export default function SchedulingPage() {
   const [showCreateSheet, setShowCreateSheet] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<SchedulingEvent | null>(null);
   const [showEventSheet, setShowEventSheet] = useState(false);
-  const [showChatPanel, setShowChatPanel] = useState(false);
   const [updatingEventId, setUpdatingEventId] = useState<string | null>(null);
+  const { rightPanelOpen, activeRightPanel, toggleRightPanel, closeRightPanel } = useUIStore();
+  const showChatPanel = rightPanelOpen && activeRightPanel === 'scheduler';
 
   // Get userId and orgId from session
   const userId = session?.user?.id || '';
@@ -236,10 +238,7 @@ export default function SchedulingPage() {
 
   return (
     <PageContainer>
-      <div className={cn(
-        'transition-all duration-300',
-        showChatPanel ? 'lg:mr-[400px]' : ''
-      )}>
+      <div className="transition-all duration-300">
         {/* Header */}
         <PageHeader
           title="Scheduling"
@@ -262,7 +261,7 @@ export default function SchedulingPage() {
               <Button
                 variant={showChatPanel ? 'primary' : 'outline'}
                 className="gap-2 w-full sm:w-auto"
-                onClick={() => setShowChatPanel(!showChatPanel)}
+                onClick={() => toggleRightPanel('scheduler')}
               >
                 <MessageSquare className="h-5 w-5" />
                 <span>{showChatPanel ? 'Hide Chat' : 'Chat Assistant'}</span>
@@ -345,8 +344,6 @@ export default function SchedulingPage() {
 
       {/* Chat Panel */}
       <CalendarChatSidePanel
-        show={showChatPanel}
-        onClose={() => setShowChatPanel(false)}
         userId={userId}
         orgId={orgId}
         onEventCreated={fetchEvents}
@@ -368,6 +365,6 @@ export default function SchedulingPage() {
         onDecline={handleDeclineEvent}
         updatingEventId={updatingEventId}
       />
-    </PageContainer>
+    </PageContainer >
   );
 }

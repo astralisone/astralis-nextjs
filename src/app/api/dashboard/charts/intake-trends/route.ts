@@ -87,16 +87,20 @@ export async function GET(req: NextRequest) {
     }
 
     // Query intake data grouped by time period
-    const intakeData = await prisma.$queryRaw<Array<{ date: string | Date; count: bigint }>>`
-      SELECT
+    const intakeData = await prisma.$queryRawUnsafe<Array<{ date: string | Date; count: bigint }>>(
+      `
+      SELECT 
         ${dateFormat} as date,
         COUNT(*) as count
       FROM "intakeRequest"
-      WHERE "orgId" = ${orgId}
-        AND "createdAt" >= ${startDate}
+      WHERE "orgId" = $1
+        AND "createdAt" >= $2
       GROUP BY ${groupClause}
       ORDER BY date ASC
-    `;
+      `,
+      orgId,
+      startDate
+    );
 
     // Convert BigInt to number and format dates
     const formattedData = intakeData.map(item => {
