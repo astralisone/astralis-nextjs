@@ -17,8 +17,10 @@ import { processCalendarSync } from './processors/calendarSync.processor';
 import { processSchedulingReminder } from './processors/schedulingReminder.processor';
 import { processSLAMonitor } from './processors/slaMonitor.processor';
 import { processSchedulingAgent } from './processors/schedulingAgent.processor';
+import { processHealthCheck } from './processors/healthCheck.processor';
 import { initializeSLAMonitorJob } from './jobs/sla-monitor.job';
 import { initializeReminderSchedulerJob } from './jobs/reminder-scheduler.job';
+import { initializeHealthCheckJob } from './jobs/health-check.job';
 
 /**
  * Worker Bootstrap
@@ -87,6 +89,12 @@ async function startWorkers() {
   const schedulingAgentWorker = new Worker('scheduling-agent', processSchedulingAgent, {
     connection: redisConnection,
     concurrency: 3, // Medium concurrency for AI classification + scheduling
+  });
+
+  // Health check worker (Proactive business pulse monitoring)
+  const healthCheckWorker = new Worker('health-check', processHealthCheck, {
+    connection: redisConnection,
+    concurrency: 1, // Only one check at a time
   });
 
   // Document worker event handlers
@@ -180,6 +188,15 @@ async function startWorkers() {
     console.error('[Worker:SchedulingAgent] Worker error:', err);
   });
 
+  // Health check worker event handlers
+  healthCheckWorker.on('completed', (job) => {
+    console.log(`[Worker:HealthCheck] Job ${job.id} completed`);
+  });
+
+  healthCheckWorker.on('failed', (job, err) => {
+    console.error(`[Worker:HealthCheck] Job ${job?.id} failed:`, err.message);
+  });
+
   console.log('[Workers] Document processing worker started (concurrency: 3)');
   console.log('[Workers] Document embedding worker started (concurrency: 2)');
   console.log('[Workers] Intake routing worker started (concurrency: 5)');
@@ -187,6 +204,7 @@ async function startWorkers() {
   console.log('[Workers] Scheduling reminder worker started (concurrency: 5)');
   console.log('[Workers] SLA monitor worker started (concurrency: 2)');
   console.log('[Workers] Scheduling agent worker started (concurrency: 3)');
+  console.log('[Workers] Health check worker started (concurrency: 1)');
 
   // Initialize SLA monitor cron job (runs every 15 minutes)
   try {
@@ -202,6 +220,13 @@ async function startWorkers() {
     console.error('[Workers] Failed to initialize reminder scheduler cron job:', error);
   }
 
+  // Initialize health check cron job (runs every 30 minutes)
+  try {
+    await initializeHealthCheckJob();
+  } catch (error) {
+    console.error('[Workers] Failed to initialize health check cron job:', error);
+  }
+
   // Graceful shutdown
   const shutdown = async () => {
     console.log('[Workers] Shutting down gracefully...');
@@ -215,6 +240,7 @@ async function startWorkers() {
       schedulingReminderWorker.close(),
       slaMonitorWorker.close(),
       schedulingAgentWorker.close(),
+      healthCheckWorker.close(),
     ]);
 
     console.log('[Workers] All workers closed');

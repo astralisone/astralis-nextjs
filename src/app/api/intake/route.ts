@@ -194,6 +194,13 @@ export async function POST(req: NextRequest) {
               name: (updatedIntake.requestData as any)?.name,
               phone: (updatedIntake.requestData as any)?.phone,
             },
+            businessContext: {
+              industry: (updatedIntake.requestData as any)?.industry,
+              customerSegment: (updatedIntake.requestData as any)?.segment,
+              existingCustomer: (updatedIntake.requestData as any)?.isExisting,
+              relatedOrgId: updatedIntake.orgId,
+            },
+            createdAt: updatedIntake.createdAt,
           },
         });
 

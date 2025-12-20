@@ -184,6 +184,13 @@ interface IntakeCreatedPayload {
     phone?: string;
   };
   urgency?: number;
+  businessContext?: {
+    estimatedValue?: number;
+    customerSegment?: string;
+    industry?: string;
+    existingCustomer?: boolean;
+    relatedOrgId?: string;
+  };
   createdAt: Date;
 }
 

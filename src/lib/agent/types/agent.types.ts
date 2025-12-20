@@ -171,6 +171,8 @@ export enum DecisionType {
   GET_KANBAN_STATE = 'GET_KANBAN_STATE',
   /** Search documents in the knowledge base */
   SEARCH_DOCUMENTS = 'SEARCH_DOCUMENTS',
+  /** Get proactive business insights and recommendations */
+  GET_BUSINESS_PULSE = 'GET_BUSINESS_PULSE',
 
   // Gmail / Google Workspace
   REPLY_TO_EMAIL = 'REPLY_TO_EMAIL',
@@ -930,6 +932,18 @@ export interface DecisionOutcome {
 // =============================================================================
 // ACTION PARAMETER TYPES
 // =============================================================================
+
+/**
+ * Parameters for the GET_BUSINESS_PULSE action.
+ */
+export interface GetBusinessPulseParams {
+  /** Specific areas to focus on (e.g., 'sales', 'operations', 'integrations') */
+  focusAreas?: string[];
+  /** Timeframe for data analysis (e.g., 'last_24h', 'last_7d') */
+  timeframe?: string;
+  /** Whether to include specific recommendations */
+  includeRecommendations?: boolean;
+}
 
 /**
  * Parameters for pipeline assignment action.

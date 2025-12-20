@@ -58,7 +58,10 @@ class CommunicationClassifier {
     }
 
     private isBusinessCommunication(intent: string, context: any): boolean {
-        const businessKeywords = ['email', 'contact', 'reach out', 'proposal', 'metting', 'schedule'];
+        const businessKeywords = [
+            'email', 'contact', 'reach out', 'proposal', 'meeting', 'schedule',
+            'follow up', 'update', 'status', 'check in', 'next steps'
+        ];
         return businessKeywords.some(keyword => intent.includes(keyword));
     }
 }

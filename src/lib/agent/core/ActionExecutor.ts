@@ -31,6 +31,7 @@ import type {
 import {
   DecisionType as DecisionTypeEnum,
   DecisionStatus as DecisionStatusEnum,
+  type GetBusinessPulseParams,
 } from '../types/agent.types';
 import { AgentEventBus, type EmitResult } from '../inputs/EventBus';
 import { emitTaskCreated } from '@/lib/events/taskEvents';
@@ -472,6 +473,85 @@ export class ActionExecutor {
       }
     );
 
+    // GET_BUSINESS_PULSE handler
+    this.registerHandler<GetBusinessPulseParams>(
+      DecisionTypeEnum.GET_BUSINESS_PULSE,
+      async (params, ctx) => {
+        this.logger.info('Executing GET_BUSINESS_PULSE', { params, dryRun: ctx.dryRun });
+
+        if (ctx.dryRun) {
+          return { success: true, data: { dryRun: true, pulse: 'HEALTHY', insights: [] } };
+        }
+
+        try {
+          // 1. Gather data from multiple sources
+          const [automations, credentials, intakes] = await Promise.all([
+            prisma.automation.findMany({ where: { orgId: ctx.orgId! }, take: 20 }),
+            prisma.integrationCredential.findMany({ where: { orgId: ctx.orgId!, isActive: true } }),
+            prisma.intakeRequest.findMany({ where: { orgId: ctx.orgId! }, orderBy: { createdAt: 'desc' }, take: 50 }),
+          ]);
+
+          // 2. Analyze for insights
+          const insights: any[] = [];
+
+          // Integration health check
+          const errorIntegrations = credentials.filter((c: any) => c.status !== 'CONNECTED_ACTIVE');
+          if (errorIntegrations.length > 0) {
+            insights.push({
+              type: 'WARNING',
+              category: 'INTEGRATIONS',
+              severity: 'HIGH',
+              message: `${errorIntegrations.length} integrations require attention.`,
+              data: errorIntegrations.map((i: any) => i.provider),
+              recommendation: 'Check integration credentials and re-authenticate if necessary.'
+            });
+          }
+
+          // Automation efficiency
+          const lowSuccessAutomations = automations.filter((a: any) => a.executionCount > 10 && (a.successCount / a.executionCount) < 0.8);
+          if (lowSuccessAutomations.length > 0) {
+            insights.push({
+              type: 'OPTIMIZATION',
+              category: 'AUTOMATION',
+              severity: 'MEDIUM',
+              message: `${lowSuccessAutomations.length} automations have low success rates.`,
+              data: lowSuccessAutomations.map((a: any) => a.name),
+              recommendation: 'Review error logs for these automations to identify common failure points.'
+            });
+          }
+
+          // Intake trends
+          if (intakes.length > 0) {
+            const highUrgency = intakes.filter((i: any) => (i.urgency || 0) >= 4).length;
+            if (highUrgency > 5) {
+              insights.push({
+                type: 'INFO',
+                category: 'OPERATIONS',
+                severity: 'MEDIUM',
+                message: `High volume of urgent intakes detected (${highUrgency} recent items).`,
+                recommendation: 'Consider reallocating team resources to handle peak intake volume.'
+              });
+            }
+          }
+
+          return {
+            success: true,
+            data: {
+              pulse: insights.some(i => i.severity === 'HIGH') ? 'CRITICAL' : (insights.length > 0 ? 'NEEDS_ATTENTION' : 'HEALTHY'),
+              timestamp: new Date(),
+              insights,
+              summary: insights.length > 0
+                ? `System analysis identified ${insights.length} areas for optimization.`
+                : "All systems are operating within normal parameters.",
+            },
+          };
+        } catch (error) {
+          this.logger.error('Failed to get business pulse', error);
+          return { success: false, error: (error as Error).message };
+        }
+      }
+    );
+
     // CREATE_EVENT handler
     this.registerHandler<CreateEventParams>(
       DecisionTypeEnum.CREATE_EVENT,
@@ -600,7 +680,7 @@ export class ActionExecutor {
 
         try {
           // Check if Gmail integration is available
-          const gmailService = await this.getIntegrationService('GMAIL', ctx.userId, ctx.orgId);
+          const gmailService = await this.getIntegrationService('GMAIL', ctx.userId!, ctx.orgId!);
 
           if (!gmailService) {
             return {
@@ -611,8 +691,8 @@ export class ActionExecutor {
           }
 
           // Use Gmail integration for business emails
-          const result = await gmailService.sendEmail({
-            to: params.to || params.recipient,
+          const result = await (gmailService as any).sendEmail({
+            to: Array.isArray(params.to || params.recipient) ? (params.to || params.recipient) : [params.to || params.recipient],
             subject: params.subject,
             body: params.body || params.html,
             isHtml: params.isHtml || true
@@ -1024,7 +1104,7 @@ export class ActionExecutor {
 
     // If no handler found, try to load from admin actions repository
     if (!handler) {
-      handler = await this.loadActionFromRepository(action.type);
+      handler = (await this.loadActionFromRepository(action.type)) ?? undefined;
     }
 
     if (!handler) {
@@ -1300,7 +1380,7 @@ export class ActionExecutor {
       }
 
       // Create dynamic handler that calls the action execution API
-      return async (params: any, context: ActionExecutionContext) => {
+      return (async (params: any, context: ActionExecutionContext) => {
         this.logger.info(`Executing dynamic action: ${actionType}`, { params, dryRun: context.dryRun });
 
         if (context.dryRun) {
@@ -1345,7 +1425,7 @@ export class ActionExecutor {
             rollbackable: false,
           };
         }
-      };
+      }) as ActionHandler;
     } catch (error) {
       this.logger.warn(`Failed to load action from repository: ${actionType}`, { error });
       return null;
