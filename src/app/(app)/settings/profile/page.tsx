@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,17 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { AvatarUpload } from '@/components/ui/avatar-upload';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { User, Mail, Building, Briefcase, Loader2 } from 'lucide-react';
 
 interface ProfileData {
@@ -26,6 +37,12 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [profileSyncError, setProfileSyncError] = useState<boolean>(false);
 
   const [formData, setFormData] = useState<ProfileData>({
     name: '',
@@ -44,11 +61,13 @@ export default function ProfilePage() {
       const response = await fetch('/api/users/me');
 
       if (!response.ok) {
+        setProfileSyncError(true);
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to fetch profile');
       }
 
       const { data } = await response.json();
+      setProfileSyncError(false);
       setFormData({
         name: data.name || '',
         email: data.email || '',
@@ -59,6 +78,7 @@ export default function ProfilePage() {
       });
     } catch (err) {
       console.error('Error fetching profile:', err);
+      setProfileSyncError(true);
       setError(err instanceof Error ? err.message : 'Failed to load profile');
       // Fall back to session data if API fails
       if (session?.user) {
@@ -138,6 +158,46 @@ export default function ProfilePage() {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmation !== 'DELETE') {
+      setDeleteError('Please type DELETE to confirm');
+      return;
+    }
+
+    if (!deletePassword) {
+      setDeleteError('Password is required');
+      return;
+    }
+
+    setDeleting(true);
+    setDeleteError(null);
+
+    try {
+      const response = await fetch('/api/users/me', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          password: deletePassword,
+          confirmation: deleteConfirmation,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete account');
+      }
+
+      // If successful, sign out and redirect
+      await signOut({ callbackUrl: '/' });
+    } catch (err) {
+      console.error('Error deleting account:', err);
+      setDeleteError(err instanceof Error ? err.message : 'Failed to delete account');
+      setDeleting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -157,6 +217,16 @@ export default function ProfilePage() {
         <Alert variant="error" showIcon>
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {profileSyncError && (
+        <Alert variant="warning" showIcon>
+          <AlertTitle>Working Offline</AlertTitle>
+          <AlertDescription>
+            We couldn't sync your latest profile data from the server.
+            You're seeing a cached version, and changes may not be saved.
+          </AlertDescription>
         </Alert>
       )}
 
@@ -324,9 +394,70 @@ export default function ProfilePage() {
               <p className="font-medium text-error">Delete Account</p>
               <p className="text-sm text-slate-500">Permanently delete your account and all data</p>
             </div>
-            <Button variant="destructive" size="sm" className="gap-1.5 text-sm">
-              Delete Account
-            </Button>
+
+            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm" className="gap-1.5 text-sm">
+                  Delete Account
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="text-error">Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently deactivate your account
+                    and remove your profile from our active systems.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+
+                <div className="space-y-4 py-4">
+                  {deleteError && (
+                    <Alert variant="error" size="sm">
+                      <AlertDescription>{deleteError}</AlertDescription>
+                    </Alert>
+                  )}
+
+                  <div className="space-y-2">
+                    <Label htmlFor="delete-password">Confirm Password</Label>
+                    <Input
+                      id="delete-password"
+                      type="password"
+                      value={deletePassword}
+                      onChange={(e) => setDeletePassword(e.target.value)}
+                      placeholder="Enter your current password"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="delete-confirm">Type <span className="font-bold text-error">DELETE</span> to confirm</Label>
+                    <Input
+                      id="delete-confirm"
+                      value={deleteConfirmation}
+                      onChange={(e) => setDeleteConfirmation(e.target.value)}
+                      placeholder="DELETE"
+                    />
+                  </div>
+                </div>
+
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+                  <Button
+                    variant="destructive"
+                    onClick={handleDeleteAccount}
+                    disabled={deleting || deleteConfirmation !== 'DELETE' || !deletePassword}
+                  >
+                    {deleting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Deleting...
+                      </>
+                    ) : (
+                      'Delete Permanently'
+                    )}
+                  </Button>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </CardContent>
       </Card>

@@ -1,8 +1,7 @@
 /**
  * Type definitions for Third-Party Integrations
  *
- * Comprehensive types for OAuth flows, API clients, and integration services
- * for Accounting, CRM, Communication, and Storage providers.
+ * Core types for OAuth flows, API clients, and integration services.
  */
 
 import type { IntegrationProvider as PrismaIntegrationProvider } from '@prisma/client';
@@ -26,9 +25,9 @@ export type IntegrationCategory =
   | 'hr';
 
 /**
- * Integration status for connection state
+ * Integration connection state
  */
-export type IntegrationStatus =
+export type IntegrationConnectionStatus =
   | 'connected'
   | 'disconnected'
   | 'expired'
@@ -52,13 +51,30 @@ export interface IntegrationMetadata {
 }
 
 /**
- * Connected integration instance
+ * View model for an integration in the UI
+ */
+export interface IntegrationStatus {
+  provider: PrismaIntegrationProvider;
+  isConnected: boolean;
+  available: boolean;
+  unavailableReason?: string;
+  credential?: {
+    id: string;
+    status: string;
+    expiresAt?: Date;
+    lastUsedAt?: Date;
+    lastError?: string;
+  };
+}
+
+/**
+ * Connected integration instance (backend record)
  */
 export interface ConnectedIntegration {
   id: string;
   provider: PrismaIntegrationProvider;
   credentialName: string;
-  status: IntegrationStatus;
+  status: IntegrationConnectionStatus;
   scope: string | null;
   expiresAt: Date | null;
   lastUsedAt: Date | null;
@@ -95,7 +111,7 @@ export interface OAuthTokenResponse {
   token_type: string;
   scope?: string;
   id_token?: string;
-  // Provider-specific fields
+  // Provider-specific fields (kept for general mapping)
   realmId?: string; // QuickBooks
   tenantId?: string; // Xero
   team?: { id: string; name: string }; // Slack
@@ -115,468 +131,13 @@ export interface OAuthState {
 }
 
 // ============================================================================
-// Accounting Integrations (QuickBooks, Xero)
-// ============================================================================
-
-/**
- * QuickBooks-specific types
- */
-export interface QuickBooksCompanyInfo {
-  companyName: string;
-  companyId: string;
-  legalName?: string;
-  country?: string;
-  email?: string;
-  phone?: string;
-}
-
-export interface QuickBooksInvoice {
-  id: string;
-  docNumber: string;
-  customerRef: { value: string; name: string };
-  totalAmt: number;
-  balance: number;
-  dueDate: string;
-  txnDate: string;
-  status: 'Draft' | 'Sent' | 'Paid' | 'Overdue' | 'Voided';
-  line: Array<{
-    id: string;
-    description?: string;
-    amount: number;
-    detailType: string;
-  }>;
-}
-
-export interface QuickBooksCustomer {
-  id: string;
-  displayName: string;
-  companyName?: string;
-  primaryEmailAddr?: { address: string };
-  primaryPhone?: { freeFormNumber: string };
-  balance: number;
-  active: boolean;
-}
-
-export interface QuickBooksPayment {
-  id: string;
-  totalAmt: number;
-  txnDate: string;
-  customerRef: { value: string; name: string };
-  paymentMethodRef?: { value: string; name: string };
-}
-
-/**
- * Xero-specific types
- */
-export interface XeroOrganization {
-  organisationID: string;
-  name: string;
-  legalName?: string;
-  countryCode: string;
-  baseCurrency: string;
-  organisationType: string;
-}
-
-export interface XeroInvoice {
-  invoiceID: string;
-  invoiceNumber: string;
-  contact: { contactID: string; name: string };
-  total: number;
-  amountDue: number;
-  dueDate: string;
-  date: string;
-  status: 'DRAFT' | 'SUBMITTED' | 'AUTHORISED' | 'PAID' | 'VOIDED';
-  lineItems: Array<{
-    lineItemID: string;
-    description?: string;
-    lineAmount: number;
-    quantity: number;
-    unitAmount: number;
-  }>;
-}
-
-export interface XeroContact {
-  contactID: string;
-  name: string;
-  emailAddress?: string;
-  phones?: Array<{ phoneNumber: string; phoneType: string }>;
-  accountsReceivableTaxType?: string;
-  accountsPayableTaxType?: string;
-}
-
-// ============================================================================
-// CRM Integrations (HubSpot, Salesforce)
-// ============================================================================
-
-/**
- * HubSpot-specific types
- */
-export interface HubSpotContact {
-  id: string;
-  properties: {
-    email: string;
-    firstname?: string;
-    lastname?: string;
-    phone?: string;
-    company?: string;
-    lifecyclestage?: string;
-  };
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface HubSpotCompany {
-  id: string;
-  properties: {
-    name: string;
-    domain?: string;
-    industry?: string;
-    phone?: string;
-    city?: string;
-    state?: string;
-    country?: string;
-  };
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface HubSpotDeal {
-  id: string;
-  properties: {
-    dealname: string;
-    amount?: string;
-    dealstage: string;
-    closedate?: string;
-    pipeline: string;
-  };
-  createdAt: string;
-  updatedAt: string;
-}
-
-/**
- * Salesforce-specific types
- */
-export interface SalesforceContact {
-  Id: string;
-  FirstName?: string;
-  LastName: string;
-  Email?: string;
-  Phone?: string;
-  AccountId?: string;
-  Title?: string;
-  Department?: string;
-}
-
-export interface SalesforceAccount {
-  Id: string;
-  Name: string;
-  Type?: string;
-  Industry?: string;
-  Phone?: string;
-  Website?: string;
-  BillingCity?: string;
-  BillingState?: string;
-  BillingCountry?: string;
-}
-
-export interface SalesforceOpportunity {
-  Id: string;
-  Name: string;
-  Amount?: number;
-  StageName: string;
-  CloseDate: string;
-  Probability?: number;
-  AccountId?: string;
-  Description?: string;
-}
-
-export interface SalesforceLead {
-  Id: string;
-  FirstName?: string;
-  LastName: string;
-  Email?: string;
-  Phone?: string;
-  Company: string;
-  Status: string;
-  LeadSource?: string;
-}
-
-// ============================================================================
-// Communication Integrations (Slack, Gmail, Microsoft Teams)
-// ============================================================================
-
-/**
- * Slack-specific types
- */
-export interface SlackWorkspace {
-  id: string;
-  name: string;
-  domain: string;
-  icon?: { image_132: string };
-}
-
-export interface SlackChannel {
-  id: string;
-  name: string;
-  is_channel: boolean;
-  is_private: boolean;
-  is_member: boolean;
-  num_members?: number;
-  topic?: { value: string };
-  purpose?: { value: string };
-}
-
-export interface SlackUser {
-  id: string;
-  name: string;
-  real_name?: string;
-  profile?: {
-    email?: string;
-    image_72?: string;
-    display_name?: string;
-  };
-  is_admin?: boolean;
-  is_bot?: boolean;
-}
-
-export interface SlackMessage {
-  ts: string;
-  channel: string;
-  text: string;
-  user?: string;
-  bot_id?: string;
-  thread_ts?: string;
-  attachments?: Array<{
-    fallback: string;
-    color?: string;
-    title?: string;
-    text?: string;
-  }>;
-  blocks?: Array<Record<string, unknown>>;
-}
-
-/**
- * Gmail-specific types
- */
-export interface GmailProfile {
-  emailAddress: string;
-  messagesTotal: number;
-  threadsTotal: number;
-  historyId: string;
-}
-
-export interface GmailMessage {
-  id: string;
-  threadId: string;
-  labelIds: string[];
-  snippet: string;
-  payload: {
-    headers: Array<{ name: string; value: string }>;
-    mimeType: string;
-    body?: { data?: string; size: number };
-    parts?: Array<{
-      mimeType: string;
-      body: { data?: string; size: number };
-    }>;
-  };
-  internalDate: string;
-}
-
-export interface GmailThread {
-  id: string;
-  historyId: string;
-  messages: GmailMessage[];
-}
-
-export interface GmailLabel {
-  id: string;
-  name: string;
-  type: 'system' | 'user';
-  messagesTotal?: number;
-  messagesUnread?: number;
-}
-
-/**
- * Microsoft Teams-specific types
- */
-export interface TeamsUser {
-  id: string;
-  displayName: string;
-  mail?: string;
-  userPrincipalName: string;
-  jobTitle?: string;
-  department?: string;
-}
-
-export interface TeamsTeam {
-  id: string;
-  displayName: string;
-  description?: string;
-  visibility: 'public' | 'private';
-  webUrl: string;
-}
-
-export interface TeamsChannel {
-  id: string;
-  displayName: string;
-  description?: string;
-  email?: string;
-  webUrl: string;
-  membershipType: 'standard' | 'private' | 'shared';
-}
-
-export interface TeamsMessage {
-  id: string;
-  createdDateTime: string;
-  body: { contentType: string; content: string };
-  from?: { user?: { displayName: string; id: string } };
-  attachments?: Array<{
-    id: string;
-    contentType: string;
-    name: string;
-    contentUrl?: string;
-  }>;
-}
-
-// ============================================================================
-// Storage Integrations (Google Drive, Dropbox)
-// ============================================================================
-
-/**
- * Google Drive-specific types
- */
-export interface GoogleDriveFile {
-  id: string;
-  name: string;
-  mimeType: string;
-  size?: string;
-  createdTime: string;
-  modifiedTime: string;
-  parents?: string[];
-  webViewLink?: string;
-  webContentLink?: string;
-  iconLink?: string;
-  thumbnailLink?: string;
-  owners?: Array<{ displayName: string; emailAddress: string }>;
-  shared?: boolean;
-}
-
-export interface GoogleDriveFolder {
-  id: string;
-  name: string;
-  mimeType: 'application/vnd.google-apps.folder';
-  parents?: string[];
-  createdTime: string;
-  modifiedTime: string;
-}
-
-export interface GoogleDrivePermission {
-  id: string;
-  type: 'user' | 'group' | 'domain' | 'anyone';
-  role: 'owner' | 'organizer' | 'fileOrganizer' | 'writer' | 'commenter' | 'reader';
-  emailAddress?: string;
-  domain?: string;
-}
-
-/**
- * Dropbox-specific types
- */
-export interface DropboxAccount {
-  account_id: string;
-  name: { display_name: string; given_name: string; surname: string };
-  email: string;
-  email_verified: boolean;
-  profile_photo_url?: string;
-}
-
-export interface DropboxFile {
-  id: string;
-  name: string;
-  path_lower: string;
-  path_display: string;
-  size: number;
-  client_modified: string;
-  server_modified: string;
-  rev: string;
-  is_downloadable: boolean;
-  content_hash?: string;
-}
-
-export interface DropboxFolder {
-  id: string;
-  name: string;
-  path_lower: string;
-  path_display: string;
-}
-
-export interface DropboxSharedLink {
-  url: string;
-  name: string;
-  link_permissions: {
-    can_revoke: boolean;
-    resolved_visibility: 'public' | 'team_only' | 'password' | 'team_and_password';
-  };
-  expires?: string;
-}
-
-// ============================================================================
-// API Action Types
-// ============================================================================
-
-/**
- * Generic API response wrapper
- */
-export interface IntegrationApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: {
-    code: string;
-    message: string;
-    details?: Record<string, unknown>;
-  };
-  pagination?: {
-    cursor?: string;
-    hasMore: boolean;
-    total?: number;
-  };
-}
-
-/**
- * Sync operation result
- */
-export interface SyncResult {
-  provider: PrismaIntegrationProvider;
-  syncedAt: Date;
-  itemsCreated: number;
-  itemsUpdated: number;
-  itemsDeleted: number;
-  errors: Array<{
-    itemId: string;
-    error: string;
-  }>;
-}
-
-/**
- * Webhook event from provider
- */
-export interface IntegrationWebhookEvent {
-  provider: PrismaIntegrationProvider;
-  eventType: string;
-  eventId: string;
-  timestamp: Date;
-  data: Record<string, unknown>;
-  signature?: string;
-}
-
-// ============================================================================
-// Integration Configuration
+// Integration Catalog
 // ============================================================================
 
 /**
  * Available integrations catalog
  */
 export const INTEGRATION_CATALOG: IntegrationMetadata[] = [
-  // Accounting
   {
     id: 'quickbooks',
     provider: 'QUICKBOOKS' as PrismaIntegrationProvider,
@@ -603,7 +164,6 @@ export const INTEGRATION_CATALOG: IntegrationMetadata[] = [
     scopes: ['openid', 'profile', 'email', 'accounting.transactions', 'accounting.contacts'],
     webhooksSupported: true,
   },
-  // CRM
   {
     id: 'hubspot',
     provider: 'HUBSPOT' as PrismaIntegrationProvider,
@@ -617,20 +177,6 @@ export const INTEGRATION_CATALOG: IntegrationMetadata[] = [
     scopes: ['crm.objects.contacts.read', 'crm.objects.contacts.write', 'crm.objects.companies.read', 'crm.objects.deals.read'],
     webhooksSupported: true,
   },
-  {
-    id: 'salesforce',
-    provider: 'SALESFORCE' as PrismaIntegrationProvider,
-    name: 'Salesforce',
-    description: 'Connect to Salesforce for leads, accounts, and opportunities',
-    category: 'crm',
-    icon: 'salesforce',
-    color: '#00A1E0',
-    oauthSupported: true,
-    apiKeySupported: false,
-    scopes: ['api', 'refresh_token', 'offline_access'],
-    webhooksSupported: true,
-  },
-  // Communication
   {
     id: 'slack',
     provider: 'SLACK' as PrismaIntegrationProvider,
@@ -658,20 +204,6 @@ export const INTEGRATION_CATALOG: IntegrationMetadata[] = [
     webhooksSupported: true,
   },
   {
-    id: 'microsoft-teams',
-    provider: 'MICROSOFT_TEAMS' as PrismaIntegrationProvider,
-    name: 'Microsoft Teams',
-    description: 'Send messages and collaborate in Teams channels',
-    category: 'communication',
-    icon: 'microsoft-teams',
-    color: '#6264A7',
-    oauthSupported: true,
-    apiKeySupported: false,
-    scopes: ['User.Read', 'Team.ReadBasic.All', 'Channel.ReadBasic.All', 'ChannelMessage.Send'],
-    webhooksSupported: true,
-  },
-  // Storage
-  {
     id: 'google-drive',
     provider: 'GOOGLE_DRIVE' as PrismaIntegrationProvider,
     name: 'Google Drive',
@@ -684,88 +216,6 @@ export const INTEGRATION_CATALOG: IntegrationMetadata[] = [
     scopes: ['https://www.googleapis.com/auth/drive.file', 'https://www.googleapis.com/auth/drive.readonly'],
     webhooksSupported: true,
   },
-  {
-    id: 'google-docs',
-    provider: 'GOOGLE_DOCS' as PrismaIntegrationProvider,
-    name: 'Google Docs',
-    description: 'Create, edit, and manage documents in Google Docs',
-    category: 'storage',
-    icon: 'google-docs',
-    color: '#4285F4',
-    oauthSupported: true,
-    apiKeySupported: false,
-    scopes: ['https://www.googleapis.com/auth/documents'],
-    webhooksSupported: false,
-  },
-  {
-    id: 'dropbox',
-    provider: 'DROPBOX' as PrismaIntegrationProvider,
-    name: 'Dropbox',
-    description: 'Sync documents and files with Dropbox',
-    category: 'storage',
-    icon: 'dropbox',
-    color: '#0061FF',
-    oauthSupported: true,
-    apiKeySupported: false,
-    scopes: ['files.content.read', 'files.content.write', 'sharing.read', 'sharing.write'],
-    webhooksSupported: true,
-  },
-  // DevOps
-  {
-    id: 'github',
-    provider: 'GITHUB' as PrismaIntegrationProvider,
-    name: 'GitHub',
-    description: 'Connect to GitHub for repositories, issues, and pull requests',
-    category: 'devops',
-    icon: 'github',
-    color: '#181717',
-    oauthSupported: true,
-    apiKeySupported: false,
-    scopes: ['repo', 'user'],
-    webhooksSupported: true,
-  },
-  // Marketing
-  {
-    id: 'facebook',
-    provider: 'FACEBOOK' as PrismaIntegrationProvider,
-    name: 'Facebook',
-    description: 'Connect to Facebook for pages, posts, and ads',
-    category: 'marketing',
-    icon: 'facebook',
-    color: '#1877F2',
-    oauthSupported: true,
-    apiKeySupported: false,
-    scopes: ['email', 'public_profile'],
-    webhooksSupported: true,
-  },
-  // E-commerce
-  {
-    id: 'shopify',
-    provider: 'SHOPIFY' as PrismaIntegrationProvider,
-    name: 'Shopify',
-    description: 'Connect to Shopify for products, orders, and customers',
-    category: 'ecommerce',
-    icon: 'shopify',
-    color: '#7AB55C',
-    oauthSupported: true,
-    apiKeySupported: false,
-    scopes: ['read_products', 'read_orders'],
-    webhooksSupported: true,
-  },
-  // HR
-  {
-    id: 'bamboohr',
-    provider: 'BAMBOOHR' as PrismaIntegrationProvider,
-    name: 'BambooHR',
-    description: 'Connect to BambooHR for employee data and HR workflows',
-    category: 'hr',
-    icon: 'bamboohr',
-    color: '#00A852',
-    oauthSupported: true,
-    apiKeySupported: false,
-    scopes: ['openid', 'profile', 'email'],
-    webhooksSupported: true,
-  },
 ];
 
 /**
@@ -773,13 +223,6 @@ export const INTEGRATION_CATALOG: IntegrationMetadata[] = [
  */
 export function getIntegrationMetadata(provider: PrismaIntegrationProvider): IntegrationMetadata | undefined {
   return INTEGRATION_CATALOG.find((i) => i.provider === provider);
-}
-
-/**
- * Get integrations by category
- */
-export function getIntegrationsByCategory(category: IntegrationCategory): IntegrationMetadata[] {
-  return INTEGRATION_CATALOG.filter((i) => i.category === category);
 }
 
 // Export provider type alias

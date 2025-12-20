@@ -16,12 +16,23 @@ describe('DashboardAgent', () => {
   let agent: DashboardAgent;
 
   beforeEach(() => {
+    const mockLLM = {
+      complete: jest.fn().mockResolvedValue({
+        content: JSON.stringify({ type: 'create_workflow', confidence: 0.9, entities: {} }),
+        usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 }
+      }),
+      completeWithJSON: jest.fn(),
+      isReady: jest.fn().mockReturnValue(true),
+      getRateLimitStatus: jest.fn(),
+    } as any;
+
     agent = new DashboardAgent({
+      orgId: 'org-456',
       enableWorkflowCreation: true,
       enableIntegrationManagement: true,
       enableBusinessInsights: true,
       maxConversationTurns: 10
-    });
+    }, mockLLM);
   });
 
   test('should handle workflow creation request', async () => {
@@ -123,67 +134,64 @@ describe('DashboardAgent', () => {
  * To integrate DashboardAgent into AgentChatInterface:
  */
 
-/*
-export function integrateDashboardAgent() {
-  // Replace current agent selection logic
-  const AVAILABLE_AGENTS = [
-    {
-      id: 'dashboard',
-      name: 'Dashboard Agent',
-      description: 'Natural language interface for all business operations',
-      icon: <Bot className="h-5 w-5" />
-    },
-    // ... existing agents
-  ];
+import { createDefaultClient } from './LLMFactory';
+import { Bot } from 'lucide-react';
 
-  // Update message handling
-  const handleSendMessage = async () => {
-    if (selectedAgent === 'dashboard') {
-      // Use DashboardAgent instead of API call
-      const dashboardAgent = new DashboardAgent({
-        enableWorkflowCreation: true,
-        enableIntegrationManagement: true,
-        enableBusinessInsights: true,
-        maxConversationTurns: 10
-      });
+/**
+ * integrateDashboardAgent - Example implementation of how to integrate 
+ * the DashboardAgent into a React component or chat interface.
+ */
+export async function integrateDashboardAgent(
+  input: string,
+  session: any,
+  messages: any[],
+  setMessages: (fn: (prev: any[]) => any[]) => void,
+  executeAction: (action: any) => Promise<void>
+) {
+  // 1. Initialize the LLM client and Agent
+  const llmClient = createDefaultClient();
+  const dashboardAgent = new DashboardAgent({
+    orgId: session.user.orgId,
+    enableWorkflowCreation: true,
+    enableIntegrationManagement: true,
+    enableBusinessInsights: true,
+    maxConversationTurns: 10
+  }, llmClient);
 
-      const result = await dashboardAgent.process({
-        text: input,
-        userId: session.user.id,
-        orgId: session.user.orgId,
-        context: {
-          previousMessages: messages.map(m => ({
-            role: m.role,
-            content: m.content
-          })),
-          activeIntegrations: [], // Fetch from API
-          currentWorkflows: [] // Fetch from API
-        }
-      });
-
-      // Handle the result
-      if (result.success && result.data) {
-        setMessages(prev => [...prev, {
-          id: Date.now().toString(),
-          role: 'assistant',
-          content: result.data.response,
-          timestamp: new Date(),
-          agent: 'Dashboard Agent',
-          suggestions: result.data.suggestions?.map(s => ({
-            provider: s.type,
-            reason: s.description,
-            benefit: s.type
-          }))
-        }]);
-
-        // Execute any actions
-        for (const action of result.data.actions) {
-          await executeAction(action);
-        }
-      }
-    } else {
-      // Use existing API call logic
-      // ... existing code
+  // 2. Process the natural language request
+  const result = await dashboardAgent.process({
+    text: input,
+    userId: session.user.id,
+    orgId: session.user.orgId,
+    context: {
+      previousMessages: messages.map(m => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content
+      })),
+      activeIntegrations: [], // In a real app, fetch these from state/API
+      currentWorkflows: []    // In a real app, fetch these from state/API
     }
-  };
-}*/
+  });
+
+  // 3. Handle the result
+  if (result.success && result.data) {
+    // Update the UI with the assistant's response
+    setMessages(prev => [...prev, {
+      id: Date.now().toString(),
+      role: 'assistant',
+      content: result.data!.response,
+      timestamp: new Date(),
+      agent: 'Dashboard Agent',
+      suggestions: result.data!.suggestions
+    }]);
+
+    // Execute any suggested actions
+    if (result.data.actions && result.data.actions.length > 0) {
+      for (const action of result.data.actions) {
+        await executeAction(action);
+      }
+    }
+  }
+
+  return result;
+}

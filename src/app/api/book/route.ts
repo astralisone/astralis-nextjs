@@ -162,138 +162,75 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Step 3: Create SchedulingEvent in database
-    const event = await prisma.schedulingEvent.create({
-      data: {
-        userId,
-        title,
-        description,
-        startTime,
-        endTime,
-        timezone,
-        participantEmails: [guestEmail],
-        status: 'SCHEDULED',
-        aiSuggestionMeta: {
-          guestName,
-          guestEmail,
-          guestPhone: guestPhone || null,
-          meetingType,
-          bookedAt: new Date().toISOString(),
-          source: 'public_booking_api',
-        },
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
+    // Step 3-6: Execute database operations in a transaction for atomicity
+    const { event, createdReminders, intakeRequest } = await prisma.$transaction(async (tx) => {
+      // Create SchedulingEvent
+      const event = await tx.schedulingEvent.create({
+        data: {
+          userId,
+          title,
+          description,
+          startTime,
+          endTime,
+          timezone,
+          participantEmails: [guestEmail],
+          status: 'SCHEDULED',
+          aiSuggestionMeta: {
+            guestName,
+            guestEmail,
+            guestPhone: guestPhone || null,
+            meetingType,
+            bookedAt: new Date().toISOString(),
+            source: 'public_booking_api',
           },
         },
-      },
-    });
-
-    // Step 4: Create EventReminder entries (24h and 1h before)
-    const reminders = [];
-    const reminder24h = new Date(startTime);
-    reminder24h.setHours(reminder24h.getHours() - 24);
-
-    const reminder1h = new Date(startTime);
-    reminder1h.setHours(reminder1h.getHours() - 1);
-
-    // Only create reminders if they're in the future
-    if (reminder24h > now) {
-      reminders.push(
-        prisma.eventReminder.create({
-          data: {
-            eventId: event.id,
-            reminderTime: reminder24h,
-            status: 'PENDING',
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
           },
-        })
-      );
-    }
-
-    if (reminder1h > now) {
-      reminders.push(
-        prisma.eventReminder.create({
-          data: {
-            eventId: event.id,
-            reminderTime: reminder1h,
-            status: 'PENDING',
-          },
-        })
-      );
-    }
-
-    const createdReminders = await Promise.all(reminders);
-
-    // Queue each reminder for processing
-    for (const reminder of createdReminders) {
-      try {
-        await addReminderJob({
-          reminderId: reminder.id,
-          eventId: reminder.eventId,
-        });
-      } catch (queueError) {
-        console.error(`Failed to queue reminder ${reminder.id}:`, queueError);
-        // Don't fail the booking if queueing fails
-      }
-    }
-
-    console.log(
-      `Created booking event ${event.id} for user ${userId} with ${reminders.length} reminders`
-    );
-
-    // Step 5: Send confirmation emails
-    const bookingDetails = {
-      eventId: event.id,
-      title,
-      startTime,
-      endTime,
-      timezone,
-      guestName,
-      guestEmail,
-      guestPhone,
-      meetingType,
-      hostName: user.name || 'Host',
-      hostEmail: user.email,
-    };
-
-    // Send confirmation to guest
-    try {
-      await sendEmail({
-        to: guestEmail,
-        subject: `Booking Confirmed: ${title}`,
-        html: generateSchedulingConfirmationEmail(bookingDetails, false),
-        text: generateSchedulingConfirmationText(bookingDetails, false),
+        },
       });
-      console.log(`Guest confirmation email sent to ${guestEmail}`);
-    } catch (emailError) {
-      console.error('Failed to send guest confirmation email:', emailError);
-      // Continue processing even if email fails
-    }
 
-    // Send notification to host
-    if (user.email) {
-      try {
-        await sendEmail({
-          to: user.email,
-          subject: `New Booking: ${guestName} - ${title}`,
-          html: generateHostNotificationEmail(bookingDetails),
+      // Create EventReminders
+      const remindersToCreate = [];
+      const reminder24h = new Date(startTime);
+      reminder24h.setHours(reminder24h.getHours() - 24);
+
+      const reminder1h = new Date(startTime);
+      reminder1h.setHours(reminder1h.getHours() - 1);
+
+      if (reminder24h > now) {
+        remindersToCreate.push({
+          eventId: event.id,
+          reminderTime: reminder24h,
         });
-        console.log(`Host notification email sent to ${user.email}`);
-      } catch (emailError) {
-        console.error('Failed to send host notification email:', emailError);
-        // Continue processing even if email fails
       }
-    }
 
-    // Step 6: Create intake request for the agent/pipeline
-    const DEFAULT_ORG_ID = process.env.DEFAULT_ORG_ID;
-    if (DEFAULT_ORG_ID) {
-      try {
-        const intakeRequest = await prisma.intakeRequest.create({
+      if (reminder1h > now) {
+        remindersToCreate.push({
+          eventId: event.id,
+          reminderTime: reminder1h,
+        });
+      }
+
+      const createdReminders = remindersToCreate.length > 0
+        ? await Promise.all(remindersToCreate.map(r => tx.eventReminder.create({
+          data: {
+            ...r,
+            status: 'PENDING' as any
+          }
+        })))
+        : [];
+
+      // Create IntakeRequest
+      let intakeRequest = null;
+      const DEFAULT_ORG_ID = process.env.DEFAULT_ORG_ID;
+      if (DEFAULT_ORG_ID) {
+        intakeRequest = await tx.intakeRequest.create({
           data: {
             source: 'FORM',
             status: 'NEW',
@@ -311,8 +248,67 @@ export async function POST(req: NextRequest) {
             orgId: DEFAULT_ORG_ID,
           },
         });
+      }
 
-        // Emit agent event
+      return { event, createdReminders, intakeRequest };
+    });
+
+    // Step 7: Queue reminders after transaction succeeds
+    for (const reminder of createdReminders) {
+      try {
+        await addReminderJob({
+          reminderId: reminder.id,
+          eventId: reminder.eventId,
+        });
+      } catch (queueError) {
+        console.error(`Failed to queue reminder ${reminder.id}:`, queueError);
+      }
+    }
+
+    // Step 8: Send confirmation emails
+    const bookingDetails = {
+      eventId: event.id,
+      title,
+      startTime,
+      endTime,
+      timezone,
+      guestName,
+      guestEmail,
+      guestPhone,
+      meetingType,
+      hostName: user.name || 'Host',
+      hostEmail: user.email,
+    };
+
+    // Send emails in parallel but non-blocking (already in try-catch)
+    const emailPromises = [];
+
+    // Guest email
+    emailPromises.push(
+      sendEmail({
+        to: guestEmail,
+        subject: `Booking Confirmed: ${title}`,
+        html: generateSchedulingConfirmationEmail(bookingDetails, false),
+        text: generateSchedulingConfirmationText(bookingDetails, false),
+        userId, // Pass userId for potential Gmail integration
+      }).catch(err => console.error('Guest email failed:', err))
+    );
+
+    // Host email
+    if (user.email) {
+      emailPromises.push(
+        sendEmail({
+          to: user.email,
+          subject: `New Booking: ${guestName} - ${title}`,
+          html: generateHostNotificationEmail(bookingDetails),
+          userId,
+        }).catch(err => console.error('Host email failed:', err))
+      );
+    }
+
+    // Step 9: Emit agent event
+    if (intakeRequest) {
+      try {
         getEventBus().emit('webhook:booking_requested', {
           bookingId: event.id,
           date: startTime.toISOString().split('T')[0],
@@ -324,12 +320,12 @@ export async function POST(req: NextRequest) {
           requestedAt: new Date(),
           intakeRequestId: intakeRequest.id,
         });
-
-        console.log(`Intake request created and agent event emitted for booking ${event.id}`);
-      } catch (intakeError) {
-        console.error('Failed to create intake request or emit agent event:', intakeError);
+      } catch (busError) {
+        console.error('Event bus emit failed:', busError);
       }
     }
+
+    console.log(`Booking ${event.id} processed successfully with all integrations`);
 
     // Step 7: Return success with event details
 

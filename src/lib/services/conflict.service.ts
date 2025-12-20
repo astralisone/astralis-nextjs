@@ -85,7 +85,6 @@ export async function detectConflicts(
         { startTime, endTime } as any,
         event
       );
-
       let conflictType: ConflictDetail['conflictType'] = 'partial_overlap';
 
       // Determine conflict type
@@ -293,10 +292,11 @@ export async function getConflictingEvents(
  * - Medium overlap (50-75% overlap): 50-79
  * - Low overlap (25-50% overlap): 25-49
  * - Minimal overlap (<25% overlap): 1-24
- * - Back-to-back (no gap): 10
+ * - Back-to-back (no gap): 30 (Increased from 10 to satisfy buffer requirement)
+ * - Near-conflict (gap < 15 mins): 20
  *
- * @param event1 - First event
- * @param event2 - Second event
+ * @param event1 - Proposed event {startTime, endTime}
+ * @param event2 - Existing event {startTime, endTime}
  * @returns Conflict score from 0 (no conflict) to 100 (complete overlap)
  */
 export function scoreConflict(event1: any, event2: any): number {
@@ -309,12 +309,22 @@ export function scoreConflict(event1: any, event2: any): number {
   const overlapStart = Math.max(start1, start2);
   const overlapEnd = Math.min(end1, end2);
 
+  const BUFFER_TIME_MS = 15 * 60 * 1000; // 15 minutes buffer
+
   // No overlap
   if (overlapStart >= overlapEnd) {
-    // Check if back-to-back
-    if (end1 === start2 || end2 === start1) {
-      return 10;
+    // Check for back-to-back or near-conflict within buffer time
+    const gap = overlapStart - overlapEnd;
+
+    if (gap === 0) {
+      return 30; // Back-to-back is more significant than before
     }
+
+    if (gap < BUFFER_TIME_MS) {
+      // Linear score from 20 (gap=1ms) to 1 (gap=BUFFER_TIME-1)
+      return Math.max(1, 20 - Math.floor((gap / BUFFER_TIME_MS) * 20));
+    }
+
     return 0;
   }
 

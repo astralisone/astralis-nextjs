@@ -37,6 +37,9 @@ import { AgentEventBus, type EmitResult } from '../inputs/EventBus';
 import { emitTaskCreated } from '@/lib/events/taskEvents';
 import { prisma } from '@/lib/prisma';
 import { PipelineAssigner } from '../actions/PipelineAssigner';
+import { sendEmail } from '@/lib/email';
+import { n8nService } from '@/lib/services/n8n.service';
+import { IntegrationProvider } from '@prisma/client';
 
 // =============================================================================
 // Types
@@ -724,15 +727,53 @@ export class ActionExecutor {
           return { success: true, data: { dryRun: true, ...params } };
         }
 
-        // In production, this would call notification service
-        // For now, just log and emit event
-        const notificationId = `notif-${Date.now()}`;
+        try {
+          // 1. Record in ActivityLog (multi-tenant)
+          const log = await prisma.activityLog.create({
+            data: {
+              orgId: ctx.orgId || '',
+              userId: ctx.userId,
+              action: 'NOTIFICATION_SENT',
+              entity: params.type || 'SYSTEM',
+              entityId: (params as any).taskId || null,
+              metadata: {
+                title: params.subject,
+                message: params.body,
+                priority: params.priority,
+                sentTo: params.recipientIds ?? params.recipientEmails,
+              },
+            },
+          });
 
-        return {
-          success: true,
-          data: { notificationId, sentTo: params.recipientIds ?? params.recipientEmails },
-          rollbackable: false, // Can't unsend notifications
-        };
+          // 2. Send email if requested or if priority is HIGH
+          if (params.type === 'email' || params.priority === 'high' || params.recipientEmails?.length) {
+            const recipients = params.recipientEmails || [];
+
+            // If we only have recipient IDs, we should ideally look up their emails
+            // For now, we'll focus on the explicit emails provided in the params
+            for (const email of recipients) {
+              await sendEmail({
+                to: email,
+                subject: params.subject || 'Astralis Notification',
+                html: `<p>${params.body}</p>`,
+                userId: ctx.userId, // use sender's Gmail if available
+              });
+            }
+          }
+
+          return {
+            success: true,
+            data: { notificationId: log.id, sentTo: params.recipientIds ?? params.recipientEmails },
+            rollbackable: false,
+          };
+        } catch (error) {
+          this.logger.error('Failed to send notification', { error, params });
+          return {
+            success: false,
+            error: (error as Error).message,
+            rollbackable: false,
+          };
+        }
       }
     );
 
@@ -746,21 +787,35 @@ export class ActionExecutor {
           return { success: true, data: { dryRun: true, ...params } };
         }
 
-        await ctx.eventBus.emit('automation:triggered', {
-          id: `auto-${Date.now()}`,
-          workflowId: params.workflowId,
-          workflowName: params.workflowId,
-          status: 'success',
-          executionTime: 0,
-          timestamp: new Date(),
-          source: 'WORKER' as const,
-        }, { source: 'agent', correlationId: ctx.correlationId });
+        try {
+          // Use n8nService to execute the workflow
+          const { n8nService } = await import('@/lib/services/n8n.service');
+          const result = await n8nService.executeWorkflow(params.workflowId, {
+            ...params.payload,
+            _context: {
+              orgId: ctx.orgId,
+              userId: ctx.userId,
+              executionId: ctx.executionId,
+            }
+          });
 
-        return {
-          success: true,
-          data: { triggerId: `trigger-${Date.now()}`, ...params },
-          rollbackable: false,
-        };
+          return {
+            success: result.finished,
+            data: {
+              executionId: result.id,
+              status: result.finished ? 'FINISHED' : 'FAILED',
+              output: result.data
+            },
+            rollbackable: false,
+          };
+        } catch (error) {
+          this.logger.error('Automation trigger failed', { error, workflowId: params.workflowId });
+          return {
+            success: false,
+            error: (error as Error).message,
+            rollbackable: false,
+          };
+        }
       }
     );
 
@@ -1432,53 +1487,35 @@ export class ActionExecutor {
     }
   }
 
-  /**
-   * Get integration service instance for the specified provider
-   */
   private async getIntegrationService(provider: string, userId: string, orgId: string) {
     try {
       // Import integration services dynamically
       const { integrationService } = await import('@/lib/services/integration.service');
 
       // Get the credential for this integration
-      // Note: We use the generic integration service to check availability/credentials
-      // even if specific services use their own tables (like CalendarConnection)
-      // This standardization should be resolved in a future refactor.
       const credentials = await integrationService.listCredentials(userId, orgId, provider as any);
       const isActive = credentials.some(c => c.isActive && c.status === 'CONNECTED_ACTIVE');
 
       // Initialize the appropriate service based on provider
       switch (provider) {
         case 'GMAIL': {
-          if (!isActive) return null;
           const { gmailService } = await import('@/lib/integrations/communication/gmail.service');
-          // Start the service if needed (though gmailService seems stateless/singleton)
           return gmailService;
         }
-
+        case 'SLACK': {
+          const { slackService } = await import('@/lib/integrations/communication/slack.service');
+          return slackService;
+        }
         case 'GOOGLE_CALENDAR':
         case 'GOOGLE': {
-          // For Google Calendar, we check checking if the specific service works
-          // The service manages its own connections via CalendarConnection table
-          // We assume if IntegrationService has a credential, the data might be synched or we trust the user.
-          // Ideally check prisma.calendarConnection too, but googleCalendarService handles that internally.
           const googleCalendarService = await import('@/lib/services/googleCalendar.service');
-
           return {
             createEvent: (params: any) => googleCalendarService.createEvent(userId, params),
             updateEvent: (params: any) => googleCalendarService.updateEvent(userId, params.eventId, params),
             deleteEvent: (params: any) => googleCalendarService.deleteEvent(userId, params.eventId),
             listEvents: (params: any) => googleCalendarService.listEvents(userId, new Date(params.timeMin), new Date(params.timeMax)),
-            // sync: () => googleCalendarService.syncFromGoogle(userId)
           };
         }
-
-        case 'SLACK': {
-          if (!isActive) return null;
-          // Placeholder for Slack service
-          return null;
-        }
-
         default:
           return null;
       }
