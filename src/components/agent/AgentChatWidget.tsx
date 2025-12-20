@@ -25,6 +25,7 @@ export function AgentChatWidget() {
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const widgetRef = useRef<HTMLDivElement>(null);
     const { toast } = useToast();
 
     const scrollToBottom = () => {
@@ -34,6 +35,23 @@ export function AgentChatWidget() {
     useEffect(() => {
         scrollToBottom();
     }, [messages, isOpen]);
+
+    // Handle click outside to close
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (isOpen && widgetRef.current && !widgetRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+
+        if (isOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isOpen]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -91,10 +109,13 @@ export function AgentChatWidget() {
     }
 
     return (
-        <Card className={cn(
-            "fixed bottom-8 right-8 z-[100000] shadow-2xl transition-all duration-300 flex flex-col border-[#2B6CB0]/20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
-            isExpanded ? "w-[600px] h-[80vh]" : "w-[400px] h-[600px]"
-        )}>
+        <Card
+            ref={widgetRef}
+            className={cn(
+                "fixed bottom-8 right-8 z-[100000] shadow-2xl transition-all duration-300 flex flex-col border-[#2B6CB0]/20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+                isExpanded ? "w-[600px] h-[80vh]" : "w-[400px] h-[600px]"
+            )}
+        >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 border-b border-border/50">
                 <div className="flex items-center gap-2">
                     <div className="h-8 w-8 rounded-full bg-[#0A1B2B] flex items-center justify-center border border-[#2B6CB0]/20">

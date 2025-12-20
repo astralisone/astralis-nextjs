@@ -17,10 +17,12 @@ import { processCalendarSync } from './processors/calendarSync.processor';
 import { processSchedulingReminder } from './processors/schedulingReminder.processor';
 import { processSLAMonitor } from './processors/slaMonitor.processor';
 import { processSchedulingAgent } from './processors/schedulingAgent.processor';
-import { processHealthCheck } from './processors/healthCheck.processor';
+import { processHealthCheck } from './processors/health-check.processor';
+import { processPendingItemsSync } from './processors/pendingItemsSync.processor';
 import { initializeSLAMonitorJob } from './jobs/sla-monitor.job';
 import { initializeReminderSchedulerJob } from './jobs/reminder-scheduler.job';
 import { initializeHealthCheckJob } from './jobs/health-check.job';
+import { initializePendingItemsSyncJob } from './jobs/pending-items-sync.job';
 
 /**
  * Worker Bootstrap
@@ -43,58 +45,64 @@ async function startWorkers() {
   }
 
   // Redis auto-connects, so we just wait for ready state
-  if (redisConnection.status !== 'ready') {
+  if (redisConnection && redisConnection.status !== 'ready') {
     await new Promise((resolve) => {
-      redisConnection.once('ready', resolve);
+      redisConnection!.once('ready', resolve);
     });
   }
 
   // Document processing worker (OCR)
   const documentWorker = new Worker('document-processing', processDocumentOCR, {
-    connection: redisConnection,
+    connection: redisConnection as any,
     concurrency: 3, // Lower concurrency due to CPU-intensive OCR
   });
 
   // Document embedding worker (RAG embeddings)
   const embeddingWorker = new Worker('document-embedding', processDocumentEmbedding, {
-    connection: redisConnection,
+    connection: redisConnection as any,
     concurrency: 2, // Lower concurrency due to API rate limits
   });
 
   // Intake routing worker (AI-powered request routing)
   const intakeRoutingWorker = new Worker('intake-routing', processIntakeRouting, {
-    connection: redisConnection,
+    connection: redisConnection as any,
     concurrency: 5, // Higher concurrency for lightweight routing operations
   });
 
   // Calendar sync worker (Google Calendar synchronization)
   const calendarSyncWorker = new Worker('calendar-sync', processCalendarSync, {
-    connection: redisConnection,
+    connection: redisConnection as any,
     concurrency: 2, // Lower concurrency due to external API rate limits
   });
 
   // Scheduling reminder worker (email reminders for events)
   const schedulingReminderWorker = new Worker('scheduling-reminders', processSchedulingReminder, {
-    connection: redisConnection,
+    connection: redisConnection as any,
     concurrency: 5, // Higher concurrency for email sending
   });
 
   // SLA monitor worker (task SLA compliance monitoring)
   const slaMonitorWorker = new Worker('sla-monitor', processSLAMonitor, {
-    connection: redisConnection,
+    connection: redisConnection as any,
     concurrency: 2, // Lower concurrency for thorough checks
   });
 
   // Scheduling agent worker (AI-powered scheduling and task classification)
   const schedulingAgentWorker = new Worker('scheduling-agent', processSchedulingAgent, {
-    connection: redisConnection,
+    connection: redisConnection as any,
     concurrency: 3, // Medium concurrency for AI classification + scheduling
   });
 
   // Health check worker (Proactive business pulse monitoring)
   const healthCheckWorker = new Worker('health-check', processHealthCheck, {
-    connection: redisConnection,
+    connection: redisConnection as any,
     concurrency: 1, // Only one check at a time
+  });
+
+  // Pending items sync worker (Proactive item cleanup)
+  const pendingItemsSyncWorker = new Worker('pending-items-sync', processPendingItemsSync, {
+    connection: redisConnection as any,
+    concurrency: 1, // Serialized cleanup to avoid race conditions
   });
 
   // Document worker event handlers
@@ -197,6 +205,15 @@ async function startWorkers() {
     console.error(`[Worker:HealthCheck] Job ${job?.id} failed:`, err.message);
   });
 
+  // Pending items sync worker event handlers
+  pendingItemsSyncWorker.on('completed', (job) => {
+    console.log(`[Worker:PendingSync] Job ${job.id} completed`);
+  });
+
+  pendingItemsSyncWorker.on('failed', (job, err) => {
+    console.error(`[Worker:PendingSync] Job ${job?.id} failed:`, err.message);
+  });
+
   console.log('[Workers] Document processing worker started (concurrency: 3)');
   console.log('[Workers] Document embedding worker started (concurrency: 2)');
   console.log('[Workers] Intake routing worker started (concurrency: 5)');
@@ -205,6 +222,7 @@ async function startWorkers() {
   console.log('[Workers] SLA monitor worker started (concurrency: 2)');
   console.log('[Workers] Scheduling agent worker started (concurrency: 3)');
   console.log('[Workers] Health check worker started (concurrency: 1)');
+  console.log('[Workers] Pending items sync worker started (concurrency: 1)');
 
   // Initialize SLA monitor cron job (runs every 15 minutes)
   try {
@@ -227,6 +245,13 @@ async function startWorkers() {
     console.error('[Workers] Failed to initialize health check cron job:', error);
   }
 
+  // Initialize pending items sync cron job (runs every 15 minutes)
+  try {
+    await initializePendingItemsSyncJob();
+  } catch (error) {
+    console.error('[Workers] Failed to initialize pending items sync cron job:', error);
+  }
+
   // Graceful shutdown
   const shutdown = async () => {
     console.log('[Workers] Shutting down gracefully...');
@@ -241,10 +266,13 @@ async function startWorkers() {
       slaMonitorWorker.close(),
       schedulingAgentWorker.close(),
       healthCheckWorker.close(),
+      pendingItemsSyncWorker.close(),
     ]);
 
     console.log('[Workers] All workers closed');
-    await redisConnection.quit();
+    if (redisConnection) {
+      await redisConnection.quit();
+    }
     console.log('[Workers] Redis connection closed');
     process.exit(0);
   };
