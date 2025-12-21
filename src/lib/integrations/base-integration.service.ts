@@ -6,7 +6,7 @@
  */
 
 import { integrationService, type CredentialWithData } from '@/lib/services/integration.service';
-import { refreshAccessTokenWithCredentials, getOAuthConfig } from '@/lib/integrations/oauth-config';
+import { getOAuthConfig } from '@/lib/integrations/oauth-config';
 import type { IntegrationProvider } from '@prisma/client';
 import type { IntegrationApiResponse } from '@/types/integrations';
 
