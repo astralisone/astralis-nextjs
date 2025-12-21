@@ -207,14 +207,21 @@ export async function GET(
       req.nextUrl.origin
     );
 
-    // 7. Generate authorization URL with org credentials and PKCE if needed
-    const authUrl = generateAuthorizationUrlWithCredentials(
-      provider,
-      callbackUrl.toString(),
-      state,
-      credentials,
-      pkceData
-    );
+    // 7. Generate authorization URL
+    let authUrl: string | null = null;
+
+    if (provider === 'QUICKBOOKS') {
+      const { getQuickBooksAuthUri } = await import('@/lib/integrations/quickbooks');
+      authUrl = getQuickBooksAuthUri(state, callbackUrl.toString());
+    } else {
+      authUrl = generateAuthorizationUrlWithCredentials(
+        provider,
+        callbackUrl.toString(),
+        state,
+        credentials,
+        pkceData
+      );
+    }
 
     if (!authUrl) {
       return NextResponse.json(
