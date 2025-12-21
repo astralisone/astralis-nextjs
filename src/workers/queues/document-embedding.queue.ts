@@ -1,28 +1,9 @@
-import { Queue } from 'bullmq';
-import { redisConnection } from '../redis';
+import { platformQueue } from './platform.queue';
 
 /**
- * Document Embedding Queue
- *
- * Handles asynchronous document embedding generation for RAG
+ * Document Embedding Queue (Legacy Wrapper)
  */
-export const documentEmbeddingQueue = new Queue('document-embedding', {
-  connection: redisConnection,
-  defaultJobOptions: {
-    attempts: 3,
-    backoff: {
-      type: 'exponential',
-      delay: 10000, // Start with 10s delay (longer than OCR due to API calls)
-    },
-    removeOnComplete: {
-      age: 24 * 3600, // Keep completed jobs for 24 hours
-      count: 1000,
-    },
-    removeOnFail: {
-      age: 7 * 24 * 3600, // Keep failed jobs for 7 days
-    },
-  },
-});
+export const documentEmbeddingQueue = platformQueue;
 
 /**
  * Job data interface
@@ -39,39 +20,33 @@ export interface DocumentEmbeddingJobData {
 export async function queueDocumentEmbedding(
   data: DocumentEmbeddingJobData
 ): Promise<void> {
-  await documentEmbeddingQueue.add('embed-document', data, {
+  await platformQueue.add('embed-document', data, {
     jobId: `embed-${data.documentId}`,
   });
 
-  console.log(`[Queue] Document embedding job queued: ${data.documentId}`);
+  console.log(`[Queue] Document embedding job queued: ${data.documentId} -> platform-jobs`);
 }
 
 /**
- * Retry document embedding (removes old job first)
+ * Retry document embedding
  */
 export async function retryDocumentEmbedding(
   data: DocumentEmbeddingJobData
 ): Promise<void> {
   const jobId = `embed-${data.documentId}`;
 
-  // Try to remove any existing job with this ID
   try {
-    const existingJob = await documentEmbeddingQueue.getJob(jobId);
+    const existingJob = await platformQueue.getJob(jobId);
     if (existingJob) {
       await existingJob.remove();
-      console.log(`[Queue] Removed existing embedding job for retry: ${data.documentId}`);
     }
-  } catch (error) {
-    // Job might not exist, that's fine
-    console.log(`[Queue] No existing embedding job to remove: ${data.documentId}`);
-  }
+  } catch (error) {}
 
-  // Queue new job
-  await documentEmbeddingQueue.add('embed-document', data, {
+  await platformQueue.add('embed-document', data, {
     jobId,
   });
 
-  console.log(`[Queue] Document embedding retry job queued: ${data.documentId}`);
+  console.log(`[Queue] Document embedding retry job queued: ${data.documentId} -> platform-jobs`);
 }
 
 /**
@@ -79,10 +54,10 @@ export async function retryDocumentEmbedding(
  */
 export async function getEmbeddingQueueStats() {
   const [waiting, active, completed, failed] = await Promise.all([
-    documentEmbeddingQueue.getWaitingCount(),
-    documentEmbeddingQueue.getActiveCount(),
-    documentEmbeddingQueue.getCompletedCount(),
-    documentEmbeddingQueue.getFailedCount(),
+    platformQueue.getWaitingCount(),
+    platformQueue.getActiveCount(),
+    platformQueue.getCompletedCount(),
+    platformQueue.getFailedCount(),
   ]);
 
   return {

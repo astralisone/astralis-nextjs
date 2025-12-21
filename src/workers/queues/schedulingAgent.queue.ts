@@ -1,15 +1,10 @@
-import { Queue, JobsOptions } from 'bullmq';
-import { redisConnection } from '../redis';
+import { JobsOptions } from 'bullmq';
+import { platformQueue } from './platform.queue';
 
 /**
- * Scheduling Agent Queue
- *
- * Handles asynchronous processing of scheduling agent tasks including:
- * - AI classification of incoming requests
- * - Meeting scheduling with conflict detection
- * - Response generation and delivery
- * - Task retry handling
+ * Scheduling Agent Queue (Legacy Wrapper)
  */
+export const schedulingAgentQueue = platformQueue;
 
 // Job type definitions
 export type SchedulingAgentJobType =
@@ -18,7 +13,7 @@ export type SchedulingAgentJobType =
   | 'send-response'
   | 'retry-task';
 
-// Job data interfaces for each job type
+// Job data interfaces
 export interface ProcessInboxJobData {
   taskId: string;
   orgId?: string;
@@ -60,47 +55,14 @@ export interface RetryTaskJobData {
   previousAttempts: number;
 }
 
-// Union type for all job data
-export type SchedulingAgentJobData =
-  | { type: 'process-inbox'; data: ProcessInboxJobData }
-  | { type: 'schedule-meeting'; data: ScheduleMeetingJobData }
-  | { type: 'send-response'; data: SendResponseJobData }
-  | { type: 'retry-task'; data: RetryTaskJobData };
-
-/**
- * Default job options for the scheduling agent queue
- */
-const defaultJobOptions: JobsOptions = {
-  attempts: 3,
-  backoff: {
-    type: 'exponential',
-    delay: 2000, // Start with 2s delay
-  },
-  removeOnComplete: {
-    age: 86400, // Keep completed jobs for 24 hours
-  },
-  removeOnFail: {
-    age: 604800, // Keep failed jobs for 7 days
-  },
-};
-
-/**
- * Scheduling Agent Queue instance
- */
-export const schedulingAgentQueue = new Queue<SchedulingAgentJobData>('scheduling-agent', {
-  connection: redisConnection,
-  defaultJobOptions,
-});
-
 /**
  * Queue a new inbox processing job
- * Processes a new task and runs AI classification
  */
 export async function queueProcessInbox(
   data: ProcessInboxJobData,
   options?: Partial<JobsOptions>
 ): Promise<string> {
-  const job = await schedulingAgentQueue.add(
+  const job = await platformQueue.add(
     'process-inbox',
     { type: 'process-inbox', data },
     {
@@ -110,41 +72,39 @@ export async function queueProcessInbox(
     }
   );
 
-  console.log(`[SchedulingAgentQueue] Queued process-inbox job: ${data.taskId}`);
+  console.log(`[Queue] Queued process-inbox job: ${data.taskId} -> platform-jobs`);
   return job.id || '';
 }
 
 /**
  * Queue a meeting scheduling job
- * Executes scheduling with conflict detection
  */
 export async function queueScheduleMeeting(
   data: ScheduleMeetingJobData,
   options?: Partial<JobsOptions>
 ): Promise<string> {
-  const job = await schedulingAgentQueue.add(
+  const job = await platformQueue.add(
     'schedule-meeting',
     { type: 'schedule-meeting', data },
     {
       jobId: `schedule-meeting-${data.taskId}`,
-      priority: 2, // Higher priority for scheduling actions
+      priority: 2,
       ...options,
     }
   );
 
-  console.log(`[SchedulingAgentQueue] Queued schedule-meeting job: ${data.taskId}`);
+  console.log(`[Queue] Queued schedule-meeting job: ${data.taskId} -> platform-jobs`);
   return job.id || '';
 }
 
 /**
  * Queue a response sending job
- * Generates and sends response to user via specified channel
  */
 export async function queueSendResponse(
   data: SendResponseJobData,
   options?: Partial<JobsOptions>
 ): Promise<string> {
-  const job = await schedulingAgentQueue.add(
+  const job = await platformQueue.add(
     'send-response',
     { type: 'send-response', data },
     {
@@ -154,46 +114,42 @@ export async function queueSendResponse(
     }
   );
 
-  console.log(`[SchedulingAgentQueue] Queued send-response job: ${data.taskId} (${data.responseType})`);
+  console.log(`[Queue] Queued send-response job: ${data.taskId} -> platform-jobs`);
   return job.id || '';
 }
 
 /**
  * Queue a task retry job
- * Retries a failed task with exponential backoff
  */
 export async function queueRetryTask(
   data: RetryTaskJobData,
   options?: Partial<JobsOptions>
 ): Promise<string> {
-  // Remove any existing retry job for this task
+  const jobId = `retry-task-${data.taskId}`;
   try {
-    const existingJob = await schedulingAgentQueue.getJob(`retry-task-${data.taskId}`);
+    const existingJob = await platformQueue.getJob(jobId);
     if (existingJob) {
       await existingJob.remove();
-      console.log(`[SchedulingAgentQueue] Removed existing retry job for task: ${data.taskId}`);
     }
-  } catch {
-    // Job might not exist, continue
-  }
+  } catch {}
 
-  const job = await schedulingAgentQueue.add(
+  const job = await platformQueue.add(
     'retry-task',
     { type: 'retry-task', data },
     {
-      jobId: `retry-task-${data.taskId}`,
-      priority: 4, // Lower priority for retries
-      delay: Math.min(data.previousAttempts * 5000, 60000), // Progressive delay, max 60s
+      jobId,
+      priority: 4,
+      delay: Math.min(data.previousAttempts * 5000, 60000),
       ...options,
     }
   );
 
-  console.log(`[SchedulingAgentQueue] Queued retry-task job: ${data.taskId} (attempt ${data.previousAttempts + 1})`);
+  console.log(`[Queue] Queued retry-task job: ${data.taskId} -> platform-jobs`);
   return job.id || '';
 }
 
 /**
- * Queue an urgent inbox processing job (high priority)
+ * Queue an urgent inbox processing job
  */
 export async function queueProcessInboxUrgent(
   data: ProcessInboxJobData
@@ -209,11 +165,11 @@ export async function queueProcessInboxUrgent(
  */
 export async function getSchedulingAgentQueueStats() {
   const [waiting, active, completed, failed, delayed] = await Promise.all([
-    schedulingAgentQueue.getWaitingCount(),
-    schedulingAgentQueue.getActiveCount(),
-    schedulingAgentQueue.getCompletedCount(),
-    schedulingAgentQueue.getFailedCount(),
-    schedulingAgentQueue.getDelayedCount(),
+    platformQueue.getWaitingCount(),
+    platformQueue.getActiveCount(),
+    platformQueue.getCompletedCount(),
+    platformQueue.getFailedCount(),
+    platformQueue.getDelayedCount(),
   ]);
 
   return {
@@ -224,64 +180,4 @@ export async function getSchedulingAgentQueueStats() {
     delayed,
     total: waiting + active + completed + failed + delayed,
   };
-}
-
-/**
- * Get jobs by type
- */
-export async function getJobsByType(
-  type: SchedulingAgentJobType,
-  status: 'waiting' | 'active' | 'completed' | 'failed' | 'delayed' = 'waiting',
-  limit = 100
-) {
-  let jobs;
-  switch (status) {
-    case 'waiting':
-      jobs = await schedulingAgentQueue.getWaiting(0, limit);
-      break;
-    case 'active':
-      jobs = await schedulingAgentQueue.getActive(0, limit);
-      break;
-    case 'completed':
-      jobs = await schedulingAgentQueue.getCompleted(0, limit);
-      break;
-    case 'failed':
-      jobs = await schedulingAgentQueue.getFailed(0, limit);
-      break;
-    case 'delayed':
-      jobs = await schedulingAgentQueue.getDelayed(0, limit);
-      break;
-  }
-
-  return jobs.filter((job) => job.name === type);
-}
-
-/**
- * Pause the queue
- */
-export async function pauseSchedulingAgentQueue(): Promise<void> {
-  await schedulingAgentQueue.pause();
-  console.log('[SchedulingAgentQueue] Queue paused');
-}
-
-/**
- * Resume the queue
- */
-export async function resumeSchedulingAgentQueue(): Promise<void> {
-  await schedulingAgentQueue.resume();
-  console.log('[SchedulingAgentQueue] Queue resumed');
-}
-
-/**
- * Clean old jobs from the queue
- */
-export async function cleanSchedulingAgentQueue(
-  grace: number = 86400000, // 24 hours in ms
-  limit: number = 1000
-): Promise<void> {
-  await Promise.all([
-    schedulingAgentQueue.clean(grace, limit, 'completed'),
-    schedulingAgentQueue.clean(grace * 7, limit, 'failed'), // 7 days for failed
-  ]);
-  console.log('[SchedulingAgentQueue] Queue cleaned');
 }

@@ -1,29 +1,9 @@
-import { Queue } from 'bullmq';
-import { redisConnection } from '../redis';
+import { platformQueue } from './platform.queue';
 
 /**
- * Intake Routing Queue
- *
- * Handles asynchronous AI-powered routing of intake requests
- * to appropriate team members, pipelines, and workflows.
+ * Intake Routing Queue (Legacy Wrapper)
  */
-export const intakeRoutingQueue = new Queue('intake-routing', {
-  connection: redisConnection,
-  defaultJobOptions: {
-    attempts: 3,
-    backoff: {
-      type: 'exponential',
-      delay: 3000, // Start with 3s delay
-    },
-    removeOnComplete: {
-      age: 24 * 3600, // Keep completed jobs for 24 hours
-      count: 1000,
-    },
-    removeOnFail: {
-      age: 7 * 24 * 3600, // Keep failed jobs for 7 days
-    },
-  },
-});
+export const intakeRoutingQueue = platformQueue;
 
 /**
  * Job data interface for intake routing
@@ -44,55 +24,49 @@ export interface IntakeRoutingJobData {
 export async function queueIntakeRouting(
   data: IntakeRoutingJobData
 ): Promise<void> {
-  await intakeRoutingQueue.add('route-intake', data, {
+  await platformQueue.add('route-intake', data, {
     jobId: `intake-${data.intakeRequestId}`,
-    priority: data.priority || 2, // Default medium priority
+    priority: data.priority || 2,
   });
 
-  console.log(`[Queue] Intake routing job queued: ${data.intakeRequestId} (source: ${data.source})`);
+  console.log(`[Queue] Intake routing job queued: ${data.intakeRequestId} -> platform-jobs`);
 }
 
 /**
- * Queue an intake request with high priority (urgent/important emails)
+ * Queue an intake request with high priority
  */
 export async function queueIntakeRoutingUrgent(
   data: IntakeRoutingJobData
 ): Promise<void> {
-  await intakeRoutingQueue.add('route-intake', data, {
+  await platformQueue.add('route-intake', data, {
     jobId: `intake-${data.intakeRequestId}`,
-    priority: 1, // High priority
+    priority: 1,
   });
 
-  console.log(`[Queue] Urgent intake routing job queued: ${data.intakeRequestId}`);
+  console.log(`[Queue] Urgent intake routing job queued: ${data.intakeRequestId} -> platform-jobs`);
 }
 
 /**
- * Retry intake routing (removes old job first)
+ * Retry intake routing
  */
 export async function retryIntakeRouting(
   data: IntakeRoutingJobData
 ): Promise<void> {
   const jobId = `intake-${data.intakeRequestId}`;
 
-  // Try to remove any existing job with this ID
   try {
-    const existingJob = await intakeRoutingQueue.getJob(jobId);
+    const existingJob = await platformQueue.getJob(jobId);
     if (existingJob) {
       await existingJob.remove();
-      console.log(`[Queue] Removed existing intake job for retry: ${data.intakeRequestId}`);
     }
-  } catch (error) {
-    // Job might not exist, that's fine
-    console.log(`[Queue] No existing intake job to remove: ${data.intakeRequestId}`);
-  }
+  } catch (error) {}
 
-  // Queue new job
-  await intakeRoutingQueue.add('route-intake', data, {
+  await platformQueue.add('route-intake', data, {
     jobId,
     priority: data.priority || 2,
   });
 
-  console.log(`[Queue] Intake retry job queued: ${data.intakeRequestId}`);
+  console.log(`[Queue] Intake retry job queued: ${data.intakeRequestId} -> platform-jobs`);
 }
 
 /**
@@ -100,11 +74,11 @@ export async function retryIntakeRouting(
  */
 export async function getIntakeRoutingQueueStats() {
   const [waiting, active, completed, failed, delayed] = await Promise.all([
-    intakeRoutingQueue.getWaitingCount(),
-    intakeRoutingQueue.getActiveCount(),
-    intakeRoutingQueue.getCompletedCount(),
-    intakeRoutingQueue.getFailedCount(),
-    intakeRoutingQueue.getDelayedCount(),
+    platformQueue.getWaitingCount(),
+    platformQueue.getActiveCount(),
+    platformQueue.getCompletedCount(),
+    platformQueue.getFailedCount(),
+    platformQueue.getDelayedCount(),
   ]);
 
   return {

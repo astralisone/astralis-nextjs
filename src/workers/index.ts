@@ -10,15 +10,7 @@ config({ path: envFile });
 
 import { Worker } from 'bullmq';
 import { redisConnection } from './redis';
-import { processDocumentOCR } from './processors/ocr.processor';
-import { processDocumentEmbedding } from './processors/embedding.processor';
-import { processIntakeRouting } from './processors/intakeRouting.processor';
-import { processCalendarSync } from './processors/calendarSync.processor';
-import { processSchedulingReminder } from './processors/schedulingReminder.processor';
-import { processSLAMonitor } from './processors/slaMonitor.processor';
-import { processSchedulingAgent } from './processors/schedulingAgent.processor';
-import { processHealthCheck } from './processors/health-check.processor';
-import { processPendingItemsSync } from './processors/pendingItemsSync.processor';
+import { platformJobProcessor } from './platform.worker';
 import { initializeSLAMonitorJob } from './jobs/sla-monitor.job';
 import { initializeReminderSchedulerJob } from './jobs/reminder-scheduler.job';
 import { initializeHealthCheckJob } from './jobs/health-check.job';
@@ -26,263 +18,73 @@ import { initializePendingItemsSyncJob } from './jobs/pending-items-sync.job';
 
 /**
  * Worker Bootstrap
- *
- * Starts all background workers for document processing and embedding
+ * 
+ * Optimized to use a single "Omni-Worker" to reduce Redis connection count.
  */
 
 async function startWorkers() {
-  console.log('[Workers] Starting document processing and embedding workers...');
+  console.log('[Workers] Starting Optimized Omni-Worker...');
 
-  // Verify environment variables are loaded
+  // Verify environment variables
   console.log('[Workers] Environment check:');
   console.log('  - NODE_ENV:', process.env.NODE_ENV);
-  console.log('  - OPENAI_API_KEY:', process.env.OPENAI_API_KEY ? 'SET (' + process.env.OPENAI_API_KEY.substring(0, 10) + '...)' : 'NOT SET');
-  console.log('  - DATABASE_URL:', process.env.DATABASE_URL ? 'SET (length: ' + process.env.DATABASE_URL.length + ')' : 'NOT SET');
-  console.log('  - REDIS_URL:', process.env.REDIS_URL ? 'SET (length: ' + process.env.REDIS_URL.length + ')' : 'NOT SET');
-  console.log('  - BLOB_READ_WRITE_TOKEN:', process.env.BLOB_READ_WRITE_TOKEN ? 'SET' : 'NOT SET');
+  console.log('  - OPENAI_API_KEY:', process.env.OPENAI_API_KEY ? 'SET' : 'NOT SET');
+  console.log('  - REDIS_URL:', process.env.REDIS_URL ? 'SET' : 'NOT SET');
 
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('CRITICAL: OPENAI_API_KEY environment variable is not set. Worker cannot start.');
+  if (!process.env.OPENAI_API_KEY || !process.env.DATABASE_URL) {
+    throw new Error('CRITICAL: Missing environment variables. Worker cannot start.');
   }
 
-  if (!process.env.DATABASE_URL) {
-    throw new Error('CRITICAL: DATABASE_URL environment variable is not set. Worker cannot start.');
-  }
-
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
-    console.warn('[Workers] WARNING: BLOB_READ_WRITE_TOKEN is not set. Document processing will fail.');
-  }
-
-  // Redis auto-connects, so we just wait for ready state
+  // Wait for Redis
   if (redisConnection && redisConnection.status !== 'ready') {
     await new Promise((resolve) => {
       redisConnection!.once('ready', resolve);
     });
   }
 
-  // Document processing worker (OCR)
-  const documentWorker = new Worker('document-processing', processDocumentOCR, {
+  /**
+   * THE OMNI-WORKER
+   * Consolidates 9 workers into 1.
+   * Connection count: 3 (1 client, 1 subscriber, 1 blocking).
+   */
+  const omniWorker = new Worker('platform-jobs', platformJobProcessor, {
     connection: redisConnection as any,
-    concurrency: 2, // Reduced from 3
+    concurrency: 5, // Total parallel jobs across all types
+    lockDuration: 30000,
   });
 
-  // Document embedding worker (RAG embeddings)
-  const embeddingWorker = new Worker('document-embedding', processDocumentEmbedding, {
-    connection: redisConnection as any,
-    concurrency: 1, // Reduced from 2
+  omniWorker.on('completed', (job) => {
+    console.log(`[OmniWorker] Job ${job.id} (${job.name}) completed`);
   });
 
-  // Intake routing worker (AI-powered request routing)
-  const intakeRoutingWorker = new Worker('intake-routing', processIntakeRouting, {
-    connection: redisConnection as any,
-    concurrency: 2, // Reduced from 5
+  omniWorker.on('failed', (job, err) => {
+    console.error(`[OmniWorker] Job ${job?.id} (${job?.name}) FAILED:`, err.message);
   });
 
-  // Calendar sync worker (Google Calendar synchronization)
-  const calendarSyncWorker = new Worker('calendar-sync', processCalendarSync, {
-    connection: redisConnection as any,
-    concurrency: 1, // Reduced from 2
+  omniWorker.on('error', (err) => {
+    console.error('[OmniWorker] Fatal error:', err);
   });
 
-  // Scheduling reminder worker (email reminders for events)
-  const schedulingReminderWorker = new Worker('scheduling-reminders', processSchedulingReminder, {
-    connection: redisConnection as any,
-    concurrency: 2, // Reduced from 5
-  });
+  console.log('[Workers] Omni-Worker active (concurrency: 5)');
 
-  // SLA monitor worker (task SLA compliance monitoring)
-  const slaMonitorWorker = new Worker('sla-monitor', processSLAMonitor, {
-    connection: redisConnection as any,
-    concurrency: 1, // Reduced from 2
-  });
-
-  // Scheduling agent worker (AI-powered scheduling and task classification)
-  const schedulingAgentWorker = new Worker('scheduling-agent', processSchedulingAgent, {
-    connection: redisConnection as any,
-    concurrency: 2, // Reduced from 3
-  });
-
-  // Health check worker (Proactive business pulse monitoring)
-  const healthCheckWorker = new Worker('health-check', processHealthCheck, {
-    connection: redisConnection as any,
-    concurrency: 1, // Only one check at a time
-  });
-
-  // Pending items sync worker (Proactive item cleanup)
-  const pendingItemsSyncWorker = new Worker('pending-items-sync', processPendingItemsSync, {
-    connection: redisConnection as any,
-    concurrency: 1, // Serialized cleanup to avoid race conditions
-  });
-
-  // Document worker event handlers
-  documentWorker.on('completed', (job) => {
-    console.log(`[Worker:OCR] Job ${job.id} completed`);
-  });
-
-  documentWorker.on('failed', (job, err) => {
-    console.error(`[Worker:OCR] Job ${job?.id} failed:`, err.message);
-  });
-
-  documentWorker.on('error', (err) => {
-    console.error('[Worker:OCR] Worker error:', err);
-  });
-
-  // Embedding worker event handlers
-  embeddingWorker.on('completed', (job) => {
-    console.log(`[Worker:Embedding] Job ${job.id} completed`);
-  });
-
-  embeddingWorker.on('failed', (job, err) => {
-    console.error(`[Worker:Embedding] Job ${job?.id} failed:`, err.message);
-  });
-
-  embeddingWorker.on('error', (err) => {
-    console.error('[Worker:Embedding] Worker error:', err);
-  });
-
-  // Intake routing worker event handlers
-  intakeRoutingWorker.on('completed', (job) => {
-    console.log(`[Worker:IntakeRouting] Job ${job.id} completed`);
-  });
-
-  intakeRoutingWorker.on('failed', (job, err) => {
-    console.error(`[Worker:IntakeRouting] Job ${job?.id} failed:`, err.message);
-  });
-
-  intakeRoutingWorker.on('error', (err) => {
-    console.error('[Worker:IntakeRouting] Worker error:', err);
-  });
-
-  // Calendar sync worker event handlers
-  calendarSyncWorker.on('completed', (job) => {
-    console.log(`[Worker:CalendarSync] Job ${job.id} completed`);
-  });
-
-  calendarSyncWorker.on('failed', (job, err) => {
-    console.error(`[Worker:CalendarSync] Job ${job?.id} failed:`, err.message);
-  });
-
-  calendarSyncWorker.on('error', (err) => {
-    console.error('[Worker:CalendarSync] Worker error:', err);
-  });
-
-  // Scheduling reminder worker event handlers
-  schedulingReminderWorker.on('completed', (job) => {
-    console.log(`[Worker:SchedulingReminder] Job ${job.id} completed`);
-  });
-
-  schedulingReminderWorker.on('failed', (job, err) => {
-    console.error(`[Worker:SchedulingReminder] Job ${job?.id} failed:`, err.message);
-  });
-
-  schedulingReminderWorker.on('error', (err) => {
-    console.error('[Worker:SchedulingReminder] Worker error:', err);
-  });
-
-  // SLA monitor worker event handlers
-  slaMonitorWorker.on('completed', (job) => {
-    console.log(`[Worker:SLAMonitor] Job ${job.id} completed`);
-  });
-
-  slaMonitorWorker.on('failed', (job, err) => {
-    console.error(`[Worker:SLAMonitor] Job ${job?.id} failed:`, err.message);
-  });
-
-  slaMonitorWorker.on('error', (err) => {
-    console.error('[Worker:SLAMonitor] Worker error:', err);
-  });
-
-  // Scheduling agent worker event handlers
-  schedulingAgentWorker.on('completed', (job) => {
-    console.log(`[Worker:SchedulingAgent] Job ${job.id} completed`);
-  });
-
-  schedulingAgentWorker.on('failed', (job, err) => {
-    console.error(`[Worker:SchedulingAgent] Job ${job?.id} failed:`, err.message);
-  });
-
-  schedulingAgentWorker.on('error', (err) => {
-    console.error('[Worker:SchedulingAgent] Worker error:', err);
-  });
-
-  // Health check worker event handlers
-  healthCheckWorker.on('completed', (job) => {
-    console.log(`[Worker:HealthCheck] Job ${job.id} completed`);
-  });
-
-  healthCheckWorker.on('failed', (job, err) => {
-    console.error(`[Worker:HealthCheck] Job ${job?.id} failed:`, err.message);
-  });
-
-  // Pending items sync worker event handlers
-  pendingItemsSyncWorker.on('completed', (job) => {
-    console.log(`[Worker:PendingSync] Job ${job.id} completed`);
-  });
-
-  pendingItemsSyncWorker.on('failed', (job, err) => {
-    console.error(`[Worker:PendingSync] Job ${job?.id} failed:`, err.message);
-  });
-
-  console.log('[Workers] Document processing worker started (concurrency: 2)');
-  console.log('[Workers] Document embedding worker started (concurrency: 1)');
-  console.log('[Workers] Intake routing worker started (concurrency: 2)');
-  console.log('[Workers] Calendar sync worker started (concurrency: 1)');
-  console.log('[Workers] Scheduling reminder worker started (concurrency: 2)');
-  console.log('[Workers] SLA monitor worker started (concurrency: 1)');
-  console.log('[Workers] Scheduling agent worker started (concurrency: 2)');
-  console.log('[Workers] Health check worker started (concurrency: 1)');
-  console.log('[Workers] Pending items sync worker started (concurrency: 1)');
-
-  // Initialize SLA monitor cron job (runs every 15 minutes)
+  // Initialize cron jobs
   try {
-    await initializeSLAMonitorJob();
+    await Promise.all([
+      initializeSLAMonitorJob(),
+      initializeReminderSchedulerJob(),
+      initializeHealthCheckJob(),
+      initializePendingItemsSyncJob()
+    ]);
+    console.log('[Workers] All cron jobs initialized');
   } catch (error) {
-    console.error('[Workers] Failed to initialize SLA monitor cron job:', error);
-  }
-
-  // Initialize reminder scheduler cron job (runs every 5 minutes)
-  try {
-    await initializeReminderSchedulerJob();
-  } catch (error) {
-    console.error('[Workers] Failed to initialize reminder scheduler cron job:', error);
-  }
-
-  // Initialize health check cron job (runs every 30 minutes)
-  try {
-    await initializeHealthCheckJob();
-  } catch (error) {
-    console.error('[Workers] Failed to initialize health check cron job:', error);
-  }
-
-  // Initialize pending items sync cron job (runs every 15 minutes)
-  try {
-    await initializePendingItemsSyncJob();
-  } catch (error) {
-    console.error('[Workers] Failed to initialize pending items sync cron job:', error);
+    console.error('[Workers] Cron initialization failed:', error);
   }
 
   // Graceful shutdown
   const shutdown = async () => {
-    console.log('[Workers] Shutting down gracefully...');
-
-    // Close all workers in parallel for faster shutdown
-    await Promise.all([
-      documentWorker.close(),
-      embeddingWorker.close(),
-      intakeRoutingWorker.close(),
-      calendarSyncWorker.close(),
-      schedulingReminderWorker.close(),
-      slaMonitorWorker.close(),
-      schedulingAgentWorker.close(),
-      healthCheckWorker.close(),
-      pendingItemsSyncWorker.close(),
-    ]);
-
-    console.log('[Workers] All workers closed');
-    if (redisConnection) {
-      await redisConnection.quit();
-    }
-    console.log('[Workers] Redis connection closed');
+    console.log('[Workers] Shutting down...');
+    await omniWorker.close();
+    if (redisConnection) await redisConnection.quit();
     process.exit(0);
   };
 
@@ -290,8 +92,7 @@ async function startWorkers() {
   process.on('SIGINT', shutdown);
 }
 
-// Start workers
 startWorkers().catch((error) => {
-  console.error('[Workers] Failed to start:', error);
+  console.error('[Workers] Startup failed:', error);
   process.exit(1);
 });

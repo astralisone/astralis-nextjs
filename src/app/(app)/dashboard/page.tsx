@@ -7,7 +7,7 @@ import { RecentDocuments } from '@/components/dashboard/RecentDocuments';
 import { RoiMetricsWidget } from '@/components/dashboard/RoiMetricsWidget';
 
 import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
-import { MetricCard, LineChart, BarChart, AreaChart, ChartContainer } from '@/components/dashboard/charts';
+import { MetricCard, LineChart, BarChart, AreaChart, ChartContainer, CHART_THEME } from '@/components/dashboard/charts';
 import { Inbox, GitBranch, FileText, CheckCircle, Calendar, Bot, TrendingUp, RefreshCw, Download, Lightbulb } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
