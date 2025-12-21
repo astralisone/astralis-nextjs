@@ -36,10 +36,15 @@ async function startWorkers() {
   }
 
   // Wait for Redis
-  if (redisConnection && redisConnection.status !== 'ready') {
-    await new Promise((resolve) => {
-      redisConnection!.once('ready', resolve);
-    });
+  if (redisConnection) {
+    if (redisConnection.status !== 'ready') {
+      await new Promise((resolve) => {
+        redisConnection!.once('ready', resolve);
+      });
+    }
+  } else {
+    console.error('[Workers] CRITICAL: Cannot start workers - redisConnection is null. Check REDIS_URL.');
+    process.exit(1);
   }
 
   /**
@@ -48,7 +53,7 @@ async function startWorkers() {
    * Connection count: 3 (1 client, 1 subscriber, 1 blocking).
    */
   const omniWorker = new Worker('platform-jobs', platformJobProcessor, {
-    connection: redisConnection as any,
+    connection: redisConnection,
     concurrency: 5, // Total parallel jobs across all types
     lockDuration: 30000,
   });
