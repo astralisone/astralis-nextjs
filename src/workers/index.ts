@@ -63,43 +63,43 @@ async function startWorkers() {
   // Document processing worker (OCR)
   const documentWorker = new Worker('document-processing', processDocumentOCR, {
     connection: redisConnection as any,
-    concurrency: 3, // Lower concurrency due to CPU-intensive OCR
+    concurrency: 2, // Reduced from 3
   });
 
   // Document embedding worker (RAG embeddings)
   const embeddingWorker = new Worker('document-embedding', processDocumentEmbedding, {
     connection: redisConnection as any,
-    concurrency: 2, // Lower concurrency due to API rate limits
+    concurrency: 1, // Reduced from 2
   });
 
   // Intake routing worker (AI-powered request routing)
   const intakeRoutingWorker = new Worker('intake-routing', processIntakeRouting, {
     connection: redisConnection as any,
-    concurrency: 5, // Higher concurrency for lightweight routing operations
+    concurrency: 2, // Reduced from 5
   });
 
   // Calendar sync worker (Google Calendar synchronization)
   const calendarSyncWorker = new Worker('calendar-sync', processCalendarSync, {
     connection: redisConnection as any,
-    concurrency: 2, // Lower concurrency due to external API rate limits
+    concurrency: 1, // Reduced from 2
   });
 
   // Scheduling reminder worker (email reminders for events)
   const schedulingReminderWorker = new Worker('scheduling-reminders', processSchedulingReminder, {
     connection: redisConnection as any,
-    concurrency: 5, // Higher concurrency for email sending
+    concurrency: 2, // Reduced from 5
   });
 
   // SLA monitor worker (task SLA compliance monitoring)
   const slaMonitorWorker = new Worker('sla-monitor', processSLAMonitor, {
     connection: redisConnection as any,
-    concurrency: 2, // Lower concurrency for thorough checks
+    concurrency: 1, // Reduced from 2
   });
 
   // Scheduling agent worker (AI-powered scheduling and task classification)
   const schedulingAgentWorker = new Worker('scheduling-agent', processSchedulingAgent, {
     connection: redisConnection as any,
-    concurrency: 3, // Medium concurrency for AI classification + scheduling
+    concurrency: 2, // Reduced from 3
   });
 
   // Health check worker (Proactive business pulse monitoring)
@@ -223,13 +223,13 @@ async function startWorkers() {
     console.error(`[Worker:PendingSync] Job ${job?.id} failed:`, err.message);
   });
 
-  console.log('[Workers] Document processing worker started (concurrency: 3)');
-  console.log('[Workers] Document embedding worker started (concurrency: 2)');
-  console.log('[Workers] Intake routing worker started (concurrency: 5)');
-  console.log('[Workers] Calendar sync worker started (concurrency: 2)');
-  console.log('[Workers] Scheduling reminder worker started (concurrency: 5)');
-  console.log('[Workers] SLA monitor worker started (concurrency: 2)');
-  console.log('[Workers] Scheduling agent worker started (concurrency: 3)');
+  console.log('[Workers] Document processing worker started (concurrency: 2)');
+  console.log('[Workers] Document embedding worker started (concurrency: 1)');
+  console.log('[Workers] Intake routing worker started (concurrency: 2)');
+  console.log('[Workers] Calendar sync worker started (concurrency: 1)');
+  console.log('[Workers] Scheduling reminder worker started (concurrency: 2)');
+  console.log('[Workers] SLA monitor worker started (concurrency: 1)');
+  console.log('[Workers] Scheduling agent worker started (concurrency: 2)');
   console.log('[Workers] Health check worker started (concurrency: 1)');
   console.log('[Workers] Pending items sync worker started (concurrency: 1)');
 

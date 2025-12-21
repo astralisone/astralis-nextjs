@@ -40,8 +40,8 @@ function createRedisConnection(): Redis | null {
       lazyConnect: true, // Don't connect immediately
       // Connection management for better resource handling
       keepAlive: 30000, // Send keep-alive every 30 seconds
-      commandTimeout: 5000, // Command timeout
-      connectTimeout: 10000, // Connection timeout
+      commandTimeout: 10000, // Increased from 5000
+      connectTimeout: 20000, // Increased from 10000
       retryStrategy: (times) => {
         if (times > 3) {
           console.warn('[Redis] Max retries reached, giving up');
