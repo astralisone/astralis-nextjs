@@ -1,6 +1,6 @@
 
 import { prisma } from '../lib/prisma';
-import { queueDocumentProcessing } from './queues/document-processing.queue';
+import { retryDocumentProcessing } from './queues/document-processing.queue';
 import { closeRedisConnection } from './redis';
 
 async function requeuePendingDocs() {
@@ -20,8 +20,8 @@ async function requeuePendingDocs() {
     console.log(`Found ${pendingDocs.length} pending documents.`);
 
     for (const doc of pendingDocs) {
-      console.log(`Queueing document: ${doc.originalName} (${doc.id})...`);
-      await queueDocumentProcessing({
+      console.log(`Retrying document: ${doc.originalName} (${doc.id})...`);
+      await retryDocumentProcessing({
         documentId: doc.id,
         orgId: doc.orgId,
         performOCR: true,
@@ -29,7 +29,7 @@ async function requeuePendingDocs() {
       });
     }
 
-    console.log('All pending documents have been re-queued.');
+    console.log('All pending documents have been re-queued for retry.');
   } catch (error) {
     console.error('Error re-queueing documents:', error);
   } finally {
