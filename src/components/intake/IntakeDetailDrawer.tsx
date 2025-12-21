@@ -42,20 +42,45 @@ export function IntakeDetailDrawer({
   onUpdate,
   availablePipelines = [],
 }: IntakeDetailDrawerProps) {
-  const [isUpdating, setIsUpdating] = React.useState(false);
-  const [selectedStatus, setSelectedStatus] = React.useState<IntakeStatus | ''>('');
-  const [selectedPipeline, setSelectedPipeline] = React.useState<string>('');
+  const [activities, setActivities] = React.useState<any[]>([]);
+  const [isLoadingActivities, setIsLoadingActivities] = React.useState(false);
+
+  const fetchActivities = React.useCallback(async () => {
+    if (!request?.id) return;
+    setIsLoadingActivities(true);
+    try {
+      const response = await fetch(`/api/intake/${request.id}/activities`);
+      if (response.ok) {
+        const data = await response.json();
+        setActivities(data.activities || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch activities:', error);
+    } finally {
+      setIsLoadingActivities(false);
+    }
+  }, [request?.id]);
 
   React.useEffect(() => {
     if (request) {
       setSelectedStatus(request.status);
       setSelectedPipeline(request.pipeline?.id || '');
+      fetchActivities();
     }
-  }, [request]);
+  }, [request, fetchActivities]);
 
   if (!isOpen || !request) {
     return null;
   }
+
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'TASK_CREATED': return <CheckCircle2 className="w-4 h-4 text-emerald-500" />;
+      case 'AGENT_DECISION': return <Route className="w-4 h-4 text-blue-500" />;
+      case 'LOG': return <UserCheck className="w-4 h-4 text-slate-500" />;
+      default: return <FileText className="w-4 h-4 text-slate-400" />;
+    }
+  };
 
   const createdDate = typeof request.createdAt === 'string'
     ? new Date(request.createdAt)
@@ -80,6 +105,7 @@ export function IntakeDetailDrawer({
       });
 
       onUpdate?.();
+      fetchActivities();
     } catch (error) {
       toast({
         title: 'Error',
@@ -113,6 +139,7 @@ export function IntakeDetailDrawer({
       });
 
       onUpdate?.();
+      fetchActivities();
     } catch (error) {
       toast({
         title: 'Error',
@@ -310,14 +337,54 @@ export function IntakeDetailDrawer({
             </div>
           )}
 
-          {/* Activity Timeline Placeholder */}
+          {/* Activity Timeline */}
           <div className="border-t border-slate-200 pt-6">
             <label className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-4 block">
               Activity Timeline
             </label>
-            <div className="text-sm text-slate-500 text-center py-8">
-              Activity timeline coming soon
-            </div>
+            
+            {isLoadingActivities ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+              </div>
+            ) : activities.length > 0 ? (
+              <div className="space-y-6 relative before:absolute before:left-2 before:top-2 before:bottom-2 before:w-px before:bg-slate-200">
+                {activities.map((activity) => (
+                  <div key={activity.id} className="relative pl-8">
+                    <div className="absolute left-0 top-1 p-0.5 bg-white ring-4 ring-white">
+                      {getActivityIcon(activity.type)}
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium text-astralis-navy">
+                          {activity.action.replace(/_/g, ' ')}
+                        </p>
+                        <span className="text-xs text-slate-500">
+                          {format(new Date(activity.timestamp), 'MMM d, h:mm a')}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-600 mt-0.5">
+                        {activity.user && `by ${activity.user}`}
+                      </p>
+                      {activity.details?.reasoning && (
+                        <p className="text-xs text-slate-500 mt-2 bg-slate-50 p-2 rounded italic">
+                          "{activity.details.reasoning}"
+                        </p>
+                      )}
+                      {activity.details?.title && activity.type === 'TASK_CREATED' && (
+                        <p className="text-xs text-slate-500 mt-1">
+                          Task: <span className="font-medium">{activity.details.title}</span>
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-sm text-slate-500 text-center py-8">
+                No activity recorded yet
+              </div>
+            )}
           </div>
         </div>
       </div>

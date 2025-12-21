@@ -854,20 +854,74 @@ export class ActionExecutor {
     // ===========================================================================
 
     this.registerHandler(DecisionTypeEnum.SEARCH_EMAILS, async (params: any, ctx) => {
+      this.logger.info('Executing SEARCH_EMAILS', { params, dryRun: ctx.dryRun });
+      
       if (ctx.dryRun) return { success: true, data: { dryRun: true, ...params } };
-      const service = await this.getIntegrationService('GMAIL', ctx.userId!, ctx.orgId!);
-      if (!service) return { success: false, error: 'Gmail integration not found' };
-      // Assuming service has searchEmails or similar
-      // If not, we return not implemented for now, but preserving the structure
-      return { success: true, data: { threads: [] } };
+      
+      const service = await this.getIntegrationService('GMAIL', ctx.userId!, ctx.orgId!) as any;
+      if (!service) return { success: false, error: 'Gmail integration not found or disconnected' };
+      
+      try {
+        const result = await service.listThreads({
+          q: params.query,
+          maxResults: params.limit || 10
+        });
+
+        if (!result.success) {
+          return { success: false, error: result.error?.message || 'Failed to search emails' };
+        }
+
+        return { 
+          success: true, 
+          data: { 
+            threads: result.data,
+            count: result.data.length
+          } 
+        };
+      } catch (e) {
+        return { success: false, error: (e as Error).message };
+      }
     });
 
     this.registerHandler(DecisionTypeEnum.REPLY_TO_EMAIL, async (params: any, ctx) => {
+      this.logger.info('Executing REPLY_TO_EMAIL', { params, dryRun: ctx.dryRun });
+
       if (ctx.dryRun) return { success: true, data: { dryRun: true, ...params } };
-      const service = await this.getIntegrationService('GMAIL', ctx.userId!, ctx.orgId!);
-      if (!service) return { success: false, error: 'Gmail integration not found' };
-      // service.sendEmail can handle replies if implemented with threadId
-      return { success: true, data: { sent: true } };
+      
+      const service = await this.getIntegrationService('GMAIL', ctx.userId!, ctx.orgId!) as any;
+      if (!service) return { success: false, error: 'Gmail integration not found or disconnected' };
+      
+      try {
+        if (!params.messageId || !params.threadId) {
+          return { success: false, error: 'messageId and threadId are required for replies' };
+        }
+
+        const result = await service.replyToMessage(
+          params.messageId,
+          params.threadId,
+          {
+            to: Array.isArray(params.to) ? params.to : [params.to],
+            subject: params.subject,
+            body: params.body,
+            isHtml: params.isHtml !== false
+          }
+        );
+
+        if (!result.success) {
+          return { success: false, error: result.error?.message || 'Failed to send reply' };
+        }
+
+        return { 
+          success: true, 
+          data: { 
+            sent: true,
+            messageId: result.data.id,
+            threadId: result.data.threadId
+          } 
+        };
+      } catch (e) {
+        return { success: false, error: (e as Error).message };
+      }
     });
 
     // ===========================================================================
@@ -1250,13 +1304,41 @@ export class ActionExecutor {
       }
 
       case 'user_available': {
-        // Would check user availability in production
-        return true;
+        const userId = (condition.params.userId as string) || context.userId;
+        if (!userId) return true;
+
+        try {
+          const { CalendarManager } = await import('../actions/CalendarManager');
+          const manager = new CalendarManager(prisma as any);
+          
+          const start = new Date(condition.params.startTime as string || Date.now());
+          const end = new Date(condition.params.endTime as string || (start.getTime() + 30 * 60000));
+          
+          const conflicts = await manager.checkConflicts(userId, start, end);
+          return !conflicts.hasConflicts;
+        } catch (error) {
+          this.logger.error('Failed to check user availability', error as Error);
+          return true; // Fallback to true on error to avoid blocking actions
+        }
       }
 
       case 'slot_available': {
-        // Would check calendar slot availability in production
-        return true;
+        const userId = (condition.params.userId as string) || context.userId;
+        if (!userId) return true;
+
+        try {
+          const { CalendarManager } = await import('../actions/CalendarManager');
+          const manager = new CalendarManager(prisma as any);
+          
+          const start = new Date(condition.params.startTime as string);
+          const end = new Date(condition.params.endTime as string);
+          
+          const conflicts = await manager.checkConflicts(userId, start, end);
+          return !conflicts.hasConflicts;
+        } catch (error) {
+          this.logger.error('Failed to check slot availability', error as Error);
+          return true;
+        }
       }
 
       case 'custom': {
@@ -1411,59 +1493,79 @@ export class ActionExecutor {
    */
   private async loadActionFromRepository(actionType: DecisionType): Promise<ActionHandler | null> {
     try {
-      // Fetch action definition from admin API
-      const response = await fetch(
-        `${process.env.NEXTAUTH_URL || 'http://localhost:3001'}/api/admin/actions?search=${actionType}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${process.env.INTERNAL_API_TOKEN || 'internal'}`,
-            'Content-Type': 'application/json',
-          }
-        }
-      );
+      const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001';
+      const apiUrl = `${baseUrl}/api/admin/actions?search=${actionType}`;
+      
+      this.logger.debug(`Attempting to load action from repository: ${actionType}`, { apiUrl });
+
+      // Fetch action definition from admin API with timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+      const response = await fetch(apiUrl, {
+        headers: {
+          'Authorization': `Bearer ${process.env.INTERNAL_API_TOKEN || 'internal'}`,
+          'Content-Type': 'application/json',
+        },
+        signal: controller.signal
+      }).finally(() => clearTimeout(timeoutId));
 
       if (!response.ok) {
+        this.logger.warn(`Failed to fetch action definition from repository: ${response.status} ${response.statusText}`);
         return null;
       }
 
       const data = await response.json();
       const actionDef = data.actions?.find((action: any) =>
-        action.actionKey === actionType || action.name.toLowerCase().includes(actionType.toLowerCase())
+        action.actionKey === actionType || 
+        action.name.toLowerCase() === actionType.toLowerCase() ||
+        action.name.toLowerCase().includes(actionType.toLowerCase())
       );
 
-      if (!actionDef || actionDef.status !== 'ACTIVE') {
+      if (!actionDef) {
+        this.logger.debug(`Action ${actionType} not found in repository`);
         return null;
       }
 
+      if (actionDef.status !== 'ACTIVE') {
+        this.logger.warn(`Action ${actionType} found in repository but is not ACTIVE (status: ${actionDef.status})`);
+        return null;
+      }
+
+      this.logger.info(`Successfully resolved dynamic action: ${actionType} (${actionDef.name})`);
+
       // Create dynamic handler that calls the action execution API
       return (async (params: any, context: ActionExecutionContext) => {
-        this.logger.info(`Executing dynamic action: ${actionType}`, { params, dryRun: context.dryRun });
+        this.logger.info(`Executing dynamic action: ${actionType}`, { 
+          actionKey: actionDef.actionKey, 
+          params, 
+          dryRun: context.dryRun 
+        });
 
         if (context.dryRun) {
-          return { success: true, data: { dryRun: true, actionType, ...params } };
+          return { success: true, data: { dryRun: true, actionType, actionKey: actionDef.actionKey, ...params } };
         }
 
         try {
+          const executeUrl = `${baseUrl}/api/actions/execute`;
+          
           // Execute the action via the admin API
-          const executeResponse = await fetch(
-            `${process.env.NEXTAUTH_URL || 'http://localhost:3001'}/api/actions/execute`,
-            {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${process.env.INTERNAL_API_TOKEN || 'internal'}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                actionKey: actionDef.actionKey,
-                params,
-                orgId: context.orgId,
-              }),
-            }
-          );
+          const executeResponse = await fetch(executeUrl, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${process.env.INTERNAL_API_TOKEN || 'internal'}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              actionKey: actionDef.actionKey,
+              params,
+              orgId: context.orgId,
+            }),
+          });
 
           if (!executeResponse.ok) {
             const errorData = await executeResponse.json().catch(() => ({}));
-            throw new Error(errorData.error || `Action execution failed: ${executeResponse.status}`);
+            throw new Error(errorData.error || `Action execution API failed: ${executeResponse.status}`);
           }
 
           const result = await executeResponse.json();
@@ -1475,15 +1577,21 @@ export class ActionExecutor {
             rollbackable: false, // Admin actions don't support rollback yet
           };
         } catch (error) {
+          const errMsg = error instanceof Error ? error.message : String(error);
+          this.logger.error(`Dynamic action execution failed for ${actionType}`, error as Error);
           return {
             success: false,
-            error: `Dynamic action execution failed: ${(error as Error).message}`,
+            error: `Dynamic action execution failed: ${errMsg}`,
             rollbackable: false,
           };
         }
       }) as ActionHandler;
     } catch (error) {
-      this.logger.warn(`Failed to load action from repository: ${actionType}`, { error });
+      if ((error as any).name === 'AbortError') {
+        this.logger.warn(`Timeout while loading action ${actionType} from repository`);
+      } else {
+        this.logger.warn(`Failed to load action from repository: ${actionType}`, { error });
+      }
       return null;
     }
   }

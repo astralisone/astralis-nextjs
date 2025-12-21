@@ -81,33 +81,6 @@ export function getOAuthConfig(provider: IntegrationProvider): OAuthProviderConf
 }
 
 /**
- * Generate OAuth authorization URL
- * @deprecated Use generateAuthorizationUrlWithCredentials for org-specific credentials
- */
-export function generateAuthorizationUrl(
-  provider: IntegrationProvider,
-  redirectUri: string,
-  state: string
-): string | null {
-  const config = getOAuthConfig(provider);
-  if (!config) return null;
-
-  const clientId = getClientId(provider);
-  if (!clientId) return null;
-
-  const params = new URLSearchParams({
-    client_id: clientId,
-    redirect_uri: redirectUri,
-    response_type: 'code',
-    scope: config.scopes.join(' '),
-    state,
-    ...config.additionalAuthParams,
-  });
-
-  return `${config.authorizationUrl}?${params.toString()}`;
-}
-
-/**
  * Generate OAuth authorization URL with org-specific credentials
  */
 export function generateAuthorizationUrlWithCredentials(
@@ -443,28 +416,6 @@ function getEnvKeyPrefix(provider: IntegrationProvider): string {
 }
 
 /**
- * Exchange authorization code for tokens
- * @deprecated Use exchangeCodeForTokensWithCredentials for org-specific credentials
- */
-export async function exchangeCodeForTokens(
-  provider: IntegrationProvider,
-  code: string,
-  redirectUri: string
-): Promise<TokenResponseData> {
-  const clientId = getClientId(provider);
-  const clientSecret = getClientSecret(provider);
-
-  if (!clientId || !clientSecret) {
-    throw new Error(`OAuth credentials not configured for ${provider}`);
-  }
-
-  return exchangeCodeForTokensWithCredentials(provider, code, redirectUri, {
-    clientId,
-    clientSecret,
-  });
-}
-
-/**
  * Exchange authorization code for tokens with org-specific credentials
  */
 export async function exchangeCodeForTokensWithCredentials(
@@ -560,27 +511,6 @@ export async function exchangeCodeForTokensWithCredentials(
     scope: tokens.scope,
     tokenType: tokens.token_type,
   };
-}
-
-/**
- * Refresh access token
- * @deprecated Use refreshAccessTokenWithCredentials for org-specific credentials
- */
-export async function refreshAccessToken(
-  provider: IntegrationProvider,
-  refreshToken: string
-): Promise<TokenResponseData> {
-  const clientId = getClientId(provider);
-  const clientSecret = getClientSecret(provider);
-
-  if (!clientId || !clientSecret) {
-    throw new Error(`OAuth credentials not configured for ${provider}`);
-  }
-
-  return refreshAccessTokenWithCredentials(provider, refreshToken, {
-    clientId,
-    clientSecret,
-  });
 }
 
 /**

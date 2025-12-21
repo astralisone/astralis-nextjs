@@ -346,11 +346,31 @@ export class ActionRuntime implements IActionRuntime {
   }
 
   /**
-   * Estimate execution cost (placeholder)
+   * Estimate execution cost based on provider and typical usage
    */
   private estimateExecutionCost(action: any): number {
-    // Placeholder - could be based on API pricing, complexity, etc.
-    return 0.01; // 1 cent per execution
+    const provider = (action.provider || '').toUpperCase();
+    
+    // Cost estimation logic (USD)
+    const costMap: Record<string, number> = {
+      'OPENAI': 0.03,      // Average cost for GPT-4o-mini / Vision operations
+      'ANTHROPIC': 0.05,   // Average cost for Claude operations
+      'RESEND': 0.001,     // Transactional email cost
+      'TWILIO': 0.01,      // SMS segment cost
+      'GMAIL': 0.0001,     // API overhead
+      'GOOGLE': 0.0001,    // Calendar/Docs API overhead
+      'STRIPE': 0.02,      // Payment processing (estimated platform overhead)
+      'QUICKBOOKS': 0.01,  // ERP sync overhead
+    };
+
+    // Base cost for unknown providers
+    const baseCost = costMap[provider] || 0.005;
+
+    // Optional: Scale by complexity if metadata is available
+    let multiplier = 1.0;
+    if (action.executionSpec?.method === 'POST') multiplier = 1.5;
+    
+    return baseCost * multiplier;
   }
 
   /**

@@ -40,16 +40,31 @@ export async function processDocumentOCR(job: Job<DocumentProcessingJobData>) {
     });
 
     if (!document) {
-      throw new Error('Document not found');
+      throw new Error(`Document not found: ${documentId}`);
     }
 
-    console.log(`[Worker] Found document: ${document.originalName}`);
+    // Verify orgId consistency
+    if (document.orgId !== orgId) {
+      console.warn(`[Worker] OrgID mismatch for document ${documentId}: job orgId=${orgId}, db orgId=${document.orgId}`);
+      // Proceed but use the database's orgId for truth
+    }
+
+    console.log(`[Worker] Found document: ${document.originalName} (Org: ${document.orgId})`);
 
     // Download file from Blob storage
     await job.updateProgress(20);
     const blobService = getBlobService();
     // Use cdnUrl for Vercel Blob, fall back to filePath for compatibility
-    const fileBuffer = await blobService.downloadFile(document.cdnUrl || document.filePath);
+    const fileUrl = document.cdnUrl || document.filePath;
+    
+    console.log(`[Worker] Downloading file from: ${fileUrl}`);
+    let fileBuffer: Buffer;
+    try {
+      fileBuffer = await blobService.downloadFile(fileUrl);
+    } catch (downloadError) {
+      console.error(`[Worker] Failed to download file for document ${documentId}:`, downloadError);
+      throw new Error(`File download failed: ${downloadError instanceof Error ? downloadError.message : 'Unknown error'}`);
+    }
 
     console.log(`[Worker] Downloaded file from Blob storage: ${fileBuffer.length} bytes`);
 

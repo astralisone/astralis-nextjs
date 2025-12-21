@@ -93,6 +93,12 @@ export class DocumentService {
       throw new Error(validation.error || 'File validation failed');
     }
 
+    // 1.5 Ensure orgId is valid
+    if (!orgId || orgId.trim() === '') {
+      console.error('[DocumentService] Attempted to upload document with missing or empty orgId');
+      throw new Error('Organization context is missing. Please sign out and sign back in.');
+    }
+
     // 2. Upload to Blob storage
     const uploadResult = await this.getBlobService().uploadFile(
       file,

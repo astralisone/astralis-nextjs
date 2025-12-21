@@ -35,13 +35,22 @@ async function startWorkers() {
 
   // Verify environment variables are loaded
   console.log('[Workers] Environment check:');
-  console.log('  - OPENAI_API_KEY:', process.env.OPENAI_API_KEY ? 'SET (' + process.env.OPENAI_API_KEY.substring(0, 20) + '...)' : 'NOT SET');
-  console.log('  - DATABASE_URL:', process.env.DATABASE_URL ? 'SET' : 'NOT SET');
-  console.log('  - REDIS_URL:', process.env.REDIS_URL ? 'SET' : 'NOT SET');
+  console.log('  - NODE_ENV:', process.env.NODE_ENV);
+  console.log('  - OPENAI_API_KEY:', process.env.OPENAI_API_KEY ? 'SET (' + process.env.OPENAI_API_KEY.substring(0, 10) + '...)' : 'NOT SET');
+  console.log('  - DATABASE_URL:', process.env.DATABASE_URL ? 'SET (length: ' + process.env.DATABASE_URL.length + ')' : 'NOT SET');
+  console.log('  - REDIS_URL:', process.env.REDIS_URL ? 'SET (length: ' + process.env.REDIS_URL.length + ')' : 'NOT SET');
   console.log('  - BLOB_READ_WRITE_TOKEN:', process.env.BLOB_READ_WRITE_TOKEN ? 'SET' : 'NOT SET');
 
   if (!process.env.OPENAI_API_KEY) {
     throw new Error('CRITICAL: OPENAI_API_KEY environment variable is not set. Worker cannot start.');
+  }
+
+  if (!process.env.DATABASE_URL) {
+    throw new Error('CRITICAL: DATABASE_URL environment variable is not set. Worker cannot start.');
+  }
+
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    console.warn('[Workers] WARNING: BLOB_READ_WRITE_TOKEN is not set. Document processing will fail.');
   }
 
   // Redis auto-connects, so we just wait for ready state

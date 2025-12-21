@@ -1075,17 +1075,155 @@ async function queueNextAction(
       break;
 
     case 'RESCHEDULE_MEETING':
+      // Extract rescheduling data and update event
+      const rescheduleEntities = task.entities as Record<string, unknown> | null;
+      const eventId = rescheduleEntities?.eventId as string;
+
+      if (!eventId) {
+        await queueSendResponse({
+          taskId: task.id,
+          userId,
+          responseType: 'clarification',
+          channel: 'email',
+        });
+        await prisma.schedulingAgentTask.update({
+          where: { id: task.id },
+          data: { status: 'AWAITING_INPUT', intent: 'Which meeting should I reschedule?' },
+        });
+        break;
+      }
+
+      // Try to construct new times
+      let newStartStr: string | undefined;
+      let newEndStr: string | undefined;
+
+      if (rescheduleEntities?.startTime && rescheduleEntities?.endTime) {
+        newStartStr = rescheduleEntities.startTime as string;
+        newEndStr = rescheduleEntities.endTime as string;
+      } else if (rescheduleEntities?.date && rescheduleEntities?.time) {
+        const date = rescheduleEntities.date as string;
+        const time = rescheduleEntities.time as string;
+        const duration = (rescheduleEntities.duration as number) || 60;
+        const dateObj = new Date(`${date}T${time}:00`);
+        if (!isNaN(dateObj.getTime())) {
+          newStartStr = dateObj.toISOString();
+          newEndStr = new Date(dateObj.getTime() + duration * 60 * 1000).toISOString();
+        }
+      }
+
+      if (newStartStr && newEndStr) {
+        try {
+          const { createCalendarManager } = await import('@/lib/agent/actions/CalendarManager');
+          const manager = createCalendarManager(prisma as any);
+          
+          await manager.rescheduleEvent(eventId, new Date(newStartStr), new Date(newEndStr));
+          
+          await prisma.schedulingAgentTask.update({
+            where: { id: task.id },
+            data: {
+              status: 'COMPLETED',
+              resolution: `Meeting ${eventId} rescheduled to ${newStartStr}`,
+              completedAt: new Date(),
+            },
+          });
+
+          await queueSendResponse({
+            taskId: task.id,
+            userId,
+            responseType: 'confirmation',
+            channel: 'email',
+          });
+        } catch (error) {
+          console.error('[SchedulingAgent] Reschedule failed:', error);
+          await updateTaskOnError(task.id, error);
+        }
+      } else {
+        await queueSendResponse({
+          taskId: task.id,
+          userId,
+          responseType: 'clarification',
+          channel: 'email',
+        });
+        await prisma.schedulingAgentTask.update({
+          where: { id: task.id },
+          data: { status: 'AWAITING_INPUT' },
+        });
+      }
+      break;
+
     case 'CANCEL_MEETING':
+      const cancelEntities = task.entities as Record<string, unknown> | null;
+      const cancelEventId = cancelEntities?.eventId as string;
+
+      if (cancelEventId) {
+        try {
+          const { createCalendarManager } = await import('@/lib/agent/actions/CalendarManager');
+          const manager = createCalendarManager(prisma as any);
+          
+          await manager.cancelEvent(cancelEventId, (cancelEntities?.reason as string) || 'Cancelled by user');
+          
+          await prisma.schedulingAgentTask.update({
+            where: { id: task.id },
+            data: {
+              status: 'COMPLETED',
+              resolution: `Meeting ${cancelEventId} cancelled`,
+              completedAt: new Date(),
+            },
+          });
+
+          await queueSendResponse({
+            taskId: task.id,
+            userId,
+            responseType: 'confirmation',
+            channel: 'email',
+          });
+        } catch (error) {
+          await updateTaskOnError(task.id, error);
+        }
+      } else {
+        await queueSendResponse({
+          taskId: task.id,
+          userId,
+          responseType: 'clarification',
+          channel: 'email',
+        });
+        await prisma.schedulingAgentTask.update({
+          where: { id: task.id },
+          data: { status: 'AWAITING_INPUT' },
+        });
+      }
+      break;
+
     case 'CHECK_AVAILABILITY':
-      // TODO: Implement handlers for these task types
-      console.log(`[SchedulingAgent] Task type ${task.taskType} not yet implemented`);
-      await prisma.schedulingAgentTask.update({
-        where: { id: task.id },
-        data: {
-          status: 'AWAITING_INPUT',
-          resolution: `Task type ${task.taskType} pending implementation`,
-        },
-      });
+      const checkEntities = task.entities as Record<string, unknown> | null;
+      const checkDate = checkEntities?.date ? new Date(checkEntities.date as string) : new Date();
+      const checkDuration = (checkEntities?.duration as number) || 30;
+
+      try {
+        const { createCalendarManager } = await import('@/lib/agent/actions/CalendarManager');
+        const manager = createCalendarManager(prisma as any);
+        
+        const slots = await manager.findAvailableSlots(userId, checkDate, checkDuration);
+        
+        await prisma.schedulingAgentTask.update({
+          where: { id: task.id },
+          data: {
+            status: 'COMPLETED',
+            proposedSlots: slots.slice(0, 5) as any,
+            resolution: `Found ${slots.length} available slots for ${checkDate.toDateString()}`,
+            completedAt: new Date(),
+          },
+        });
+
+        await queueSendResponse({
+          taskId: task.id,
+          userId,
+          responseType: 'alternatives',
+          channel: 'email',
+        });
+      } catch (error) {
+        await updateTaskOnError(task.id, error);
+      }
       break;
 
     case 'CREATE_TASK':

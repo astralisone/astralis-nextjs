@@ -174,7 +174,7 @@ export class APClerkAgent extends BaseOperationalAgent {
 
       // Step 4: Sync to accounting system (if enabled)
       if (this.apConfig.syncToQuickBooks) {
-        const syncResult = await this.syncToAccounting(invoiceData, dueDate);
+        const syncResult = await this.syncToAccounting(event, invoiceData, dueDate);
 
         if (syncResult.success) {
           actionsTaken.push('SYNCED_TO_QUICKBOOKS');
@@ -335,6 +335,7 @@ export class APClerkAgent extends BaseOperationalAgent {
    * Sync invoice to accounting system (QuickBooks)
    */
   private async syncToAccounting(
+    event: DocumentProcessedEvent,
     invoiceData: InvoiceData,
     dueDate: DateCalculationResult
   ): Promise<ApiPostResult> {
@@ -349,13 +350,19 @@ export class APClerkAgent extends BaseOperationalAgent {
       };
     }
 
-    return await apiPostHandler.syncToQuickBooks({
-      vendorName: invoiceData.vendor_name,
-      invoiceNumber: invoiceData.invoice_number,
-      amount: invoiceData.amount,
-      dueDate: dueDate.resultDateISO || new Date().toISOString(),
-      lineItems: invoiceData.line_items,
-    });
+    return await apiPostHandler.syncToQuickBooks(
+      {
+        vendorName: invoiceData.vendor_name,
+        invoiceNumber: invoiceData.invoice_number,
+        amount: invoiceData.amount,
+        dueDate: dueDate.resultDateISO || new Date().toISOString(),
+        lineItems: invoiceData.line_items,
+      },
+      {
+        userId: event.metadata.uploadedById,
+        orgId: event.orgId
+      }
+    );
   }
 }
 

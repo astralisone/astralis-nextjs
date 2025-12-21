@@ -330,9 +330,9 @@ const DEFAULT_CONFIG: NotificationDispatcherConfig = {
   },
   services: {
     email: {
-      provider: 'sendgrid',
-      fromAddress: 'noreply@astralis.agency',
-      fromName: 'Astralis Agency',
+      provider: (process.env.EMAIL_PROVIDER as any) || 'smtp',
+      fromAddress: process.env.SMTP_FROM_EMAIL || 'support@astralisone.com',
+      fromName: process.env.SMTP_FROM_NAME || 'Astralis One',
     },
   },
 };
@@ -935,58 +935,26 @@ export class NotificationDispatcher {
     }
 
     try {
-      // PLACEHOLDER: Integrate with actual email service
-      // This is where you would integrate with SendGrid, SES, Resend, etc.
+      // Use internal email service for all email notifications
+      const { sendEmail } = await import('@/lib/email');
 
-      switch (emailConfig.provider) {
-        case 'sendgrid':
-          // const sgMail = require('@sendgrid/mail');
-          // sgMail.setApiKey(emailConfig.apiKey);
-          // await sgMail.send({
-          //   to,
-          //   from: { email: emailConfig.fromAddress, name: emailConfig.fromName },
-          //   subject,
-          //   text: body,
-          //   html: payload.metadata?.html ? body : undefined,
-          // });
-          this.logger.debug('Would send via SendGrid', { to, subject });
-          break;
+      await sendEmail({
+        to,
+        subject,
+        html: payload.metadata?.html ? (payload.metadata.html as string) : body,
+        text: body,
+        from: `"${emailConfig.fromName || 'Astralis One'}" <${emailConfig.fromAddress}>`,
+        userId: payload.senderId, // If senderId is provided, try their Gmail
+      });
 
-        case 'ses':
-          // Use AWS SES SDK
-          this.logger.debug('Would send via AWS SES', { to, subject });
-          break;
-
-        case 'resend':
-          // Use Resend SDK
-          this.logger.debug('Would send via Resend', { to, subject });
-          break;
-
-        default:
-          // SMTP fallback
-          this.logger.debug('Would send via SMTP', { to, subject });
-      }
-
-      // For now, simulate successful send
       const notificationId = this.generateId();
-
-      // Try to queue in database for actual processing
-      try {
-        await prisma.$executeRaw`
-          INSERT INTO email_queue (id, to_address, subject, body, status, created_at)
-          VALUES (${notificationId}, ${to}, ${subject}, ${body}, 'queued', NOW())
-          ON CONFLICT DO NOTHING
-        `;
-      } catch {
-        // Table might not exist, that's okay for placeholder
-      }
 
       return {
         success: true,
         notificationId,
         channel: 'email',
         recipient: to,
-        status: 'queued',
+        status: 'sent',
         timestamp: new Date(),
       };
     } catch (error) {
@@ -1068,53 +1036,29 @@ export class NotificationDispatcher {
     message: string,
     payload: NotificationPayload
   ): Promise<NotificationResult> {
-    const smsConfig = this.config.services.sms;
-
-    if (!smsConfig) {
-      return {
-        success: false,
-        channel: 'sms',
-        recipient: phoneNumber,
-        status: 'failed',
-        error: 'SMS service not configured',
-        timestamp: new Date(),
-      };
-    }
-
     try {
-      // PLACEHOLDER: Integrate with actual SMS service
-      // This is where you would integrate with Twilio, Vonage, AWS SNS, etc.
+      const { smsService } = await import('@/lib/services/sms.service');
 
-      switch (smsConfig.provider) {
-        case 'twilio':
-          // const twilio = require('twilio')(smsConfig.accountSid, smsConfig.authToken);
-          // const twilioResult = await twilio.messages.create({
-          //   body: message,
-          //   to: phoneNumber,
-          //   from: smsConfig.fromNumber,
-          // });
-          this.logger.debug('Would send via Twilio', { to: phoneNumber, messageLength: message.length });
-          break;
-
-        case 'vonage':
-          // Use Vonage SDK
-          this.logger.debug('Would send via Vonage', { to: phoneNumber });
-          break;
-
-        case 'aws-sns':
-          // Use AWS SNS SDK
-          this.logger.debug('Would send via AWS SNS', { to: phoneNumber });
-          break;
+      if (!smsService.isReady()) {
+        return {
+          success: false,
+          channel: 'sms',
+          recipient: phoneNumber,
+          status: 'failed',
+          error: 'SMS service not configured',
+          timestamp: new Date(),
+        };
       }
 
-      const notificationId = this.generateId();
+      const result = await smsService.sendSms(phoneNumber, message);
 
       return {
-        success: true,
-        notificationId,
+        success: result.success,
+        notificationId: result.messageId || this.generateId(),
         channel: 'sms',
         recipient: phoneNumber,
-        status: 'queued',
+        status: result.success ? 'sent' : 'failed',
+        error: result.error,
         timestamp: new Date(),
       };
     } catch (error) {
@@ -1340,14 +1284,25 @@ export class NotificationDispatcher {
     let quietHours = this.config.defaultQuietHours;
 
     try {
-      // PLACEHOLDER: Fetch user preferences from database
-      // const userPrefs = await prisma.userPreferences.findUnique({
-      //   where: { userId: recipient },
-      //   select: { quietHours: true },
-      // });
-      // if (userPrefs?.quietHours) {
-      //   quietHours = userPrefs.quietHours as QuietHoursConfig;
-      // }
+      // Fetch user timezone for better accuracy
+      const user = await prisma.users.findFirst({
+        where: {
+          OR: [
+            { id: recipient },
+            { email: recipient },
+          ],
+        },
+        select: {
+          timezone: true,
+        },
+      });
+
+      if (user?.timezone && quietHours) {
+        quietHours = { ...quietHours, timezone: user.timezone };
+      }
+      
+      // NOTE: Detailed quiet hours preferences (start/end time) could be 
+      // added to user model or a separate preference model in the future.
     } catch {
       // Use default config
     }

@@ -719,23 +719,54 @@ export class CalendarManager {
       method: r.method,
     })) || this.getDefaultReminders(eventData, attendees);
 
-    // Prepare conference data if requested
-    let conferenceData: ConferenceData | undefined;
-    if (eventData.createMeetingLink) {
-      conferenceData = {
-        createRequest: true,
-        provider: eventData.conferenceProvider || this.config.defaultConferenceProvider,
-      };
-    }
-
-    // Generate meeting link placeholder (would integrate with actual provider)
-    const meetingLink = conferenceData?.createRequest
-      ? this.generateMeetingLinkPlaceholder(conferenceData.provider)
-      : undefined;
-
-    // Create the event in database
+    // 4. Create the event in database
     const eventId = this.generateEventId();
     const now = new Date();
+
+    // Prepare for external calendar creation if meeting link requested
+    let externalMeetingLink: string | undefined;
+    let externalEventData: any;
+
+    if (conferenceData?.createRequest && conferenceData.provider === 'google_meet') {
+      try {
+        const { createEvent: createGoogleEvent } = await import('@/lib/services/googleCalendar.service');
+        
+        // Map to Google API format
+        const googleEvent = await createGoogleEvent(eventData.userId, {
+          summary: eventData.title,
+          description: eventData.description,
+          location: eventData.location,
+          start: { 
+            dateTime: eventData.startTime.toISOString(),
+            timeZone: eventData.timezone || this.config.defaultTimezone
+          },
+          end: { 
+            dateTime: eventData.endTime.toISOString(),
+            timeZone: eventData.timezone || this.config.defaultTimezone
+          },
+          attendees: attendees.map(a => ({ email: a.email })),
+          conferenceData: {
+            createRequest: {
+              requestId: `meet_${eventId}`,
+              conferenceSolutionKey: { type: 'hangoutsMeet' }
+            }
+          }
+        } as any);
+
+        externalMeetingLink = googleEvent.hangoutLink || googleEvent.htmlLink;
+        externalEventData = {
+          googleEventId: googleEvent.id,
+          provider: 'GOOGLE',
+          syncedAt: now.toISOString()
+        };
+        
+        this.logger.info(`Successfully created Google Calendar event with link: ${externalMeetingLink}`);
+      } catch (error) {
+        this.logger.error('Failed to create real meeting link via Google Calendar', error as Error);
+        // Fallback to placeholder if external creation fails so the local event still exists
+        externalMeetingLink = this.generateMeetingLinkPlaceholder(conferenceData.provider);
+      }
+    }
 
     const dbEvent = await this.prisma.schedulingEvent.create({
       data: {
@@ -748,11 +779,14 @@ export class CalendarManager {
         endTime: eventData.endTime,
         timezone: eventData.timezone || this.config.defaultTimezone,
         location: eventData.location,
-        meetingLink,
+        meetingLink: externalMeetingLink,
         participantEmails: attendees.map((a) => a.email),
         status: 'SCHEDULED',
         aiSuggestionMeta: eventData.metadata?.aiSuggestionMeta || null,
-        calendarIntegrationData: conferenceData ? { conference: conferenceData } : null,
+        calendarIntegrationData: {
+          ...(conferenceData ? { conference: conferenceData } : {}),
+          ...externalEventData
+        },
         createdAt: now,
         updatedAt: now,
       },

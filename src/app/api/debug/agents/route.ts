@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/config';
 
+import { prisma } from '@/lib/prisma';
+
 /**
  * GET /api/debug/agents
  *
@@ -27,6 +29,17 @@ export async function GET(req: NextRequest) {
         { status: 403 }
       );
     }
+
+    // Fetch recent decisions from DB
+    const recentDecisions = await prisma.decisionLog.findMany({
+      take: 10,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        task: {
+          select: { title: true }
+        }
+      }
+    });
 
     // Agent configurations (hardcoded for now, could be dynamic)
     const agents = [
@@ -87,6 +100,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       agents,
       environment: agentEnvironment,
+      recentDecisions,
       totalAgents: agents.length,
       timestamp: new Date().toISOString(),
     });

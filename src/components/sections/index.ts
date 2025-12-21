@@ -42,12 +42,3 @@ export type { FeatureCardIconProps } from './feature-card-icon';
 export { HomepageStatsBar } from './HomepageStatsBar';
 export { HomepageProcessFlow } from './HomepageProcessFlow';
 export { HomepageCapabilities } from './HomepageCapabilities';
-
-// Mockup-specific components
-export { SolutionFinder } from './solution-finder';
-export type { Solution } from './solution-finder';
-export { ServicePricingCard } from './service-pricing-card';
-export type { ServicePricingCardProps } from './service-pricing-card';
-export { TrustBadges } from './trust-badges';
-export type { TrustBadge } from './trust-badges';
-export { Hero3DHexagon } from './hero-3d-hexagon';

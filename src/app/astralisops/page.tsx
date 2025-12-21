@@ -18,6 +18,9 @@ import { CTASection } from '@/components/sections/cta-section';
 import { astralisOpsContent } from '@/data/astralisops-content';
 import { cn } from '@/lib/utils';
 
+import { InteractivePipelineHero } from '@/components/interactive/InteractivePipelineHero';
+import { LiveWorkflowVisual } from '@/components/interactive/LiveWorkflowVisual';
+
 /**
  * AstralisOps Product Page
  * Following Astralis One Master Project Specification v1.0 - Section 4.3
@@ -66,7 +69,7 @@ export default function AstralisOpsPage() {
         primaryButton={astralisOpsContent.hero.primaryButton}
         secondaryButton={astralisOpsContent.hero.secondaryButton}
         variant="dark"
-        rightContent={<ProductHeroVisual />}
+        rightContent={<InteractivePipelineHero />}
       />
 
       {/* 2. Feature List - 2x3 Grid */}
@@ -80,7 +83,7 @@ export default function AstralisOpsPage() {
       />
 
       {/* 3. Workflow Diagram Section */}
-      <WorkflowDiagramSection />
+      <LiveWorkflowSection />
 
       {/* 4. Outcomes Section - Stats */}
       <StatsSection
@@ -107,56 +110,10 @@ export default function AstralisOpsPage() {
 }
 
 /**
- * Product Hero Visual - AstralisOps Dashboard Preview
- * Combines product mockup with live pipeline stats
+ * Live Workflow Section
  */
-function ProductHeroVisual() {
-  const stages = [
-    { name: 'Intake', count: 8 },
-    { name: 'In Progress', count: 12 },
-    { name: 'Done', count: 23 },
-  ];
-
-  return (
-    <div className="space-y-6">
-      {/* Product Mockup Image */}
-      <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden border border-slate-700 shadow-2xl">
-        <Image
-          src="/images/home-page-mockup.png"
-          alt="AstralisOps dashboard interface - AI-powered operations console showing automation workflows and analytics"
-          fill
-          className="object-cover object-top"
-          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 600px"
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 to-transparent" />
-      </div>
-
-      {/* Pipeline Stats Card */}
-      <div className="rounded-xl border border-slate-700 bg-slate-900/60 backdrop-blur-sm p-6 shadow-xl">
-        <div className="mb-4 text-sm font-medium text-slate-400">Pipeline Overview</div>
-        <div className="grid gap-4 md:grid-cols-3">
-          {stages.map((stage) => (
-            <div
-              key={stage.name}
-              className="rounded-lg border border-slate-700 bg-slate-950/60 p-4 transition-all duration-200 hover:border-astralis-blue"
-            >
-              <div className="text-xs font-medium text-slate-400 uppercase tracking-wide">{stage.name}</div>
-              <div className="mt-2 text-3xl font-bold text-white">{stage.count}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/**
- * Workflow Diagram Section
- * Visual representation of the AstralisOps workflow stages
- */
-function WorkflowDiagramSection() {
-  const { title, description, stages } = astralisOpsContent.workflowDiagram;
+function LiveWorkflowSection() {
+  const { title, description } = astralisOpsContent.workflowDiagram;
 
   return (
     <section className="w-full px-8 py-24 md:px-20 md:py-32 lg:px-24 bg-white dark:bg-slate-900">
@@ -171,40 +128,7 @@ function WorkflowDiagramSection() {
           </p>
         </div>
 
-        {/* Workflow Diagram */}
-        <div className="relative">
-          {/* Stages */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 relative">
-            {stages.map((stage, index) => (
-              <React.Fragment key={stage.label}>
-                {/* Stage Card */}
-                <div className="relative">
-                  <div className="p-6 bg-white dark:bg-slate-800 border-2 border-astralis-blue rounded-lg shadow-lg text-center">
-                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-astralis-blue text-white font-bold text-lg mb-4">
-                      {index + 1}
-                    </div>
-                    <h3 className="text-xl font-semibold text-astralis-navy dark:text-white mb-2">
-                      {stage.label}
-                    </h3>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">
-                      {stage.sublabel}
-                    </p>
-                  </div>
-
-                  {/* Arrow Connector (hidden on mobile, shown on md+) */}
-                  {index < stages.length - 1 && (
-                    <div className="hidden md:block absolute top-1/2 -right-3 transform -translate-y-1/2 z-10">
-                      <ArrowRight className="w-6 h-6 text-astralis-blue" />
-                    </div>
-                  )}
-                </div>
-              </React.Fragment>
-            ))}
-          </div>
-
-          {/* Connecting Line (desktop only) */}
-          <div className="hidden md:block absolute top-1/2 left-0 right-0 h-0.5 bg-astralis-blue/30 -z-0" style={{ marginTop: '-1px' }} />
-        </div>
+        <LiveWorkflowVisual />
       </div>
     </section>
   );

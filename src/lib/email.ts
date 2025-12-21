@@ -78,18 +78,28 @@ async function sendViaResend(options: EmailOptions): Promise<void> {
  * Configure SMTP settings in environment variables
  */
 function createTransporter(): Transporter {
+  const port = Number(process.env.SMTP_PORT) || 587;
+  // port 465 is always secure (SSL/TLS), 587 is STARTTLS
+  const secure = port === 465;
+
+  console.log(`[Email] Creating transporter: ${process.env.SMTP_HOST}:${port} (secure: ${secure})`);
+
   const smtpConfig = {
     host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT),
-    secure: false, // port 587 = STARTTLS, so false
+    port: port,
+    secure: secure,
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASSWORD || process.env.SMTP_PASS,
     },
     // Add timeouts to prevent blocking when SMTP is unreachable
-    connectionTimeout: 5000, // 5 seconds to establish connection
-    greetingTimeout: 5000,   // 5 seconds for server greeting
-    socketTimeout: 10000,    // 10 seconds for socket inactivity
+    connectionTimeout: 10000, // 10 seconds to establish connection
+    greetingTimeout: 10000,   // 10 seconds for server greeting
+    socketTimeout: 15000,    // 15 seconds for socket inactivity
+    tls: {
+      // Do not fail on invalid certs (common with some SMTP providers)
+      rejectUnauthorized: false
+    }
   };
 
   return nodemailer.createTransport(smtpConfig);
@@ -100,13 +110,19 @@ function createTransporter(): Transporter {
  */
 async function sendViaSMTP(options: EmailOptions): Promise<void> {
   console.log(`[Email] Attempting to send via SMTP to ${options.to}`);
+  
+  if (!process.env.SMTP_HOST) {
+    console.error('[Email] SMTP_HOST is not configured! Cannot send via SMTP.');
+    throw new Error('SMTP_HOST not configured');
+  }
+
   console.log(`[Email] SMTP Config - Host: ${process.env.SMTP_HOST}, Port: ${process.env.SMTP_PORT}, User: ${process.env.SMTP_USER}`);
 
   const transporter = createTransporter();
 
   const fromEmail = options.from || process.env.SMTP_FROM_EMAIL || 'support@astralisone.com';
   const mailOptions = {
-    from: `"${process.env.SMTP_FROM_NAME || 'Astralis'}" <${fromEmail}>`,
+    from: `"${process.env.SMTP_FROM_NAME || 'Astralis One'}" <${fromEmail}>`,
     to: options.to,
     subject: options.subject,
     text: options.text,
@@ -114,8 +130,13 @@ async function sendViaSMTP(options: EmailOptions): Promise<void> {
     attachments: options.attachments,
   };
 
-  const result = await transporter.sendMail(mailOptions);
-  console.log(`[Email] ✅ SUCCESS - Sent via SMTP to ${options.to} (Message ID: ${result.messageId})`);
+  try {
+    const result = await transporter.sendMail(mailOptions);
+    console.log(`[Email] ✅ SUCCESS - Sent via SMTP to ${options.to} (Message ID: ${result.messageId})`);
+  } catch (error) {
+    console.error(`[Email] SMTP delivery failed:`, error);
+    throw error;
+  }
 }
 
 /**
@@ -1400,12 +1421,42 @@ export async function sendSchedulingAgentEmail(options: SchedulingAgentEmailOpti
 
   const text = generateSchedulingAgentEmailText(options);
 
+  // Generate ICS calendar attachment for confirmations
+  let attachments: EmailOptions['attachments'];
+  if (options.responseType === 'confirmation' && options.meetingDetails) {
+    try {
+      const { generateBookingCalendarEvent } = await import('@/lib/calendar');
+      const icsContent = await generateBookingCalendarEvent({
+        title: options.meetingDetails.title,
+        description: `Meeting scheduled via Astralis Assistant`,
+        location: options.meetingDetails.location || 'Virtual',
+        startDate: options.meetingDetails.startTime,
+        duration: Math.round((options.meetingDetails.endTime.getTime() - options.meetingDetails.startTime.getTime()) / 60000),
+        attendeeEmail: options.recipientEmail,
+        attendeeName: options.recipientName,
+        organizerEmail: process.env.SMTP_FROM_EMAIL || 'support@astralisone.com',
+        organizerName: process.env.SMTP_FROM_NAME || 'Astralis',
+      });
+
+      attachments = [
+        {
+          filename: 'invite.ics',
+          content: icsContent,
+          contentType: 'text/calendar',
+        },
+      ];
+    } catch (icsError) {
+      console.error('[Email] Failed to generate ICS attachment:', icsError);
+    }
+  }
+
   await sendEmail({
     to: options.recipientEmail,
     subject,
     html,
     text,
     userId: options.hostUserId,
+    attachments,
   });
 
   console.log(`[Email] Scheduling agent ${options.responseType} email sent to ${options.recipientEmail}`);
