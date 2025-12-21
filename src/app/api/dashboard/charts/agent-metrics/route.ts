@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
         GROUP BY DATE("createdAt")
       ),
       executions AS (
-        SELECT DATE("createdAt") as d, COUNT(*) as total, SUM(CASE WHEN "status" = 'COMPLETED' THEN 1 ELSE 0 END) as success
+        SELECT DATE("createdAt") as d, COUNT(*) as total, SUM(CASE WHEN "status" = 'SUCCESS' THEN 1 ELSE 0 END) as success
         FROM "workflow_executions"
         WHERE "orgId" = $1 AND "createdAt" >= $2
         GROUP BY DATE("createdAt")
