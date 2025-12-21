@@ -27,6 +27,9 @@ export function useDebugPanel() {
 export function DebugPanel() {
   const { isOpen, setIsOpen } = useDebugPanel();
   const { data: session, status } = useSession();
+  const [dbInfo, setDbInfo] = useState<any>(null);
+  const [secrets, setSecrets] = useState<any>(null);
+  const [oauthSettings, setOauthSettings] = useState<any>(null);
   const [agentInfo, setAgentInfo] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -92,7 +95,7 @@ export function DebugPanel() {
             <SheetTitle className="flex items-center gap-2">
               <Settings className="h-5 w-5" />
               Debug Panel
-              <Badge variant="outline" className="text-xs">Option+Shift+D</Badge>
+              <Badge variant="warning" className="text-xs">Option+Shift+D</Badge>
             </SheetTitle>
           </SheetHeader>
 
@@ -180,7 +183,7 @@ export function DebugPanel() {
               {dbInfo ? (
                 <div className="space-y-4">
                   <div className="flex items-center gap-4">
-                    <Badge variant={dbInfo.connected ? 'default' : 'destructive'}>
+                    <Badge variant={dbInfo.connected ? 'default' : 'warning'}>
                       {dbInfo.connected ? 'Connected' : 'Disconnected'}
                     </Badge>
                     <span className="text-sm">Database: {dbInfo.database || 'Unknown'}</span>
