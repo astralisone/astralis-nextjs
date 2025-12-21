@@ -54,9 +54,9 @@ export async function GET(req: NextRequest) {
       const credentialCount = await prisma.integrationCredential.count();
       tables.push({ name: 'integration_credentials', count: credentialCount });
 
-      // Workflows
-      const workflowCount = await prisma.workflow.count();
-      tables.push({ name: 'workflows', count: workflowCount });
+      // Workflows (Automations)
+      const workflowCount = await prisma.automation.count();
+      tables.push({ name: 'automations', count: workflowCount });
 
       // Pipeline stages
       const pipelineCount = await prisma.pipelineStage.count();
