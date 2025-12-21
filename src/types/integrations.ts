@@ -227,3 +227,21 @@ export function getIntegrationMetadata(provider: PrismaIntegrationProvider): Int
 
 // Export provider type alias
 export type IntegrationProvider = PrismaIntegrationProvider;
+
+/**
+ * Standard API Response for Integration Services
+ */
+export interface IntegrationApiResponse<T = unknown> {
+  success: boolean;
+  data?: T;
+  error?: {
+    code: string;
+    message: string;
+    details?: unknown;
+  };
+  pagination?: {
+    cursor?: string;
+    hasMore: boolean;
+    total?: number;
+  };
+}

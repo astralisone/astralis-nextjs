@@ -6,7 +6,7 @@
  */
 
 import { integrationService, type CredentialWithData } from '@/lib/services/integration.service';
-import { refreshAccessToken, getOAuthConfig } from '@/lib/integrations/oauth-config';
+import { refreshAccessTokenWithCredentials, getOAuthConfig } from '@/lib/integrations/oauth-config';
 import type { IntegrationProvider } from '@prisma/client';
 import type { IntegrationApiResponse } from '@/types/integrations';
 
@@ -165,7 +165,19 @@ export abstract class BaseIntegrationService<TCredentialData = Record<string, un
     }
 
     try {
-      const newTokens = await refreshAccessToken(this.config.provider, refreshToken);
+      // Get org-specific credentials for refresh
+      const { getOrgOAuthCredentials, refreshAccessTokenWithCredentials } = await import('@/lib/integrations/oauth-config');
+      const orgCredentials = await getOrgOAuthCredentials(this.config.provider, this.credential.orgId);
+
+      if (!orgCredentials) {
+        throw new Error(`No OAuth credentials configured for ${this.config.provider}`);
+      }
+
+      const newTokens = await refreshAccessTokenWithCredentials(
+        this.config.provider, 
+        refreshToken, 
+        orgCredentials
+      );
 
       // Update credential with new tokens
       await integrationService.refreshToken(

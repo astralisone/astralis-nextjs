@@ -7,16 +7,17 @@
 // OAuth Configuration
 export {
   getOAuthConfig,
-  generateAuthorizationUrl,
+  generateAuthorizationUrlWithCredentials,
   generateOAuthState,
   parseOAuthState,
   validateOAuthState,
-  exchangeCodeForTokens,
-  refreshAccessToken,
+  exchangeCodeForTokensWithCredentials,
+  refreshAccessTokenWithCredentials,
   getSupportedOAuthProviders,
   supportsOAuth,
   getClientId,
   getClientSecret,
+  getOrgOAuthCredentials,
 } from './oauth-config';
 export type {
   OAuthProviderConfig,
