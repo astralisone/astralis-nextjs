@@ -33,7 +33,8 @@
     "seed:templates": "npx tsx prisma/seeds/task-templates.seed.ts",
     "redis:cleanup": "npx tsx scripts/redis-cleanup.ts",
     "redis:cleanup:dry": "npx tsx scripts/redis-cleanup.ts --dry-run",
-    "deploy:ollama": "cd ops/ollama-fly && fly deploy"
+    "deploy:ollama": "cd ops/ollama-fly && fly deploy",
+    "deploy:n8n": "cd ops/n8n-fly && fly deploy"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.70.1",
