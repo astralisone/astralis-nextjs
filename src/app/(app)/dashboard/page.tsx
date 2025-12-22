@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { RecentDocuments } from '@/components/dashboard/RecentDocuments';
 import { RoiMetricsWidget } from '@/components/dashboard/RoiMetricsWidget';
+import { AgentChatInterface } from '@/components/dashboard/AgentChatInterface';
 
 import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
 import { MetricCard, LineChart, BarChart, AreaChart, ChartContainer, CHART_THEME } from '@/components/dashboard/charts';
@@ -538,8 +539,19 @@ export default function DashboardPage() {
 
 
           {/* Recent Documents Widget */}
-          <div className="animate-slide-in" style={{ animationDelay: '1000ms' }}>
-            <RecentDocuments documents={recentDocuments} />
+          <div className="space-y-6">
+            <div className="animate-slide-in" style={{ animationDelay: '1000ms' }}>
+              <AgentChatInterface
+                context={{
+                  metrics: dashboardData,
+                  trends: chartData
+                }}
+              />
+            </div>
+
+            <div className="animate-slide-in" style={{ animationDelay: '1100ms' }}>
+              <RecentDocuments documents={recentDocuments} />
+            </div>
           </div>
         </div>
       </div>

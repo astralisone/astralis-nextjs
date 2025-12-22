@@ -145,6 +145,52 @@ export const CORE_ACTIONS: ActionDefinition[] = [
                 query: 'string (The search query)'
             }
         }
+    },
+    {
+        action: DecisionType.CREATE_INTAKE_ITEM,
+        provider: 'INTERNAL' as any,
+        description: 'Create a new intake request directly in the system',
+        schema: {
+            type: 'CREATE_INTAKE_ITEM',
+            params: {
+                subject: 'string',
+                source: 'string',
+                content: 'string',
+                contactEmail: 'string | null',
+                contactName: 'string | null',
+                urgency: 'number (1-5)'
+            }
+        }
+    },
+    {
+        action: DecisionType.UPDATE_KANBAN_ITEM,
+        provider: 'INTERNAL' as any,
+        description: 'Update an existing task or pipeline item on the Kanban board',
+        schema: {
+            type: 'UPDATE_KANBAN_ITEM',
+            params: {
+                taskId: 'string',
+                status: 'string | null',
+                stageId: 'string | null',
+                priority: 'number (1-5) | null',
+                assigneeId: 'string | null'
+            }
+        }
+    },
+    {
+        action: DecisionType.GENERATE_N8N_TEMPLATE,
+        provider: 'INTERNAL' as any,
+        description: 'Generate a new n8n automation template based on a business goal',
+        schema: {
+            type: 'GENERATE_N8N_TEMPLATE',
+            params: {
+                templateName: 'string',
+                description: 'string',
+                businessGoal: 'string',
+                triggerType: 'string',
+                steps: 'string[] (Natural language steps for the automation)'
+            }
+        }
     }
 ];
 

@@ -92,9 +92,10 @@ export default function NewAutomationPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button
-              className="w-full bg-purple-500 hover:bg-purple-600"
-              onClick={() => window.open('http://localhost:5678', '_blank')}
+            <Button 
+              variant="outline" 
+              onClick={() => window.open('https://astralis-n8n.fly.dev', '_blank')}
+              className="flex items-center gap-2"
             >
               Open n8n Editor
             </Button>

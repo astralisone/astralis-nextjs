@@ -290,7 +290,7 @@ AGENT_REQUIRE_APPROVAL_THRESHOLD=0.5
 AGENT_ESCALATION_EMAIL=admin@example.com
 
 # n8n Integration
-N8N_BASE_URL=http://localhost:5678
+N8N_BASE_URL=https://astralis-n8n.fly.dev
 N8N_API_KEY=your-n8n-api-key
 
 # Optional: Rate Limiting

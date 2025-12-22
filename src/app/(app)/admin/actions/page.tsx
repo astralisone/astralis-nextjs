@@ -22,11 +22,5 @@ export default async function AdminActionsPage({ searchParams }: AdminActionsPag
   // Check if user is admin (this would need to be implemented based on your user roles)
   // For now, assume all authenticated users can access (you should add role checking)
 
-  return (
-    <div className="min-h-screen bg-slate-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        <ActionRepositoryAdmin orgId={session.user.orgId} />
-      </div>
-    </div>
-  );
+  return <ActionRepositoryAdmin orgId={session.user.orgId} />;
 }

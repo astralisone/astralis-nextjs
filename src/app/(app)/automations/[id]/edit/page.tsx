@@ -1,117 +1,105 @@
+// src/app/(app)/automations/[id]/edit/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import { 
+  ArrowLeft, 
+  Save, 
+  X, 
+  Settings, 
+  Zap, 
+  Activity, 
+  Code,
+  ExternalLink,
+  ChevronRight
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/components/ui/use-toast';
 import { WorkflowEditor } from '@/components/automations/WorkflowEditor';
-import { ArrowLeft, Save, X } from 'lucide-react';
-import type { Automation } from '@/types/automation';
 
 export default function EditAutomationPage() {
   const params = useParams();
   const router = useRouter();
+  const { toast } = useToast();
   const automationId = params.id as string;
 
-  const [automation, setAutomation] = useState<Automation | null>(null);
+  const [automation, setAutomation] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // Form state
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [tags, setTags] = useState('');
   const [isActive, setIsActive] = useState(true);
   const [workflowJson, setWorkflowJson] = useState<any>(null);
 
   useEffect(() => {
-    if (automationId && automationId !== 'new') {
+    async function fetchAutomation() {
+      try {
+        const response = await fetch(`/api/automations/${automationId}`);
+        if (!response.ok) throw new Error('Failed to fetch automation');
+        const data = await response.json();
+        
+        setAutomation(data);
+        setName(data.name);
+        setDescription(data.description || '');
+        setIsActive(data.isActive);
+        setWorkflowJson(data.metadata?.workflowJson || { nodes: [], connections: {} });
+      } catch (error) {
+        console.error('Error fetching automation:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load automation details.',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (automationId) {
       fetchAutomation();
     }
-  }, [automationId]);
-
-  const fetchAutomation = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch(`/api/automations/${automationId}`);
-      if (!res.ok) throw new Error('Failed to fetch automation');
-      const response = await res.json();
-      const data = response.data || response;
-
-      setAutomation(data);
-      setName(data.name || '');
-      setDescription(data.description || '');
-      setTags(data.tags?.join(', ') || '');
-      setIsActive(data.isActive ?? true);
-
-      // Get workflow JSON from metadata or fetch from n8n
-      if (data.metadata?.workflowJson) {
-        setWorkflowJson(data.metadata.workflowJson);
-      } else if (data.n8nWorkflowId) {
-        // Fetch from n8n if available
-        fetchWorkflowFromN8n(data.n8nWorkflowId);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load automation');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchWorkflowFromN8n = async (workflowId: string) => {
-    try {
-      const res = await fetch(`/api/automations/${automationId}/workflow`);
-      if (res.ok) {
-        const data = await res.json();
-        setWorkflowJson(data.workflow);
-      }
-    } catch (err) {
-      console.error('Failed to fetch workflow from n8n:', err);
-    }
-  };
+  }, [automationId, toast]);
 
   const handleSave = async () => {
+    setSaving(true);
     try {
-      setSaving(true);
-      setError(null);
-
-      const updateData: any = {
-        name,
-        description: description || null,
-        tags: tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : [],
-        isActive,
-      };
-
-      // Include workflow JSON in metadata if modified
-      if (workflowJson) {
-        updateData.metadata = {
-          ...(automation?.metadata || {}),
-          workflowJson,
-        };
-      }
-
-      const res = await fetch(`/api/automations/${automationId}`, {
+      const response = await fetch(`/api/automations/${automationId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updateData),
+        body: JSON.stringify({
+          name,
+          description,
+          isActive,
+          metadata: {
+            ...automation.metadata,
+            workflowJson
+          }
+        }),
       });
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.details || 'Failed to update automation');
-      }
+      if (!response.ok) throw new Error('Failed to update automation');
 
+      toast({
+        title: 'Success',
+        description: 'Automation updated successfully.',
+      });
       router.push(`/automations/${automationId}`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save automation');
+    } catch (error) {
+      console.error('Error updating automation:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update automation.',
+        variant: 'destructive',
+      });
     } finally {
       setSaving(false);
     }
@@ -119,161 +107,127 @@ export default function EditAutomationPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 p-6">
-        <div className="max-w-3xl mx-auto space-y-6">
-          <Skeleton className="h-10 w-64" />
-          <Skeleton className="h-96" />
-        </div>
-      </div>
-    );
-  }
-
-  if (error && !automation) {
-    return (
-      <div className="min-h-screen bg-slate-50 p-6">
-        <div className="max-w-3xl mx-auto">
-          <Alert variant="error" showIcon>
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-          <Button variant="outline" className="mt-4" asChild>
-            <Link href={`/automations/${automationId}`}>
-              <ArrowLeft className=" w-5 h-5 mr-2" />
-              Back to Automation
-            </Link>
-          </Button>
-        </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-astralis-blue"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
-      <div className="max-w-3xl mx-auto space-y-6">
+    <div className="p-8 max-w-6xl mx-auto">
+      <div className="flex flex-col gap-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" asChild>
+            <Button variant="ghost" size="sm" asChild>
               <Link href={`/automations/${automationId}`}>
-                <ArrowLeft className="w-5 h-5" />
+                <ArrowLeft className="h-4 w-4" />
               </Link>
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-astralis-navy">
-                Edit Automation
-              </h1>
-              <p className="text-slate-600 mt-1">
-                Update automation settings and configuration
-              </p>
+              <h1 className="text-2xl font-bold text-slate-900">Edit Automation</h1>
+              <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
+                <Link href="/automations" className="hover:text-astralis-blue">Automations</Link>
+                <ChevronRight className="h-3 w-3" />
+                <span>{name}</span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Error Alert */}
-        {error && (
-          <Alert variant="error" showIcon>
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        {/* Edit Tabs */}
-        <Tabs defaultValue="details" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="details">Details</TabsTrigger>
-            <TabsTrigger value="workflow">Workflow</TabsTrigger>
+        <Tabs defaultValue="settings" className="w-full">
+          <TabsList className="bg-slate-100 p-1">
+            <TabsTrigger value="settings" className="gap-2">
+              <Settings className="h-4 w-4" />
+              Settings
+            </TabsTrigger>
+            <TabsTrigger value="workflow" className="gap-2">
+              <Code className="h-4 w-4" />
+              Workflow Logic
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="details">
+          <TabsContent value="settings" className="mt-6">
             <Card>
               <CardHeader>
                 <CardTitle>Automation Details</CardTitle>
+                <CardDescription>
+                  Configure the basic information and triggering for this automation.
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-            {/* Name */}
-            <div className="space-y-2">
-              <Label htmlFor="name">Name *</Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g., Lead Notification Workflow"
-                required
-              />
-            </div>
-
-            {/* Description */}
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe what this automation does..."
-                rows={4}
-              />
-            </div>
-
-            {/* Tags */}
-            <div className="space-y-2">
-              <Label htmlFor="tags">Tags</Label>
-              <Input
-                id="tags"
-                value={tags}
-                onChange={(e) => setTags(e.target.value)}
-                placeholder="e.g., sales, email, notification (comma-separated)"
-              />
-              <p className="text-xs text-slate-500">
-                Separate tags with commas
-              </p>
-            </div>
-
-            {/* Active Status */}
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="isActive"
-                checked={isActive}
-                onChange={(e) => setIsActive(e.target.checked)}
-                className=" w-5 h-5 text-astralis-blue border-slate-300 rounded focus:ring-astralis-blue"
-              />
-              <Label htmlFor="isActive" className="cursor-pointer">
-                Automation is active
-              </Label>
-            </div>
-
-            {/* Read-only Info */}
-            {automation && (
-              <div className="pt-4 border-t border-slate-200 space-y-3">
-                <div>
-                  <p className="text-sm font-medium text-slate-900">Trigger Type</p>
-                  <p className="text-sm text-slate-600 capitalize mt-1">
-                    {automation.triggerType?.toLowerCase()}
-                  </p>
+                <div className="space-y-2">
+                  <Label htmlFor="name">Name</Label>
+                  <Input
+                    id="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="e.g., Lead Response Workflow"
+                  />
                 </div>
-                {automation.n8nWorkflowId && (
-                  <div>
-                    <p className="text-sm font-medium text-slate-900">n8n Workflow ID</p>
-                    <p className="text-sm text-slate-600 font-mono mt-1">
-                      {automation.n8nWorkflowId}
-                    </p>
-                    <a
-                      href={`http://localhost:5678/workflow/${automation.n8nWorkflowId}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-astralis-blue hover:underline"
-                    >
-                      Edit in n8n →
-                    </a>
+
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Describe what this automation does..."
+                    rows={3}
+                  />
+                </div>
+
+                {/* Active Status */}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="isActive"
+                    checked={isActive}
+                    onChange={(e) => setIsActive(e.target.checked)}
+                    className=" w-5 h-5 text-astralis-blue border-slate-300 rounded focus:ring-astralis-blue"
+                  />
+                  <Label htmlFor="isActive" className="cursor-pointer">
+                    Automation is active
+                  </Label>
+                </div>
+
+                {/* Read-only Info */}
+                {automation && (
+                  <div className="pt-4 border-t border-slate-200 space-y-3">
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">Trigger Type</p>
+                      <p className="text-sm text-slate-600 capitalize mt-1">
+                        {automation.triggerType?.toLowerCase()}
+                      </p>
+                    </div>
+                    {automation.n8nWorkflowId && (
+                      <div>
+                        <p className="text-sm font-medium text-slate-900">n8n Workflow ID</p>
+                        <p className="text-sm text-slate-600 font-mono mt-1">
+                          {automation.n8nWorkflowId}
+                        </p>
+                        <div className="mt-3">
+                          <Button variant="outline" size="sm" asChild>
+                            <a 
+                              href={`https://astralis-n8n.fly.dev/workflow/${automation.n8nWorkflowId}`} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2"
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                              Edit in n8n →
+                            </a>
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
-              </div>
-            )}
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="workflow">
+          <TabsContent value="workflow" className="mt-6">
             <WorkflowEditor
               workflowJson={workflowJson}
               onChange={setWorkflowJson}
@@ -283,7 +237,7 @@ export default function EditAutomationPage() {
         </Tabs>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
           <Button
             variant="primary"
             size="sm"

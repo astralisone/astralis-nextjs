@@ -638,7 +638,7 @@ async function seedTemplates() {
     console.log('   1. Access templates at http://localhost:3001/app/automations/templates');
     console.log('   2. Configure required integrations (Gmail, Slack, Google Sheets)');
     console.log('   3. Deploy templates with one click');
-    console.log('   4. Access n8n editor at http://localhost:5678 to customize workflows');
+    console.log('   4. Access n8n editor at https://astralis-n8n.fly.dev to customize workflows');
     console.log('');
   } catch (error) {
     console.error('');

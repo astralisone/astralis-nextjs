@@ -19,6 +19,7 @@ interface ChatMessage {
   agent?: string;
   suggestions?: IntegrationSuggestion[];
   confidence?: number;
+  executionResults?: any[];
 }
 
 interface AgentOption {
@@ -49,7 +50,7 @@ const AVAILABLE_AGENTS: AgentOption[] = [
   }
 ];
 
-export function AgentChatInterface() {
+export function AgentChatInterface({ context }: { context?: Record<string, any> }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [selectedAgent, setSelectedAgent] = useState('orchestration');
@@ -97,7 +98,9 @@ export function AgentChatInterface() {
           source: 'API',
           type: 'chat',
           agent: selectedAgent,
-          priority: 3,
+          structuredData: {
+            dashboardContext: context
+          },
         }),
       });
 
@@ -116,6 +119,7 @@ export function AgentChatInterface() {
         agent: AVAILABLE_AGENTS.find(a => a.id === selectedAgent)?.name,
         suggestions: data.decision.suggestions,
         confidence: data.decision.confidence,
+        executionResults: data.decision.executionResults,
       };
       setMessages(prev => [...prev, assistantMessage]);
 
@@ -220,10 +224,39 @@ export function AgentChatInterface() {
               </div>
             </div>
 
-            {/* Status Indicator */}
-            <div className="flex items-center gap-2 px-3 py-2 bg-green-500/20 rounded-lg border border-green-500/30">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span className="text-xs font-medium text-green-300">SYSTEMS ACTIVE</span>
+            {/* Status Indicators */}
+            <div className="flex items-center gap-4">
+              {context && (
+                <div className="flex items-center gap-2 px-3 py-2 bg-astralis-blue/20 rounded-lg border border-astralis-blue/30 cursor-help group relative">
+                  <Activity className="h-4 w-4 text-astralis-blue" />
+                  <span className="text-xs font-medium text-astralis-blue uppercase tracking-wider">Context Active</span>
+                  <div className="absolute top-full right-0 mt-2 w-64 p-3 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl hidden group-hover:block z-50 text-white text-xs animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="font-bold mb-2 flex items-center gap-2">
+                      <Zap className="h-3 w-3 text-yellow-400" />
+                      <span>Active Awareness Context</span>
+                    </div>
+                    <div className="space-y-2 text-slate-300">
+                      <div className="flex justify-between items-center border-b border-slate-700 pb-1">
+                        <span>Dashboard Metrics</span>
+                        <span className="text-green-400 font-mono">LIVE</span>
+                      </div>
+                      <div className="flex justify-between items-center border-b border-slate-700 pb-1">
+                        <span>Business Trends</span>
+                        <span className="text-green-400 font-mono">LIVE</span>
+                      </div>
+                      <div className="flex justify-between items-center border-b border-slate-700 pb-1">
+                        <span>Pipeline Intelligence</span>
+                        <span className="text-green-400 font-mono">LIVE</span>
+                      </div>
+                    </div>
+                    <p className="mt-2 text-slate-400 italic">Agent is leveraging real-time dashboard data for reasoning.</p>
+                  </div>
+                </div>
+              )}
+              <div className="flex items-center gap-2 px-3 py-2 bg-green-500/20 rounded-lg border border-green-500/30">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span className="text-xs font-medium text-green-300 uppercase tracking-wider">Systems Active</span>
+              </div>
             </div>
           </div>
 
@@ -288,9 +321,8 @@ export function AgentChatInterface() {
             messages.map((message) => (
               <div
                 key={message.id}
-                className={`flex gap-4 group ${
-                  message.role === 'user' ? 'justify-end' : 'justify-start'
-                }`}
+                className={`flex gap-4 group ${message.role === 'user' ? 'justify-end' : 'justify-start'
+                  }`}
               >
                 {message.role === 'assistant' && (
                   <div className="flex-shrink-0">
@@ -309,13 +341,12 @@ export function AgentChatInterface() {
                     {message.confidence && (
                       <Badge
                         variant="secondary"
-                        className={`text-xs px-2 py-1 ${
-                          message.confidence > 0.8
-                            ? 'bg-green-500/10 text-green-600 border-green-500/20'
-                            : message.confidence > 0.6
+                        className={`text-xs px-2 py-1 ${message.confidence > 0.8
+                          ? 'bg-green-500/10 text-green-600 border-green-500/20'
+                          : message.confidence > 0.6
                             ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20'
                             : 'bg-red-500/10 text-red-600 border-red-500/20'
-                        }`}
+                          }`}
                       >
                         {message.confidence > 0.8 ? (
                           <CheckCircle2 className="h-5 w-5 mr-1" />
@@ -329,13 +360,41 @@ export function AgentChatInterface() {
 
                   {/* Message Content */}
                   <div
-                    className={`rounded-2xl px-6 py-4 shadow-card border backdrop-blur-sm transition-all duration-200 group-hover:shadow-card-hover ${
-                      message.role === 'user'
-                        ? 'bg-gradient-to-r from-astralis-blue to-blue-600 text-white border-astralis-blue/20 shadow-glow-blue'
-                        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white'
-                    }`}
+                    className={`rounded-2xl px-6 py-4 shadow-card border backdrop-blur-sm transition-all duration-200 group-hover:shadow-card-hover ${message.role === 'user'
+                      ? 'bg-gradient-to-r from-astralis-blue to-blue-600 text-white border-astralis-blue/20 shadow-glow-blue'
+                      : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white'
+                      }`}
                   >
                     <div className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</div>
+
+                    {message.executionResults && message.executionResults.length > 0 && (
+                      <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700 space-y-2">
+                        <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider font-bold text-slate-400">
+                          <Zap className="h-3 w-3 text-yellow-500" />
+                          <span>System Operations Executed</span>
+                        </div>
+                        <div className="space-y-1.5">
+                          {message.executionResults.map((res, i) => (
+                            <div key={i} className="flex items-center justify-between text-xs bg-slate-50 dark:bg-slate-900/40 p-2.5 rounded-lg border border-slate-100 dark:border-slate-800 transition-all hover:bg-white dark:hover:bg-slate-800">
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="font-mono text-[10px] py-0 h-4 bg-white dark:bg-slate-900">
+                                  {res.action}
+                                </Badge>
+                                <span className="text-slate-600 dark:text-slate-400 truncate max-w-[150px]">
+                                  {res.status === 'success' || res.success ? 'Operation completed' : 'Operation failed'}
+                                </span>
+                              </div>
+                              {res.status === 'success' || res.success ? (
+                                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                              ) : (
+                                <AlertTriangle className="h-4 w-4 text-red-500" />
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {renderSuggestions(message.suggestions)}
                   </div>
                 </div>

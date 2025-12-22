@@ -209,6 +209,14 @@ export enum DecisionType {
   // Accounting
   GET_FINANCIAL_SNAPSHOT = 'GET_FINANCIAL_SNAPSHOT',
   CREATE_INVOICE = 'CREATE_INVOICE',
+
+  // Dashboard Agent Missions
+  /** Create a new intake item directly */
+  CREATE_INTAKE_ITEM = 'CREATE_INTAKE_ITEM',
+  /** Update a task or pipeline item on the Kanban board */
+  UPDATE_KANBAN_ITEM = 'UPDATE_KANBAN_ITEM',
+  /** Generate an n8n JSON template and add to templates */
+  GENERATE_N8N_TEMPLATE = 'GENERATE_N8N_TEMPLATE',
   SEARCH_CUSTOMERS = 'SEARCH_CUSTOMERS',
 }
 
@@ -1976,6 +1984,58 @@ export function isDecisionStatus(value: unknown): value is DecisionStatus {
 }
 
 /**
+ * Parameters for creating an intake item.
+ */
+export interface CreateIntakeItemParams {
+  /** Brief subject of the intake */
+  subject: string;
+  /** Source of the intake (e.g., 'AGENT_CHAT', 'DASHBOARD') */
+  source: string;
+  /** Full content/description of the request */
+  content: string;
+  /** Email of the contact person */
+  contactEmail?: string;
+  /** Name of the contact person */
+  contactName?: string;
+  /** Urgency level (1-5) */
+  urgency?: number;
+  /** Additional metadata */
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * Parameters for updating a Kanban item.
+ */
+export interface UpdateKanbanItemParams {
+  /** ID of the task to update */
+  taskId: string;
+  /** New status (NEW, IN_PROGRESS, DONE, etc.) */
+  status?: string;
+  /** New stage ID in the pipeline */
+  stageId?: string;
+  /** New priority level (1-5) */
+  priority?: number;
+  /** New assignee user ID */
+  assigneeId?: string;
+}
+
+/**
+ * Parameters for generating an n8n template.
+ */
+export interface GenerateN8NTemplateParams {
+  /** Name for the new template */
+  templateName: string;
+  /** Description of what the automation does */
+  description: string;
+  /** The business goal this automation achieves */
+  businessGoal: string;
+  /** The trigger that starts the workflow */
+  triggerType: string;
+  /** Array of natural language steps for the automation */
+  steps: string[];
+}
+
+/**
  * Make all properties of T optional recursively.
  */
 export type DeepPartial<T> = {
@@ -2002,6 +2062,12 @@ export type ActionParamsFor<T extends DecisionType> =
   ? TriggerAutomationParams
   : T extends DecisionType.ESCALATE
   ? EscalateParams
+  : T extends DecisionType.CREATE_INTAKE_ITEM
+  ? CreateIntakeItemParams
+  : T extends DecisionType.UPDATE_KANBAN_ITEM
+  ? UpdateKanbanItemParams
+  : T extends DecisionType.GENERATE_N8N_TEMPLATE
+  ? GenerateN8NTemplateParams
   : Record<string, unknown>;
 
 /**

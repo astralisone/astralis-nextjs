@@ -2,6 +2,7 @@ import { Job } from 'bullmq';
 import { prisma } from '@/lib/prisma';
 import { getDefaultPipeline } from '@/lib/services/defaultPipelines.service';
 import type { IntakeRoutingJobData } from '../queues/intakeRouting.queue';
+import { intakeEnrichmentService } from '@/lib/services/intake-enrichment.service';
 
 /**
  * Intake Routing Processor
@@ -16,6 +17,15 @@ export async function processIntakeRouting(job: Job<IntakeRoutingJobData>) {
   console.log(`[IntakeRouting] Priority: ${priority || 'normal'}, Source: ${source || 'unknown'}`);
 
   try {
+    // 1. Enrich with AI
+    await job.updateProgress(5);
+    try {
+      console.log(`[IntakeRouting] Enriching intake ${intakeRequestId} with AI...`);
+      await intakeEnrichmentService.enrichIntake(intakeRequestId);
+    } catch (enrichError) {
+      console.warn(`[IntakeRouting] Enrichment failed for ${intakeRequestId}, continuing with basic routing`, enrichError);
+    }
+
     // Update intake status to ROUTING
     await prisma.intakeRequest.update({
       where: { id: intakeRequestId },

@@ -27,6 +27,9 @@ import type {
   SendNotificationParams,
   TriggerAutomationParams,
   EscalateParams,
+  CreateIntakeItemParams,
+  UpdateKanbanItemParams,
+  GenerateN8NTemplateParams,
 } from '../types/agent.types';
 import {
   DecisionType as DecisionTypeEnum,
@@ -476,6 +479,122 @@ export class ActionExecutor {
       }
     );
 
+    // CREATE_INTAKE_ITEM handler
+    this.registerHandler<CreateIntakeItemParams>(
+      DecisionTypeEnum.CREATE_INTAKE_ITEM,
+      async (params, ctx) => {
+        this.logger.info('Executing CREATE_INTAKE_ITEM', { params, dryRun: ctx.dryRun });
+
+        if (ctx.dryRun) {
+          return { success: true, data: { dryRun: true, ...params } };
+        }
+
+        try {
+          const intake = await prisma.intakeRequest.create({
+            data: {
+              orgId: ctx.orgId!,
+              title: params.subject,
+              description: params.content,
+              source: (params.source as any) || 'API',
+              priority: params.urgency || 0,
+              requestData: {
+                contactEmail: params.contactEmail,
+                contactName: params.contactName,
+                ...(params.metadata || {}),
+              },
+            },
+          });
+
+          await ctx.eventBus.emit('intake:created', {
+            id: intake.id,
+            intakeId: intake.id,
+            orgId: intake.orgId,
+            timestamp: new Date(),
+            source: 'agent',
+          }, { source: 'agent', correlationId: ctx.correlationId });
+
+          return {
+            success: true,
+            data: { intakeId: intake.id },
+            rollbackable: true,
+            rollback: async () => {
+              await prisma.intakeRequest.delete({ where: { id: intake.id } });
+            },
+          };
+        } catch (error) {
+          this.logger.error('Failed to create intake item', error);
+          return { success: false, error: (error as Error).message };
+        }
+      }
+    );
+
+    // UPDATE_KANBAN_ITEM handler
+    this.registerHandler<UpdateKanbanItemParams>(
+      DecisionTypeEnum.UPDATE_KANBAN_ITEM,
+      async (params, ctx) => {
+        this.logger.info('Executing UPDATE_KANBAN_ITEM', { params, dryRun: ctx.dryRun });
+
+        if (ctx.dryRun) {
+          return { success: true, data: { dryRun: true, ...params } };
+        }
+
+        try {
+          const task = await prisma.task.update({
+            where: { id: params.taskId },
+            data: {
+              status: params.status as any,
+              stageId: params.stageId,
+              priority: params.priority,
+              assignedToUserId: params.assigneeId,
+            },
+          });
+
+          return { success: true, data: { taskId: task.id, status: task.status } };
+        } catch (error) {
+          this.logger.error('Failed to update kanban item', error);
+          return { success: false, error: (error as Error).message };
+        }
+      }
+    );
+
+    // GENERATE_N8N_TEMPLATE handler
+    this.registerHandler<GenerateN8NTemplateParams>(
+      DecisionTypeEnum.GENERATE_N8N_TEMPLATE,
+      async (params, ctx) => {
+        this.logger.info('Executing GENERATE_N8N_TEMPLATE', { params, dryRun: ctx.dryRun });
+
+        if (ctx.dryRun) {
+          return { success: true, data: { dryRun: true, ...params } };
+        }
+
+        try {
+          // In a real scenario, we might use an LLM to generate the actual n8n JSON nodes 
+          // but for this implementation we'll create a template record with the specs.
+          const template = await prisma.automationTemplate.create({
+            data: {
+              name: params.templateName,
+              description: params.description,
+              category: 'OTHER', // Should probably derive from businessGoal
+              difficulty: 'intermediate',
+              n8nWorkflowJson: JSON.stringify({
+                nodes: [], // Placeholder for nodes
+                connections: {},
+                settings: {},
+                staticData: { goal: params.businessGoal, steps: params.steps }
+              }),
+              requiredIntegrations: [],
+              isOfficial: false,
+            },
+          });
+
+          return { success: true, data: { templateId: template.id } };
+        } catch (error) {
+          this.logger.error('Failed to generate n8n template', error);
+          return { success: false, error: (error as Error).message };
+        }
+      }
+    );
+
     // GET_BUSINESS_PULSE handler
     this.registerHandler<GetBusinessPulseParams>(
       DecisionTypeEnum.GET_BUSINESS_PULSE,
@@ -855,12 +974,12 @@ export class ActionExecutor {
 
     this.registerHandler(DecisionTypeEnum.SEARCH_EMAILS, async (params: any, ctx) => {
       this.logger.info('Executing SEARCH_EMAILS', { params, dryRun: ctx.dryRun });
-      
+
       if (ctx.dryRun) return { success: true, data: { dryRun: true, ...params } };
-      
+
       const service = await this.getIntegrationService('GMAIL', ctx.userId!, ctx.orgId!) as any;
       if (!service) return { success: false, error: 'Gmail integration not found or disconnected' };
-      
+
       try {
         const result = await service.listThreads({
           q: params.query,
@@ -871,12 +990,12 @@ export class ActionExecutor {
           return { success: false, error: result.error?.message || 'Failed to search emails' };
         }
 
-        return { 
-          success: true, 
-          data: { 
+        return {
+          success: true,
+          data: {
             threads: result.data,
             count: result.data.length
-          } 
+          }
         };
       } catch (e) {
         return { success: false, error: (e as Error).message };
@@ -887,10 +1006,10 @@ export class ActionExecutor {
       this.logger.info('Executing REPLY_TO_EMAIL', { params, dryRun: ctx.dryRun });
 
       if (ctx.dryRun) return { success: true, data: { dryRun: true, ...params } };
-      
+
       const service = await this.getIntegrationService('GMAIL', ctx.userId!, ctx.orgId!) as any;
       if (!service) return { success: false, error: 'Gmail integration not found or disconnected' };
-      
+
       try {
         if (!params.messageId || !params.threadId) {
           return { success: false, error: 'messageId and threadId are required for replies' };
@@ -911,13 +1030,13 @@ export class ActionExecutor {
           return { success: false, error: result.error?.message || 'Failed to send reply' };
         }
 
-        return { 
-          success: true, 
-          data: { 
+        return {
+          success: true,
+          data: {
             sent: true,
             messageId: result.data.id,
             threadId: result.data.threadId
-          } 
+          }
         };
       } catch (e) {
         return { success: false, error: (e as Error).message };
@@ -1310,10 +1429,10 @@ export class ActionExecutor {
         try {
           const { CalendarManager } = await import('../actions/CalendarManager');
           const manager = new CalendarManager(prisma as any);
-          
+
           const start = new Date(condition.params.startTime as string || Date.now());
           const end = new Date(condition.params.endTime as string || (start.getTime() + 30 * 60000));
-          
+
           const conflicts = await manager.checkConflicts(userId, start, end);
           return !conflicts.hasConflicts;
         } catch (error) {
@@ -1329,10 +1448,10 @@ export class ActionExecutor {
         try {
           const { CalendarManager } = await import('../actions/CalendarManager');
           const manager = new CalendarManager(prisma as any);
-          
+
           const start = new Date(condition.params.startTime as string);
           const end = new Date(condition.params.endTime as string);
-          
+
           const conflicts = await manager.checkConflicts(userId, start, end);
           return !conflicts.hasConflicts;
         } catch (error) {
@@ -1495,7 +1614,7 @@ export class ActionExecutor {
     try {
       const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001';
       const apiUrl = `${baseUrl}/api/admin/actions?search=${actionType}`;
-      
+
       this.logger.debug(`Attempting to load action from repository: ${actionType}`, { apiUrl });
 
       // Fetch action definition from admin API with timeout
@@ -1517,7 +1636,7 @@ export class ActionExecutor {
 
       const data = await response.json();
       const actionDef = data.actions?.find((action: any) =>
-        action.actionKey === actionType || 
+        action.actionKey === actionType ||
         action.name.toLowerCase() === actionType.toLowerCase() ||
         action.name.toLowerCase().includes(actionType.toLowerCase())
       );
@@ -1536,10 +1655,10 @@ export class ActionExecutor {
 
       // Create dynamic handler that calls the action execution API
       return (async (params: any, context: ActionExecutionContext) => {
-        this.logger.info(`Executing dynamic action: ${actionType}`, { 
-          actionKey: actionDef.actionKey, 
-          params, 
-          dryRun: context.dryRun 
+        this.logger.info(`Executing dynamic action: ${actionType}`, {
+          actionKey: actionDef.actionKey,
+          params,
+          dryRun: context.dryRun
         });
 
         if (context.dryRun) {
@@ -1548,7 +1667,7 @@ export class ActionExecutor {
 
         try {
           const executeUrl = `${baseUrl}/api/actions/execute`;
-          
+
           // Execute the action via the admin API
           const executeResponse = await fetch(executeUrl, {
             method: 'POST',

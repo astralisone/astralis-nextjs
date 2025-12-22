@@ -68,12 +68,14 @@ export class AutomationService {
     const webhookPath = webhookNode.parameters?.path || webhookNode.webhookId || 'webhook';
 
     // Construct full n8n webhook URL
-    const protocol = process.env.N8N_PROTOCOL || 'http';
-    const host = process.env.N8N_HOST || 'localhost';
-    const port = process.env.N8N_PORT || '5678';
+    const protocol = process.env.N8N_PROTOCOL || 'https';
+    const host = process.env.N8N_HOST || 'astralis-n8n.fly.dev';
+    const port = process.env.N8N_PORT || '443';
 
-    // n8n webhook URLs follow the pattern: http://host:port/webhook-test/path
-    const webhookUrl = `${protocol}://${host}:${port}/webhook-test/${webhookPath}`;
+    // n8n webhook URLs follow the pattern: https://host/webhook-test/path
+    // Note: port 443 is typically omitted in URLs
+    const urlPort = port === '443' || port === '80' ? '' : `:${port}`;
+    const webhookUrl = `${protocol}://${host}${urlPort}/webhook-test/${webhookPath}`;
 
     console.log('[Automation Service] Extracted webhook URL from n8n:', webhookUrl);
     return webhookUrl;

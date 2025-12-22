@@ -233,16 +233,13 @@ export function WorkflowEditor({
             {expandedNodes.size === workflow.nodes.length ? 'Collapse All' : 'Expand All'}
           </Button>
           {n8nWorkflowId && (
-            <Button
-              variant="outline"
-              size="sm"
-              asChild
-            >
-              <a
-                href={`http://localhost:5678/workflow/${n8nWorkflowId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+                  <Button variant="outline" size="sm" asChild>
+                    <a 
+                      href={`https://astralis-n8n.fly.dev/workflow/${n8nWorkflowId}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2"
+                    >
                 <ExternalLink className=" w-5 h-5 mr-2" />
                 Edit in n8n
               </a>

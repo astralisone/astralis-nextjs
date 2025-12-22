@@ -47,9 +47,9 @@ export class N8nService {
   private baseUrl: string;
 
   constructor() {
-    const protocol = process.env.N8N_PROTOCOL || 'http';
-    const host = process.env.N8N_HOST || 'localhost';
-    const port = process.env.N8N_PORT || '5678';
+    const protocol = process.env.N8N_PROTOCOL || 'https';
+    const host = process.env.N8N_HOST || 'astralis-n8n.fly.dev';
+    const port = process.env.N8N_PORT || '443';
     this.baseUrl = `${protocol}://${host}:${port}/api/v1`;
 
     // Prepare authentication headers
@@ -111,10 +111,18 @@ export class N8nService {
 
       console.log(`[N8N Service] Workflow created: ${response.data.id}`);
 
-      // Note: Workflow activation via API is complex and version-dependent
-      // For now, workflows are created as inactive and can be activated manually in n8n UI
+      // Attempt automatic activation if requested
       if (data.active) {
-        console.log(`[N8N Service] Workflow created as inactive - activate manually in n8n UI at http://localhost:5678`);
+        try {
+          console.log(`[N8N Service] Attempting automatic activation for ${response.data.id}...`);
+          const activated = await this.activateWorkflow(response.data.id);
+          console.log(`[N8N Service] Workflow activated successfully: ${response.data.id}`);
+          return activated;
+        } catch (activationError) {
+          console.warn(`[N8N Service] Workflow created but automatic activation failed. It may need manual adjustment in n8n UI.`, activationError);
+          // Return the created but inactive workflow
+          return response.data;
+        }
       }
 
       return response.data;
