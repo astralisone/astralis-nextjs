@@ -15,7 +15,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
  * - Recovery actions (reset/home)
  * - Accessible error reporting
  *
- * This error boundary catches errors that occur within the (app) route group,
+ * This error boundary catches errors that occur within the (main) route group,
  * providing a fallback UI when the main dashboard or any protected route fails.
  *
  * @see https://nextjs.org/docs/app/building-your-application/routing/error-handling

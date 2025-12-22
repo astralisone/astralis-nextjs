@@ -72,7 +72,7 @@ export default withAuth(
           return !!token;
         }
 
-        // Routes that require authentication (using (app) route group paths)
+        // Routes that require authentication (using (main) route group paths)
         const protectedRoutes = [
           '/dashboard',
           '/pipelines',

@@ -1,16 +1,16 @@
-// src/app/(app)/automations/[id]/edit/page.tsx
+// src/app/(main)/automations/[id]/edit/page.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import { 
-  ArrowLeft, 
-  Save, 
-  X, 
-  Settings, 
-  Zap, 
-  Activity, 
+import {
+  ArrowLeft,
+  Save,
+  X,
+  Settings,
+  Zap,
+  Activity,
   Code,
   ExternalLink,
   ChevronRight
@@ -46,7 +46,7 @@ export default function EditAutomationPage() {
         const response = await fetch(`/api/automations/${automationId}`);
         if (!response.ok) throw new Error('Failed to fetch automation');
         const data = await response.json();
-        
+
         setAutomation(data);
         setName(data.name);
         setDescription(data.description || '');
@@ -208,9 +208,9 @@ export default function EditAutomationPage() {
                         </p>
                         <div className="mt-3">
                           <Button variant="outline" size="sm" asChild>
-                            <a 
-                              href={`https://astralis-n8n.fly.dev/workflow/${automation.n8nWorkflowId}`} 
-                              target="_blank" 
+                            <a
+                              href={`https://astralis-n8n.fly.dev/workflow/${automation.n8nWorkflowId}`}
+                              target="_blank"
                               rel="noopener noreferrer"
                               className="flex items-center gap-2"
                             >
