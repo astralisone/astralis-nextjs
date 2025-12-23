@@ -63,12 +63,6 @@ export function Footer() {
             >
               Terms of Service
             </Link>
-            <Link
-              href="/delete-me"
-              className="text-sm font-medium text-slate-600 hover:text-astralis-blue transition-colors duration-200"
-            >
-              Data Deletion
-            </Link>
 
             {/* Social Icons */}
             <div className="flex items-center gap-3">
