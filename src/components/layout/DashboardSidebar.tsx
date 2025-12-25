@@ -50,7 +50,7 @@ interface DashboardSidebarProps {
 }
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Command Center', href: '/command-center', icon: LayoutDashboard },
   { name: 'Actions', href: '/admin/actions', icon: Activity },
   { name: 'Pipelines', href: '/pipelines', icon: GitBranch },
   { name: 'Intake', href: '/intake', icon: Inbox },

@@ -105,14 +105,14 @@ export function LineChart({
           )}
           <defs>
             <linearGradient id={`lineGradient-${dataKey}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor={strokeColor} stopOpacity={0.8}/>
-              <stop offset="95%" stopColor={strokeColor} stopOpacity={0.1}/>
+              <stop offset="5%" stopColor={strokeColor} stopOpacity={0.8} />
+              <stop offset="95%" stopColor={strokeColor} stopOpacity={0.1} />
             </linearGradient>
             <filter id={`glow-${dataKey}`}>
-              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+              <feGaussianBlur stdDeviation="3" result="coloredBlur" />
               <feMerge>
-                <feMergeNode in="coloredBlur"/>
-                <feMergeNode in="SourceGraphic"/>
+                <feMergeNode in="coloredBlur" />
+                <feMergeNode in="SourceGraphic" />
               </feMerge>
             </filter>
           </defs>
@@ -183,6 +183,7 @@ export function LineChart({
 // Bar Chart Component
 interface BarChartProps extends BaseChartProps {
   dataKey?: string;
+  xAxisKey?: string;
   fillColor?: string;
   barSize?: number;
 }
@@ -195,6 +196,7 @@ export function BarChart({
   showTooltip = true,
   animate = true,
   dataKey = 'value',
+  xAxisKey = 'date',
   fillColor = CHART_THEME.colors.primary,
   barSize,
 }: BarChartProps) {
@@ -209,7 +211,7 @@ export function BarChart({
             />
           )}
           <XAxis
-            dataKey="date"
+            dataKey={xAxisKey}
             fontSize={parseInt(CHART_THEME.fonts.size.small)}
             tick={{ fill: CHART_THEME.colors.neutral }}
             axisLine={{ stroke: CHART_THEME.grid.stroke }}
@@ -275,15 +277,15 @@ export function AreaChart({
           )}
           <defs>
             <linearGradient id={`areaGradient-${dataKey}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor={fillColor} stopOpacity={fillOpacity * 0.8}/>
-              <stop offset="50%" stopColor={fillColor} stopOpacity={fillOpacity * 0.4}/>
-              <stop offset="95%" stopColor={fillColor} stopOpacity={fillOpacity * 0.1}/>
+              <stop offset="5%" stopColor={fillColor} stopOpacity={fillOpacity * 0.8} />
+              <stop offset="50%" stopColor={fillColor} stopOpacity={fillOpacity * 0.4} />
+              <stop offset="95%" stopColor={fillColor} stopOpacity={fillOpacity * 0.1} />
             </linearGradient>
             <filter id={`areaGlow-${dataKey}`}>
-              <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+              <feGaussianBlur stdDeviation="2" result="coloredBlur" />
               <feMerge>
-                <feMergeNode in="coloredBlur"/>
-                <feMergeNode in="SourceGraphic"/>
+                <feMergeNode in="coloredBlur" />
+                <feMergeNode in="SourceGraphic" />
               </feMerge>
             </filter>
           </defs>
@@ -437,8 +439,8 @@ export function MetricCard({
                 <RechartsAreaChart data={sparklineData}>
                   <defs>
                     <linearGradient id={`gradient-${title.replace(/\s+/g, '-').toLowerCase()}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={CHART_THEME.colors.primary} stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor={CHART_THEME.colors.primary} stopOpacity={0.1}/>
+                      <stop offset="5%" stopColor={CHART_THEME.colors.primary} stopOpacity={0.3} />
+                      <stop offset="95%" stopColor={CHART_THEME.colors.primary} stopOpacity={0.1} />
                     </linearGradient>
                   </defs>
                   <Area
