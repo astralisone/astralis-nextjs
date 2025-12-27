@@ -613,6 +613,24 @@ export class DecisionEngine {
           errors.push(`${prefix} SEARCH_DOCUMENTS requires "query" string`);
         }
         break;
+
+      case DecisionTypeEnum.UPDATE_KANBAN_ITEM:
+        if (typeof params.taskId !== 'string') {
+          errors.push(`${prefix} UPDATE_KANBAN_ITEM requires "taskId" string`);
+        }
+        break;
+
+      case DecisionTypeEnum.CREATE_INTAKE_ITEM:
+        if (typeof params.subject !== 'string') {
+          errors.push(`${prefix} CREATE_INTAKE_ITEM requires "subject" string`);
+        }
+        break;
+
+      case DecisionTypeEnum.GENERATE_N8N_TEMPLATE:
+        if (typeof params.templateName !== 'string') {
+          errors.push(`${prefix} GENERATE_N8N_TEMPLATE requires "templateName" string`);
+        }
+        break;
     }
 
     return { errors, warnings };
@@ -740,7 +758,7 @@ export class DecisionEngine {
 
       const decision: AgentDecisionResult = {
         intent,
-        confidence: 1.0, // High confidence that we are taking NO ACTION
+        confidence: 0.9, // Signal that this is a fallback
         reasoning: this.createUserFriendlyFallbackMessage(reason, intent),
         actions,
         requiresApproval: false,
@@ -821,6 +839,13 @@ export class DecisionEngine {
   private createUserFriendlyFallbackMessage(technicalReason: string, intent: string): string {
     // Map technical reasons to user-friendly messages
     if (technicalReason.includes('Validation failed')) {
+      const fieldMatch = technicalReason.match(/requires "([^"]+)"/);
+      const fieldName = fieldMatch ? fieldMatch[1] : null;
+
+      if (fieldName) {
+        return `I understood your request, but I need a specific ${fieldName} to proceed safely. Please provide that detail so I can help.`;
+      }
+
       return "I understood your request but need a bit more specific information to proceed safely. I've drafted a task for this, but please provide more details if possible.";
     }
     if (technicalReason.includes('Parse error')) {
@@ -904,24 +929,33 @@ export class DecisionEngine {
    * Parse raw LLM response (string or object).
    */
   private parseResponse(response: string | Record<string, unknown>): RawLLMResponse {
+    let parsed: RawLLMResponse;
+
     if (typeof response === 'object') {
-      return response as RawLLMResponse;
+      parsed = response as RawLLMResponse;
+    } else {
+      // Try to extract JSON from string
+      let jsonString = response.trim();
+
+      // Remove markdown code blocks if present
+      const codeBlockMatch = jsonString.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+      if (codeBlockMatch) {
+        jsonString = codeBlockMatch[1].trim();
+      }
+
+      try {
+        parsed = JSON.parse(jsonString) as RawLLMResponse;
+      } catch (error) {
+        throw new Error(`Failed to parse LLM response as JSON: ${(error as Error).message}`);
+      }
     }
 
-    // Try to extract JSON from string
-    let jsonString = response.trim();
-
-    // Remove markdown code blocks if present
-    const codeBlockMatch = jsonString.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-    if (codeBlockMatch) {
-      jsonString = codeBlockMatch[1].trim();
+    // Heuristic: If intent is a string instead of an object, wrap it
+    if (typeof (parsed as any).intent === 'string') {
+      parsed.intent = { primary: (parsed as any).intent };
     }
 
-    try {
-      return JSON.parse(jsonString) as RawLLMResponse;
-    } catch (error) {
-      throw new Error(`Failed to parse LLM response as JSON: ${(error as Error).message}`);
-    }
+    return parsed;
   }
 
   /**

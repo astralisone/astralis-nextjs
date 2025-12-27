@@ -25,8 +25,8 @@ import {
  * - AGENT_REQUIRE_APPROVAL_THRESHOLD: Confidence threshold below which approval is required
  */
 const DEFAULT_ORG_ID = process.env.DEFAULT_ORG_ID || '';
-const LLM_PROVIDER = (process.env.AGENT_LLM_PROVIDER as 'OPENAI' | 'CLAUDE') || 'CLAUDE';
-const LLM_MODEL = process.env.AGENT_LLM_MODEL || 'claude-sonnet-4-20250514';
+const LLM_PROVIDER = (process.env.AGENT_LLM_PROVIDER as 'OPENAI' | 'CLAUDE' | 'GEMINI') || 'GEMINI';
+const LLM_MODEL = process.env.AGENT_LLM_MODEL || 'gemini-2.0-flash';
 const AUTO_EXECUTE_THRESHOLD = parseFloat(process.env.AGENT_AUTO_EXECUTE_THRESHOLD || '0.85');
 const REQUIRE_APPROVAL_THRESHOLD = parseFloat(process.env.AGENT_REQUIRE_APPROVAL_THRESHOLD || '0.5');
 
@@ -141,7 +141,7 @@ function getOrCreateAgent(
 
   const config: OrchestrationAgentConfig = {
     orgId,
-    llmProvider: LLMProvider[LLM_PROVIDER] || LLMProvider.CLAUDE,
+    llmProvider: LLMProvider[LLM_PROVIDER] || LLMProvider.GEMINI,
     llmModel: LLM_MODEL,
     temperature,
     autoExecuteThreshold: options?.autoExecuteThreshold ?? AUTO_EXECUTE_THRESHOLD,

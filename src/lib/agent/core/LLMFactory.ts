@@ -77,13 +77,15 @@ export interface LLMEnvironmentConfig {
  */
 function getEnvironmentConfig(): LLMEnvironmentConfig {
   const envProvider = process.env.AGENT_DEFAULT_PROVIDER?.toUpperCase();
-  const defaultProvider = envProvider === 'OPENAI' ? LLMProvider.OPENAI : LLMProvider.CLAUDE;
+  const defaultProvider = envProvider === 'OPENAI' ? LLMProvider.OPENAI :
+    envProvider === 'CLAUDE' ? LLMProvider.CLAUDE :
+      LLMProvider.GEMINI;
 
   return {
     defaultProvider,
     defaultModels: {
-      [LLMProvider.OPENAI]: (process.env.AGENT_DEFAULT_OPENAI_MODEL as OpenAIModel) || 'gpt-4-turbo',
-      [LLMProvider.CLAUDE]: (process.env.AGENT_DEFAULT_CLAUDE_MODEL as ClaudeModel) || 'claude-sonnet-4-20250514',
+      [LLMProvider.OPENAI]: (process.env.AGENT_DEFAULT_OPENAI_MODEL as OpenAIModel) || 'gpt-4o',
+      [LLMProvider.CLAUDE]: (process.env.AGENT_DEFAULT_CLAUDE_MODEL as ClaudeModel) || 'claude-3-5-sonnet-20241022',
       [LLMProvider.GEMINI]: (process.env.AGENT_DEFAULT_GEMINI_MODEL as GeminiModel) || 'gemini-2.0-flash',
       [LLMProvider.OLLAMA]: (process.env.AGENT_DEFAULT_OLLAMA_MODEL as OllamaModel) || 'llama3',
     },
@@ -111,7 +113,7 @@ const CLAUDE_MODELS: ClaudeModel[] = [
   'claude-3-opus-20240229',
   'claude-3-sonnet-20240229',
   'claude-3-haiku-20240307',
-  'claude-sonnet-4-20250514',
+  'claude-3-5-sonnet-20240620',
   'claude-3-5-sonnet-20241022',
 ];
 
