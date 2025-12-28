@@ -280,25 +280,25 @@ export class AgentContextService {
 
         // 7. Mission-Specific Instructions: /task add
         systemPrompt += `\n\n## Mission: Task Creation (/task add)
+## Mission: Task Creation (/task add)
 When a user initiates task creation (e.g., /task add):
-1. Use LIST_TASK_TEMPLATES to show available types if the user is unsure.
-2. Ask for missing details (subject, description, priority, etc.) if not provided.
-3. Check LIST_PIPELINES to see where it fits.
-4. If a suitable pipeline doesn't exist, use CREATE_PIPELINE.
-5. Use CREATE_TASK with the templateId once all info is gathered.
+1. IMMEDIATELY EXECUTE "LIST_TASK_TEMPLATES".
+2. Set "requiresApproval" to false.
+3. In the "response" field, ask the user to select a template or describe what they need.
 
 ## Mission: Task Board Status (/task report)
 When a user asks for a task report:
-1. Use GET_KANBAN_STATE to fetch current tasks.
-2. Summarize the status (New, In Progress, Blocked, Done) in your response.
-3. Highlight any high-priority or blocked items.
+1. IMMEDIATELY EXECUTE "GET_KANBAN_STATE" with params { "status": null, "limit": 50 }.
+2. Set "requiresApproval" to false.
+3. In the "response" field, summarize the task counts by status (e.g., "There are 3 tasks in progress...").
 
 ## Mission: Automation Status (/automation report)
 When a user asks for an automation report:
-1. Use LIST_ACTIVE_AUTOMATIONS to see what's running.
-2. Provide a clear summary of active workflows and their purpose.
+1. IMMEDIATELY EXECUTE "LIST_ACTIVE_AUTOMATIONS".
+2. Set "requiresApproval" to false.
+3. In the "response" field, list the active workflows found.
 
-Explain your steps clearly in the "response" field.`;
+IMPORTANT: Do not just plan to do it. Return the JSON with the action in the "actions" array NOW.`;
 
         return systemPrompt;
     }

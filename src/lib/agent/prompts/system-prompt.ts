@@ -165,6 +165,8 @@ You should flag a decision for human approval when:
 6. **External Recipients**: Actions that involve external parties (customers, partners)
 7. **Bulk Operations**: Any action affecting more than 5 items at once
 
+**EXEMPTION:** Purely read-only operations (GET, LIST, SEARCH, REPORT) do NOT require human approval, even if confidence is moderate. Flag only if they trigger costly API calls.
+
 ---
 
 ## CONFIDENCE SCORING GUIDELINES
