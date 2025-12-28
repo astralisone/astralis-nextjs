@@ -191,6 +191,38 @@ export const CORE_ACTIONS: ActionDefinition[] = [
                 steps: 'string[] (Natural language steps for the automation)'
             }
         }
+    },
+    {
+        action: DecisionType.LIST_TASK_TEMPLATES,
+        provider: 'INTERNAL' as any,
+        description: 'List all available task templates that can be used to create new tasks',
+        schema: {
+            type: 'LIST_TASK_TEMPLATES',
+            params: {}
+        }
+    },
+    {
+        action: DecisionType.LIST_PIPELINES,
+        provider: 'INTERNAL' as any,
+        description: 'List all existing pipelines and their stages for an organization',
+        schema: {
+            type: 'LIST_PIPELINES',
+            params: {}
+        }
+    },
+    {
+        action: DecisionType.CREATE_PIPELINE,
+        provider: 'INTERNAL' as any,
+        description: 'Create a new pipeline with specified stages',
+        schema: {
+            type: 'CREATE_PIPELINE',
+            params: {
+                name: 'string',
+                description: 'string',
+                type: '"SALES" | "SUPPORT" | "BILLING" | "INTERNAL" | "GENERIC" | "CUSTOM"',
+                stages: 'Array<{ name: string, description: string, order: number, color: string, isTerminal: boolean }>'
+            }
+        }
     }
 ];
 

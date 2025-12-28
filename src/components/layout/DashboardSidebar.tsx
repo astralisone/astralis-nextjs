@@ -50,8 +50,8 @@ interface DashboardSidebarProps {
 }
 
 const navigation = [
-  { name: 'Command Center', href: '/command-center', icon: LayoutDashboard },
-  { name: 'Actions', href: '/admin/actions', icon: Activity },
+  { name: 'Command Center', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Actions', href: '/actions', icon: Activity },
   { name: 'Pipelines', href: '/pipelines', icon: GitBranch },
   { name: 'Intake', href: '/intake', icon: Inbox },
   { name: 'Documents', href: '/documents', icon: FileText },
@@ -62,7 +62,7 @@ const navigation = [
 ];
 
 const adminNavigation = [
-  // Actions moved to main navigation
+  { name: 'Admin', href: '/admin', icon: Activity },
 ];
 
 /**

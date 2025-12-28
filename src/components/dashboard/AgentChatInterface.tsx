@@ -72,18 +72,41 @@ export function AgentChatInterface({ context }: { context?: Record<string, any> 
     inputRef.current?.focus();
   }, []);
 
-  const handleSendMessage = async () => {
+  const handleSendMessage = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!input.trim() || isLoading) return;
 
-    const userMessage: ChatMessage = {
+    const userMessageContent = input.trim();
+    setInput('');
+
+    // Handle Local Slash Commands
+    if (userMessageContent === '/commands') {
+      const commandList = [
+        '**Available Commands:**',
+        '- `/commands`: Show this list',
+        '- `/task add`: Create a new task (Agent-led)',
+        '- `/automation report`: Get automation status',
+        '- `/task report`: Get task board status'
+      ].join('\n');
+
+      setMessages(prev => [
+        ...prev,
+        { id: Date.now().toString(), role: 'user', content: userMessageContent, timestamp: new Date() },
+        { id: (Date.now() + 1).toString(), role: 'assistant', content: commandList, timestamp: new Date() }
+      ]);
+      setIsLoading(false);
+      setError(null);
+      return;
+    }
+
+    const userChatMessage: ChatMessage = {
       id: Date.now().toString(),
       role: 'user',
-      content: input.trim(),
+      content: userMessageContent,
       timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
+    setMessages(prev => [...prev, userChatMessage]);
     setIsLoading(true);
     setError(null);
 

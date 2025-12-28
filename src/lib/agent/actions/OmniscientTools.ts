@@ -162,4 +162,123 @@ export function registerOmniscientHandlers(executor: ActionExecutor): void {
             }
         }
     );
+
+    // LIST_TASK_TEMPLATES
+    executor.registerHandler(
+        DecisionType.LIST_TASK_TEMPLATES,
+        async (_params, _context) => {
+            try {
+                const templates = await prisma.taskTemplate.findMany({
+                    select: {
+                        id: true,
+                        label: true,
+                        category: true,
+                        department: true,
+                        typicalMinutes: true,
+                        definition: true
+                    }
+                });
+
+                return {
+                    success: true,
+                    data: {
+                        templates: templates.map(t => ({
+                            id: t.id,
+                            label: t.label,
+                            category: t.category,
+                            department: t.department,
+                            typicalMinutes: t.typicalMinutes,
+                            // Minimal definition info to avoid overwhelming context
+                            requiresInfo: (t.definition as any)?.steps?.map((s: any) => s.label) || []
+                        })),
+                        count: templates.length
+                    }
+                };
+            } catch (error) {
+                return { success: false, error: `Failed to fetch task templates: ${(error as Error).message}` };
+            }
+        }
+    );
+
+    // LIST_PIPELINES
+    executor.registerHandler(
+        DecisionType.LIST_PIPELINES,
+        async (_params, context) => {
+            const orgId = context.orgId;
+            if (!orgId) return { success: false, error: 'No Organization ID in context' };
+
+            try {
+                const pipelines = await prisma.pipeline.findMany({
+                    where: { orgId },
+                    include: {
+                        stages: {
+                            orderBy: { order: 'asc' }
+                        }
+                    }
+                });
+
+                return {
+                    success: true,
+                    data: {
+                        pipelines: pipelines.map(p => ({
+                            id: p.id,
+                            name: p.name,
+                            type: p.type,
+                            stages: p.stages.map(s => ({
+                                id: s.id,
+                                name: s.name,
+                                key: s.key
+                            }))
+                        })),
+                        count: pipelines.length
+                    }
+                };
+            } catch (error) {
+                return { success: false, error: `Failed to fetch pipelines: ${(error as Error).message}` };
+            }
+        }
+    );
+
+    // CREATE_PIPELINE
+    executor.registerHandler(
+        DecisionType.CREATE_PIPELINE,
+        async (params: any, context) => {
+            const orgId = context.orgId;
+            if (!orgId) return { success: false, error: 'No Organization ID in context' };
+
+            try {
+                const pipeline = await prisma.pipeline.create({
+                    data: {
+                        orgId,
+                        name: params.name,
+                        description: params.description,
+                        type: params.type || 'CUSTOM',
+                        isActive: true,
+                        stages: {
+                            create: params.stages.map((s: any) => ({
+                                name: s.name,
+                                key: s.name.toLowerCase().replace(/ /g, '_'),
+                                description: s.description || '',
+                                order: s.order || 0,
+                                color: s.color || '#3B82F6',
+                                isTerminal: s.isTerminal || false
+                            }))
+                        }
+                    },
+                    include: { stages: true }
+                });
+
+                return {
+                    success: true,
+                    data: {
+                        pipelineId: pipeline.id,
+                        name: pipeline.name,
+                        stageCount: pipeline.stages.length
+                    }
+                };
+            } catch (error) {
+                return { success: false, error: `Failed to create pipeline: ${(error as Error).message}` };
+            }
+        }
+    );
 }

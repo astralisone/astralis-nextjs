@@ -106,11 +106,34 @@ export class AgentContextService {
             ...supplementalActions
         ]));
 
+        // Fetch pipelines for the organization
+        const pipelines = await prisma.pipeline.findMany({
+            where: { orgId: this.config.orgId },
+            include: { stages: { orderBy: { order: 'asc' } } }
+        });
+
+        // Fetch team members
+        const users = await prisma.user.findMany({
+            where: { orgId: this.config.orgId },
+            select: { id: true, firstName: true, lastName: true, email: true, role: true }
+        });
+
         const org: OrgContext = {
             id: this.config.orgId,
-            name: 'Organization', // Simplified for now
-            pipelines: [],
-            users: [],
+            name: 'Organization',
+            pipelines: pipelines.map(p => ({
+                id: p.id,
+                name: p.name,
+                description: p.description,
+                stages: p.stages.map(s => s.name)
+            })),
+            users: users.map(u => ({
+                id: u.id,
+                name: `${u.firstName} ${u.lastName}`,
+                email: u.email,
+                role: u.role,
+                isAvailable: true
+            })),
             settings: {} as any,
         };
 
@@ -243,6 +266,27 @@ export class AgentContextService {
             systemPrompt += `\n\n## Upcoming Scheduled Bookings\n`;
             systemPrompt += upcomingBookings.map(b => `- ID: ${b.id} | Title: ${b.title} | Time: ${b.startTime.toISOString()} | Host: ${b.userId}`).join('\n');
         }
+
+        // 6. Inject Task Templates
+        const taskTemplates = await prisma.taskTemplate.findMany({
+            select: { id: true, label: true, category: true, department: true }
+        });
+
+        if (taskTemplates.length > 0) {
+            systemPrompt += `\n\n## Available Task Templates (for CREATE_TASK)\n`;
+            systemPrompt += `Use these IDs when creating a task based on a template:\n`;
+            systemPrompt += taskTemplates.map(t => `- ID: ${t.id} | Label: ${t.label} | Category: ${t.category}`).join('\n');
+        }
+
+        // 7. Mission-Specific Instructions: /task add
+        systemPrompt += `\n\n## Mission: Task Creation (/task add)
+When a user initiates task creation (e.g., /task add):
+1. Use LIST_TASK_TEMPLATES to show available types if the user is unsure.
+2. Ask for missing details (subject, description, priority, etc.) if not provided.
+3. Check LIST_PIPELINES to see where it fits.
+4. If a suitable pipeline doesn't exist, use CREATE_PIPELINE.
+5. Use CREATE_TASK with the templateId once all info is gathered.
+Explain your steps clearly to the user.`;
 
         return systemPrompt;
     }

@@ -89,8 +89,8 @@ export class OrchestrationAgent {
     this.config = this.validateAndMergeConfig(config);
     this.agentId = `agent-${this.config.orgId}`;
 
-    // Initialize default logger if not provided (would typically be injected)
-    this.logger = {
+    // Initialize logger: use from config if provided, otherwise default to console
+    this.logger = this.config.logger || {
       debug: (msg, data) => console.debug(`[OrchestrationAgent] ${msg}`, data ?? ''),
       info: (msg, data) => console.info(`[OrchestrationAgent] ${msg}`, data ?? ''),
       warn: (msg, data) => console.warn(`[OrchestrationAgent] ${msg}`, data ?? ''),
@@ -175,209 +175,64 @@ export class OrchestrationAgent {
     const startTime = Date.now();
     const correlationId = input.correlationId || `req-${startTime}`;
 
-    this.logger.info('Processing input', {
-      type: input.type,
-      source: input.source,
-      correlationId
+    correlationId
+  });
+
+  // Detect Slash Commands as special intents
+  if(input.rawContent.startsWith('/task add')) {
+  this.logger.info('Detected /task add command, initiating task creation mission');
+  input.rawContent = `MISSION: Help me create a new task. Guide me through selecting a type and gathering details. ${input.rawContent.replace('/task add', '').trim()}`;
+} else if (input.rawContent.startsWith('/')) {
+  // Broaden to other commands if needed, but for now we focus on task add
+  this.logger.debug('Detected slash command', { command: input.rawContent.split(' ')[0] });
+}
+
+// Check rate limits
+if (this.rateLimiter.isRateLimited(this.config.maxActionsPerMinute, this.config.maxActionsPerHour)) {
+  this.logger.warn('Rate limit exceeded, rejecting input');
+  throw new Error('Rate limit exceeded. Please try again later.');
+}
+
+try {
+  // Build decision context
+  const context = await this.contextService.buildDecisionContext(input, this.agentId);
+
+  // Build LLM prompts
+  const systemPrompt = await this.contextService.buildSystemPrompt(context.org);
+  const userPrompt = this.contextService.buildUserPrompt(input, context);
+
+  // Make LLM call
+  const llmResponse = await this.makeLLMDecision(systemPrompt, userPrompt);
+
+  // Process LLM response through decision engine
+  const decision = this.decisionEngine.processLLMResponse(llmResponse, context);
+
+  // Record stats
+  const decisionTime = Date.now() - startTime;
+  this.statsManager.recordDecisionTime(decisionTime);
+  this.statsManager.incrementTotalDecisions();
+  this.rateLimiter.recordAction();
+
+  // Determine execution path
+  if (this.decisionEngine.shouldAutoExecute(decision)) {
+    // Auto-execute
+    this.logger.info('Auto-executing decision', {
+      intent: decision.intent,
+      confidence: decision.confidence,
+      actionCount: decision.actions.length,
     });
 
-    // Check rate limits
-    if (this.rateLimiter.isRateLimited(this.config.maxActionsPerMinute, this.config.maxActionsPerHour)) {
-      this.logger.warn('Rate limit exceeded, rejecting input');
-      throw new Error('Rate limit exceeded. Please try again later.');
-    }
+    const outcome = await this.executeDecision(decision, correlationId);
 
-    try {
-      // Build decision context
-      const context = await this.contextService.buildDecisionContext(input, this.agentId);
-
-      // Build LLM prompts
-      const systemPrompt = await this.contextService.buildSystemPrompt(context.org);
-      const userPrompt = this.contextService.buildUserPrompt(input, context);
-
-      // Make LLM call
-      const llmResponse = await this.makeLLMDecision(systemPrompt, userPrompt);
-
-      // Process LLM response through decision engine
-      const decision = this.decisionEngine.processLLMResponse(llmResponse, context);
-
-      // Record stats
-      const decisionTime = Date.now() - startTime;
-      this.statsManager.recordDecisionTime(decisionTime);
-      this.statsManager.incrementTotalDecisions();
-      this.rateLimiter.recordAction();
-
-      // Determine execution path
-      if (this.decisionEngine.shouldAutoExecute(decision)) {
-        // Auto-execute
-        this.logger.info('Auto-executing decision', {
-          intent: decision.intent,
-          confidence: decision.confidence,
-          actionCount: decision.actions.length,
-        });
-
-        const outcome = await this.executeDecision(decision, correlationId);
-
-        // Record outcome
-        await this.statsManager.recordDecision(
-          this.agentId,
-          this.config.orgId,
-          input,
-          decision,
-          outcome,
-          { prompt: systemPrompt, response: llmResponse }
-        );
-
-        if (outcome.status === DecisionStatusEnum.EXECUTED) {
-          this.statsManager.incrementSuccessfulDecisions();
-        } else {
-          this.statsManager.incrementFailedDecisions();
-        }
-
-        return {
-          ...decision,
-          executionResults: outcome.results,
-        };
-
-      } else if (this.decisionEngine.requiresApproval(decision)) {
-        // Requires approval
-        this.logger.info('Decision requires approval', {
-          intent: decision.intent,
-          confidence: decision.confidence,
-        });
-
-        const pendingId = this.storePendingDecision(decision, input, context);
-        this.statsManager.incrementPendingApprovals();
-
-        // Record as pending
-        await this.statsManager.recordDecision(
-          this.agentId,
-          this.config.orgId,
-          input,
-          decision,
-          {
-            status: DecisionStatusEnum.REQUIRES_APPROVAL,
-            executionTime: 0,
-            results: [],
-            errors: [],
-            completedAt: new Date(),
-          },
-          { prompt: systemPrompt, response: llmResponse }
-        );
-
-        // Notify if configured
-        if (this.config.notifyOnHighPriority && (decision.priority ?? 3) >= 4) {
-          await this.sendApprovalNotification(pendingId, decision);
-        }
-
-        return decision;
-
-      } else {
-        // Rejected due to low confidence
-        this.logger.warn('Decision rejected due to low confidence', {
-          intent: decision.intent,
-          confidence: decision.confidence,
-        });
-
-        this.statsManager.incrementFailedDecisions();
-
-        await this.statsManager.recordDecision(
-          this.agentId,
-          this.config.orgId,
-          input,
-          decision,
-          {
-            status: DecisionStatusEnum.REJECTED,
-            executionTime: 0,
-            results: [],
-            errors: [{ action: DecisionTypeEnum.NO_ACTION, code: 'LOW_CONFIDENCE', message: 'Confidence below threshold', retryable: false }],
-            completedAt: new Date(),
-          },
-          { prompt: systemPrompt, response: llmResponse }
-        );
-
-        return decision;
-      }
-
-    } catch (error) {
-      this.statsManager.incrementTotalErrors();
-      this.logger.error('Error processing input', error as Error, { correlationId });
-
-      // Notify on failure if configured
-      if (this.config.notifyOnFailure) {
-        await this.sendErrorNotification(error as Error, input);
-      }
-
-      throw error;
-    }
-  }
-
-  /**
-   * Handle an incoming event from the event bus.
-   */
-  async handleEvent(event: AgentEvent): Promise<void> {
-    this.statsManager.incrementTotalEvents();
-
-    this.logger.debug('Handling event', {
-      type: event.type,
-      eventId: event.eventId,
-    });
-
-    // Handle task:created events for autonomous execution
-    if (event.type === 'task:created') {
-      try {
-        const taskId = (event.payload as any).id;
-        if (taskId) {
-          // Fire and forget - don't await strictly effectively
-          this.taskExecutionAgent.handleTaskCreated(taskId);
-        }
-      } catch (error) {
-        this.logger.error('Error handling task:created event', error as Error);
-      }
-      return;
-    }
-
-    // Skip agent's own events to prevent loops
-    if (event.source === 'agent' || event.type === 'agent:action_executed') {
-      return;
-    }
-
-    // Convert event to AgentInput for other event types
-    const input = this.eventToInput(event);
-
-    try {
-      await this.process(input);
-    } catch (error) {
-      this.logger.error('Error handling event', error as Error, {
-        eventType: event.type,
-        eventId: event.eventId,
-      });
-    }
-  }
-
-  // ===========================================================================
-  // Approval Methods
-  // ===========================================================================
-
-  async approveDecision(decisionId: string): Promise<DecisionOutcome> {
-    const pending = this.pendingDecisions.get(decisionId);
-
-    if (!pending) {
-      throw new Error(`Pending decision not found: ${decisionId}`);
-    }
-
-    this.logger.info('Approving decision', { decisionId });
-
-    if (new Date() > pending.expiresAt) {
-      this.pendingDecisions.delete(decisionId);
-      this.statsManager.decrementPendingApprovals();
-      throw new Error('Decision has expired');
-    }
-
-    const outcome = await this.executeDecision(pending.decision, decisionId);
-
-    this.pendingDecisions.delete(decisionId);
-    this.statsManager.decrementPendingApprovals();
+    // Record outcome
+    await this.statsManager.recordDecision(
+      this.agentId,
+      this.config.orgId,
+      input,
+      decision,
+      outcome,
+      { prompt: systemPrompt, response: llmResponse }
+    );
 
     if (outcome.status === DecisionStatusEnum.EXECUTED) {
       this.statsManager.incrementSuccessfulDecisions();
@@ -385,276 +240,428 @@ export class OrchestrationAgent {
       this.statsManager.incrementFailedDecisions();
     }
 
-    return outcome;
-  }
+    return {
+      ...decision,
+      executionResults: outcome.results,
+    };
 
-  async rejectDecision(decisionId: string, reason: string): Promise<void> {
-    const pending = this.pendingDecisions.get(decisionId);
+  } else if (this.decisionEngine.requiresApproval(decision)) {
+    // Requires approval
+    this.logger.info('Decision requires approval', {
+      intent: decision.intent,
+      confidence: decision.confidence,
+    });
 
-    if (!pending) {
-      throw new Error(`Pending decision not found: ${decisionId}`);
-    }
+    const pendingId = this.storePendingDecision(decision, input, context);
+    this.statsManager.incrementPendingApprovals();
 
-    this.logger.info('Rejecting decision', { decisionId, reason });
-
-    this.pendingDecisions.delete(decisionId);
-    this.statsManager.decrementPendingApprovals();
-    this.statsManager.incrementFailedDecisions();
-
-    // Record rejection
+    // Record as pending
     await this.statsManager.recordDecision(
       this.agentId,
       this.config.orgId,
-      pending.input,
-      pending.decision,
+      input,
+      decision,
+      {
+        status: DecisionStatusEnum.REQUIRES_APPROVAL,
+        executionTime: 0,
+        results: [],
+        errors: [],
+        completedAt: new Date(),
+      },
+      { prompt: systemPrompt, response: llmResponse }
+    );
+
+    // Notify if configured
+    if (this.config.notifyOnHighPriority && (decision.priority ?? 3) >= 4) {
+      await this.sendApprovalNotification(pendingId, decision);
+    }
+
+    return decision;
+
+  } else {
+    // Rejected due to low confidence
+    this.logger.warn('Decision rejected due to low confidence', {
+      intent: decision.intent,
+      confidence: decision.confidence,
+    });
+
+    this.statsManager.incrementFailedDecisions();
+
+    await this.statsManager.recordDecision(
+      this.agentId,
+      this.config.orgId,
+      input,
+      decision,
       {
         status: DecisionStatusEnum.REJECTED,
         executionTime: 0,
         results: [],
-        errors: [{ action: DecisionTypeEnum.NO_ACTION, code: 'REJECTED', message: reason, retryable: false }],
+        errors: [{ action: DecisionTypeEnum.NO_ACTION, code: 'LOW_CONFIDENCE', message: 'Confidence below threshold', retryable: false }],
         completedAt: new Date(),
       },
-      { prompt: '', response: '' } // Context lost for brevity
+      { prompt: systemPrompt, response: llmResponse }
     );
+
+    return decision;
   }
 
-  // ===========================================================================
-  // Configuration Methods
-  // ===========================================================================
+} catch (error) {
+  this.statsManager.incrementTotalErrors();
+  this.logger.error('Error processing input', error as Error, { correlationId });
 
-  updateConfig(config: Partial<OrchestrationAgentConfig>): void {
-    this.config = { ...this.config, ...config };
+  // Notify on failure if configured
+  if (this.config.notifyOnFailure) {
+    await this.sendErrorNotification(error as Error, input);
+  }
 
-    // Update sub-components
-    this.decisionEngine.updateConfig({
-      autoExecuteThreshold: this.config.autoExecuteThreshold,
-      requireApprovalThreshold: this.config.requireApprovalThreshold,
-    });
+  throw error;
+}
+  }
 
-    if (config.dryRun !== undefined) {
-      this.actionExecutor.setDryRun(config.dryRun);
+  /**
+   * Handle an incoming event from the event bus.
+   */
+  async handleEvent(event: AgentEvent): Promise < void> {
+  this.statsManager.incrementTotalEvents();
+
+  this.logger.debug('Handling event', {
+    type: event.type,
+    eventId: event.eventId,
+  });
+
+  // Handle task:created events for autonomous execution
+  if(event.type === 'task:created') {
+  try {
+    const taskId = (event.payload as any).id;
+    if (taskId) {
+      // Fire and forget - don't await strictly effectively
+      this.taskExecutionAgent.handleTaskCreated(taskId);
     }
-
-    this.contextService.updateConfig({
-      orgId: config.orgId,
-      enabledActions: config.enabledActions
-    });
-
-    this.logger.info('Configuration updated');
+  } catch (error) {
+    this.logger.error('Error handling task:created event', error as Error);
   }
+  return;
+}
 
-  getConfig(): Readonly<OrchestrationAgentConfig> {
-    return { ...this.config };
+// Skip agent's own events to prevent loops
+if (event.source === 'agent' || event.type === 'agent:action_executed') {
+  return;
+}
+
+// Convert event to AgentInput for other event types
+const input = this.eventToInput(event);
+
+try {
+  await this.process(input);
+} catch (error) {
+  this.logger.error('Error handling event', error as Error, {
+    eventType: event.type,
+    eventId: event.eventId,
+  });
+}
   }
 
   // ===========================================================================
-  // Statistics Methods
+  // Approval Methods
   // ===========================================================================
 
-  getStats(): AgentStats {
-    const rateLimitUse = this.rateLimiter.getUsage();
-    return this.statsManager.getStats({
-      ...rateLimitUse,
-      isLimited: this.rateLimiter.isRateLimited(this.config.maxActionsPerMinute, this.config.maxActionsPerHour)
-    });
+  async approveDecision(decisionId: string): Promise < DecisionOutcome > {
+  const pending = this.pendingDecisions.get(decisionId);
+
+  if(!pending) {
+    throw new Error(`Pending decision not found: ${decisionId}`);
   }
 
-  getDecisionHistory(limit?: number): DecisionRecord[] {
-    return this.statsManager.getDecisionHistory(limit);
+    this.logger.info('Approving decision', { decisionId });
+
+  if(new Date() > pending.expiresAt) {
+  this.pendingDecisions.delete(decisionId);
+  this.statsManager.decrementPendingApprovals();
+  throw new Error('Decision has expired');
+}
+
+const outcome = await this.executeDecision(pending.decision, decisionId);
+
+this.pendingDecisions.delete(decisionId);
+this.statsManager.decrementPendingApprovals();
+
+if (outcome.status === DecisionStatusEnum.EXECUTED) {
+  this.statsManager.incrementSuccessfulDecisions();
+} else {
+  this.statsManager.incrementFailedDecisions();
+}
+
+return outcome;
   }
+
+  async rejectDecision(decisionId: string, reason: string): Promise < void> {
+  const pending = this.pendingDecisions.get(decisionId);
+
+  if(!pending) {
+    throw new Error(`Pending decision not found: ${decisionId}`);
+  }
+
+    this.logger.info('Rejecting decision', { decisionId, reason });
+
+  this.pendingDecisions.delete(decisionId);
+  this.statsManager.decrementPendingApprovals();
+  this.statsManager.incrementFailedDecisions();
+
+  // Record rejection
+  await this.statsManager.recordDecision(
+    this.agentId,
+    this.config.orgId,
+    pending.input,
+    pending.decision,
+    {
+      status: DecisionStatusEnum.REJECTED,
+      executionTime: 0,
+      results: [],
+      errors: [{ action: DecisionTypeEnum.NO_ACTION, code: 'REJECTED', message: reason, retryable: false }],
+      completedAt: new Date(),
+    },
+    { prompt: '', response: '' } // Context lost for brevity
+  );
+}
+
+// ===========================================================================
+// Configuration Methods
+// ===========================================================================
+
+updateConfig(config: Partial<OrchestrationAgentConfig>): void {
+  this.config = { ...this.config, ...config };
+
+  // Update sub-components
+  this.decisionEngine.updateConfig({
+    autoExecuteThreshold: this.config.autoExecuteThreshold,
+    requireApprovalThreshold: this.config.requireApprovalThreshold,
+  });
+
+  if(config.dryRun !== undefined) {
+  this.actionExecutor.setDryRun(config.dryRun);
+}
+
+this.contextService.updateConfig({
+  orgId: config.orgId,
+  enabledActions: config.enabledActions
+});
+
+this.logger.info('Configuration updated');
+  }
+
+getConfig(): Readonly < OrchestrationAgentConfig > {
+  return { ...this.config };
+}
+
+// ===========================================================================
+// Statistics Methods
+// ===========================================================================
+
+getStats(): AgentStats {
+  const rateLimitUse = this.rateLimiter.getUsage();
+  return this.statsManager.getStats({
+    ...rateLimitUse,
+    isLimited: this.rateLimiter.isRateLimited(this.config.maxActionsPerMinute, this.config.maxActionsPerHour)
+  });
+}
+
+getDecisionHistory(limit ?: number): DecisionRecord[] {
+  return this.statsManager.getDecisionHistory(limit);
+}
 
   // ===========================================================================
   // Private: LLM & Execution Helpers
   // ===========================================================================
 
   protected initializeLLMClient(): ILLMClient {
-    // We now construct a fallback chain:
-    // 1. Primary configured provider (from config or env)
-    // 2. Gemini (Free Tier) - if invalid key, will fail fast
-    // 3. Ollama (Local) - if not running, will fail fast
+  // We now construct a fallback chain:
+  // 1. Primary configured provider (from config or env)
+  // 2. Gemini (Free Tier) - if invalid key, will fail fast
+  // 3. Ollama (Local) - if not running, will fail fast
 
-    const clients: ILLMClient[] = [];
+  const clients: ILLMClient[] = [];
 
-    // 1. Primary Client
-    try {
-      const primaryClient = createLLMClient({
-        provider: this.config.llmProvider || LLMProvider.OPENAI,
-        model: (this.config.llmModel as LLMModel) || 'gpt-4o',
-        defaultOptions: {
-          temperature: this.config.temperature,
-          maxTokens: this.config.maxTokens,
-        }
-      });
-      clients.push(primaryClient);
-    } catch (e) {
-      this.logger.warn('Failed to create primary LLM client', { error: e });
-    }
-
-    // 2. Free Tier / Fallbacks (Added automatically for robustness)
-    // Only add if they aren't the primary one
-    const currentProvider = this.config.llmProvider;
-
-    if (currentProvider !== LLMProvider.GEMINI) {
-      try {
-        // Try to add Gemini
-        const gemini = createLLMClient({
-          provider: LLMProvider.GEMINI,
-          model: 'gemini-2.0-flash'
-        });
-        if (gemini.isReady()) clients.push(gemini);
-      } catch { }
-    }
-
-    if (currentProvider !== LLMProvider.OLLAMA) {
-      try {
-        // Try to add Ollama
-        // Use env var or default to llama3. This allows users to set specific models like 'gemma:2b'
-        const ollamaModel = (process.env.AGENT_DEFAULT_OLLAMA_MODEL as any) || 'llama3';
-
-        const ollama = createLLMClient({
-          provider: LLMProvider.OLLAMA,
-          model: ollamaModel
-        });
-        // Ollama client is always "ready" if baseUrl is set (default), 
-        // connectivity check happens at request time.
-        clients.push(ollama);
-      } catch { }
-    }
-
-    if (clients.length === 0) {
-      throw new Error('No compatible LLM clients could be initialized.');
-    }
-
-    if (clients.length === 1) {
-      return clients[0];
-    }
-
-    return createFallbackClient(clients);
+  // 1. Primary Client
+  try {
+    const primaryClient = createLLMClient({
+      provider: this.config.llmProvider || LLMProvider.OPENAI,
+      model: (this.config.llmModel as LLMModel) || 'gpt-4o',
+      defaultOptions: {
+        temperature: this.config.temperature,
+        maxTokens: this.config.maxTokens,
+      }
+    });
+    clients.push(primaryClient);
+  } catch (e) {
+    this.logger.warn('Failed to create primary LLM client', { error: e });
   }
 
-  private async makeLLMDecision(systemPrompt: string, userPrompt: string): Promise<string> {
+  // 2. Free Tier / Fallbacks (Added automatically for robustness)
+  // Only add if they aren't the primary one
+  const currentProvider = this.config.llmProvider;
+
+  if (currentProvider !== LLMProvider.GEMINI) {
     try {
-      const response = await this.llmClient.complete([
+      // Try to add Gemini
+      const gemini = createLLMClient({
+        provider: LLMProvider.GEMINI,
+        model: 'gemini-2.0-flash'
+      });
+      if (gemini.isReady()) clients.push(gemini);
+    } catch { }
+  }
+
+  if (currentProvider !== LLMProvider.OLLAMA) {
+    try {
+      // Try to add Ollama
+      // Use env var or default to llama3. This allows users to set specific models like 'gemma:2b'
+      const ollamaModel = (process.env.AGENT_DEFAULT_OLLAMA_MODEL as any) || 'llama3';
+
+      const ollama = createLLMClient({
+        provider: LLMProvider.OLLAMA,
+        model: ollamaModel
+      });
+      // Ollama client is always "ready" if baseUrl is set (default), 
+      // connectivity check happens at request time.
+      clients.push(ollama);
+    } catch { }
+  }
+
+  if (clients.length === 0) {
+    throw new Error('No compatible LLM clients could be initialized.');
+  }
+
+  if (clients.length === 1) {
+    return clients[0];
+  }
+
+  return createFallbackClient(clients);
+}
+
+  private async makeLLMDecision(systemPrompt: string, userPrompt: string): Promise < string > {
+  try {
+    const response = await this.llmClient.complete([
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ]);
+    return response.content;
+  } catch(claudeError) {
+    this.logger.error('[OA] Primary LLM failed, attempting OpenAI fallback', claudeError as Error);
+
+    try {
+      const openaiClient = createLLMClient({
+        provider: LLMProvider.OPENAI,
+        model: 'gpt-4o' as LLMModel,
+        defaultOptions: { temperature: this.config.temperature },
+      });
+
+      const fallbackResponse = await openaiClient.complete([
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ]);
-      return response.content;
-    } catch (claudeError) {
-      this.logger.error('[OA] Primary LLM failed, attempting OpenAI fallback', claudeError as Error);
-
-      try {
-        const openaiClient = createLLMClient({
-          provider: LLMProvider.OPENAI,
-          model: 'gpt-4o' as LLMModel,
-          defaultOptions: { temperature: this.config.temperature },
-        });
-
-        const fallbackResponse = await openaiClient.complete([
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ]);
-        return fallbackResponse.content;
-      } catch (openaiError) {
-        await this.eventBus.emit('intake:routing_failed', {
-          error: 'LLM routing failed',
-          timestamp: new Date(),
-        }, { source: 'agent' });
-        throw new Error('LLM routing failed');
-      }
+      return fallbackResponse.content;
+    } catch (openaiError) {
+      await this.eventBus.emit('intake:routing_failed', {
+        error: 'LLM routing failed',
+        timestamp: new Date(),
+      }, { source: 'agent' });
+      throw new Error('LLM routing failed');
     }
   }
+}
 
   private async executeDecision(
-    decision: AgentDecisionResult,
-    correlationId: string
-  ): Promise<DecisionOutcome> {
-    const outcome = await this.actionExecutor.execute(decision.actions, {
-      executionId: correlationId,
-      correlationId,
-      dryRun: this.config.dryRun,
-    });
-    this.statsManager.incrementTotalActions(decision.actions.length);
-    return outcome;
-  }
+  decision: AgentDecisionResult,
+  correlationId: string
+): Promise < DecisionOutcome > {
+  const outcome = await this.actionExecutor.execute(decision.actions, {
+    executionId: correlationId,
+    correlationId,
+    dryRun: this.config.dryRun,
+  });
+  this.statsManager.incrementTotalActions(decision.actions.length);
+  return outcome;
+}
 
   private storePendingDecision(
-    decision: AgentDecisionResult,
-    input: AgentInput,
-    context: DecisionContext
-  ): string {
-    const id = `pending-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  decision: AgentDecisionResult,
+  input: AgentInput,
+  context: DecisionContext
+): string {
+  const id = `pending-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    this.pendingDecisions.set(id, {
-      id,
-      decision,
-      input,
-      context,
-      createdAt: new Date(),
-      expiresAt,
-    });
+  this.pendingDecisions.set(id, {
+    id,
+    decision,
+    input,
+    context,
+    createdAt: new Date(),
+    expiresAt,
+  });
 
-    return id;
-  }
+  return id;
+}
 
   // ===========================================================================
   // Private: Notification & Utility Helpers
   // ===========================================================================
 
-  private async sendApprovalNotification(decisionId: string, decision: AgentDecisionResult): Promise<void> {
-    this.logger.info('Sending approval notification', { decisionId, intent: decision.intent });
-    // Implementation would go here
-  }
+  private async sendApprovalNotification(decisionId: string, decision: AgentDecisionResult): Promise < void> {
+  this.logger.info('Sending approval notification', { decisionId, intent: decision.intent });
+  // Implementation would go here
+}
 
-  private async sendErrorNotification(error: Error, input: AgentInput): Promise<void> {
-    this.logger.info('Sending error notification', { error: error.message });
-    // Implementation would go here
-  }
+  private async sendErrorNotification(error: Error, input: AgentInput): Promise < void> {
+  this.logger.info('Sending error notification', { error: error.message });
+  // Implementation would go here
+}
 
   private eventToInput(event: AgentEvent): AgentInput {
-    const payload = event.payload as Record<string, unknown>;
-    const relatedEntityIds: Record<string, string> = {};
-    if (event.eventId) relatedEntityIds.eventId = event.eventId;
+  const payload = event.payload as Record<string, unknown>;
+  const relatedEntityIds: Record<string, string> = {};
+  if (event.eventId) relatedEntityIds.eventId = event.eventId;
 
-    return {
-      source: this.mapEventSourceToInputSource(event.source),
-      type: event.type,
-      rawContent: JSON.stringify(payload),
-      structuredData: payload,
-      metadata: { relatedEntityIds, ...event.metadata },
-      timestamp: event.timestamp,
-      correlationId: event.correlationId,
-    };
-  }
+  return {
+    source: this.mapEventSourceToInputSource(event.source),
+    type: event.type,
+    rawContent: JSON.stringify(payload),
+    structuredData: payload,
+    metadata: { relatedEntityIds, ...event.metadata },
+    timestamp: event.timestamp,
+    correlationId: event.correlationId,
+  };
+}
 
   private mapEventSourceToInputSource(source: string | AgentInputSource): AgentInputSource {
-    if (Object.values(AgentInputSource).includes(source as AgentInputSource)) {
-      return source as AgentInputSource;
-    }
-    switch (source) {
-      case 'agent':
-      case 'system': return AgentInputSource.WORKER;
-      default: return AgentInputSource.API;
-    }
+  if (Object.values(AgentInputSource).includes(source as AgentInputSource)) {
+    return source as AgentInputSource;
   }
+  switch (source) {
+    case 'agent':
+    case 'system': return AgentInputSource.WORKER;
+    default: return AgentInputSource.API;
+  }
+}
 
   private validateAndMergeConfig(config: OrchestrationAgentConfig): OrchestrationAgentConfig {
-    return {
-      ...config,
-      orgId: config.orgId,
-      llmProvider: config.llmProvider ?? LLMProvider.OPENAI,
-      llmModel: config.llmModel ?? 'gpt-4o',
-      temperature: config.temperature ?? DEFAULT_AGENT_CONFIG.temperature,
-      autoExecuteThreshold: config.autoExecuteThreshold ?? DEFAULT_AGENT_CONFIG.autoExecuteThreshold,
-      requireApprovalThreshold: config.requireApprovalThreshold ?? DEFAULT_AGENT_CONFIG.requireApprovalThreshold,
-      enabledActions: config.enabledActions ?? Object.values(DecisionTypeEnum),
-      maxActionsPerMinute: config.maxActionsPerMinute ?? DEFAULT_AGENT_CONFIG.maxActionsPerMinute,
-      maxActionsPerHour: config.maxActionsPerHour ?? DEFAULT_AGENT_CONFIG.maxActionsPerHour,
-      notifyOnHighPriority: config.notifyOnHighPriority ?? true,
-      notifyOnFailure: config.notifyOnFailure ?? true,
-      escalationEmail: config.escalationEmail ?? 'admin@example.com',
-    };
-  }
+  return {
+    ...config,
+    orgId: config.orgId,
+    llmProvider: config.llmProvider ?? LLMProvider.OPENAI,
+    llmModel: config.llmModel ?? 'gpt-4o',
+    temperature: config.temperature ?? DEFAULT_AGENT_CONFIG.temperature,
+    autoExecuteThreshold: config.autoExecuteThreshold ?? DEFAULT_AGENT_CONFIG.autoExecuteThreshold,
+    requireApprovalThreshold: config.requireApprovalThreshold ?? DEFAULT_AGENT_CONFIG.requireApprovalThreshold,
+    enabledActions: config.enabledActions ?? Object.values(DecisionTypeEnum),
+    maxActionsPerMinute: config.maxActionsPerMinute ?? DEFAULT_AGENT_CONFIG.maxActionsPerMinute,
+    maxActionsPerHour: config.maxActionsPerHour ?? DEFAULT_AGENT_CONFIG.maxActionsPerHour,
+    notifyOnHighPriority: config.notifyOnHighPriority ?? true,
+    notifyOnFailure: config.notifyOnFailure ?? true,
+    escalationEmail: config.escalationEmail ?? 'admin@example.com',
+    logger: config.logger,
+  };
+}
 }
 
 /**

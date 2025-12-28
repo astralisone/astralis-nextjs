@@ -69,6 +69,25 @@ export function AgentChatWidget() {
 
         const userMessage = input.trim();
         setInput('');
+
+        // Handle Local Slash Commands
+        if (userMessage === '/commands') {
+            const commandList = [
+                '**Available Commands:**',
+                '- `/commands`: Show this list',
+                '- `/task add`: Create a new task (Agent-led)',
+                '- `/automation report`: Get automation status',
+                '- `/task report`: Get task board status'
+            ].join('\n');
+
+            setMessages(prev => [
+                ...prev,
+                { role: 'user', content: userMessage },
+                { role: 'assistant', content: commandList }
+            ]);
+            return;
+        }
+
         setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
         setIsLoading(true);
 

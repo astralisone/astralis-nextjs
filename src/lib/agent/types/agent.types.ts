@@ -218,6 +218,14 @@ export enum DecisionType {
   /** Generate an n8n JSON template and add to templates */
   GENERATE_N8N_TEMPLATE = 'GENERATE_N8N_TEMPLATE',
   SEARCH_CUSTOMERS = 'SEARCH_CUSTOMERS',
+
+  // Task & Pipeline Management
+  /** List available task templates */
+  LIST_TASK_TEMPLATES = 'LIST_TASK_TEMPLATES',
+  /** List existing pipelines and their stages */
+  LIST_PIPELINES = 'LIST_PIPELINES',
+  /** Create a new pipeline with stages */
+  CREATE_PIPELINE = 'CREATE_PIPELINE',
 }
 
 /**
@@ -440,6 +448,9 @@ export interface AgentConfig {
   totalDecisions?: number;
   /** Number of successful decisions */
   successfulDecisions?: number;
+
+  /** Custom logger instance */
+  logger?: Logger;
 
   // Timestamps
   /** When the configuration was created */
