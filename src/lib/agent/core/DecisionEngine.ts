@@ -821,11 +821,12 @@ export class DecisionEngine {
     const decision: AgentDecisionResult = {
       intent,
       confidence: DEFAULT_FALLBACK_CONFIDENCE,
-      reasoning: this.createUserFriendlyFallbackMessage(reason, intent),
+      reasoning: this.createErrorSurfaceMessage(reason, intent),
       actions,
       requiresApproval: true, // Always require approval for fallback
       priority: urgency,
       warnings: [`Decision made via fallback logic: ${reason}`],
+      response: this.createErrorSurfaceMessage(reason, intent),
     };
 
     return {
@@ -836,26 +837,10 @@ export class DecisionEngine {
   }
 
   /**
-   * Create a user-friendly message for fallback scenarios.
+   * Create a message that explicitly surfaces the error involved.
    */
-  private createUserFriendlyFallbackMessage(technicalReason: string, intent: string): string {
-    // Map technical reasons to user-friendly messages
-    if (technicalReason.includes('Validation failed')) {
-      const fieldMatch = technicalReason.match(/requires "([^"]+)"/);
-      const fieldName = fieldMatch ? fieldMatch[1] : null;
-
-      if (fieldName) {
-        return `I understood your request, but I need a specific ${fieldName} to proceed safely. Please provide that detail so I can help.`;
-      }
-
-      return "I understood your request but need a bit more specific information to proceed safely. I've drafted a task for this, but please provide more details if possible.";
-    }
-    if (technicalReason.includes('Parse error')) {
-      return "I'm having a little trouble processing that exact request. I've created a task to track this, but you might want to try rephrasing your request.";
-    }
-
-    // Default friendly message
-    return `I've detected that you're interested in ${intent.toLowerCase().replace('_', ' ')}. I've created a task for review, but I'd like to better understand your specific needs.`;
+  private createErrorSurfaceMessage(technicalReason: string, intent: string): string {
+    return `I encountered an issue processing this request: ${technicalReason}. Please check your input or system configuration.`;
   }
 
   /**

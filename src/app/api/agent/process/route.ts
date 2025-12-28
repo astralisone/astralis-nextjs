@@ -146,7 +146,7 @@ function getOrCreateAgent(
     temperature,
     autoExecuteThreshold: options?.autoExecuteThreshold ?? AUTO_EXECUTE_THRESHOLD,
     requireApprovalThreshold: options?.requireApprovalThreshold ?? REQUIRE_APPROVAL_THRESHOLD,
-    enabledActions,
+    enabledActions: Object.values(DecisionType),
     maxActionsPerMinute: 60,
     maxActionsPerHour: 500,
     notifyOnHighPriority: true,

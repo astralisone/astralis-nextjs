@@ -893,6 +893,8 @@ export interface AgentDecisionResult {
   suggestions?: IntegrationSuggestion[];
   /** Results of auto-executed actions (added for Chat/ReAct loop) */
   executionResults?: ActionResult[];
+  /** Errors encountered during execution */
+  errors?: ExecutionError[];
   /** Direct response to the user (conversational) */
   response?: string;
 }

@@ -23,7 +23,10 @@ function getChatAgent(orgId: string): ChatAgent {
             DecisionType.LIST_ACTIVE_AUTOMATIONS,
             DecisionType.GET_KANBAN_STATE,
             DecisionType.SEARCH_DOCUMENTS,
-            DecisionType.CREATE_TASK, // Allow creating tasks
+            DecisionType.CREATE_TASK,
+            DecisionType.LIST_TASK_TEMPLATES,
+            DecisionType.LIST_PIPELINES,
+            DecisionType.CREATE_PIPELINE,
             DecisionType.NO_ACTION
         ],
         maxActionsPerMinute: 60,
