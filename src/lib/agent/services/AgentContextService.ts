@@ -113,9 +113,9 @@ export class AgentContextService {
         });
 
         // Fetch team members
-        const users = await prisma.user.findMany({
+        const teamMembers = await prisma.users.findMany({
             where: { orgId: this.config.orgId },
-            select: { id: true, firstName: true, lastName: true, email: true, role: true }
+            select: { id: true, name: true, email: true, role: true }
         });
 
         const org: OrgContext = {
@@ -127,9 +127,9 @@ export class AgentContextService {
                 description: p.description,
                 stages: p.stages.map(s => s.name)
             })),
-            users: users.map(u => ({
+            users: teamMembers.map(u => ({
                 id: u.id,
-                name: `${u.firstName} ${u.lastName}`,
+                name: u.name || 'Unknown',
                 email: u.email,
                 role: u.role,
                 isAvailable: true
