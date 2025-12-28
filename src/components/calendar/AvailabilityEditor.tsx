@@ -163,11 +163,10 @@ export function AvailabilityEditor({
         {DAYS_OF_WEEK.map((day) => (
           <Card
             key={day}
-            className={`p-4 transition-all ${
-              availability[day].enabled
+            className={`p-4 transition-all ${availability[day].enabled
                 ? "border-astralis-blue bg-blue-50/30"
                 : "border-slate-200 bg-slate-50/30"
-            }`}
+              }`}
           >
             <div className="space-y-3">
               {/* Day Header */}
@@ -182,11 +181,10 @@ export function AvailabilityEditor({
                   />
                   <Label
                     htmlFor={`toggle-${day}`}
-                    className={`text-base font-semibold cursor-pointer ${
-                      availability[day].enabled
+                    className={`text-base font-semibold cursor-pointer ${availability[day].enabled
                         ? "text-astralis-navy"
                         : "text-slate-400"
-                    }`}
+                      }`}
                   >
                     {day}
                   </Label>
@@ -213,7 +211,7 @@ export function AvailabilityEditor({
                       key={index}
                       className="flex items-center gap-2 bg-white p-3 rounded-md border border-slate-200"
                     >
-                      <Clock className="h-4 w-4 text-slate-400 flex-shrink-0" />
+                      <Clock className="h-[24px] w-[24px] text-slate-400 flex-shrink-0" />
                       <Input
                         type="time"
                         value={range.start}
@@ -239,7 +237,7 @@ export function AvailabilityEditor({
                           onClick={() => removeTimeRange(day, index)}
                           className="flex-shrink-0 text-red-500 hover:text-red-700 hover:bg-red-50"
                         >
-                          <X className="h-4 w-4" />
+                          <X className="h-[24px] w-[24px]" />
                         </Button>
                       )}
                     </div>
@@ -285,7 +283,7 @@ export function AvailabilityEditor({
           disabled={isSaving}
           className="gap-2"
         >
-          <Save className="h-4 w-4" />
+          <Save className="h-[24px] w-[24px]" />
           {isSaving ? "Saving..." : "Save Availability"}
         </Button>
       </div>

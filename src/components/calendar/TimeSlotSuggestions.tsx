@@ -112,7 +112,7 @@ export function TimeSlotSuggestions({
                     {/* Date and Time */}
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-slate-400" />
+                        <Clock className="h-[24px] w-[24px] text-slate-400" />
                         <span className="text-base font-semibold text-astralis-navy">
                           {formatDate(startDate)}
                         </span>

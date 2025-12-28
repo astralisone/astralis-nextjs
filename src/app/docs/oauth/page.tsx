@@ -225,7 +225,7 @@ export default function OAuthPage() {
                     <Badge
                       variant={
                         issue.severity === 'Critical' ? 'destructive' :
-                        issue.severity === 'Configuration' ? 'secondary' : 'default'
+                          issue.severity === 'Configuration' ? 'secondary' : 'default'
                       }
                     >
                       {issue.severity}
@@ -310,7 +310,7 @@ export default function OAuthPage() {
             </div>
 
             <Alert>
-              <Shield className="h-4 w-4" />
+              <Shield className="h-[24px] w-[24px]" />
               <AlertDescription>
                 <strong>Enterprise Security:</strong> All OAuth tokens are encrypted at rest and in transit.
                 We follow OAuth 2.0 security best practices and regularly audit our implementation.

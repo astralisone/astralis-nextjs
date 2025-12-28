@@ -60,7 +60,7 @@ const alertVariants = cva(
  */
 export interface AlertProps
   extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof alertVariants> {
+  VariantProps<typeof alertVariants> {
   /**
    * Whether to show the icon for the alert variant
    * @default false
@@ -87,7 +87,7 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
         className={cn(alertVariants({ variant }), className)}
         {...props}
       >
-        {showIcon && <Icon className="h-4 w-4" />}
+        {showIcon && <Icon className="h-[24px] w-[24px]" />}
         {children}
       </div>
     );

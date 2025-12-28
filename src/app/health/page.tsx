@@ -157,7 +157,7 @@ export default function HealthPage() {
             variant="outline"
             size="sm"
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+            <RefreshCw className={`h-[24px] w-[24px] mr-2 ${loading ? "animate-spin" : ""}`} />
             Refresh
           </Button>
         </div>
@@ -201,7 +201,7 @@ export default function HealthPage() {
             {/* Uptime */}
             <div className="bg-slate-50 rounded-lg p-4">
               <div className="flex items-center gap-2 text-slate-600 mb-1">
-                <Clock className="h-4 w-4" />
+                <Clock className="h-[24px] w-[24px]" />
                 <span className="text-sm">Uptime</span>
               </div>
               <div className="text-lg font-semibold text-astralis-navy">
@@ -212,7 +212,7 @@ export default function HealthPage() {
             {/* Database */}
             <div className="bg-slate-50 rounded-lg p-4">
               <div className="flex items-center gap-2 text-slate-600 mb-1">
-                <Database className="h-4 w-4" />
+                <Database className="h-[24px] w-[24px]" />
                 <span className="text-sm">Database</span>
               </div>
               <div className="flex items-center gap-2">
@@ -231,7 +231,7 @@ export default function HealthPage() {
             {/* Redis */}
             <div className="bg-slate-50 rounded-lg p-4">
               <div className="flex items-center gap-2 text-slate-600 mb-1">
-                <Cpu className="h-4 w-4" />
+                <Cpu className="h-[24px] w-[24px]" />
                 <span className="text-sm">Redis</span>
               </div>
               <div className="flex items-center gap-2">
@@ -245,7 +245,7 @@ export default function HealthPage() {
             {/* API Count */}
             <div className="bg-slate-50 rounded-lg p-4">
               <div className="flex items-center gap-2 text-slate-600 mb-1">
-                <Server className="h-4 w-4" />
+                <Server className="h-[24px] w-[24px]" />
                 <span className="text-sm">API Routes</span>
               </div>
               <div className="text-lg font-semibold text-astralis-navy">
@@ -259,7 +259,7 @@ export default function HealthPage() {
         <Sheet>
           <SheetTrigger asChild>
             <Button variant="outline" className="w-full mb-6">
-              <ChevronDown className="h-4 w-4 mr-2" />
+              <ChevronDown className="h-[24px] w-[24px] mr-2" />
               More Details
             </Button>
           </SheetTrigger>
@@ -278,7 +278,7 @@ export default function HealthPage() {
               {/* Uptime Section */}
               <div className="bg-slate-50 rounded-lg p-4">
                 <h3 className="font-semibold text-astralis-navy mb-3 flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
+                  <Clock className="h-[24px] w-[24px]" />
                   Uptime
                 </h3>
                 <div className="grid grid-cols-2 gap-4 text-sm">
@@ -314,7 +314,7 @@ export default function HealthPage() {
               {/* Server Logs Section */}
               <div className="bg-slate-50 rounded-lg p-4">
                 <h3 className="font-semibold text-astralis-navy mb-3 flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
+                  <FileText className="h-[24px] w-[24px]" />
                   Server Logs
                 </h3>
                 <div className="text-sm space-y-2">
@@ -335,7 +335,7 @@ export default function HealthPage() {
               {/* API Routes Section */}
               <div>
                 <h3 className="font-semibold text-astralis-navy mb-3 flex items-center gap-2">
-                  <Server className="h-4 w-4" />
+                  <Server className="h-[24px] w-[24px]" />
                   API Routes ({API_ROUTES.length} total)
                 </h3>
 
@@ -354,9 +354,8 @@ export default function HealthPage() {
                             {routes.length} routes
                           </span>
                           <ChevronDown
-                            className={`h-4 w-4 text-slate-400 transition-transform ${
-                              expandedCategories.has(category) ? "rotate-180" : ""
-                            }`}
+                            className={`h-[24px] w-[24px] text-slate-400 transition-transform ${expandedCategories.has(category) ? "rotate-180" : ""
+                              }`}
                           />
                         </div>
                       </button>

@@ -1064,7 +1064,7 @@ export default function EditAutomationPage() {
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="sm" asChild>
               <Link href={`/automations/${automationId}`}>
-                <ArrowLeft className="h-4 w-4" />
+                <ArrowLeft className="h-[24px] w-[24px]" />
               </Link>
             </Button>
             <div>
@@ -1081,11 +1081,11 @@ export default function EditAutomationPage() {
         <Tabs defaultValue="settings" className="w-full">
           <TabsList className="bg-slate-100 p-1">
             <TabsTrigger value="settings" className="gap-2">
-              <Settings className="h-4 w-4" />
+              <Settings className="h-[24px] w-[24px]" />
               Settings
             </TabsTrigger>
             <TabsTrigger value="workflow" className="gap-2">
-              <Code className="h-4 w-4" />
+              <Code className="h-[24px] w-[24px]" />
               Workflow Logic
             </TabsTrigger>
           </TabsList>
@@ -1188,12 +1188,12 @@ export default function EditAutomationPage() {
             onClick={handleSave}
             disabled={saving || !name}
           >
-            <Save className="h-4 w-4" />
+            <Save className="h-[24px] w-[24px]" />
             {saving ? 'Saving...' : 'Save Changes'}
           </Button>
           <Button variant="outline" size="sm" className="gap-1.5 text-sm" asChild>
             <Link href={`/automations/${automationId}`}>
-              <X className="h-4 w-4" />
+              <X className="h-[24px] w-[24px]" />
               Cancel
             </Link>
           </Button>
@@ -1443,7 +1443,7 @@ export default function AutomationDetailPage() {
               onClick={handleExecute}
               disabled={isExecuting}
             >
-              <Play className="h-4 w-4" />
+              <Play className="h-[24px] w-[24px]" />
               {isExecuting ? 'Executing...' : 'Execute Now'}
             </Button>
             <Button
@@ -1454,12 +1454,12 @@ export default function AutomationDetailPage() {
             >
               {automation.isActive ? (
                 <>
-                  <Pause className="h-4 w-4" />
+                  <Pause className="h-[24px] w-[24px]" />
                   Deactivate
                 </>
               ) : (
                 <>
-                  <Play className="h-4 w-4" />
+                  <Play className="h-[24px] w-[24px]" />
                   Activate
                 </>
               )}
@@ -1703,7 +1703,7 @@ export default function NewAutomationPage() {
       <div className="mb-8">
         <Link href="/automations">
           <Button variant="ghost" size="sm" className="mb-4">
-            <ArrowLeft className="h-4 w-4 mr-2" />
+            <ArrowLeft className="h-[24px] w-[24px] mr-2" />
             Back to Automations
           </Button>
         </Link>
@@ -3108,7 +3108,7 @@ export default function DocumentsError({ error, reset }: DocumentsErrorProps) {
             size="lg"
             className="min-w-[160px]"
           >
-            <RefreshCw className="mr-2 h-4 w-4" />
+            <RefreshCw className="mr-2 h-[24px] w-[24px]" />
             Try Again
           </Button>
 
@@ -3118,7 +3118,7 @@ export default function DocumentsError({ error, reset }: DocumentsErrorProps) {
             size="lg"
             className="min-w-[160px]"
           >
-            <AlertCircle className="mr-2 h-4 w-4" />
+            <AlertCircle className="mr-2 h-[24px] w-[24px]" />
             Go to Dashboard
           </Button>
         </div>
@@ -3191,7 +3191,7 @@ export default function DocumentsLoading() {
         <div className="p-4 space-y-4">
           {/* Header row */}
           <div className="flex gap-4 pb-3 border-b">
-            <Skeleton className="h-4 w-48" />
+            <Skeleton className="h-[24px] w-[24px]8" />
             <Skeleton className="h-4 w-16" />
             <Skeleton className="h-4 w-20" />
             <Skeleton className="h-4 w-24" />
@@ -3378,10 +3378,10 @@ export default function DocumentsPage() {
   };
 
   const SortIcon = ({ column }: { column: SortColumn }) => {
-    if (sortColumn !== column) return <ChevronUp className="h-4 w-4 text-slate-300" />;
+    if (sortColumn !== column) return <ChevronUp className="h-[24px] w-[24px] text-slate-300" />;
     return sortDirection === 'asc'
-      ? <ChevronUp className="h-4 w-4 text-astralis-blue" />
-      : <ChevronDown className="h-4 w-4 text-astralis-blue" />;
+      ? <ChevronUp className="h-[24px] w-[24px] text-astralis-blue" />
+      : <ChevronDown className="h-[24px] w-[24px] text-astralis-blue" />;
   };
 
   return (
@@ -3392,11 +3392,11 @@ export default function DocumentsPage() {
         actions={
           <div className="flex gap-3">
             <Button variant="outline" onClick={() => handleChat()}>
-              <MessageSquare className="h-4 w-4 mr-2" />
+              <MessageSquare className="h-[24px] w-[24px] mr-2" />
               Chat with Documents
             </Button>
             <Button variant="primary" onClick={() => setShowUploader(true)}>
-              <UploadIcon className="h-4 w-4 mr-2" />
+              <UploadIcon className="h-[24px] w-[24px] mr-2" />
               Upload
             </Button>
           </div>
@@ -3431,7 +3431,7 @@ export default function DocumentsPage() {
 
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-[24px] w-[24px] text-slate-400" />
           <Input
             type="search"
             placeholder="Search documents..."
@@ -3471,7 +3471,7 @@ export default function DocumentsPage() {
           <AlertDescription>
             <p className="mb-3">{error instanceof Error ? error.message : 'An error occurred.'}</p>
             <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
-              <RefreshCw className="h-4 w-4 mr-2" />
+              <RefreshCw className="h-[24px] w-[24px] mr-2" />
               Retry
             </Button>
           </AlertDescription>
@@ -3526,7 +3526,7 @@ export default function DocumentsPage() {
                             className="p-2 hover:bg-slate-100 rounded"
                             title="View"
                           >
-                            <Eye className="h-4 w-4" />
+                            <Eye className="h-[24px] w-[24px]" />
                           </button>
                           <button
                             onClick={() => handleDownload(doc)}
@@ -3534,7 +3534,7 @@ export default function DocumentsPage() {
                             title="Download"
                             disabled={!doc.cdnUrl}
                           >
-                            <Download className="h-4 w-4" />
+                            <Download className="h-[24px] w-[24px]" />
                           </button>
                         </div>
                       </TableCell>
@@ -4224,7 +4224,7 @@ function IntegrationsPageContent() {
 
       {error && (
         <Alert variant="destructive" className="mb-6">
-          <AlertCircle className="h-4 w-4" />
+          <AlertCircle className="h-[24px] w-[24px]" />
           <AlertDescription>
             {error}
           </AlertDescription>
@@ -5742,7 +5742,7 @@ export default function ProfilePage() {
                   >
                     {deleting ? (
                       <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <Loader2 className="mr-2 h-[24px] w-[24px] animate-spin" />
                         Deleting...
                       </>
                     ) : (
@@ -6752,7 +6752,7 @@ export default function SettingsPage() {
                   className="gap-1.5 text-sm"
                   onClick={() => setInviteModalOpen(true)}
                 >
-                  <UserPlus className="h-4 w-4" />
+                  <UserPlus className="h-[24px] w-[24px]" />
                   Invite Member
                 </Button>
               </div>
@@ -6817,7 +6817,7 @@ export default function SettingsPage() {
                             className="h-8 w-8 text-slate-400 hover:text-red-600"
                             onClick={() => handleRemoveMember(member.id)}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-[24px] w-[24px]" />
                           </Button>
                         )}
                       </div>
@@ -6903,7 +6903,7 @@ export default function SettingsPage() {
               disabled={inviting || !inviteEmail.trim()}
               className="gap-1.5"
             >
-              {inviting && <Loader2 className="h-4 w-4 animate-spin" />}
+              {inviting && <Loader2 className="h-[24px] w-[24px] animate-spin" />}
               {inviting ? 'Sending...' : 'Send Invitation'}
             </Button>
           </DialogFooter>
@@ -7039,7 +7039,7 @@ export default function AppError({ error, reset }: AppErrorProps) {
             size="lg"
             className="min-w-[160px]"
           >
-            <RefreshCw className="mr-2 h-4 w-4" />
+            <RefreshCw className="mr-2 h-[24px] w-[24px]" />
             Try Again
           </Button>
 
@@ -7049,7 +7049,7 @@ export default function AppError({ error, reset }: AppErrorProps) {
             size="lg"
             className="min-w-[160px]"
           >
-            <Home className="mr-2 h-4 w-4" />
+            <Home className="mr-2 h-[24px] w-[24px]" />
             Go Home
           </Button>
         </div>
@@ -8875,7 +8875,7 @@ function ServiceCard({ pkg, index }: { pkg: ServicePackage; index: number }) {
                 : 'border-astralis-blue/30 bg-white text-astralis-blue hover:border-astralis-blue/60 hover:bg-astralis-blue/5'
             )}
           >
-            <Info className="h-4 w-4" />
+            <Info className="h-[24px] w-[24px]" />
             <span className="relative">
               More Info
               {/* Pulsing indicator when collapsed */}
@@ -8887,9 +8887,9 @@ function ServiceCard({ pkg, index }: { pkg: ServicePackage; index: number }) {
               )}
             </span>
             {isExpanded ? (
-              <ChevronUp className="h-4 w-4 ml-1" />
+              <ChevronUp className="h-[24px] w-[24px] ml-1" />
             ) : (
-              <ChevronDown className="h-4 w-4 ml-1" />
+              <ChevronDown className="h-[24px] w-[24px] ml-1" />
             )}
           </button>
         )}
@@ -32626,7 +32626,7 @@ export default function SignInPage() {
         >
           {isSubmitting ? (
             <span className="flex items-center gap-2">
-              <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <svg className="animate-spin h-[24px] w-[24px]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
@@ -34540,7 +34540,7 @@ export default function AutomationBestPracticesPage() {
                 pitfall.severity === 'High' ? 'border-orange-200 bg-orange-50' :
                 'border-yellow-200 bg-yellow-50'
               }>
-                <AlertTriangle className="h-4 w-4" />
+                <AlertTriangle className="h-[24px] w-[24px]" />
                 <AlertDescription>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
@@ -35170,7 +35170,7 @@ export default function IntegrationsDocsPage() {
 
         {/* Prerequisites */}
         <Alert className="mb-8">
-          <AlertCircle className="h-4 w-4" />
+          <AlertCircle className="h-[24px] w-[24px]" />
           <AlertDescription>
             <strong>Prerequisites:</strong> Before setting up integrations, ensure you have:
             <ul className="mt-2 ml-4 list-disc">
@@ -35604,7 +35604,7 @@ export default function N8nPage() {
 
         {/* Prerequisites */}
         <Alert className="mb-12">
-          <Settings className="h-4 w-4" />
+          <Settings className="h-[24px] w-[24px]" />
           <AlertDescription>
             <strong>Prerequisites:</strong> Before setting up n8n integration, ensure you have:
             <ul className="mt-2 ml-4 list-disc">
@@ -36011,7 +36011,7 @@ export default function OAuthPage() {
             </div>
 
             <Alert>
-              <Shield className="h-4 w-4" />
+              <Shield className="h-[24px] w-[24px]" />
               <AlertDescription>
                 <strong>Enterprise Security:</strong> All OAuth tokens are encrypted at rest and in transit.
                 We follow OAuth 2.0 security best practices and regularly audit our implementation.
@@ -36155,7 +36155,7 @@ export default function QuickStartPage() {
           </p>
 
           <Alert className="max-w-2xl mx-auto">
-            <CheckCircle className="h-4 w-4" />
+            <CheckCircle className="h-[24px] w-[24px]" />
             <AlertDescription>
               <strong>Prerequisites:</strong> Modern web browser, valid email address
             </AlertDescription>
@@ -36435,7 +36435,7 @@ export default function SecurityPage() {
 
         {/* Security Overview */}
         <Alert className="mb-8 border-green-200 bg-green-50">
-          <Shield className="h-4 w-4" />
+          <Shield className="h-[24px] w-[24px]" />
           <AlertDescription className="text-green-800">
             <strong>Security First:</strong> Astralis is built with enterprise-grade security from the ground up.
             Your data is protected by multiple layers of security controls and encryption.
@@ -36532,7 +36532,7 @@ export default function SecurityPage() {
             </div>
 
             <Alert>
-              <Lock className="h-4 w-4" />
+              <Lock className="h-[24px] w-[24px]" />
               <AlertDescription>
                 <strong>Data Encryption:</strong> All sensitive data is encrypted using AES-256 encryption.
                 API keys, OAuth tokens, and personal information are never stored in plain text.
@@ -37429,7 +37429,7 @@ export default function WebhooksPage() {
             </div>
 
             <Alert>
-              <Shield className="h-4 w-4" />
+              <Shield className="h-[24px] w-[24px]" />
               <AlertDescription>
                 <strong>Security Note:</strong> Always verify webhook signatures to ensure authenticity.
                 Store your webhook secret securely and rotate it regularly.
@@ -38226,7 +38226,7 @@ export default function HealthPage() {
             variant="outline"
             size="sm"
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+            <RefreshCw className={`h-[24px] w-[24px] mr-2 ${loading ? "animate-spin" : ""}`} />
             Refresh
           </Button>
         </div>
@@ -38270,7 +38270,7 @@ export default function HealthPage() {
             {/* Uptime */}
             <div className="bg-slate-50 rounded-lg p-4">
               <div className="flex items-center gap-2 text-slate-600 mb-1">
-                <Clock className="h-4 w-4" />
+                <Clock className="h-[24px] w-[24px]" />
                 <span className="text-sm">Uptime</span>
               </div>
               <div className="text-lg font-semibold text-astralis-navy">
@@ -38281,7 +38281,7 @@ export default function HealthPage() {
             {/* Database */}
             <div className="bg-slate-50 rounded-lg p-4">
               <div className="flex items-center gap-2 text-slate-600 mb-1">
-                <Database className="h-4 w-4" />
+                <Database className="h-[24px] w-[24px]" />
                 <span className="text-sm">Database</span>
               </div>
               <div className="flex items-center gap-2">
@@ -38300,7 +38300,7 @@ export default function HealthPage() {
             {/* Redis */}
             <div className="bg-slate-50 rounded-lg p-4">
               <div className="flex items-center gap-2 text-slate-600 mb-1">
-                <Cpu className="h-4 w-4" />
+                <Cpu className="h-[24px] w-[24px]" />
                 <span className="text-sm">Redis</span>
               </div>
               <div className="flex items-center gap-2">
@@ -38314,7 +38314,7 @@ export default function HealthPage() {
             {/* API Count */}
             <div className="bg-slate-50 rounded-lg p-4">
               <div className="flex items-center gap-2 text-slate-600 mb-1">
-                <Server className="h-4 w-4" />
+                <Server className="h-[24px] w-[24px]" />
                 <span className="text-sm">API Routes</span>
               </div>
               <div className="text-lg font-semibold text-astralis-navy">
@@ -38328,7 +38328,7 @@ export default function HealthPage() {
         <Sheet>
           <SheetTrigger asChild>
             <Button variant="outline" className="w-full mb-6">
-              <ChevronDown className="h-4 w-4 mr-2" />
+              <ChevronDown className="h-[24px] w-[24px] mr-2" />
               More Details
             </Button>
           </SheetTrigger>
@@ -38347,7 +38347,7 @@ export default function HealthPage() {
               {/* Uptime Section */}
               <div className="bg-slate-50 rounded-lg p-4">
                 <h3 className="font-semibold text-astralis-navy mb-3 flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
+                  <Clock className="h-[24px] w-[24px]" />
                   Uptime
                 </h3>
                 <div className="grid grid-cols-2 gap-4 text-sm">
@@ -38383,7 +38383,7 @@ export default function HealthPage() {
               {/* Server Logs Section */}
               <div className="bg-slate-50 rounded-lg p-4">
                 <h3 className="font-semibold text-astralis-navy mb-3 flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
+                  <FileText className="h-[24px] w-[24px]" />
                   Server Logs
                 </h3>
                 <div className="text-sm space-y-2">
@@ -38404,7 +38404,7 @@ export default function HealthPage() {
               {/* API Routes Section */}
               <div>
                 <h3 className="font-semibold text-astralis-navy mb-3 flex items-center gap-2">
-                  <Server className="h-4 w-4" />
+                  <Server className="h-[24px] w-[24px]" />
                   API Routes ({API_ROUTES.length} total)
                 </h3>
 
@@ -38423,7 +38423,7 @@ export default function HealthPage() {
                             {routes.length} routes
                           </span>
                           <ChevronDown
-                            className={`h-4 w-4 text-slate-400 transition-transform ${
+                            className={`h-[24px] w-[24px] text-slate-400 transition-transform ${
                               expandedCategories.has(category) ? "rotate-180" : ""
                             }`}
                           />
@@ -39506,7 +39506,7 @@ export default function Error({ error, reset }: ErrorProps) {
             size="lg"
             className="min-w-[160px]"
           >
-            <RefreshCw className="mr-2 h-4 w-4" />
+            <RefreshCw className="mr-2 h-[24px] w-[24px]" />
             Try again
           </Button>
 
@@ -40840,15 +40840,15 @@ export function ActionRepositoryAdmin({ orgId }: ActionRepositoryAdminProps) {
   const getStatusIcon = (status: ActionStatus) => {
     switch (status) {
       case 'ACTIVE':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
+        return <CheckCircle className="h-[24px] w-[24px] text-green-500" />;
       case 'INACTIVE':
-        return <Clock className="h-4 w-4 text-yellow-500" />;
+        return <Clock className="h-[24px] w-[24px] text-yellow-500" />;
       case 'DEPRECATED':
-        return <AlertTriangle className="h-4 w-4 text-orange-500" />;
+        return <AlertTriangle className="h-[24px] w-[24px] text-orange-500" />;
       case 'BROKEN':
-        return <AlertTriangle className="h-4 w-4 text-red-500" />;
+        return <AlertTriangle className="h-[24px] w-[24px] text-red-500" />;
       default:
-        return <Clock className="h-4 w-4 text-gray-500" />;
+        return <Clock className="h-[24px] w-[24px] text-gray-500" />;
     }
   };
 
@@ -40901,11 +40901,11 @@ export function ActionRepositoryAdmin({ orgId }: ActionRepositoryAdminProps) {
             onClick={loadActions}
             disabled={loading}
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-[24px] w-[24px] mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
           <Button onClick={handleDiscoverActions} disabled={loading}>
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="h-[24px] w-[24px] mr-2" />
             Discover Actions
           </Button>
         </div>
@@ -40970,7 +40970,7 @@ export function ActionRepositoryAdmin({ orgId }: ActionRepositoryAdminProps) {
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-[24px] w-[24px] text-slate-400" />
               <Input
                 placeholder="Search actions..."
                 value={searchQuery}
@@ -41025,7 +41025,7 @@ export function ActionRepositoryAdmin({ orgId }: ActionRepositoryAdminProps) {
       {/* Error State */}
       {error && (
         <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
+          <AlertTriangle className="h-[24px] w-[24px]" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
@@ -41114,21 +41114,21 @@ export function ActionRepositoryAdmin({ orgId }: ActionRepositoryAdminProps) {
                           size="sm"
                           onClick={() => handleExecute(action)}
                         >
-                          <Play className="h-4 w-4" />
+                          <Play className="h-[24px] w-[24px]" />
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => setSelectedAction(action)}
                         >
-                          <Edit className="h-4 w-4" />
+                          <Edit className="h-[24px] w-[24px]" />
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleDelete(action.id)}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-[24px] w-[24px]" />
                         </Button>
                       </div>
                     </TableCell>
@@ -41297,7 +41297,7 @@ export function AgentChatWidget() {
             <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 border-b border-border/50">
                 <div className="flex items-center gap-2">
                     <div className="h-8 w-8 rounded-full bg-[#0A1B2B] flex items-center justify-center border border-[#2B6CB0]/20">
-                        <Sparkles className="h-4 w-4 text-[#2B6CB0]" />
+                        <Sparkles className="h-[24px] w-[24px] text-[#2B6CB0]" />
                     </div>
                     <div>
                         <CardTitle className="text-sm font-medium">Astralis Assistant</CardTitle>
@@ -41306,10 +41306,10 @@ export function AgentChatWidget() {
                 </div>
                 <div className="flex items-center gap-1">
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsExpanded(!isExpanded)}>
-                        {isExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                        {isExpanded ? <Minimize2 className="h-[24px] w-[24px]" /> : <Maximize2 className="h-[24px] w-[24px]" />}
                     </Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsOpen(false)}>
-                        <X className="h-4 w-4" />
+                        <X className="h-[24px] w-[24px]" />
                     </Button>
                 </div>
             </CardHeader>
@@ -41369,7 +41369,7 @@ export function AgentChatWidget() {
                         disabled={isLoading}
                     />
                     <Button type="submit" size="icon" disabled={isLoading || !input.trim()} className="bg-[#2B6CB0] hover:bg-[#2B6CB0]/90">
-                        <Send className="h-4 w-4" />
+                        <Send className="h-[24px] w-[24px]" />
                     </Button>
                 </form>
             </CardFooter>
@@ -41724,9 +41724,9 @@ export function AutomationCard({
                 title={automation.isActive ? 'Pause automation' : 'Activate automation'}
               >
                 {automation.isActive ? (
-                  <Pause className="h-4 w-4" />
+                  <Pause className="h-[24px] w-[24px]" />
                 ) : (
-                  <Play className="h-4 w-4" />
+                  <Play className="h-[24px] w-[24px]" />
                 )}
               </Button>
             </div>
@@ -41800,7 +41800,7 @@ export function AutomationCard({
                 onClick={handleExecute}
                 className="flex-1"
               >
-                <Play className="h-4 w-4 mr-2" />
+                <Play className="h-[24px] w-[24px] mr-2" />
                 Execute
               </Button>
               <Button
@@ -42774,7 +42774,7 @@ export function IntegrationSetup({
           {/* Status Alerts */}
           {lastError && (status === 'CONNECTED_ERROR' || status === 'NEEDS_REAUTH') && (
             <Alert variant="error">
-              <AlertCircle className="h-4 w-4" />
+              <AlertCircle className="h-[24px] w-[24px]" />
               <AlertDescription>
                 <strong>Connection Issue:</strong> {lastError}
                 {status === 'NEEDS_REAUTH' && (
@@ -42788,7 +42788,7 @@ export function IntegrationSetup({
 
           {isExpired && (
             <Alert variant="error">
-              <AlertCircle className="h-4 w-4" />
+              <AlertCircle className="h-[24px] w-[24px]" />
               <AlertDescription>
                 <strong>Expired:</strong> This connection has expired. Please reconnect to continue
                 using it.
@@ -42801,7 +42801,7 @@ export function IntegrationSetup({
           {/* Unavailable Integration Alert */}
           {!available && unavailableReason && (
             <Alert variant="warning" showIcon>
-              <AlertCircle className="h-4 w-4" />
+              <AlertCircle className="h-[24px] w-[24px]" />
               <AlertDescription>
                 <strong>Not Available:</strong> {unavailableReason}
                 <div className="mt-2">
@@ -42898,7 +42898,7 @@ export function IntegrationSetup({
 
             <div className="space-y-4">
               <Alert>
-                <AlertCircle className="h-4 w-4" />
+                <AlertCircle className="h-[24px] w-[24px]" />
                 <AlertDescription>
                   <strong>OAuth Setup Required:</strong> This integration requires OAuth credentials to be configured for your organization.
                 </AlertDescription>
@@ -43226,9 +43226,9 @@ export function TriggerConfig({
                 title="Copy webhook URL"
               >
                 {copied ? (
-                  <Check className="h-4 w-4 text-success" />
+                  <Check className="h-[24px] w-[24px] text-success" />
                 ) : (
-                  <Copy className="h-4 w-4" />
+                  <Copy className="h-[24px] w-[24px]" />
                 )}
               </Button>
             </div>
@@ -45340,7 +45340,7 @@ export function AvailabilityEditor({
                       key={index}
                       className="flex items-center gap-2 bg-white p-3 rounded-md border border-slate-200"
                     >
-                      <Clock className="h-4 w-4 text-slate-400 flex-shrink-0" />
+                      <Clock className="h-[24px] w-[24px] text-slate-400 flex-shrink-0" />
                       <Input
                         type="time"
                         value={range.start}
@@ -45366,7 +45366,7 @@ export function AvailabilityEditor({
                           onClick={() => removeTimeRange(day, index)}
                           className="flex-shrink-0 text-red-500 hover:text-red-700 hover:bg-red-50"
                         >
-                          <X className="h-4 w-4" />
+                          <X className="h-[24px] w-[24px]" />
                         </Button>
                       )}
                     </div>
@@ -45412,7 +45412,7 @@ export function AvailabilityEditor({
           disabled={isSaving}
           className="gap-2"
         >
-          <Save className="h-4 w-4" />
+          <Save className="h-[24px] w-[24px]" />
           {isSaving ? "Saving..." : "Save Availability"}
         </Button>
       </div>
@@ -45889,7 +45889,7 @@ export function CalendarChatPanel({ userId, orgId, className, onEventCreated }: 
           {/* Capabilities Display */}
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-slate-300">
-              <Brain className="h-4 w-4" />
+              <Brain className="h-[24px] w-[24px]" />
               <span className="text-sm font-medium">Capabilities:</span>
             </div>
             <div className="flex gap-2">
@@ -46008,7 +46008,7 @@ export function CalendarChatPanel({ userId, orgId, className, onEventCreated }: 
         {error && (
           <div className="flex justify-center">
             <Alert className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950 max-w-[75%]">
-              <AlertCircle className="h-4 w-4 text-red-600" />
+              <AlertCircle className="h-[24px] w-[24px] text-red-600" />
               <AlertDescription className="text-red-800 dark:text-red-200">{error}</AlertDescription>
             </Alert>
           </div>
@@ -46038,7 +46038,7 @@ export function CalendarChatPanel({ userId, orgId, className, onEventCreated }: 
                     className="bg-green-600 hover:bg-green-700 text-white shadow-glow-green hover:shadow-glow-green transition-all duration-200"
                     size="sm"
                   >
-                    <CheckCircle className="h-4 w-4 mr-2" />
+                    <CheckCircle className="h-[24px] w-[24px] mr-2" />
                     Confirm Execution
                   </Button>
                   <Button
@@ -46047,7 +46047,7 @@ export function CalendarChatPanel({ userId, orgId, className, onEventCreated }: 
                     size="sm"
                     className="border-slate-300 hover:bg-slate-50"
                   >
-                    <XCircle className="h-4 w-4 mr-2" />
+                    <XCircle className="h-[24px] w-[24px] mr-2" />
                     Cancel Operation
                   </Button>
                 </div>
@@ -46242,7 +46242,7 @@ export function CalendarConnectionCard({
           {/* Sync Error Indicator */}
           {hasSyncErrors && (
             <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-md">
-              <AlertTriangle className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
+              <AlertTriangle className="h-[24px] w-[24px] text-red-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
                 <p className="text-sm font-medium text-red-900">
                   Sync Error ({connection.syncErrorCount}{" "}
@@ -46269,12 +46269,12 @@ export function CalendarConnectionCard({
           >
             {isSyncing ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-[24px] w-[24px] animate-spin" />
                 <span>Syncing...</span>
               </>
             ) : (
               <>
-                <RefreshCw className="h-4 w-4" />
+                <RefreshCw className="h-[24px] w-[24px]" />
                 <span>Sync Now</span>
               </>
             )}
@@ -46289,12 +46289,12 @@ export function CalendarConnectionCard({
           >
             {isDisconnecting ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-[24px] w-[24px] animate-spin" />
                 <span>Disconnecting...</span>
               </>
             ) : (
               <>
-                <Unlink className="h-4 w-4" />
+                <Unlink className="h-[24px] w-[24px]" />
                 <span>Disconnect</span>
               </>
             )}
@@ -46401,7 +46401,7 @@ export function CalendarView({
           onClick={() => handleViewChange("dayGridMonth")}
           className="flex items-center gap-2"
         >
-          <Calendar className="h-4 w-4" />
+          <Calendar className="h-[24px] w-[24px]" />
           <span className="hidden sm:inline">Month</span>
         </Button>
         <Button
@@ -46410,7 +46410,7 @@ export function CalendarView({
           onClick={() => handleViewChange("timeGridWeek")}
           className="flex items-center gap-2"
         >
-          <Clock className="h-4 w-4" />
+          <Clock className="h-[24px] w-[24px]" />
           <span className="hidden sm:inline">Week</span>
         </Button>
         <Button
@@ -46419,7 +46419,7 @@ export function CalendarView({
           onClick={() => handleViewChange("timeGridDay")}
           className="flex items-center gap-2"
         >
-          <Users className="h-4 w-4" />
+          <Users className="h-[24px] w-[24px]" />
           <span className="hidden sm:inline">Day</span>
         </Button>
       </div>
@@ -46620,17 +46620,17 @@ export function ConflictDetector({
     low: {
       badge: "bg-yellow-100 text-yellow-800 border-yellow-300",
       alert: "warning" as const,
-      icon: <AlertTriangle className="h-4 w-4" />,
+      icon: <AlertTriangle className="h-[24px] w-[24px]" />,
     },
     medium: {
       badge: "bg-orange-100 text-orange-800 border-orange-300",
       alert: "warning" as const,
-      icon: <AlertTriangle className="h-4 w-4" />,
+      icon: <AlertTriangle className="h-[24px] w-[24px]" />,
     },
     high: {
       badge: "bg-red-100 text-red-800 border-red-300",
       alert: "error" as const,
-      icon: <AlertTriangle className="h-4 w-4" />,
+      icon: <AlertTriangle className="h-[24px] w-[24px]" />,
     },
   };
 
@@ -47351,9 +47351,9 @@ export function EventForm({ event, onSubmit, onCancel, mode }: EventFormProps) {
         className="gap-2"
       >
         {isGettingSuggestions ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
+          <Loader2 className="h-[24px] w-[24px] animate-spin" />
         ) : (
-          <Sparkles className="h-4 w-4" />
+          <Sparkles className="h-[24px] w-[24px]" />
         )}
         Get AI Time Suggestions
       </Button>
@@ -47384,7 +47384,7 @@ export function EventForm({ event, onSubmit, onCancel, mode }: EventFormProps) {
             size="sm"
             onClick={handleAddParticipant}
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-[24px] w-[24px]" />
           </Button>
         </div>
         {errors.participantEmail && (
@@ -47446,14 +47446,14 @@ export function EventForm({ event, onSubmit, onCancel, mode }: EventFormProps) {
       {/* Conflict Warning */}
       {isCheckingConflicts && (
         <Alert>
-          <Loader2 className="h-4 w-4 animate-spin" />
+          <Loader2 className="h-[24px] w-[24px] animate-spin" />
           <AlertTitle>Checking for conflicts...</AlertTitle>
         </Alert>
       )}
 
       {!isCheckingConflicts && conflicts.length > 0 && (
         <Alert variant="warning">
-          <AlertTriangle className="h-4 w-4" />
+          <AlertTriangle className="h-[24px] w-[24px]" />
           <AlertTitle>Scheduling Conflicts Detected</AlertTitle>
           <AlertDescription>
             <div className="mt-2 space-y-1">
@@ -47471,7 +47471,7 @@ export function EventForm({ event, onSubmit, onCancel, mode }: EventFormProps) {
       {/* Submit Error */}
       {errors.submit && (
         <Alert variant="error">
-          <AlertTriangle className="h-4 w-4" />
+          <AlertTriangle className="h-[24px] w-[24px]" />
           <AlertDescription>{errors.submit}</AlertDescription>
         </Alert>
       )}
@@ -48133,7 +48133,7 @@ export function ReminderSettings({
 
           {/* Method Display (Email only for now) */}
           <div className="flex items-center gap-2 text-sm text-slate-600">
-            <Mail className="h-4 w-4" />
+            <Mail className="h-[24px] w-[24px]" />
             <span>Reminder method: Email notification</span>
           </div>
         </div>
@@ -48146,7 +48146,7 @@ export function ReminderSettings({
           className="w-full gap-2"
           disabled={selectedOffset === -1 && !customOffset}
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-[24px] w-[24px]" />
           Add Reminder
         </Button>
       </Card>
@@ -48165,7 +48165,7 @@ export function ReminderSettings({
                 >
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-astralis-blue/10 rounded-lg">
-                      <Bell className="h-4 w-4 text-astralis-blue" />
+                      <Bell className="h-[24px] w-[24px] text-astralis-blue" />
                     </div>
                     <div>
                       <p className="font-medium text-astralis-navy">
@@ -48184,7 +48184,7 @@ export function ReminderSettings({
                     onClick={() => handleRemoveReminder(index)}
                     className="text-red-500 hover:text-red-700 hover:bg-red-50"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-[24px] w-[24px]" />
                   </Button>
                 </Card>
               ))}
@@ -48338,7 +48338,7 @@ export function TimeSlotSuggestions({
                     {/* Date and Time */}
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-slate-400" />
+                        <Clock className="h-[24px] w-[24px] text-slate-400" />
                         <span className="text-base font-semibold text-astralis-navy">
                           {formatDate(startDate)}
                         </span>
@@ -49698,7 +49698,7 @@ export function AgentChatInterface({ context }: { context?: Record<string, any> 
       <div className="mt-4 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-astralis-blue font-semibold">
-            <Lightbulb className="h-4 w-4" />
+            <Lightbulb className="h-[24px] w-[24px]" />
             <span>Strategic Integration Recommendations</span>
           </div>
           <Button
@@ -49770,7 +49770,7 @@ export function AgentChatInterface({ context }: { context?: Record<string, any> 
             <div className="flex items-center gap-4">
               {context && (
                 <div className="flex items-center gap-2 px-3 py-2 bg-astralis-blue/20 rounded-lg border border-astralis-blue/30 cursor-help group relative">
-                  <Activity className="h-4 w-4 text-astralis-blue" />
+                  <Activity className="h-[24px] w-[24px] text-astralis-blue" />
                   <span className="text-xs font-medium text-astralis-blue uppercase tracking-wider">Context Active</span>
                   <div className="absolute top-full right-0 mt-2 w-64 p-3 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl hidden group-hover:block z-50 text-white text-xs animate-in fade-in slide-in-from-top-2 duration-200">
                     <div className="font-bold mb-2 flex items-center gap-2">
@@ -49805,7 +49805,7 @@ export function AgentChatInterface({ context }: { context?: Record<string, any> 
           {/* Agent Selector */}
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-slate-300">
-              <Settings className="h-4 w-4" />
+              <Settings className="h-[24px] w-[24px]" />
               <span className="text-sm font-medium">Active Agent:</span>
             </div>
             <Select value={selectedAgent} onValueChange={setSelectedAgent}>
@@ -49927,9 +49927,9 @@ export function AgentChatInterface({ context }: { context?: Record<string, any> 
                                 </span>
                               </div>
                               {res.status === 'success' || res.success ? (
-                                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                <CheckCircle2 className="h-[24px] w-[24px] text-green-500" />
                               ) : (
-                                <AlertTriangle className="h-4 w-4 text-red-500" />
+                                <AlertTriangle className="h-[24px] w-[24px] text-red-500" />
                               )}
                             </div>
                           ))}
@@ -49984,7 +49984,7 @@ export function AgentChatInterface({ context }: { context?: Record<string, any> 
         {error && (
           <div className="px-6 pb-4 flex-shrink-0">
             <Alert className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950">
-              <AlertTriangle className="h-4 w-4 text-red-600" />
+              <AlertTriangle className="h-[24px] w-[24px] text-red-600" />
               <AlertDescription className="text-red-800 dark:text-red-200">{error}</AlertDescription>
             </Alert>
           </div>
@@ -52173,7 +52173,7 @@ export function DebugPanel() {
 
         <div className="mt-6 space-y-6 flex-1 overflow-y-auto pr-2">
           <Button variant="outline" size="sm" onClick={fetchDebugData} disabled={isLoading}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-[24px] w-[24px] mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             Refresh Data
           </Button>
 
@@ -52518,7 +52518,7 @@ export function DocsChatAlpha({ documentIds, className, onClose }: DocsChatAlpha
         {isLoading && (
           <div className="flex justify-start">
             <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-100 text-slate-600 text-sm">
-              <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <svg className="h-[24px] w-[24px] animate-spin" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
@@ -52529,7 +52529,7 @@ export function DocsChatAlpha({ documentIds, className, onClose }: DocsChatAlpha
 
         {error && (
           <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-50 text-red-600 text-sm border border-red-200">
-            <svg className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="h-[24px] w-[24px] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span>{error}</span>
@@ -52960,7 +52960,7 @@ export function DocumentCard({
             {/* Error Messages */}
             {document.status === 'FAILED' && document.processingError && (
               <div className="mt-2 flex items-start gap-2">
-                <AlertCircle className="h-4 w-4 text-error flex-shrink-0 mt-0.5" />
+                <AlertCircle className="h-[24px] w-[24px] text-error flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
                   <p className="text-xs font-medium text-error">Processing Error:</p>
                   <p className="text-xs text-error">{document.processingError}</p>
@@ -52973,7 +52973,7 @@ export function DocumentCard({
              typeof document.metadata === 'object' &&
              'embeddingError' in document.metadata && (
               <div className="mt-2 flex items-start gap-2">
-                <AlertCircle className="h-4 w-4 text-warning flex-shrink-0 mt-0.5" />
+                <AlertCircle className="h-[24px] w-[24px] text-warning flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
                   <p className="text-xs font-medium text-warning">Embedding Error:</p>
                   <p className="text-xs text-warning">
@@ -53019,7 +53019,7 @@ export function DocumentCard({
               className="flex-1"
               disabled={!document.cdnUrl}
             >
-              <Eye className="h-4 w-4 mr-1" />
+              <Eye className="h-[24px] w-[24px] mr-1" />
               View
             </Button>
 
@@ -53363,7 +53363,7 @@ export function DocumentChat({ documentId, className }: DocumentChatProps) {
           {/* Capabilities Display */}
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-slate-300">
-              <Brain className="h-4 w-4" />
+              <Brain className="h-[24px] w-[24px]" />
               <span className="text-sm font-medium">Capabilities:</span>
             </div>
             <div className="flex gap-2">
@@ -53484,7 +53484,7 @@ export function DocumentChat({ documentId, className }: DocumentChatProps) {
         {error && (
           <div className="flex justify-center">
             <Alert className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950 max-w-[75%]">
-              <AlertCircle className="h-4 w-4 text-red-600" />
+              <AlertCircle className="h-[24px] w-[24px] text-red-600" />
               <AlertDescription className="text-red-800 dark:text-red-200">{error}</AlertDescription>
             </Alert>
           </div>
@@ -53993,7 +53993,7 @@ export function DocumentUploader({
                       className="flex-shrink-0 p-1 hover:bg-slate-200 rounded transition-colors"
                       aria-label="Remove file"
                     >
-                      <X className="h-4 w-4 text-slate-500" />
+                      <X className="h-[24px] w-[24px] text-slate-500" />
                     </button>
                   )}
                 </div>
@@ -54279,19 +54279,19 @@ export function DocumentViewer({ document, isOpen, onClose }: DocumentViewerProp
             <div className="flex items-center gap-2">
               {/* Zoom Controls */}
               <Button variant="outline" size="sm" onClick={handleZoomOut}>
-                <ZoomOut className="h-4 w-4" />
+                <ZoomOut className="h-[24px] w-[24px]" />
               </Button>
               <span className="text-sm text-slate-600 min-w-[60px] text-center">
                 {zoom}%
               </span>
               <Button variant="outline" size="sm" onClick={handleZoomIn}>
-                <ZoomIn className="h-4 w-4" />
+                <ZoomIn className="h-[24px] w-[24px]" />
               </Button>
 
               {/* Rotation */}
               {isImage && (
                 <Button variant="outline" size="sm" onClick={handleRotate}>
-                  <RotateCw className="h-4 w-4" />
+                  <RotateCw className="h-[24px] w-[24px]" />
                 </Button>
               )}
 
@@ -54311,12 +54311,12 @@ export function DocumentViewer({ document, isOpen, onClose }: DocumentViewerProp
                 >
                   {showOcrOverlay ? (
                     <>
-                      <EyeOff className="h-4 w-4 mr-1" />
+                      <EyeOff className="h-[24px] w-[24px] mr-1" />
                       Hide OCR
                     </>
                   ) : (
                     <>
-                      <Eye className="h-4 w-4 mr-1" />
+                      <Eye className="h-[24px] w-[24px] mr-1" />
                       Show OCR
                     </>
                   )}
@@ -54325,7 +54325,7 @@ export function DocumentViewer({ document, isOpen, onClose }: DocumentViewerProp
 
               {/* Download */}
               <Button variant="outline" size="sm" onClick={handleDownload}>
-                <Download className="h-4 w-4 mr-1" />
+                <Download className="h-[24px] w-[24px] mr-1" />
                 Download
               </Button>
             </div>
@@ -54381,7 +54381,7 @@ export function DocumentViewer({ document, isOpen, onClose }: DocumentViewerProp
           {showOcrOverlay && document.ocrText && (
             <div className="p-4 bg-white border border-slate-200 rounded-lg">
               <h4 className="text-sm font-semibold text-astralis-navy mb-2 flex items-center gap-2">
-                <FileText className="h-4 w-4" />
+                <FileText className="h-[24px] w-[24px]" />
                 Extracted Text (OCR)
                 {document.ocrConfidence && (
                   <Badge variant="secondary" className="ml-auto">
@@ -58138,11 +58138,11 @@ export function IntakeTable({
             >
               Priority
               {column.getIsSorted() === 'asc' ? (
-                <ArrowUp className="ml-2 h-4 w-4" />
+                <ArrowUp className="ml-2 h-[24px] w-[24px]" />
               ) : column.getIsSorted() === 'desc' ? (
-                <ArrowDown className="ml-2 h-4 w-4" />
+                <ArrowDown className="ml-2 h-[24px] w-[24px]" />
               ) : (
-                <ArrowUpDown className="ml-2 h-4 w-4" />
+                <ArrowUpDown className="ml-2 h-[24px] w-[24px]" />
               )}
             </Button>
           );
@@ -58179,11 +58179,11 @@ export function IntakeTable({
             >
               Created
               {column.getIsSorted() === 'asc' ? (
-                <ArrowUp className="ml-2 h-4 w-4" />
+                <ArrowUp className="ml-2 h-[24px] w-[24px]" />
               ) : column.getIsSorted() === 'desc' ? (
-                <ArrowDown className="ml-2 h-4 w-4" />
+                <ArrowDown className="ml-2 h-[24px] w-[24px]" />
               ) : (
-                <ArrowUpDown className="ml-2 h-4 w-4" />
+                <ArrowUpDown className="ml-2 h-[24px] w-[24px]" />
               )}
             </Button>
           );
@@ -58318,7 +58318,7 @@ export function IntakeTable({
               onClick={() => table.setPageIndex(0)}
               disabled={!table.getCanPreviousPage()}
             >
-              <ChevronsLeft className="h-4 w-4" />
+              <ChevronsLeft className="h-[24px] w-[24px]" />
             </Button>
             <Button
               variant="outline"
@@ -58326,7 +58326,7 @@ export function IntakeTable({
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-[24px] w-[24px]" />
             </Button>
             <Button
               variant="outline"
@@ -58334,7 +58334,7 @@ export function IntakeTable({
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
             >
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-[24px] w-[24px]" />
             </Button>
             <Button
               variant="outline"
@@ -58342,7 +58342,7 @@ export function IntakeTable({
               onClick={() => table.setPageIndex(table.getPageCount() - 1)}
               disabled={!table.getCanNextPage()}
             >
-              <ChevronsRight className="h-4 w-4" />
+              <ChevronsRight className="h-[24px] w-[24px]" />
             </Button>
           </div>
         </div>
@@ -58600,7 +58600,7 @@ export function IntegrationCard({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <MoreVertical className="h-4 w-4" />
+                  <MoreVertical className="h-[24px] w-[24px]" />
                   <span className="sr-only">Open menu</span>
                 </Button>
               </DropdownMenuTrigger>
@@ -58608,7 +58608,7 @@ export function IntegrationCard({
                 {onConfigure && (
                   <>
                     <DropdownMenuItem onClick={onConfigure}>
-                      <Settings2 className="mr-2 h-4 w-4" />
+                      <Settings2 className="mr-2 h-[24px] w-[24px]" />
                       Configure OAuth
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -58620,7 +58620,7 @@ export function IntegrationCard({
                       onClick={() => connection && onTest(connection.id)}
                       disabled={isTesting}
                     >
-                      <RefreshCw className={`mr-2 h-4 w-4 ${isTesting ? 'animate-spin' : ''}`} />
+                      <RefreshCw className={`mr-2 h-[24px] w-[24px] ${isTesting ? 'animate-spin' : ''}`} />
                       Test Connection
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
@@ -58629,7 +58629,7 @@ export function IntegrationCard({
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        <ExternalLink className="mr-2 h-4 w-4" />
+                        <ExternalLink className="mr-2 h-[24px] w-[24px]" />
                         Open {integration.name}
                       </a>
                     </DropdownMenuItem>
@@ -58638,7 +58638,7 @@ export function IntegrationCard({
                       onClick={() => setShowDisconnectDialog(true)}
                       className="text-red-600 focus:text-red-600"
                     >
-                      <Trash2 className="mr-2 h-4 w-4" />
+                      <Trash2 className="mr-2 h-[24px] w-[24px]" />
                       Disconnect
                     </DropdownMenuItem>
                   </>
@@ -58650,7 +58650,7 @@ export function IntegrationCard({
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      <ExternalLink className="mr-2 h-4 w-4" />
+                      <ExternalLink className="mr-2 h-[24px] w-[24px]" />
                       Documentation
                     </a>
                   </DropdownMenuItem>
@@ -58675,7 +58675,7 @@ export function IntegrationCard({
                   size="sm"
                   variant="outline"
                 >
-                  <Settings2 className="mr-2 h-4 w-4" />
+                  <Settings2 className="mr-2 h-[24px] w-[24px]" />
                   Configure
                 </Button>
               ) : (
@@ -58691,7 +58691,7 @@ export function IntegrationCard({
                 >
                   {isConnecting ? (
                     <>
-                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                      <RefreshCw className="mr-2 h-[24px] w-[24px] animate-spin" />
                       Connecting...
                     </>
                   ) : (
@@ -59137,7 +59137,7 @@ export function IntegrationConfigDialog({
                 onClick={() => setShowSecret(!showSecret)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
               >
-                {showSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showSecret ? <EyeOff className="h-[24px] w-[24px]" /> : <Eye className="h-[24px] w-[24px]" />}
               </button>
             </div>
             {errors.clientSecret && (
@@ -59221,7 +59221,7 @@ export function IntegrationConfigDialog({
               >
                 {isTesting ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <Loader2 className="h-[24px] w-[24px] mr-2 animate-spin" />
                     Testing...
                   </>
                 ) : (
@@ -59256,7 +59256,7 @@ export function IntegrationConfigDialog({
             <Button type="submit" disabled={isSaving}>
               {isSaving ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="h-[24px] w-[24px] mr-2 animate-spin" />
                   Saving...
                 </>
               ) : (
@@ -59461,7 +59461,7 @@ class IntegrationsErrorBoundary extends Component<Props, State> {
         <div className="min-h-screen bg-slate-50 p-6 flex items-center justify-center">
           <div className="max-w-md w-full">
             <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
+              <AlertTriangle className="h-[24px] w-[24px]" />
               <AlertTitle>Something went wrong</AlertTitle>
               <AlertDescription className="mt-2">
                 The integrations page encountered an error. This might be due to a temporary issue.
@@ -59470,7 +59470,7 @@ class IntegrationsErrorBoundary extends Component<Props, State> {
 
             <div className="mt-4 flex gap-2">
               <Button onClick={this.handleRetry} variant="outline">
-                <RefreshCw className="h-4 w-4 mr-2" />
+                <RefreshCw className="h-[24px] w-[24px] mr-2" />
                 Try Again
               </Button>
               <Button onClick={this.handleReload}>
@@ -59531,7 +59531,7 @@ export function IntegrationsFilters({
   return (
     <div className="flex flex-col sm:flex-row gap-4 mb-6">
       <div className="relative flex-1">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-[24px] w-[24px]" />
         <Input
           placeholder="Search integrations..."
           value={searchQuery}
@@ -59841,7 +59841,7 @@ export function IntegrationsGrid({ initialConnections = [], isAdmin = false }: I
         </Tabs>
 
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 h-[24px] w-[24px] -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search integrations..."
             value={searchQuery}
@@ -60250,7 +60250,7 @@ export function OAuthConfigModal({ open, onOpenChange, provider, onConfigured }:
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <Alert>
-            <AlertCircle className="h-4 w-4" />
+            <AlertCircle className="h-[24px] w-[24px]" />
             <AlertDescription>
               <strong>Setup Required:</strong> {info.description}
               {info.docsUrl !== '#' && (
@@ -60322,7 +60322,7 @@ export function OAuthConfigModal({ open, onOpenChange, provider, onConfigured }:
 
           {error && (
             <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
+              <AlertCircle className="h-[24px] w-[24px]" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
@@ -62387,7 +62387,7 @@ export function DashboardSidebar({ user, isMobile = false, onClose }: DashboardS
                 {activities.length > 0 && (
                   <Badge
                     variant="error"
-                    className="absolute top-1 left-7 h-4 w-4 flex items-center justify-center p-0 text-[10px]"
+                    className="absolute top-1 left-7 h-[24px] w-[24px] flex items-center justify-center p-0 text-[10px]"
                   >
                     {activities.length > 9 ? '9+' : activities.length}
                   </Badge>
@@ -62952,7 +62952,7 @@ export function Navigation() {
                   className="border-slate-600 text-slate-100 hover:bg-slate-700 hover:text-white transition-all duration-200"
                   onClick={handleSignOut}
                 >
-                  <LogOut className="h-4 w-4 mr-2" />
+                  <LogOut className="h-[24px] w-[24px] mr-2" />
                   Sign Out
                 </Button>
               </>
@@ -65097,7 +65097,7 @@ export function CreatePipelineModal({
                       <div className="flex-1">
                         <CardTitle className="text-lg text-astralis-navy flex items-center gap-2">
                           <div className={`p-2 rounded-md ${getTemplateIconColor(template.type)}`}>
-                            <LayoutGrid className="h-4 w-4" />
+                            <LayoutGrid className="h-[24px] w-[24px]" />
                           </div>
                           {template.name}
                         </CardTitle>
@@ -66883,7 +66883,7 @@ export function CalendarChatSidePanel({
       <div className="flex items-center justify-between p-4 border-b border-border/50">
         <span className="text-lg font-semibold text-astralis-navy">Calendar Assistant</span>
         <Button variant="ghost" size="icon" onClick={() => closeRightPanel()}>
-          <X className="h-4 w-4" />
+          <X className="h-[24px] w-[24px]" />
         </Button>
       </div>
       <div className="h-[calc(100%-60px)]">
@@ -67064,7 +67064,7 @@ export function EventDetailsSheet({
                         key={index}
                         className="flex items-center gap-2 text-sm text-slate-700"
                       >
-                        <Users className="h-4 w-4 text-slate-400" />
+                        <Users className="h-[24px] w-[24px] text-slate-400" />
                         {email}
                       </div>
                     ))}
@@ -67479,7 +67479,7 @@ export function PublicBookingForm({
           {/* Personal Information */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-              <User className="h-4 w-4" />
+              <User className="h-[24px] w-[24px]" />
               Your Information
             </h3>
 
@@ -67509,7 +67509,7 @@ export function PublicBookingForm({
                 Email <span className="text-red-500">*</span>
               </Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-[24px] w-[24px] text-slate-400" />
                 <Input
                   id="email"
                   name="email"
@@ -67532,7 +67532,7 @@ export function PublicBookingForm({
             <div className="space-y-2">
               <Label htmlFor="phone">Phone (optional)</Label>
               <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-[24px] w-[24px] text-slate-400" />
                 <Input
                   id="phone"
                   name="phone"
@@ -67549,7 +67549,7 @@ export function PublicBookingForm({
           {/* Appointment Details */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-              <Clock className="h-4 w-4" />
+              <Clock className="h-[24px] w-[24px]" />
               Appointment Details
             </h3>
 
@@ -67612,7 +67612,7 @@ export function PublicBookingForm({
                   {MEETING_TYPES.map((type) => (
                     <SelectItem key={type.value} value={type.value}>
                       <span className="flex items-center gap-2">
-                        <type.icon className="h-4 w-4" />
+                        <type.icon className="h-[24px] w-[24px]" />
                         {type.label}
                       </span>
                     </SelectItem>
@@ -67660,7 +67660,7 @@ export function PublicBookingForm({
           {/* Description */}
           <div className="space-y-2">
             <Label htmlFor="description" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
+              <FileText className="h-[24px] w-[24px]" />
               Description (optional)
             </Label>
             <Textarea
@@ -71495,7 +71495,7 @@ export function TimezoneSelector({
             disabled={saving}
             className="gap-1.5"
           >
-            <MapPin className="h-4 w-4" />
+            <MapPin className="h-[24px] w-[24px]" />
             Detect
           </Button>
         </div>
@@ -71521,7 +71521,7 @@ export function TimezoneSelector({
           className="gap-1.5"
           variant="primary"
         >
-          {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+          {saving && <Loader2 className="h-[24px] w-[24px] animate-spin" />}
           {saving ? 'Saving...' : saved ? 'Saved!' : 'Save Preferences'}
         </Button>
       </div>
@@ -71571,7 +71571,7 @@ const AccordionTrigger = React.forwardRef<
       {...props}
     >
       {children}
-      <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 text-slate-500" />
+      <ChevronDown className="h-[24px] w-[24px] shrink-0 transition-transform duration-200 text-slate-500" />
     </AccordionPrimitive.Trigger>
   </AccordionPrimitive.Header>
 ));
@@ -72116,7 +72116,7 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
         className={cn(alertVariants({ variant }), className)}
         {...props}
       >
-        {showIcon && <Icon className="h-4 w-4" />}
+        {showIcon && <Icon className="h-[24px] w-[24px]" />}
         {children}
       </div>
     );
@@ -74174,7 +74174,7 @@ const DialogContent = React.forwardRef<
       {children}
       {showCloseButton && (
         <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-white transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-astralis-blue focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-slate-100 data-[state=open]:text-slate-500">
-          <X className="h-4 w-4" />
+          <X className="h-[24px] w-[24px]" />
           <span className="sr-only">Close</span>
         </DialogPrimitive.Close>
       )}
@@ -74332,7 +74332,7 @@ const DropdownMenuSubTrigger = React.forwardRef<
     {...props}
   >
     {children}
-    <ChevronRight className="ml-auto h-4 w-4" />
+    <ChevronRight className="ml-auto h-[24px] w-[24px]" />
   </DropdownMenuPrimitive.SubTrigger>
 ));
 DropdownMenuSubTrigger.displayName =
@@ -74406,7 +74406,7 @@ const DropdownMenuCheckboxItem = React.forwardRef<
   >
     <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
       <DropdownMenuPrimitive.ItemIndicator>
-        <Check className="h-4 w-4" />
+        <Check className="h-[24px] w-[24px]" />
       </DropdownMenuPrimitive.ItemIndicator>
     </span>
     {children}
@@ -75282,7 +75282,7 @@ const SelectTrigger = React.forwardRef<
   >
     {children}
     <SelectPrimitive.Icon asChild>
-      <ChevronDown className="h-4 w-4 opacity-50" />
+      <ChevronDown className="h-[24px] w-[24px] opacity-50" />
     </SelectPrimitive.Icon>
   </SelectPrimitive.Trigger>
 ));
@@ -75300,7 +75300,7 @@ const SelectScrollUpButton = React.forwardRef<
     )}
     {...props}
   >
-    <ChevronUp className="h-4 w-4" />
+    <ChevronUp className="h-[24px] w-[24px]" />
   </SelectPrimitive.ScrollUpButton>
 ));
 SelectScrollUpButton.displayName = SelectPrimitive.ScrollUpButton.displayName;
@@ -75317,7 +75317,7 @@ const SelectScrollDownButton = React.forwardRef<
     )}
     {...props}
   >
-    <ChevronDown className="h-4 w-4" />
+    <ChevronDown className="h-[24px] w-[24px]" />
   </SelectPrimitive.ScrollDownButton>
 ));
 SelectScrollDownButton.displayName =
@@ -75385,7 +75385,7 @@ const SelectItem = React.forwardRef<
   >
     <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
       <SelectPrimitive.ItemIndicator>
-        <Check className="h-4 w-4 text-astralis-blue" />
+        <Check className="h-[24px] w-[24px] text-astralis-blue" />
       </SelectPrimitive.ItemIndicator>
     </span>
 
@@ -75515,7 +75515,7 @@ const SheetContent = React.forwardRef<
     >
       {children}
       <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-white transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-astralis-blue focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-slate-100">
-        <X className="h-4 w-4" />
+        <X className="h-[24px] w-[24px]" />
         <span className="sr-only">Close</span>
       </SheetPrimitive.Close>
     </SheetPrimitive.Content>
@@ -75757,7 +75757,7 @@ export const CommentList: Story = {
           <div className="flex-1 space-y-2">
             <Skeleton className="h-4 w-32" />
             <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-4/5" />
+            <Skeleton className="h-[24px] w-[24px]/5" />
           </div>
         </div>
       ))}
@@ -76500,7 +76500,7 @@ const ToastClose = React.forwardRef<
     toast-close=""
     {...props}
   >
-    <X className="h-4 w-4" />
+    <X className="h-[24px] w-[24px]" />
   </ToastPrimitives.Close>
 ))
 ToastClose.displayName = ToastPrimitives.Close.displayName

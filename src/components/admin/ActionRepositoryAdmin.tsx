@@ -174,15 +174,15 @@ export function ActionRepositoryAdmin({ orgId }: ActionRepositoryAdminProps) {
   const getStatusIcon = (status: ActionStatus) => {
     switch (status) {
       case 'ACTIVE':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
+        return <CheckCircle className="h-[24px] w-[24px] text-green-500" />;
       case 'INACTIVE':
-        return <Clock className="h-4 w-4 text-yellow-500" />;
+        return <Clock className="h-[24px] w-[24px] text-yellow-500" />;
       case 'DEPRECATED':
-        return <AlertTriangle className="h-4 w-4 text-orange-500" />;
+        return <AlertTriangle className="h-[24px] w-[24px] text-orange-500" />;
       case 'BROKEN':
-        return <AlertTriangle className="h-4 w-4 text-red-500" />;
+        return <AlertTriangle className="h-[24px] w-[24px] text-red-500" />;
       default:
-        return <Clock className="h-4 w-4 text-gray-500" />;
+        return <Clock className="h-[24px] w-[24px] text-gray-500" />;
     }
   };
 
@@ -235,11 +235,11 @@ export function ActionRepositoryAdmin({ orgId }: ActionRepositoryAdminProps) {
             onClick={loadActions}
             disabled={loading}
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-[24px] w-[24px] mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
           <Button onClick={handleDiscoverActions} disabled={loading}>
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="h-[24px] w-[24px] mr-2" />
             Discover Actions
           </Button>
         </div>
@@ -304,7 +304,7 @@ export function ActionRepositoryAdmin({ orgId }: ActionRepositoryAdminProps) {
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-[24px] w-[24px] text-slate-400" />
               <Input
                 placeholder="Search actions..."
                 value={searchQuery}
@@ -359,7 +359,7 @@ export function ActionRepositoryAdmin({ orgId }: ActionRepositoryAdminProps) {
       {/* Error State */}
       {error && (
         <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
+          <AlertTriangle className="h-[24px] w-[24px]" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
@@ -448,21 +448,21 @@ export function ActionRepositoryAdmin({ orgId }: ActionRepositoryAdminProps) {
                           size="sm"
                           onClick={() => handleExecute(action)}
                         >
-                          <Play className="h-4 w-4" />
+                          <Play className="h-[24px] w-[24px]" />
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => setSelectedAction(action)}
                         >
-                          <Edit className="h-4 w-4" />
+                          <Edit className="h-[24px] w-[24px]" />
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleDelete(action.id)}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-[24px] w-[24px]" />
                         </Button>
                       </div>
                     </TableCell>

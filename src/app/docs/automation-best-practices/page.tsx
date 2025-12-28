@@ -327,17 +327,17 @@ export default function AutomationBestPracticesPage() {
             {commonPitfalls.map((pitfall) => (
               <Alert key={pitfall.pitfall} className={
                 pitfall.severity === 'Critical' ? 'border-red-200 bg-red-50' :
-                pitfall.severity === 'High' ? 'border-orange-200 bg-orange-50' :
-                'border-yellow-200 bg-yellow-50'
+                  pitfall.severity === 'High' ? 'border-orange-200 bg-orange-50' :
+                    'border-yellow-200 bg-yellow-50'
               }>
-                <AlertTriangle className="h-4 w-4" />
+                <AlertTriangle className="h-[24px] w-[24px]" />
                 <AlertDescription>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <strong className="text-lg">{pitfall.pitfall}</strong>
                       <Badge variant={
                         pitfall.severity === 'Critical' ? 'destructive' :
-                        pitfall.severity === 'High' ? 'secondary' : 'outline'
+                          pitfall.severity === 'High' ? 'secondary' : 'outline'
                       }>
                         {pitfall.severity}
                       </Badge>

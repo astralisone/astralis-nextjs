@@ -157,10 +157,10 @@ export default function DocumentsPage() {
   };
 
   const SortIcon = ({ column }: { column: SortColumn }) => {
-    if (sortColumn !== column) return <ChevronUp className="h-4 w-4 text-slate-300" />;
+    if (sortColumn !== column) return <ChevronUp className="h-[24px] w-[24px] text-slate-300" />;
     return sortDirection === 'asc'
-      ? <ChevronUp className="h-4 w-4 text-astralis-blue" />
-      : <ChevronDown className="h-4 w-4 text-astralis-blue" />;
+      ? <ChevronUp className="h-[24px] w-[24px] text-astralis-blue" />
+      : <ChevronDown className="h-[24px] w-[24px] text-astralis-blue" />;
   };
 
   return (
@@ -171,11 +171,11 @@ export default function DocumentsPage() {
         actions={
           <div className="flex gap-3">
             <Button variant="outline" onClick={() => handleChat()}>
-              <MessageSquare className="h-4 w-4 mr-2" />
+              <MessageSquare className="h-[24px] w-[24px] mr-2" />
               Chat with Documents
             </Button>
             <Button variant="primary" onClick={() => setShowUploader(true)}>
-              <UploadIcon className="h-4 w-4 mr-2" />
+              <UploadIcon className="h-[24px] w-[24px] mr-2" />
               Upload
             </Button>
           </div>
@@ -210,7 +210,7 @@ export default function DocumentsPage() {
 
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-[24px] w-[24px] text-slate-400" />
           <Input
             type="search"
             placeholder="Search documents..."
@@ -250,7 +250,7 @@ export default function DocumentsPage() {
           <AlertDescription>
             <p className="mb-3">{error instanceof Error ? error.message : 'An error occurred.'}</p>
             <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
-              <RefreshCw className="h-4 w-4 mr-2" />
+              <RefreshCw className="h-[24px] w-[24px] mr-2" />
               Retry
             </Button>
           </AlertDescription>
@@ -305,7 +305,7 @@ export default function DocumentsPage() {
                             className="p-2 hover:bg-slate-100 rounded"
                             title="View"
                           >
-                            <Eye className="h-4 w-4" />
+                            <Eye className="h-[24px] w-[24px]" />
                           </button>
                           <button
                             onClick={() => handleDownload(doc)}
@@ -313,7 +313,7 @@ export default function DocumentsPage() {
                             title="Download"
                             disabled={!doc.cdnUrl}
                           >
-                            <Download className="h-4 w-4" />
+                            <Download className="h-[24px] w-[24px]" />
                           </button>
                         </div>
                       </TableCell>

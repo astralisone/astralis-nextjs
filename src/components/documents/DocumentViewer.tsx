@@ -135,19 +135,19 @@ export function DocumentViewer({ document, isOpen, onClose }: DocumentViewerProp
             <div className="flex items-center gap-2">
               {/* Zoom Controls */}
               <Button variant="outline" size="sm" onClick={handleZoomOut}>
-                <ZoomOut className="h-4 w-4" />
+                <ZoomOut className="h-[24px] w-[24px]" />
               </Button>
               <span className="text-sm text-slate-600 min-w-[60px] text-center">
                 {zoom}%
               </span>
               <Button variant="outline" size="sm" onClick={handleZoomIn}>
-                <ZoomIn className="h-4 w-4" />
+                <ZoomIn className="h-[24px] w-[24px]" />
               </Button>
 
               {/* Rotation */}
               {isImage && (
                 <Button variant="outline" size="sm" onClick={handleRotate}>
-                  <RotateCw className="h-4 w-4" />
+                  <RotateCw className="h-[24px] w-[24px]" />
                 </Button>
               )}
 
@@ -167,12 +167,12 @@ export function DocumentViewer({ document, isOpen, onClose }: DocumentViewerProp
                 >
                   {showOcrOverlay ? (
                     <>
-                      <EyeOff className="h-4 w-4 mr-1" />
+                      <EyeOff className="h-[24px] w-[24px] mr-1" />
                       Hide OCR
                     </>
                   ) : (
                     <>
-                      <Eye className="h-4 w-4 mr-1" />
+                      <Eye className="h-[24px] w-[24px] mr-1" />
                       Show OCR
                     </>
                   )}
@@ -181,7 +181,7 @@ export function DocumentViewer({ document, isOpen, onClose }: DocumentViewerProp
 
               {/* Download */}
               <Button variant="outline" size="sm" onClick={handleDownload}>
-                <Download className="h-4 w-4 mr-1" />
+                <Download className="h-[24px] w-[24px] mr-1" />
                 Download
               </Button>
             </div>
@@ -237,7 +237,7 @@ export function DocumentViewer({ document, isOpen, onClose }: DocumentViewerProp
           {showOcrOverlay && document.ocrText && (
             <div className="p-4 bg-white border border-slate-200 rounded-lg">
               <h4 className="text-sm font-semibold text-astralis-navy mb-2 flex items-center gap-2">
-                <FileText className="h-4 w-4" />
+                <FileText className="h-[24px] w-[24px]" />
                 Extracted Text (OCR)
                 {document.ocrConfidence && (
                   <Badge variant="secondary" className="ml-auto">
@@ -301,8 +301,8 @@ export function DocumentViewer({ document, isOpen, onClose }: DocumentViewerProp
                     document.status === 'COMPLETED'
                       ? 'success'
                       : document.status === 'FAILED'
-                      ? 'error'
-                      : 'warning'
+                        ? 'error'
+                        : 'warning'
                   }
                 >
                   {document.status}

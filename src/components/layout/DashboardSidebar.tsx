@@ -257,7 +257,7 @@ export function DashboardSidebar({ user, isMobile = false, onClose }: DashboardS
                 {activities.length > 0 && (
                   <Badge
                     variant="error"
-                    className="absolute top-1 left-7 h-4 w-4 flex items-center justify-center p-0 text-[10px]"
+                    className="absolute top-1 left-7 h-[24px] w-[24px] flex items-center justify-center p-0 text-[10px]"
                   >
                     {activities.length > 9 ? '9+' : activities.length}
                   </Badge>

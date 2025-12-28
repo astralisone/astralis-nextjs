@@ -366,9 +366,9 @@ export function EventForm({ event, onSubmit, onCancel, mode }: EventFormProps) {
         className="gap-2"
       >
         {isGettingSuggestions ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
+          <Loader2 className="h-[24px] w-[24px] animate-spin" />
         ) : (
-          <Sparkles className="h-4 w-4" />
+          <Sparkles className="h-[24px] w-[24px]" />
         )}
         Get AI Time Suggestions
       </Button>
@@ -399,7 +399,7 @@ export function EventForm({ event, onSubmit, onCancel, mode }: EventFormProps) {
             size="sm"
             onClick={handleAddParticipant}
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-[24px] w-[24px]" />
           </Button>
         </div>
         {errors.participantEmail && (
@@ -461,14 +461,14 @@ export function EventForm({ event, onSubmit, onCancel, mode }: EventFormProps) {
       {/* Conflict Warning */}
       {isCheckingConflicts && (
         <Alert>
-          <Loader2 className="h-4 w-4 animate-spin" />
+          <Loader2 className="h-[24px] w-[24px] animate-spin" />
           <AlertTitle>Checking for conflicts...</AlertTitle>
         </Alert>
       )}
 
       {!isCheckingConflicts && conflicts.length > 0 && (
         <Alert variant="warning">
-          <AlertTriangle className="h-4 w-4" />
+          <AlertTriangle className="h-[24px] w-[24px]" />
           <AlertTitle>Scheduling Conflicts Detected</AlertTitle>
           <AlertDescription>
             <div className="mt-2 space-y-1">
@@ -486,7 +486,7 @@ export function EventForm({ event, onSubmit, onCancel, mode }: EventFormProps) {
       {/* Submit Error */}
       {errors.submit && (
         <Alert variant="error">
-          <AlertTriangle className="h-4 w-4" />
+          <AlertTriangle className="h-[24px] w-[24px]" />
           <AlertDescription>{errors.submit}</AlertDescription>
         </Alert>
       )}

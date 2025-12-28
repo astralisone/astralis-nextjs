@@ -125,11 +125,11 @@ export function DocumentUploader({
             prev.map((upload, idx) =>
               idx === i
                 ? {
-                    ...upload,
-                    status: 'processing',
-                    progress: 100,
-                    document: response.document,
-                  }
+                  ...upload,
+                  status: 'processing',
+                  progress: 100,
+                  document: response.document,
+                }
                 : upload
             )
           );
@@ -148,10 +148,10 @@ export function DocumentUploader({
             prev.map((upload, idx) =>
               idx === i
                 ? {
-                    ...upload,
-                    status: 'error',
-                    error: err instanceof Error ? err.message : 'Upload failed',
-                  }
+                  ...upload,
+                  status: 'error',
+                  error: err instanceof Error ? err.message : 'Upload failed',
+                }
                 : upload
             )
           );
@@ -381,7 +381,7 @@ export function DocumentUploader({
                       className="flex-shrink-0 p-1 hover:bg-slate-200 rounded transition-colors"
                       aria-label="Remove file"
                     >
-                      <X className="h-4 w-4 text-slate-500" />
+                      <X className="h-[24px] w-[24px] text-slate-500" />
                     </button>
                   )}
                 </div>

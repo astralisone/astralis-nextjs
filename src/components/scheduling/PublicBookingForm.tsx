@@ -345,7 +345,7 @@ export function PublicBookingForm({
           {/* Personal Information */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-              <User className="h-4 w-4" />
+              <User className="h-[24px] w-[24px]" />
               Your Information
             </h3>
 
@@ -375,7 +375,7 @@ export function PublicBookingForm({
                 Email <span className="text-red-500">*</span>
               </Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-[24px] w-[24px] text-slate-400" />
                 <Input
                   id="email"
                   name="email"
@@ -398,7 +398,7 @@ export function PublicBookingForm({
             <div className="space-y-2">
               <Label htmlFor="phone">Phone (optional)</Label>
               <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-[24px] w-[24px] text-slate-400" />
                 <Input
                   id="phone"
                   name="phone"
@@ -415,7 +415,7 @@ export function PublicBookingForm({
           {/* Appointment Details */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-              <Clock className="h-4 w-4" />
+              <Clock className="h-[24px] w-[24px]" />
               Appointment Details
             </h3>
 
@@ -478,7 +478,7 @@ export function PublicBookingForm({
                   {MEETING_TYPES.map((type) => (
                     <SelectItem key={type.value} value={type.value}>
                       <span className="flex items-center gap-2">
-                        <type.icon className="h-4 w-4" />
+                        <type.icon className="h-[24px] w-[24px]" />
                         {type.label}
                       </span>
                     </SelectItem>
@@ -526,7 +526,7 @@ export function PublicBookingForm({
           {/* Description */}
           <div className="space-y-2">
             <Label htmlFor="description" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
+              <FileText className="h-[24px] w-[24px]" />
               Description (optional)
             </Label>
             <Textarea

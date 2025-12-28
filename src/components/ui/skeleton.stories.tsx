@@ -165,7 +165,7 @@ export const CommentList: Story = {
           <div className="flex-1 space-y-2">
             <Skeleton className="h-4 w-32" />
             <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-4/5" />
+            <Skeleton className="h-[24px] w-[24px]/5" />
           </div>
         </div>
       ))}

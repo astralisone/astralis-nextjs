@@ -122,7 +122,7 @@ export default function AppError({ error, reset }: AppErrorProps) {
             size="lg"
             className="min-w-[160px]"
           >
-            <RefreshCw className="mr-2 h-4 w-4" />
+            <RefreshCw className="mr-2 h-[24px] w-[24px]" />
             Try Again
           </Button>
 
@@ -132,7 +132,7 @@ export default function AppError({ error, reset }: AppErrorProps) {
             size="lg"
             className="min-w-[160px]"
           >
-            <Home className="mr-2 h-4 w-4" />
+            <Home className="mr-2 h-[24px] w-[24px]" />
             Go Home
           </Button>
         </div>

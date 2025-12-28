@@ -69,7 +69,7 @@ export function EventDetailsSheet({
                         key={index}
                         className="flex items-center gap-2 text-sm text-slate-700"
                       >
-                        <Users className="h-4 w-4 text-slate-400" />
+                        <Users className="h-[24px] w-[24px] text-slate-400" />
                         {email}
                       </div>
                     ))}

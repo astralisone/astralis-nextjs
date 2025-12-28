@@ -158,7 +158,7 @@ export function Navigation() {
                   className="border-slate-600 text-slate-100 hover:bg-slate-700 hover:text-white transition-all duration-200"
                   onClick={handleSignOut}
                 >
-                  <LogOut className="h-4 w-4 mr-2" />
+                  <LogOut className="h-[24px] w-[24px] mr-2" />
                   Sign Out
                 </Button>
               </>

@@ -109,7 +109,7 @@ export function DocumentChat({ documentId, className }: DocumentChatProps) {
           {/* Capabilities Display */}
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-slate-300">
-              <Brain className="h-4 w-4" />
+              <Brain className="h-[24px] w-[24px]" />
               <span className="text-sm font-medium">Capabilities:</span>
             </div>
             <div className="flex gap-2">
@@ -158,9 +158,8 @@ export function DocumentChat({ documentId, className }: DocumentChatProps) {
         {messages.map(msg => (
           <div
             key={msg.id}
-            className={`flex gap-4 group ${
-              msg.role === 'user' ? 'justify-end' : 'justify-start'
-            }`}
+            className={`flex gap-4 group ${msg.role === 'user' ? 'justify-end' : 'justify-start'
+              }`}
           >
             {msg.role === 'assistant' && (
               <div className="flex-shrink-0">
@@ -180,11 +179,10 @@ export function DocumentChat({ documentId, className }: DocumentChatProps) {
 
               {/* Message Content */}
               <div
-                className={`rounded-2xl px-6 py-4 shadow-card border backdrop-blur-sm transition-all duration-200 group-hover:shadow-card-hover ${
-                  msg.role === 'user'
+                className={`rounded-2xl px-6 py-4 shadow-card border backdrop-blur-sm transition-all duration-200 group-hover:shadow-card-hover ${msg.role === 'user'
                     ? 'bg-gradient-to-r from-astralis-blue to-blue-600 text-white border-astralis-blue/20 shadow-glow-blue'
                     : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white'
-                }`}
+                  }`}
               >
                 <div className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</div>
               </div>
@@ -230,7 +228,7 @@ export function DocumentChat({ documentId, className }: DocumentChatProps) {
         {error && (
           <div className="flex justify-center">
             <Alert className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950 max-w-[75%]">
-              <AlertCircle className="h-4 w-4 text-red-600" />
+              <AlertCircle className="h-[24px] w-[24px] text-red-600" />
               <AlertDescription className="text-red-800 dark:text-red-200">{error}</AlertDescription>
             </Alert>
           </div>

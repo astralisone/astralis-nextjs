@@ -989,7 +989,7 @@ export default function SettingsPage() {
                   className="gap-1.5 text-sm"
                   onClick={() => setInviteModalOpen(true)}
                 >
-                  <UserPlus className="h-4 w-4" />
+                  <UserPlus className="h-[24px] w-[24px]" />
                   Invite Member
                 </Button>
               </div>
@@ -1054,7 +1054,7 @@ export default function SettingsPage() {
                             className="h-8 w-8 text-slate-400 hover:text-red-600"
                             onClick={() => handleRemoveMember(member.id)}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-[24px] w-[24px]" />
                           </Button>
                         )}
                       </div>
@@ -1140,7 +1140,7 @@ export default function SettingsPage() {
               disabled={inviting || !inviteEmail.trim()}
               className="gap-1.5"
             >
-              {inviting && <Loader2 className="h-4 w-4 animate-spin" />}
+              {inviting && <Loader2 className="h-[24px] w-[24px] animate-spin" />}
               {inviting ? 'Sending...' : 'Send Invitation'}
             </Button>
           </DialogFooter>

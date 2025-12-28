@@ -46,7 +46,7 @@ export function CalendarChatSidePanel({
       <div className="flex items-center justify-between p-4 border-b border-border/50">
         <span className="text-lg font-semibold text-astralis-navy">Calendar Assistant</span>
         <Button variant="ghost" size="icon" onClick={() => closeRightPanel()}>
-          <X className="h-4 w-4" />
+          <X className="h-[24px] w-[24px]" />
         </Button>
       </div>
       <div className="h-[calc(100%-60px)]">

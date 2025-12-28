@@ -57,7 +57,7 @@ function IntegrationsPageContent() {
 
       {error && (
         <Alert variant="destructive" className="mb-6">
-          <AlertCircle className="h-4 w-4" />
+          <AlertCircle className="h-[24px] w-[24px]" />
           <AlertDescription>
             {error}
           </AlertDescription>

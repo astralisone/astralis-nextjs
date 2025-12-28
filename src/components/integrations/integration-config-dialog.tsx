@@ -316,7 +316,7 @@ export function IntegrationConfigDialog({
                 onClick={() => setShowSecret(!showSecret)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
               >
-                {showSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showSecret ? <EyeOff className="h-[24px] w-[24px]" /> : <Eye className="h-[24px] w-[24px]" />}
               </button>
             </div>
             {errors.clientSecret && (
@@ -400,7 +400,7 @@ export function IntegrationConfigDialog({
               >
                 {isTesting ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <Loader2 className="h-[24px] w-[24px] mr-2 animate-spin" />
                     Testing...
                   </>
                 ) : (
@@ -413,11 +413,10 @@ export function IntegrationConfigDialog({
           {/* Test Result */}
           {testResult && (
             <div
-              className={`flex items-center gap-2 p-3 rounded-lg ${
-                testResult.success
+              className={`flex items-center gap-2 p-3 rounded-lg ${testResult.success
                   ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400'
                   : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'
-              }`}
+                }`}
             >
               {testResult.success ? (
                 <CheckCircle2 className="h-5 w-5" />
@@ -435,7 +434,7 @@ export function IntegrationConfigDialog({
             <Button type="submit" disabled={isSaving}>
               {isSaving ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="h-[24px] w-[24px] mr-2 animate-spin" />
                   Saving...
                 </>
               ) : (

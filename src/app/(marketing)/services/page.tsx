@@ -293,7 +293,7 @@ function ServiceCard({ pkg, index }: { pkg: ServicePackage; index: number }) {
                 : 'border-astralis-blue/30 bg-white text-astralis-blue hover:border-astralis-blue/60 hover:bg-astralis-blue/5'
             )}
           >
-            <Info className="h-4 w-4" />
+            <Info className="h-[24px] w-[24px]" />
             <span className="relative">
               More Info
               {/* Pulsing indicator when collapsed */}
@@ -305,9 +305,9 @@ function ServiceCard({ pkg, index }: { pkg: ServicePackage; index: number }) {
               )}
             </span>
             {isExpanded ? (
-              <ChevronUp className="h-4 w-4 ml-1" />
+              <ChevronUp className="h-[24px] w-[24px] ml-1" />
             ) : (
-              <ChevronDown className="h-4 w-4 ml-1" />
+              <ChevronDown className="h-[24px] w-[24px] ml-1" />
             )}
           </button>
         )}

@@ -137,11 +137,11 @@ export function IntakeTable({
             >
               Priority
               {column.getIsSorted() === 'asc' ? (
-                <ArrowUp className="ml-2 h-4 w-4" />
+                <ArrowUp className="ml-2 h-[24px] w-[24px]" />
               ) : column.getIsSorted() === 'desc' ? (
-                <ArrowDown className="ml-2 h-4 w-4" />
+                <ArrowDown className="ml-2 h-[24px] w-[24px]" />
               ) : (
-                <ArrowUpDown className="ml-2 h-4 w-4" />
+                <ArrowUpDown className="ml-2 h-[24px] w-[24px]" />
               )}
             </Button>
           );
@@ -178,11 +178,11 @@ export function IntakeTable({
             >
               Created
               {column.getIsSorted() === 'asc' ? (
-                <ArrowUp className="ml-2 h-4 w-4" />
+                <ArrowUp className="ml-2 h-[24px] w-[24px]" />
               ) : column.getIsSorted() === 'desc' ? (
-                <ArrowDown className="ml-2 h-4 w-4" />
+                <ArrowDown className="ml-2 h-[24px] w-[24px]" />
               ) : (
-                <ArrowUpDown className="ml-2 h-4 w-4" />
+                <ArrowUpDown className="ml-2 h-[24px] w-[24px]" />
               )}
             </Button>
           );
@@ -255,9 +255,9 @@ export function IntakeTable({
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
                   </th>
                 ))}
               </tr>
@@ -317,7 +317,7 @@ export function IntakeTable({
               onClick={() => table.setPageIndex(0)}
               disabled={!table.getCanPreviousPage()}
             >
-              <ChevronsLeft className="h-4 w-4" />
+              <ChevronsLeft className="h-[24px] w-[24px]" />
             </Button>
             <Button
               variant="outline"
@@ -325,7 +325,7 @@ export function IntakeTable({
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-[24px] w-[24px]" />
             </Button>
             <Button
               variant="outline"
@@ -333,7 +333,7 @@ export function IntakeTable({
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
             >
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-[24px] w-[24px]" />
             </Button>
             <Button
               variant="outline"
@@ -341,7 +341,7 @@ export function IntakeTable({
               onClick={() => table.setPageIndex(table.getPageCount() - 1)}
               disabled={!table.getCanNextPage()}
             >
-              <ChevronsRight className="h-4 w-4" />
+              <ChevronsRight className="h-[24px] w-[24px]" />
             </Button>
           </div>
         </div>

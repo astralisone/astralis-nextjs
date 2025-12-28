@@ -186,8 +186,8 @@ export function DocumentCard({
                       document.ocrConfidence >= 0.8
                         ? 'bg-success'
                         : document.ocrConfidence >= 0.6
-                        ? 'bg-warning'
-                        : 'bg-error'
+                          ? 'bg-warning'
+                          : 'bg-error'
                     )}
                     style={{ width: `${document.ocrConfidence * 100}%` }}
                   />
@@ -198,7 +198,7 @@ export function DocumentCard({
             {/* Error Messages */}
             {document.status === 'FAILED' && document.processingError && (
               <div className="mt-2 flex items-start gap-2">
-                <AlertCircle className="h-4 w-4 text-error flex-shrink-0 mt-0.5" />
+                <AlertCircle className="h-[24px] w-[24px] text-error flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
                   <p className="text-xs font-medium text-error">Processing Error:</p>
                   <p className="text-xs text-error">{document.processingError}</p>
@@ -208,18 +208,18 @@ export function DocumentCard({
 
             {/* Embedding Error */}
             {document.metadata &&
-             typeof document.metadata === 'object' &&
-             'embeddingError' in document.metadata && (
-              <div className="mt-2 flex items-start gap-2">
-                <AlertCircle className="h-4 w-4 text-warning flex-shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-xs font-medium text-warning">Embedding Error:</p>
-                  <p className="text-xs text-warning">
-                    {String((document.metadata as any).embeddingError)}
-                  </p>
+              typeof document.metadata === 'object' &&
+              'embeddingError' in document.metadata && (
+                <div className="mt-2 flex items-start gap-2">
+                  <AlertCircle className="h-[24px] w-[24px] text-warning flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-xs font-medium text-warning">Embedding Error:</p>
+                    <p className="text-xs text-warning">
+                      {String((document.metadata as any).embeddingError)}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
             {/* Extracted Data Preview */}
             {document.extractedData && Object.keys(document.extractedData).length > 0 && (
@@ -257,7 +257,7 @@ export function DocumentCard({
               className="flex-1"
               disabled={!document.cdnUrl}
             >
-              <Eye className="h-4 w-4 mr-1" />
+              <Eye className="h-[24px] w-[24px] mr-1" />
               View
             </Button>
 
@@ -287,22 +287,22 @@ export function DocumentCard({
             {(document.status === 'PENDING' ||
               document.status === 'FAILED' ||
               (document.status === 'COMPLETED' && (document.ocrConfidence === null || document.ocrConfidence === 0))) && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRetry}
-                disabled={isRetrying}
-                title={
-                  document.status === 'PENDING'
-                    ? 'Start processing'
-                    : document.status === 'FAILED'
-                    ? 'Retry processing'
-                    : 'Re-process document'
-                }
-              >
-                <RefreshCw className={cn('h-5 w-5', isRetrying && 'animate-spin')} />
-              </Button>
-            )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRetry}
+                  disabled={isRetrying}
+                  title={
+                    document.status === 'PENDING'
+                      ? 'Start processing'
+                      : document.status === 'FAILED'
+                        ? 'Retry processing'
+                        : 'Re-process document'
+                  }
+                >
+                  <RefreshCw className={cn('h-5 w-5', isRetrying && 'animate-spin')} />
+                </Button>
+              )}
 
             {/* Delete Button */}
             <Button

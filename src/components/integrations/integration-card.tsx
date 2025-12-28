@@ -165,7 +165,7 @@ export function IntegrationCard({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <MoreVertical className="h-4 w-4" />
+                  <MoreVertical className="h-[24px] w-[24px]" />
                   <span className="sr-only">Open menu</span>
                 </Button>
               </DropdownMenuTrigger>
@@ -173,7 +173,7 @@ export function IntegrationCard({
                 {onConfigure && (
                   <>
                     <DropdownMenuItem onClick={onConfigure}>
-                      <Settings2 className="mr-2 h-4 w-4" />
+                      <Settings2 className="mr-2 h-[24px] w-[24px]" />
                       Configure OAuth
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -185,7 +185,7 @@ export function IntegrationCard({
                       onClick={() => connection && onTest(connection.id)}
                       disabled={isTesting}
                     >
-                      <RefreshCw className={`mr-2 h-4 w-4 ${isTesting ? 'animate-spin' : ''}`} />
+                      <RefreshCw className={`mr-2 h-[24px] w-[24px] ${isTesting ? 'animate-spin' : ''}`} />
                       Test Connection
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
@@ -194,7 +194,7 @@ export function IntegrationCard({
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        <ExternalLink className="mr-2 h-4 w-4" />
+                        <ExternalLink className="mr-2 h-[24px] w-[24px]" />
                         Open {integration.name}
                       </a>
                     </DropdownMenuItem>
@@ -203,7 +203,7 @@ export function IntegrationCard({
                       onClick={() => setShowDisconnectDialog(true)}
                       className="text-red-600 focus:text-red-600"
                     >
-                      <Trash2 className="mr-2 h-4 w-4" />
+                      <Trash2 className="mr-2 h-[24px] w-[24px]" />
                       Disconnect
                     </DropdownMenuItem>
                   </>
@@ -215,7 +215,7 @@ export function IntegrationCard({
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      <ExternalLink className="mr-2 h-4 w-4" />
+                      <ExternalLink className="mr-2 h-[24px] w-[24px]" />
                       Documentation
                     </a>
                   </DropdownMenuItem>
@@ -240,7 +240,7 @@ export function IntegrationCard({
                   size="sm"
                   variant="outline"
                 >
-                  <Settings2 className="mr-2 h-4 w-4" />
+                  <Settings2 className="mr-2 h-[24px] w-[24px]" />
                   Configure
                 </Button>
               ) : (
@@ -256,7 +256,7 @@ export function IntegrationCard({
                 >
                   {isConnecting ? (
                     <>
-                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                      <RefreshCw className="mr-2 h-[24px] w-[24px] animate-spin" />
                       Connecting...
                     </>
                   ) : (

@@ -63,15 +63,15 @@ export default function SignInPage() {
   const successCopy = successKey === 'password-reset-success'
     ? 'Your password has been reset. Sign in with your new credentials.'
     : successKey === 'registration-complete'
-    ? 'Registration complete! Sign in to start automating with Astralis.'
-    : null;
+      ? 'Registration complete! Sign in to start automating with Astralis.'
+      : null;
 
   return (
     <AuthLayout
       title="Welcome back"
       subtitle="Sign in to your Astralis workspace"
       description="Secure authentication powered by Astralis Identity."
-      
+
       badge="Secure Sign-In"
       footer={
         <span>
@@ -96,67 +96,67 @@ export default function SignInPage() {
 
       <Card className="p-6 md:p-8" hover>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="space-y-2">
-          <Label htmlFor="email" className="text-sm font-semibold text-slate-700">
-            Work email
-          </Label>
-          <Input
-            id="email"
-            type="email"
-            autoComplete="email"
-            placeholder="you@company.com"
-            className="h-11 text-base"
-            {...register('email')}
-          />
-          {errors.email && (
-            <p className="text-sm font-medium text-error animate-in fade-in-50 duration-200">{errors.email.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="password" className="text-sm font-semibold text-slate-700">
-              Password
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-sm font-semibold text-slate-700">
+              Work email
             </Label>
-            <Link
-              href="/auth/forgot-password"
-              className="text-xs font-semibold text-astralis-blue transition-colors hover:text-astralis-blue/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-astralis-blue focus-visible:ring-offset-2 rounded"
-            >
-              Forgot password?
-            </Link>
+            <Input
+              id="email"
+              type="email"
+              autoComplete="email"
+              placeholder="you@company.com"
+              className="h-11 text-base"
+              {...register('email')}
+            />
+            {errors.email && (
+              <p className="text-sm font-medium text-error animate-in fade-in-50 duration-200">{errors.email.message}</p>
+            )}
           </div>
-          <Input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            placeholder="Enter your password"
-            className="h-11 text-base"
-            {...register('password')}
-          />
-          {errors.password && (
-            <p className="text-sm font-medium text-error animate-in fade-in-50 duration-200">{errors.password.message}</p>
-          )}
-        </div>
 
-        <Button
-          type="submit"
-          variant="primary"
-          className="w-full h-11 text-base font-semibold"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? (
-            <span className="flex items-center gap-2">
-              <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Signing in…
-            </span>
-          ) : (
-            'Sign in'
-          )}
-        </Button>
-      </form>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password" className="text-sm font-semibold text-slate-700">
+                Password
+              </Label>
+              <Link
+                href="/auth/forgot-password"
+                className="text-xs font-semibold text-astralis-blue transition-colors hover:text-astralis-blue/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-astralis-blue focus-visible:ring-offset-2 rounded"
+              >
+                Forgot password?
+              </Link>
+            </div>
+            <Input
+              id="password"
+              type="password"
+              autoComplete="current-password"
+              placeholder="Enter your password"
+              className="h-11 text-base"
+              {...register('password')}
+            />
+            {errors.password && (
+              <p className="text-sm font-medium text-error animate-in fade-in-50 duration-200">{errors.password.message}</p>
+            )}
+          </div>
+
+          <Button
+            type="submit"
+            variant="primary"
+            className="w-full h-11 text-base font-semibold"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <span className="flex items-center gap-2">
+                <svg className="animate-spin h-[24px] w-[24px]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Signing in…
+              </span>
+            ) : (
+              'Sign in'
+            )}
+          </Button>
+        </form>
       </Card>
 
       <div className="space-y-5">

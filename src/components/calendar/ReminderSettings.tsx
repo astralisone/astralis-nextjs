@@ -152,7 +152,7 @@ export function ReminderSettings({
 
           {/* Method Display (Email only for now) */}
           <div className="flex items-center gap-2 text-sm text-slate-600">
-            <Mail className="h-4 w-4" />
+            <Mail className="h-[24px] w-[24px]" />
             <span>Reminder method: Email notification</span>
           </div>
         </div>
@@ -165,7 +165,7 @@ export function ReminderSettings({
           className="w-full gap-2"
           disabled={selectedOffset === -1 && !customOffset}
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-[24px] w-[24px]" />
           Add Reminder
         </Button>
       </Card>
@@ -184,7 +184,7 @@ export function ReminderSettings({
                 >
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-astralis-blue/10 rounded-lg">
-                      <Bell className="h-4 w-4 text-astralis-blue" />
+                      <Bell className="h-[24px] w-[24px] text-astralis-blue" />
                     </div>
                     <div>
                       <p className="font-medium text-astralis-navy">
@@ -203,7 +203,7 @@ export function ReminderSettings({
                     onClick={() => handleRemoveReminder(index)}
                     className="text-red-500 hover:text-red-700 hover:bg-red-50"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-[24px] w-[24px]" />
                   </Button>
                 </Card>
               ))}

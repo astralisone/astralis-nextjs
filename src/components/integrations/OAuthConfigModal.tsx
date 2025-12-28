@@ -175,7 +175,7 @@ export function OAuthConfigModal({ open, onOpenChange, provider, onConfigured }:
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <Alert>
-            <AlertCircle className="h-4 w-4" />
+            <AlertCircle className="h-[24px] w-[24px]" />
             <AlertDescription>
               <strong>Setup Required:</strong> {info.description}
               {info.docsUrl !== '#' && (
@@ -247,7 +247,7 @@ export function OAuthConfigModal({ open, onOpenChange, provider, onConfigured }:
 
           {error && (
             <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
+              <AlertCircle className="h-[24px] w-[24px]" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}

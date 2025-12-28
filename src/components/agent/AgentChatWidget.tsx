@@ -148,7 +148,7 @@ export function AgentChatWidget() {
             <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 border-b border-border/50">
                 <div className="flex items-center gap-2">
                     <div className="h-8 w-8 rounded-full bg-[#0A1B2B] flex items-center justify-center border border-[#2B6CB0]/20">
-                        <Sparkles className="h-4 w-4 text-[#2B6CB0]" />
+                        <Sparkles className="h-[24px] w-[24px] text-[#2B6CB0]" />
                     </div>
                     <div>
                         <CardTitle className="text-sm font-medium">Astralis Assistant</CardTitle>
@@ -157,10 +157,10 @@ export function AgentChatWidget() {
                 </div>
                 <div className="flex items-center gap-1">
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsExpanded(!isExpanded)}>
-                        {isExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                        {isExpanded ? <Minimize2 className="h-[24px] w-[24px]" /> : <Maximize2 className="h-[24px] w-[24px]" />}
                     </Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsOpen(false)}>
-                        <X className="h-4 w-4" />
+                        <X className="h-[24px] w-[24px]" />
                     </Button>
                 </div>
             </CardHeader>
@@ -220,7 +220,7 @@ export function AgentChatWidget() {
                         disabled={isLoading}
                     />
                     <Button type="submit" size="icon" disabled={isLoading || !input.trim()} className="bg-[#2B6CB0] hover:bg-[#2B6CB0]/90">
-                        <Send className="h-4 w-4" />
+                        <Send className="h-[24px] w-[24px]" />
                     </Button>
                 </form>
             </CardFooter>

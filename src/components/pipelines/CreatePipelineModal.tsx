@@ -181,7 +181,7 @@ export function CreatePipelineModal({
                       <div className="flex-1">
                         <CardTitle className="text-lg text-astralis-navy flex items-center gap-2">
                           <div className={`p-2 rounded-md ${getTemplateIconColor(template.type)}`}>
-                            <LayoutGrid className="h-4 w-4" />
+                            <LayoutGrid className="h-[24px] w-[24px]" />
                           </div>
                           {template.name}
                         </CardTitle>

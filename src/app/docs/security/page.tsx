@@ -153,7 +153,7 @@ export default function SecurityPage() {
 
         {/* Security Overview */}
         <Alert className="mb-8 border-green-200 bg-green-50">
-          <Shield className="h-4 w-4" />
+          <Shield className="h-[24px] w-[24px]" />
           <AlertDescription className="text-green-800">
             <strong>Security First:</strong> Astralis is built with enterprise-grade security from the ground up.
             Your data is protected by multiple layers of security controls and encryption.
@@ -250,7 +250,7 @@ export default function SecurityPage() {
             </div>
 
             <Alert>
-              <Lock className="h-4 w-4" />
+              <Lock className="h-[24px] w-[24px]" />
               <AlertDescription>
                 <strong>Data Encryption:</strong> All sensitive data is encrypted using AES-256 encryption.
                 API keys, OAuth tokens, and personal information are never stored in plain text.

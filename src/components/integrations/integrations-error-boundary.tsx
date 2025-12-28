@@ -59,7 +59,7 @@ class IntegrationsErrorBoundary extends Component<Props, State> {
         <div className="min-h-screen bg-slate-50 p-6 flex items-center justify-center">
           <div className="max-w-md w-full">
             <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
+              <AlertTriangle className="h-[24px] w-[24px]" />
               <AlertTitle>Something went wrong</AlertTitle>
               <AlertDescription className="mt-2">
                 The integrations page encountered an error. This might be due to a temporary issue.
@@ -68,7 +68,7 @@ class IntegrationsErrorBoundary extends Component<Props, State> {
 
             <div className="mt-4 flex gap-2">
               <Button onClick={this.handleRetry} variant="outline">
-                <RefreshCw className="h-4 w-4 mr-2" />
+                <RefreshCw className="h-[24px] w-[24px] mr-2" />
                 Try Again
               </Button>
               <Button onClick={this.handleReload}>

@@ -334,7 +334,7 @@ export default function WebhooksPage() {
             </div>
 
             <Alert>
-              <Shield className="h-4 w-4" />
+              <Shield className="h-[24px] w-[24px]" />
               <AlertDescription>
                 <strong>Security Note:</strong> Always verify webhook signatures to ensure authenticity.
                 Store your webhook secret securely and rotate it regularly.

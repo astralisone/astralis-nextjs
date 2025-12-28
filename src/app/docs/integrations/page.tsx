@@ -355,7 +355,7 @@ export default function IntegrationsDocsPage() {
 
         {/* Prerequisites */}
         <Alert className="mb-8">
-          <AlertCircle className="h-4 w-4" />
+          <AlertCircle className="h-[24px] w-[24px]" />
           <AlertDescription>
             <strong>Prerequisites:</strong> Before setting up integrations, ensure you have:
             <ul className="mt-2 ml-4 list-disc">
@@ -382,7 +382,7 @@ export default function IntegrationsDocsPage() {
                       <div className="flex gap-2">
                         <Badge variant={
                           provider.difficulty === 'Easy' ? 'default' :
-                          provider.difficulty === 'Medium' ? 'secondary' : 'destructive'
+                            provider.difficulty === 'Medium' ? 'secondary' : 'destructive'
                         }>
                           {provider.difficulty}
                         </Badge>

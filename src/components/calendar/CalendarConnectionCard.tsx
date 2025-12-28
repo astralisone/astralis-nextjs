@@ -106,11 +106,10 @@ export function CalendarConnectionCard({
 
           {/* Status Badge */}
           <div
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-              connection.isActive
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${connection.isActive
                 ? "bg-green-100 text-green-800"
                 : "bg-slate-100 text-slate-600"
-            }`}
+              }`}
           >
             {connection.isActive ? (
               <>
@@ -138,7 +137,7 @@ export function CalendarConnectionCard({
           {/* Sync Error Indicator */}
           {hasSyncErrors && (
             <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-md">
-              <AlertTriangle className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
+              <AlertTriangle className="h-[24px] w-[24px] text-red-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
                 <p className="text-sm font-medium text-red-900">
                   Sync Error ({connection.syncErrorCount}{" "}
@@ -165,12 +164,12 @@ export function CalendarConnectionCard({
           >
             {isSyncing ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-[24px] w-[24px] animate-spin" />
                 <span>Syncing...</span>
               </>
             ) : (
               <>
-                <RefreshCw className="h-4 w-4" />
+                <RefreshCw className="h-[24px] w-[24px]" />
                 <span>Sync Now</span>
               </>
             )}
@@ -185,12 +184,12 @@ export function CalendarConnectionCard({
           >
             {isDisconnecting ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-[24px] w-[24px] animate-spin" />
                 <span>Disconnecting...</span>
               </>
             ) : (
               <>
-                <Unlink className="h-4 w-4" />
+                <Unlink className="h-[24px] w-[24px]" />
                 <span>Disconnect</span>
               </>
             )}

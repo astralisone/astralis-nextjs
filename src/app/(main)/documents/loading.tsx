@@ -44,7 +44,7 @@ export default function DocumentsLoading() {
         <div className="p-4 space-y-4">
           {/* Header row */}
           <div className="flex gap-4 pb-3 border-b">
-            <Skeleton className="h-4 w-48" />
+            <Skeleton className="h-[24px] w-[24px]8" />
             <Skeleton className="h-4 w-16" />
             <Skeleton className="h-4 w-20" />
             <Skeleton className="h-4 w-24" />

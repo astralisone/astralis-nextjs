@@ -179,7 +179,7 @@ export function AgentChatInterface({ context }: { context?: Record<string, any> 
       <div className="mt-4 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-astralis-blue font-semibold">
-            <Lightbulb className="h-4 w-4" />
+            <Lightbulb className="h-[24px] w-[24px]" />
             <span>Strategic Integration Recommendations</span>
           </div>
           <Button
@@ -251,7 +251,7 @@ export function AgentChatInterface({ context }: { context?: Record<string, any> 
             <div className="flex items-center gap-4">
               {context && (
                 <div className="flex items-center gap-2 px-3 py-2 bg-astralis-blue/20 rounded-lg border border-astralis-blue/30 cursor-help group relative">
-                  <Activity className="h-4 w-4 text-astralis-blue" />
+                  <Activity className="h-[24px] w-[24px] text-astralis-blue" />
                   <span className="text-xs font-medium text-astralis-blue uppercase tracking-wider">Context Active</span>
                   <div className="absolute top-full right-0 mt-2 w-64 p-3 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl hidden group-hover:block z-50 text-white text-xs animate-in fade-in slide-in-from-top-2 duration-200">
                     <div className="font-bold mb-2 flex items-center gap-2">
@@ -286,7 +286,7 @@ export function AgentChatInterface({ context }: { context?: Record<string, any> 
           {/* Agent Selector */}
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-slate-300">
-              <Settings className="h-4 w-4" />
+              <Settings className="h-[24px] w-[24px]" />
               <span className="text-sm font-medium">Active Agent:</span>
             </div>
             <Select value={selectedAgent} onValueChange={setSelectedAgent}>
@@ -408,9 +408,9 @@ export function AgentChatInterface({ context }: { context?: Record<string, any> 
                                 </span>
                               </div>
                               {res.status === 'success' || res.success ? (
-                                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                <CheckCircle2 className="h-[24px] w-[24px] text-green-500" />
                               ) : (
-                                <AlertTriangle className="h-4 w-4 text-red-500" />
+                                <AlertTriangle className="h-[24px] w-[24px] text-red-500" />
                               )}
                             </div>
                           ))}
@@ -465,7 +465,7 @@ export function AgentChatInterface({ context }: { context?: Record<string, any> 
         {error && (
           <div className="px-6 pb-4 flex-shrink-0">
             <Alert className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950">
-              <AlertTriangle className="h-4 w-4 text-red-600" />
+              <AlertTriangle className="h-[24px] w-[24px] text-red-600" />
               <AlertDescription className="text-red-800 dark:text-red-200">{error}</AlertDescription>
             </Alert>
           </div>

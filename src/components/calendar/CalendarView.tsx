@@ -79,7 +79,7 @@ export function CalendarView({
           onClick={() => handleViewChange("dayGridMonth")}
           className="flex items-center gap-2"
         >
-          <Calendar className="h-4 w-4" />
+          <Calendar className="h-[24px] w-[24px]" />
           <span className="hidden sm:inline">Month</span>
         </Button>
         <Button
@@ -88,7 +88,7 @@ export function CalendarView({
           onClick={() => handleViewChange("timeGridWeek")}
           className="flex items-center gap-2"
         >
-          <Clock className="h-4 w-4" />
+          <Clock className="h-[24px] w-[24px]" />
           <span className="hidden sm:inline">Week</span>
         </Button>
         <Button
@@ -97,7 +97,7 @@ export function CalendarView({
           onClick={() => handleViewChange("timeGridDay")}
           className="flex items-center gap-2"
         >
-          <Users className="h-4 w-4" />
+          <Users className="h-[24px] w-[24px]" />
           <span className="hidden sm:inline">Day</span>
         </Button>
       </div>
@@ -135,9 +135,8 @@ export function CalendarView({
             return (
               <div className="fc-event-content-wrapper">
                 <div
-                  className={`fc-event-main-frame ${
-                    hasConflict ? "border-l-4 border-red-500" : ""
-                  }`}
+                  className={`fc-event-main-frame ${hasConflict ? "border-l-4 border-red-500" : ""
+                    }`}
                 >
                   <div className="fc-event-time text-xs">
                     {eventInfo.timeText}

@@ -122,9 +122,9 @@ export function AutomationCard({
                 title={automation.isActive ? 'Pause automation' : 'Activate automation'}
               >
                 {automation.isActive ? (
-                  <Pause className="h-4 w-4" />
+                  <Pause className="h-[24px] w-[24px]" />
                 ) : (
-                  <Play className="h-4 w-4" />
+                  <Play className="h-[24px] w-[24px]" />
                 )}
               </Button>
             </div>
@@ -198,7 +198,7 @@ export function AutomationCard({
                 onClick={handleExecute}
                 className="flex-1"
               >
-                <Play className="h-4 w-4 mr-2" />
+                <Play className="h-[24px] w-[24px] mr-2" />
                 Execute
               </Button>
               <Button

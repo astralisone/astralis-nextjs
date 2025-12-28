@@ -236,7 +236,7 @@ export default function AutomationDetailPage() {
               onClick={handleExecute}
               disabled={isExecuting}
             >
-              <Play className="h-4 w-4" />
+              <Play className="h-[24px] w-[24px]" />
               {isExecuting ? 'Executing...' : 'Execute Now'}
             </Button>
             <Button
@@ -247,12 +247,12 @@ export default function AutomationDetailPage() {
             >
               {automation.isActive ? (
                 <>
-                  <Pause className="h-4 w-4" />
+                  <Pause className="h-[24px] w-[24px]" />
                   Deactivate
                 </>
               ) : (
                 <>
-                  <Play className="h-4 w-4" />
+                  <Play className="h-[24px] w-[24px]" />
                   Activate
                 </>
               )}
@@ -360,7 +360,7 @@ export default function AutomationDetailPage() {
                 <TriggerConfig
                   triggerType={automation.triggerType}
                   config={automation.triggerConfig}
-                  onChange={() => {}}
+                  onChange={() => { }}
                   webhookUrl={automation.webhookUrl || undefined}
                 />
               </CardContent>

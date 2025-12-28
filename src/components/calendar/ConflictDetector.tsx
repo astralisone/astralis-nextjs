@@ -22,24 +22,24 @@ export function ConflictDetector({
     conflicts.length >= 5
       ? "high"
       : conflicts.length >= 3
-      ? "medium"
-      : "low";
+        ? "medium"
+        : "low";
 
   const severityConfig = {
     low: {
       badge: "bg-yellow-100 text-yellow-800 border-yellow-300",
       alert: "warning" as const,
-      icon: <AlertTriangle className="h-4 w-4" />,
+      icon: <AlertTriangle className="h-[24px] w-[24px]" />,
     },
     medium: {
       badge: "bg-orange-100 text-orange-800 border-orange-300",
       alert: "warning" as const,
-      icon: <AlertTriangle className="h-4 w-4" />,
+      icon: <AlertTriangle className="h-[24px] w-[24px]" />,
     },
     high: {
       badge: "bg-red-100 text-red-800 border-red-300",
       alert: "error" as const,
-      icon: <AlertTriangle className="h-4 w-4" />,
+      icon: <AlertTriangle className="h-[24px] w-[24px]" />,
     },
   };
 

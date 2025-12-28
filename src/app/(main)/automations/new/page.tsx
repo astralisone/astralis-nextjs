@@ -39,7 +39,7 @@ export default function NewAutomationPage() {
       <div className="mb-8">
         <Link href="/automations">
           <Button variant="ghost" size="sm" className="mb-4">
-            <ArrowLeft className="h-4 w-4 mr-2" />
+            <ArrowLeft className="h-[24px] w-[24px] mr-2" />
             Back to Automations
           </Button>
         </Link>
@@ -92,8 +92,8 @@ export default function NewAutomationPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => window.open('https://astralis-n8n.fly.dev', '_blank')}
               className="flex items-center gap-2"
             >

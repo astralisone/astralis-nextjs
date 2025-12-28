@@ -305,7 +305,7 @@ export default function N8nPage() {
 
         {/* Prerequisites */}
         <Alert className="mb-12">
-          <Settings className="h-4 w-4" />
+          <Settings className="h-[24px] w-[24px]" />
           <AlertDescription>
             <strong>Prerequisites:</strong> Before setting up n8n integration, ensure you have:
             <ul className="mt-2 ml-4 list-disc">

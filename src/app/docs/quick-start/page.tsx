@@ -36,7 +36,7 @@ const steps = [
     icon: Settings,
   },
   {
-  step: 3,
+    step: 3,
     title: 'Connect Your First Integration',
     description: 'Link external services to start automating workflows',
     details: [
@@ -90,7 +90,7 @@ export default function QuickStartPage() {
           </p>
 
           <Alert className="max-w-2xl mx-auto">
-            <CheckCircle className="h-4 w-4" />
+            <CheckCircle className="h-[24px] w-[24px]" />
             <AlertDescription>
               <strong>Prerequisites:</strong> Modern web browser, valid email address
             </AlertDescription>

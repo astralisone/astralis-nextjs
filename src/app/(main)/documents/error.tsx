@@ -116,7 +116,7 @@ export default function DocumentsError({ error, reset }: DocumentsErrorProps) {
             size="lg"
             className="min-w-[160px]"
           >
-            <RefreshCw className="mr-2 h-4 w-4" />
+            <RefreshCw className="mr-2 h-[24px] w-[24px]" />
             Try Again
           </Button>
 
@@ -126,7 +126,7 @@ export default function DocumentsError({ error, reset }: DocumentsErrorProps) {
             size="lg"
             className="min-w-[160px]"
           >
-            <AlertCircle className="mr-2 h-4 w-4" />
+            <AlertCircle className="mr-2 h-[24px] w-[24px]" />
             Go to Dashboard
           </Button>
         </div>

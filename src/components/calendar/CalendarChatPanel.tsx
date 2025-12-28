@@ -297,7 +297,7 @@ export function CalendarChatPanel({ userId, orgId, className, onEventCreated }: 
           {/* Capabilities Display */}
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-slate-300">
-              <Brain className="h-4 w-4" />
+              <Brain className="h-[24px] w-[24px]" />
               <span className="text-sm font-medium">Capabilities:</span>
             </div>
             <div className="flex gap-2">
@@ -350,25 +350,25 @@ export function CalendarChatPanel({ userId, orgId, className, onEventCreated }: 
                 )}
               </div>
 
-               {/* Message Content */}
-               <div
-                 className={cn(
-                   'rounded-2xl px-6 py-4 shadow-card border backdrop-blur-sm transition-all duration-300 group-hover:shadow-card-hover group-hover:scale-[1.02]',
-                   message.role === 'user'
-                     ? 'bg-gradient-to-r from-astralis-blue via-blue-600 to-astralis-blue text-white border-astralis-blue/30 shadow-glow-blue hover:shadow-glow-blue-lg'
-                     : 'bg-gradient-to-br from-white to-slate-50/50 dark:from-slate-800 dark:to-slate-700/50 border-slate-200/60 dark:border-slate-700/60 text-slate-900 dark:text-white hover:border-astralis-blue/20'
-                 )}
-               >
-                 <div className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</div>
-                 {message.data && (
-                   <div className="mt-4 p-3 bg-slate-50/50 dark:bg-slate-700/50 rounded-lg border border-slate-200/30">
-                     <div className="text-xs text-slate-600 dark:text-slate-300 font-medium mb-1">📅 Event Details</div>
-                     <div className="text-xs text-slate-500 dark:text-slate-400">
-                       {JSON.stringify(message.data, null, 2)}
-                     </div>
-                   </div>
-                 )}
-               </div>
+              {/* Message Content */}
+              <div
+                className={cn(
+                  'rounded-2xl px-6 py-4 shadow-card border backdrop-blur-sm transition-all duration-300 group-hover:shadow-card-hover group-hover:scale-[1.02]',
+                  message.role === 'user'
+                    ? 'bg-gradient-to-r from-astralis-blue via-blue-600 to-astralis-blue text-white border-astralis-blue/30 shadow-glow-blue hover:shadow-glow-blue-lg'
+                    : 'bg-gradient-to-br from-white to-slate-50/50 dark:from-slate-800 dark:to-slate-700/50 border-slate-200/60 dark:border-slate-700/60 text-slate-900 dark:text-white hover:border-astralis-blue/20'
+                )}
+              >
+                <div className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</div>
+                {message.data && (
+                  <div className="mt-4 p-3 bg-slate-50/50 dark:bg-slate-700/50 rounded-lg border border-slate-200/30">
+                    <div className="text-xs text-slate-600 dark:text-slate-300 font-medium mb-1">📅 Event Details</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                      {JSON.stringify(message.data, null, 2)}
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* Timestamp */}
               <div className={`text-xs text-slate-500 mt-1 ${message.role === 'user' ? 'text-right' : 'text-left'}`}>
@@ -416,7 +416,7 @@ export function CalendarChatPanel({ userId, orgId, className, onEventCreated }: 
         {error && (
           <div className="flex justify-center">
             <Alert className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950 max-w-[75%]">
-              <AlertCircle className="h-4 w-4 text-red-600" />
+              <AlertCircle className="h-[24px] w-[24px] text-red-600" />
               <AlertDescription className="text-red-800 dark:text-red-200">{error}</AlertDescription>
             </Alert>
           </div>
@@ -446,7 +446,7 @@ export function CalendarChatPanel({ userId, orgId, className, onEventCreated }: 
                     className="bg-green-600 hover:bg-green-700 text-white shadow-glow-green hover:shadow-glow-green transition-all duration-200"
                     size="sm"
                   >
-                    <CheckCircle className="h-4 w-4 mr-2" />
+                    <CheckCircle className="h-[24px] w-[24px] mr-2" />
                     Confirm Execution
                   </Button>
                   <Button
@@ -455,7 +455,7 @@ export function CalendarChatPanel({ userId, orgId, className, onEventCreated }: 
                     size="sm"
                     className="border-slate-300 hover:bg-slate-50"
                   >
-                    <XCircle className="h-4 w-4 mr-2" />
+                    <XCircle className="h-[24px] w-[24px] mr-2" />
                     Cancel Operation
                   </Button>
                 </div>

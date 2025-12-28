@@ -121,7 +121,7 @@ export default function EditAutomationPage() {
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="sm" asChild>
               <Link href={`/automations/${automationId}`}>
-                <ArrowLeft className="h-4 w-4" />
+                <ArrowLeft className="h-[24px] w-[24px]" />
               </Link>
             </Button>
             <div>
@@ -138,11 +138,11 @@ export default function EditAutomationPage() {
         <Tabs defaultValue="settings" className="w-full">
           <TabsList className="bg-slate-100 p-1">
             <TabsTrigger value="settings" className="gap-2">
-              <Settings className="h-4 w-4" />
+              <Settings className="h-[24px] w-[24px]" />
               Settings
             </TabsTrigger>
             <TabsTrigger value="workflow" className="gap-2">
-              <Code className="h-4 w-4" />
+              <Code className="h-[24px] w-[24px]" />
               Workflow Logic
             </TabsTrigger>
           </TabsList>
@@ -245,12 +245,12 @@ export default function EditAutomationPage() {
             onClick={handleSave}
             disabled={saving || !name}
           >
-            <Save className="h-4 w-4" />
+            <Save className="h-[24px] w-[24px]" />
             {saving ? 'Saving...' : 'Save Changes'}
           </Button>
           <Button variant="outline" size="sm" className="gap-1.5 text-sm" asChild>
             <Link href={`/automations/${automationId}`}>
-              <X className="h-4 w-4" />
+              <X className="h-[24px] w-[24px]" />
               Cancel
             </Link>
           </Button>

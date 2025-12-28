@@ -64,9 +64,9 @@ export function TriggerConfig({
                 title="Copy webhook URL"
               >
                 {copied ? (
-                  <Check className="h-4 w-4 text-success" />
+                  <Check className="h-[24px] w-[24px] text-success" />
                 ) : (
-                  <Copy className="h-4 w-4" />
+                  <Copy className="h-[24px] w-[24px]" />
                 )}
               </Button>
             </div>

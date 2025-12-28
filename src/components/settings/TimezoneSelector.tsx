@@ -127,7 +127,7 @@ export function TimezoneSelector({
             disabled={saving}
             className="gap-1.5"
           >
-            <MapPin className="h-4 w-4" />
+            <MapPin className="h-[24px] w-[24px]" />
             Detect
           </Button>
         </div>
@@ -153,7 +153,7 @@ export function TimezoneSelector({
           className="gap-1.5"
           variant="primary"
         >
-          {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+          {saving && <Loader2 className="h-[24px] w-[24px] animate-spin" />}
           {saving ? 'Saving...' : saved ? 'Saved!' : 'Save Preferences'}
         </Button>
       </div>

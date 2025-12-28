@@ -351,7 +351,7 @@ export function IntegrationSetup({
           {/* Status Alerts */}
           {lastError && (status === 'CONNECTED_ERROR' || status === 'NEEDS_REAUTH') && (
             <Alert variant="error">
-              <AlertCircle className="h-4 w-4" />
+              <AlertCircle className="h-[24px] w-[24px]" />
               <AlertDescription>
                 <strong>Connection Issue:</strong> {lastError}
                 {status === 'NEEDS_REAUTH' && (
@@ -365,7 +365,7 @@ export function IntegrationSetup({
 
           {isExpired && (
             <Alert variant="error">
-              <AlertCircle className="h-4 w-4" />
+              <AlertCircle className="h-[24px] w-[24px]" />
               <AlertDescription>
                 <strong>Expired:</strong> This connection has expired. Please reconnect to continue
                 using it.
@@ -378,7 +378,7 @@ export function IntegrationSetup({
           {/* Unavailable Integration Alert */}
           {!available && unavailableReason && (
             <Alert variant="warning" showIcon>
-              <AlertCircle className="h-4 w-4" />
+              <AlertCircle className="h-[24px] w-[24px]" />
               <AlertDescription>
                 <strong>Not Available:</strong> {unavailableReason}
                 <div className="mt-2">
@@ -475,7 +475,7 @@ export function IntegrationSetup({
 
             <div className="space-y-4">
               <Alert>
-                <AlertCircle className="h-4 w-4" />
+                <AlertCircle className="h-[24px] w-[24px]" />
                 <AlertDescription>
                   <strong>OAuth Setup Required:</strong> This integration requires OAuth credentials to be configured for your organization.
                 </AlertDescription>
