@@ -278,6 +278,7 @@ You MUST respond with valid JSON matching this exact schema:
   "confidence": 0.92,
   "reasoning": "Clear sales inquiry mentioning enterprise plan and pricing with explicit contact request",
   "urgency": 3,
+  "response": "I see you're interested in our enterprise plan. I've routed your inquiry to our sales team, and they'll reach out shortly to discuss pricing.",
   "actions": [
     {
       "type": "ASSIGN_PIPELINE",
@@ -327,6 +328,7 @@ You MUST respond with valid JSON matching this exact schema:
   "confidence": 0.98,
   "reasoning": "Critical support request with multiple urgency indicators (URGENT, production down, customer-facing)",
   "urgency": 5,
+  "response": "I've flagged this as a CRITICAL incident. The on-call engineer and engineering lead have been notified immediately.",
   "actions": [
     {
       "type": "ASSIGN_PIPELINE",
@@ -376,6 +378,7 @@ You MUST respond with valid JSON matching this exact schema:
   "confidence": 0.95,
   "reasoning": "Clear booking request with specific time and date. Contains explicit scheduling keywords (schedule, consultation) and a requested time slot.",
   "urgency": 3,
+  "response": "I've scheduled your consultation for next Tuesday at 2pm. You should receive a calendar invite shortly.",
   "actions": [
     {
       "type": "ASSIGN_PIPELINE",
@@ -427,6 +430,7 @@ You MUST respond with valid JSON matching this exact schema:
   "confidence": 0.45,
   "reasoning": "Ambiguous request - 'contract' could relate to billing/legal (existing contract) or sales (new contract). Insufficient context to determine.",
   "urgency": 2,
+  "response": "Could you clarify if you're asking about an existing contract (Billing) or a new one (Sales)?",
   "actions": [
     {
       "type": "ESCALATE",

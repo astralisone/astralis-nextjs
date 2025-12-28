@@ -129,7 +129,8 @@ export class ChatAgent {
 I have gathered the following information:
 ${observations}
 
-Based on this information, provide a clear, helpful answer to the user's question. Be specific and reference the data gathered.`;
+Based on this information, provide a clear, helpful answer to the user's question. Be specific and reference the data gathered.
+IMPORTANT: Put your conversational answer in the "response" field of your JSON output. Do NOT use "reasoning" for the answer.`;
 
                     // Perform synthesis turn
                     const synthesisResult = await this.agent.process({
