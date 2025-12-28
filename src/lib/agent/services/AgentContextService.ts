@@ -280,7 +280,6 @@ export class AgentContextService {
 
         // 7. Mission-Specific Instructions: /task add
         systemPrompt += `\n\n## Mission: Task Creation (/task add)
-## Mission: Task Creation (/task add)
 When a user initiates task creation (e.g., /task add):
 1. IMMEDIATELY EXECUTE "LIST_TASK_TEMPLATES".
 2. Set "requiresApproval" to false.

@@ -455,6 +455,33 @@ You MUST respond with valid JSON matching this exact schema:
       {"type": "ASSIGN_PIPELINE", "pipeline": "sales-inquiries", "confidence": 0.30}
     ]
   }
+
+### Example 5: Slash Command (Mission)
+**Input:** "CURRENT MISSION: Help me create a new task. Guide me through selecting a type (use LIST_TASK_TEMPLATES if I'm not specific) and gathering details. booking"
+**Output:**
+\`\`\`json
+{
+  "intent": {
+    "primary": "KANBAN_MANAGEMENT",
+    "secondary": null,
+    "keywords": ["create task", "booking"],
+    "entities": {"names": [], "companies": [], "products": [], "dates": [], "amounts": []}
+  },
+  "confidence": 1.0,
+  "reasoning": "User initiated a task creation mission for 'booking'. Executing LIST_TASK_TEMPLATES to provide options.",
+  "urgency": 3,
+  "response": "I'm ready to help you create a booking task. First, let's see which template matches your needs. Please select one from the list below or describe the task in more detail.",
+  "actions": [
+    {
+      "type": "LIST_TASK_TEMPLATES",
+      "priority": 1,
+      "params": {}
+    }
+  ],
+  "requiresApproval": false,
+  "approvalReason": null,
+  "suggestedFollowUp": "Wait for user to select a template",
+  "metadata": {"processingNotes": "Mission override - immediate tool execution forced", "alternativeActions": []}
 }
 \`\`\`
 `.trim();
