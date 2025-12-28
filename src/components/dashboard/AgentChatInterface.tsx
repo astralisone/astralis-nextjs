@@ -117,7 +117,7 @@ export function AgentChatInterface({ context }: { context?: Record<string, any> 
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          content: userMessage.content,
+          content: userChatMessage.content,
           source: 'API',
           type: 'chat',
           agent: selectedAgent,
