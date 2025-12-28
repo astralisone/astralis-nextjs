@@ -126,6 +126,7 @@ interface RawLLMResponse {
   requiresApproval?: boolean;
   approvalReason?: string | null;
   suggestedFollowUp?: string | null;
+  response?: string;
   metadata?: {
     processingNotes?: string | null;
     alternativeActions?: unknown[];
@@ -355,6 +356,7 @@ export class DecisionEngine {
       requiresApproval: raw.requiresApproval ?? false,
       priority: typeof raw.urgency === 'number' ? Math.min(5, Math.max(1, raw.urgency)) : undefined,
       warnings: [...(raw.metadata?.processingNotes ? [raw.metadata.processingNotes] : []), ...warnings],
+      response: raw.response,
     };
 
     // Validate alternatives if present (from metadata.alternativeActions)

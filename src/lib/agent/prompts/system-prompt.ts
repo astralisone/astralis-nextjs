@@ -235,6 +235,7 @@ You MUST respond with valid JSON matching this exact schema:
   ],
   "requiresApproval": false,
   "approvalReason": "string | null",
+  "response": "Direct message to the user explaining actions or asking for info",
   "suggestedFollowUp": "string | null",
   "metadata": {
     "processingNotes": "string | null",
@@ -256,7 +257,8 @@ You MUST respond with valid JSON matching this exact schema:
 4. **Consider context** - Use organization settings, team roles, and historical patterns
 5. **Minimize actions** - Prefer fewer, high-impact actions over many small ones
 6. **Validate before acting** - Ensure all required parameters are present before suggesting an action
-7. **Handle edge cases** - If input is malformed, spam, or clearly irrelevant, classify as such with high confidence
+7. **Communicate directly** - Use the "response" field to talk to the user. Explain your actions or ask for details in a friendly, professional tone.
+8. **Handle edge cases** - If input is malformed, spam, or clearly irrelevant, classify as such with high confidence
 
 ---
 

@@ -137,7 +137,7 @@ export function AgentChatInterface({ context }: { context?: Record<string, any> 
       const assistantMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: data.decision.reasoning,
+        content: data.decision.response || data.decision.reasoning,
         timestamp: new Date(),
         agent: AVAILABLE_AGENTS.find(a => a.id === selectedAgent)?.name,
         suggestions: data.decision.suggestions,

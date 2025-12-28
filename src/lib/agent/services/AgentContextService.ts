@@ -286,7 +286,19 @@ When a user initiates task creation (e.g., /task add):
 3. Check LIST_PIPELINES to see where it fits.
 4. If a suitable pipeline doesn't exist, use CREATE_PIPELINE.
 5. Use CREATE_TASK with the templateId once all info is gathered.
-Explain your steps clearly to the user.`;
+
+## Mission: Task Board Status (/task report)
+When a user asks for a task report:
+1. Use GET_KANBAN_STATE to fetch current tasks.
+2. Summarize the status (New, In Progress, Blocked, Done) in your response.
+3. Highlight any high-priority or blocked items.
+
+## Mission: Automation Status (/automation report)
+When a user asks for an automation report:
+1. Use LIST_ACTIVE_AUTOMATIONS to see what's running.
+2. Provide a clear summary of active workflows and their purpose.
+
+Explain your steps clearly in the "response" field.`;
 
         return systemPrompt;
     }

@@ -82,7 +82,7 @@ export class ChatAgent {
                 // derived from its internal knowledge or it's a simple chit-chat
                 // In the specific specific agent types, 'reasoning' is the text response
                 return {
-                    message: result.reasoning || "I processed that but have no specific action to take.",
+                    message: result.response || result.reasoning || "I processed that but have no specific action to take.",
                     steps
                 };
             }
@@ -144,7 +144,7 @@ Based on this information, provide a clear, helpful answer to the user's questio
                     });
 
                     return {
-                        message: synthesisResult.reasoning || "Based on the information gathered, I can help you with that.",
+                        message: synthesisResult.response || synthesisResult.reasoning || "Based on the information gathered, I can help you with that.",
                         steps,
                         toolCalls: realActions
                     };

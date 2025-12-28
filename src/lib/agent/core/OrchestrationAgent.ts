@@ -184,10 +184,15 @@ export class OrchestrationAgent {
     // Detect Slash Commands as special intents
     if (input.rawContent.startsWith('/task add')) {
       this.logger.info('Detected /task add command, initiating task creation mission');
-      input.rawContent = `MISSION: Help me create a new task. Guide me through selecting a type and gathering details. ${input.rawContent.replace('/task add', '').trim()}`;
+      input.rawContent = `MISSION: Help me create a new task. Guide me through selecting a type (use LIST_TASK_TEMPLATES if I'm not specific) and gathering details. ${input.rawContent.replace('/task add', '').trim()}`;
+    } else if (input.rawContent.startsWith('/task report')) {
+      this.logger.info('Detected /task report command');
+      input.rawContent = `MISSION: Show me the current status of the task board. Use GET_KANBAN_STATE and provide a summary of what's in progress, new, and blocked.`;
+    } else if (input.rawContent.startsWith('/automation report')) {
+      this.logger.info('Detected /automation report command');
+      input.rawContent = `MISSION: Give me a status report on automations. Use LIST_ACTIVE_AUTOMATIONS and summarize the current state.`;
     } else if (input.rawContent.startsWith('/')) {
-      // Broaden to other commands if needed, but for now we focus on task add
-      this.logger.debug('Detected slash command', { command: input.rawContent.split(' ')[0] });
+      this.logger.debug('Detected other slash command', { command: input.rawContent.split(' ')[0] });
     }
 
     // Check rate limits
