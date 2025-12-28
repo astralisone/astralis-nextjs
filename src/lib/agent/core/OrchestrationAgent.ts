@@ -251,6 +251,7 @@ export class OrchestrationAgent {
         return {
           ...decision,
           executionResults: outcome.results,
+          errors: outcome.errors,
         };
 
       } else if (this.decisionEngine.requiresApproval(decision)) {

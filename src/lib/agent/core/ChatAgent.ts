@@ -113,9 +113,13 @@ export class ChatAgent {
 
                 if (executionResults.length > 0) {
                     // Format observations for the LLM
-                    const observations = executionResults.map(r =>
+                    let observations = executionResults.map(r =>
                         `Action: ${r.action || 'Unknown'}\nResult: ${JSON.stringify(r.data, null, 2)}${r.message ? `\nMessage: ${r.message}` : ''}`
                     ).join('\n\n');
+
+                    if (result.errors && result.errors.length > 0) {
+                        observations += `\n\nErrors encountered:\n${result.errors.map(e => `- ${e.action}: ${e.message}`).join('\n')}`;
+                    }
 
                     steps.push({
                         turn: turnCount,

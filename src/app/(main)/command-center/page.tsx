@@ -33,6 +33,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Link from 'next/link';
 import { DashboardData, ChartDataPoint } from '@/types/dashboard';
+import { cn } from '@/lib/utils';
 
 export default function CommandCenterPage() {
     const { data: session, status } = useSession();
