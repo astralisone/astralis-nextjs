@@ -185,13 +185,20 @@ export class OrchestrationAgent {
     if (input.rawContent.startsWith('/task add')) {
       const details = input.rawContent.replace('/task add', '').trim();
       this.logger.info('Detected /task add command, initiating task creation mission');
-      input.rawContent = `CURRENT MISSION: Help me create a new task. Guide me through selecting a type (use LIST_TASK_TEMPLATES if I'm not specific) and gathering details. Details provided: ${details || 'None'}`;
+      input.rawContent = `PROTOCOL: TASK_CREATION_FLOW
+MISSION: Guide the user to create a task and route it to a pipeline.
+STEP 1: If details are vague, immediately use LIST_TASK_TEMPLATES.
+STEP 2: Use CREATE_INTAKE_ITEM or CREATE_TASK to create the record.
+STEP 3: Use ASSIGN_PIPELINE to place it on the board.
+User Input: ${details || 'None'}`;
     } else if (input.rawContent.startsWith('/task report')) {
       this.logger.info('Detected /task report command');
-      input.rawContent = `CURRENT MISSION: Show me the current status of the task board. Use GET_KANBAN_STATE and provide a summary of what's in progress, new, and blocked.`;
+      input.rawContent = `PROTOCOL: TASK_REPORT_FLOW
+MISSION: Show the task board state using GET_KANBAN_STATE. Summarize progress and blocks.`;
     } else if (input.rawContent.startsWith('/automation report')) {
       this.logger.info('Detected /automation report command');
-      input.rawContent = `CURRENT MISSION: Give me a status report on automations. Use LIST_ACTIVE_AUTOMATIONS and summarize the current state.`;
+      input.rawContent = `PROTOCOL: AUTOMATION_REPORT_FLOW
+MISSION: Use LIST_ACTIVE_AUTOMATIONS to report on running workflows.`;
     } else if (input.rawContent.startsWith('/')) {
       this.logger.debug('Detected other slash command', { command: input.rawContent.split(' ')[0] });
     }
@@ -555,28 +562,13 @@ export class OrchestrationAgent {
         { role: 'user', content: userPrompt },
       ]);
       return response.content;
-    } catch (claudeError) {
-      this.logger.error('[OA] Primary LLM failed, attempting OpenAI fallback', claudeError as Error);
-
-      try {
-        const openaiClient = createLLMClient({
-          provider: LLMProvider.OPENAI,
-          model: 'gpt-4o' as LLMModel,
-          defaultOptions: { temperature: this.config.temperature },
-        });
-
-        const fallbackResponse = await openaiClient.complete([
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ]);
-        return fallbackResponse.content;
-      } catch (openaiError) {
-        await this.eventBus.emit('intake:routing_failed', {
-          error: 'LLM routing failed',
-          timestamp: new Date(),
-        }, { source: 'agent' });
-        throw new Error('LLM routing failed');
-      }
+    } catch (error) {
+      this.logger.error('[OA] LLM processing failed', error as Error);
+      await this.eventBus.emit('intake:routing_failed', {
+        error: `LLM processing failed: ${(error as Error).message}`,
+        timestamp: new Date(),
+      }, { source: 'agent' });
+      throw error;
     }
   }
 

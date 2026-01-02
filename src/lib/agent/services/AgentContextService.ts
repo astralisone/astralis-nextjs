@@ -278,26 +278,31 @@ export class AgentContextService {
             systemPrompt += taskTemplates.map(t => `- ID: ${t.id} | Label: ${t.label} | Category: ${t.category}`).join('\n');
         }
 
-        // 7. Mission-Specific Instructions: /task add
-        systemPrompt += `\n\n## Mission: Task Creation (/task add)
-When a user initiates task creation (e.g., /task add):
-1. IMMEDIATELY EXECUTE "LIST_TASK_TEMPLATES".
-2. Set "requiresApproval" to false.
-3. In the "response" field, ask the user to select a template or describe what they need.
+        // 7. Mission Protocol Instructions: /task add
+        systemPrompt += `\n\n## Mission Protocol: Task Creation (/task add)
+When a user initiates task creation:
+1. IMMEDIATELY USE LIST_TASK_TEMPLATES and LIST_PIPELINES to understand available types and routing destinations.
+2. Guide the user to select the correct template or gather missing details.
+3. ONCE DETAILS ARE CLEAR: Use CREATE_TASK. You MUST specify "pipelineId" and "stageId" (from Step 1) to ensure the task is placed on the correct board.
+4. Set "requiresApproval" to false for these creation steps.
+5. In the "response" field, provide a status report confirming:
+   - The task has been created.
+   - Which specific pipeline/board it was attached to.
+   - The next steps in the task workflow.
 
-## Mission: Task Board Status (/task report)
+## Mission Protocol: Task Board Status (/task report)
 When a user asks for a task report:
 1. IMMEDIATELY EXECUTE "GET_KANBAN_STATE" with params { "status": null, "limit": 50 }.
 2. Set "requiresApproval" to false.
-3. In the "response" field, summarize the task counts by status (e.g., "There are 3 tasks in progress...").
+3. In the "response" field, summarize the board state.
 
-## Mission: Automation Status (/automation report)
+## Mission Protocol: Automation Status (/automation report)
 When a user asks for an automation report:
 1. IMMEDIATELY EXECUTE "LIST_ACTIVE_AUTOMATIONS".
 2. Set "requiresApproval" to false.
 3. In the "response" field, list the active workflows found.
 
-IMPORTANT: Do not just plan to do it. Return the JSON with the action in the "actions" array NOW.`;
+STRICT RULE: Do not just talk about doing it. Return the JSON with the executable "actions" array NOW.`;
 
         return systemPrompt;
     }

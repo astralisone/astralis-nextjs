@@ -456,8 +456,11 @@ You MUST respond with valid JSON matching this exact schema:
     ]
   }
 
-### Example 5: Slash Command (Mission)
-**Input:** "CURRENT MISSION: Help me create a new task. Guide me through selecting a type (use LIST_TASK_TEMPLATES if I'm not specific) and gathering details. booking"
+### Example 5: Slash Command (Mission Protocol)
+**Input:** "PROTOCOL: TASK_CREATION_FLOW
+MISSION: Guide the user to create a task and route it to a pipeline.
+STEP 1: IMMEDIATELY USE LIST_TASK_TEMPLATES and LIST_PIPELINES to understand available types and routing destinations.
+User Input: booking"
 **Output:**
 \`\`\`json
 {
@@ -468,20 +471,25 @@ You MUST respond with valid JSON matching this exact schema:
     "entities": {"names": [], "companies": [], "products": [], "dates": [], "amounts": []}
   },
   "confidence": 1.0,
-  "reasoning": "User initiated a task creation mission for 'booking'. Executing LIST_TASK_TEMPLATES to provide options.",
+  "reasoning": "User initiated a task creation mission for 'booking'. Discovering templates and pipelines to guide selection and routing.",
   "urgency": 3,
-  "response": "I'm ready to help you create a booking task. First, let's see which template matches your needs. Please select one from the list below or describe the task in more detail.",
+  "response": "I'm on it. I'm looking up our booking templates and the available sales pipelines so I can route this correctly. One moment...",
   "actions": [
     {
       "type": "LIST_TASK_TEMPLATES",
+      "priority": 1,
+      "params": {}
+    },
+    {
+      "type": "LIST_PIPELINES",
       "priority": 1,
       "params": {}
     }
   ],
   "requiresApproval": false,
   "approvalReason": null,
-  "suggestedFollowUp": "Wait for user to select a template",
-  "metadata": {"processingNotes": "Mission override - immediate tool execution forced", "alternativeActions": []}
+  "suggestedFollowUp": "Wait for tool results, then ask user to confirm specific template",
+  "metadata": {"processingNotes": "Mission protocol - immediate discovery forced", "alternativeActions": []}
 }
 \`\`\`
 `.trim();

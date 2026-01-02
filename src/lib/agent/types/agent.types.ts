@@ -1124,6 +1124,10 @@ export interface CreateTaskParams {
   description?: string;
   /** Optional intake ID that triggered this task */
   intakeId?: string;
+  /** Optional pipeline ID override */
+  pipelineId?: string;
+  /** Optional stage ID override */
+  stageId?: string;
   /** Optional priority override (1-5, where 5 is highest) */
   priority?: 1 | 2 | 3 | 4 | 5;
 }

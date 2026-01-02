@@ -362,8 +362,10 @@ export class ActionExecutor {
               staffRole: templateDef.staffRole,
               priority: params.priority ?? templateDef.defaultPriority ?? 3,
               status: 'NEW',
-              pipelineKey: templateDef.pipeline?.preferredPipelineKey,
-              stageKey: templateDef.pipeline?.defaultStageKey,
+              pipelineId: params.pipelineId ?? undefined,
+              stageId: params.stageId ?? undefined,
+              pipelineKey: params.pipelineId ? undefined : templateDef.pipeline?.preferredPipelineKey,
+              stageKey: params.stageId ? undefined : templateDef.pipeline?.defaultStageKey,
               typicalMinutes: templateDef.typicalMinutes || 60,
               steps: templateDef.steps?.map((s: any) => ({
                 id: s.id,
