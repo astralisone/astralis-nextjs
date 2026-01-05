@@ -147,8 +147,8 @@ function getOrCreateAgent(
     autoExecuteThreshold: options?.autoExecuteThreshold ?? AUTO_EXECUTE_THRESHOLD,
     requireApprovalThreshold: options?.requireApprovalThreshold ?? REQUIRE_APPROVAL_THRESHOLD,
     enabledActions: Object.values(DecisionType),
-    maxActionsPerMinute: 60,
-    maxActionsPerHour: 500,
+    maxActionsPerMinute: 300,
+    maxActionsPerHour: 2000,
     notifyOnHighPriority: true,
     notifyOnFailure: true,
     escalationEmail: process.env.ESCALATION_EMAIL || 'admin@example.com',
@@ -296,12 +296,11 @@ export async function POST(req: NextRequest) {
     // 3. Get or create agent instance
     const agent = getOrCreateAgent(orgId, request.options, request.agent);
 
-    // 4. Convert request to AgentInput
-    const agentInput = requestToAgentInput(request, correlationId);
-
     // 5. Process through agent
     let decision: AgentDecisionResult;
     try {
+      // 4. Convert request to AgentInput
+      const agentInput = requestToAgentInput(request, correlationId);
       decision = await agent.process(agentInput);
     } catch (processError) {
       logger.error('Agent processing failed', processError, {

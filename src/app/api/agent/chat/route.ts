@@ -64,9 +64,13 @@ export async function POST(req: NextRequest) {
 
         const agent = getChatAgent(orgId);
 
-        const response = await agent.chat(message, history, session.user.name || session.user.email || 'User');
-
-        return NextResponse.json(response);
+        try {
+            const response = await agent.chat(message, history, session.user.name || session.user.email || 'User');
+            return NextResponse.json(response);
+        } finally {
+            // CRITICAL: Stop the agent to unregister from EventBus and prevent memory leaks/phantom processing
+            await (agent as any).orchestrationAgent?.stop();
+        }
     } catch (error) {
         console.error('Chat API Error:', error);
         return NextResponse.json(

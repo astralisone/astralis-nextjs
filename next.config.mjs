@@ -26,6 +26,7 @@ const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
 
+
   // Production optimizations
   productionBrowserSourceMaps: false, // Disable source maps to reduce build memory
   // Note: swcMinify is default in Next.js 15, no longer needs to be specified

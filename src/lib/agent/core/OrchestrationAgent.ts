@@ -84,6 +84,7 @@ export class OrchestrationAgent {
   private isRunning: boolean = false;
   private pendingDecisions: Map<string, PendingDecision> = new Map();
   private agentId: string;
+  private eventBusSubscriptionId: string | null = null;
 
   constructor(config: OrchestrationAgentConfig) {
     this.config = this.validateAndMergeConfig(config);
@@ -137,11 +138,27 @@ export class OrchestrationAgent {
     this.logger.info('Starting Orchestration Agent', { orgId: this.config.orgId });
     this.isRunning = true;
 
-    // Subscribe to events
     // Subscribe to events using wildcard handlers for broad categories
-    this.eventBus.onAny(this.handleEvent.bind(this));
+    this.eventBusSubscriptionId = this.eventBus.onAny(this.handleEvent.bind(this));
 
     this.logger.info('Orchestration Agent started');
+  }
+
+  /**
+   * Stop the agent and unregister from event bus.
+   */
+  public async stop(): Promise<void> {
+    if (!this.isRunning) return;
+
+    this.logger.info('Stopping Orchestration Agent', { orgId: this.config.orgId });
+
+    if (this.eventBusSubscriptionId) {
+      this.eventBus.off(this.eventBusSubscriptionId);
+      this.eventBusSubscriptionId = null;
+    }
+
+    this.isRunning = false;
+    this.logger.info('Orchestration Agent stopped');
   }
 
   /**
@@ -149,19 +166,6 @@ export class OrchestrationAgent {
    */
   public isActive(): boolean {
     return this.isRunning;
-  }
-
-  /**
-   * Stop the agent.
-   */
-  async stop(): Promise<void> {
-    if (!this.isRunning) return;
-
-    this.logger.info('Stopping Orchestration Agent');
-    this.isRunning = false;
-
-    // Unsubscribe (would need tracked subscriptions to do generically)
-    // For now assuming event bus handles cleanup or we restart process
   }
 
   // ===========================================================================
