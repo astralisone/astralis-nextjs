@@ -66,6 +66,7 @@ export type ClaudeModel =
   | 'claude-3-sonnet-20240229'
   | 'claude-3-haiku-20240307'
   | 'claude-sonnet-4-20250514'
+  | 'claude-3-5-sonnet-20240620'
   | 'claude-3-5-sonnet-20241022';
 
 /**

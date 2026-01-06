@@ -36,7 +36,7 @@ import {
   DEFAULT_AGENT_CONFIG,
 } from '../types/agent.types';
 import type { ILLMClient } from './LLMClient';
-import { createLLMClient, createFallbackClient } from './LLMFactory';
+import { createLLMClient, createFallbackClient, getOrCreateClient } from './LLMFactory';
 import { AgentEventBus, type EmitResult } from '../inputs/EventBus';
 import { DecisionEngine } from './DecisionEngine';
 import { ActionExecutor } from './ActionExecutor';
@@ -504,7 +504,7 @@ MISSION: Use LIST_ACTIVE_AUTOMATIONS to report on running workflows.`;
 
     // 1. Primary Client
     try {
-      const primaryClient = createLLMClient({
+      const primaryClient = getOrCreateClient({
         provider: this.config.llmProvider || LLMProvider.OPENAI,
         model: (this.config.llmModel as LLMModel) || 'gpt-4o',
         defaultOptions: {
@@ -524,7 +524,7 @@ MISSION: Use LIST_ACTIVE_AUTOMATIONS to report on running workflows.`;
     if (currentProvider !== LLMProvider.GEMINI) {
       try {
         // Try to add Gemini
-        const gemini = createLLMClient({
+        const gemini = getOrCreateClient({
           provider: LLMProvider.GEMINI,
           model: 'gemini-2.0-flash'
         });
@@ -538,7 +538,7 @@ MISSION: Use LIST_ACTIVE_AUTOMATIONS to report on running workflows.`;
         // Use env var or default to llama3. This allows users to set specific models like 'gemma:2b'
         const ollamaModel = (process.env.AGENT_DEFAULT_OLLAMA_MODEL as any) || 'llama3';
 
-        const ollama = createLLMClient({
+        const ollama = getOrCreateClient({
           provider: LLMProvider.OLLAMA,
           model: ollamaModel
         });

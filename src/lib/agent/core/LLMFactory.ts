@@ -209,7 +209,7 @@ export function hasAPIKey(provider: LLMProvider): boolean {
  * ```
  */
 export function createLLMClient(config: LLMFactoryConfig): ILLMClient {
-  console.log(`[LLMFactory] Creating ${config.provider} client with model: ${config.model}`);
+  console.log(`[LLMFactory] 🚀 Creating NEW ${config.provider} client with model: ${config.model}`);
 
   // Validate provider and model
   validateProviderModel(config.provider, config.model);
