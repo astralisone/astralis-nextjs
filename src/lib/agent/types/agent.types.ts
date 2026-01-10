@@ -89,6 +89,7 @@ export type OllamaModel =
   | 'gemma'
   | 'phi3'
   | 'llama4:scout'
+  | 'gemini-3-flash-preview:cloud'
   | (string & {});
 
 /**

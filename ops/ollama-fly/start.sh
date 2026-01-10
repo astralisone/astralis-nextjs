@@ -9,8 +9,8 @@ pid=$!
 # Wait for Ollama to start
 sleep 5
 
-echo "🔴 Retrieving model: llama4:scout..."
-ollama pull llama4:scout
+echo "🔴 Retrieving model: gemini-3-flash-preview:cloud..."
+ollama pull gemini-3-flash-preview:cloud
 
 echo "🟢 Model ready! Ollama is listening on port 11434"
 
