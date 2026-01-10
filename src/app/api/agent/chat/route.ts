@@ -1,20 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
-import { OrchestrationAgent } from '@/lib/agent/core/OrchestrationAgent';
+import { createAgentForOrg } from '@/lib/agent';
 import { ChatAgent } from '@/lib/agent/core/ChatAgent';
-import { LLMProvider, DecisionType } from '@/lib/agent/types/agent.types';
+import { DecisionType } from '@/lib/agent/types/agent.types';
 
 // Cache the agent instance to maintain some state/connections if needed
 // In a serverless environment, this might be recreated, which is fine
 let chatAgent: ChatAgent | null = null;
 
 function getChatAgent(orgId: string): ChatAgent {
-    // In a real app, we might want to cache by orgId or create fresh
-    const orchestrator = new OrchestrationAgent({
-        orgId,
-        llmProvider: LLMProvider.CLAUDE,
-        llmModel: 'claude-3-5-sonnet-20241022',
+    const orchestrator = createAgentForOrg(orgId, {
         temperature: 0, // Deterministic for tools
         autoExecuteThreshold: 0.6, // Lower threshold for chat interactions
         requireApprovalThreshold: 0.4,

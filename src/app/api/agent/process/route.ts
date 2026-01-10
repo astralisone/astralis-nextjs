@@ -2,11 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { z } from 'zod';
 import {
-  OrchestrationAgent,
-  createOrchestrationAgent,
-  LLMProvider,
-  type OrchestrationAgentConfig,
-} from '@/lib/agent/core';
+  getAgentInstance,
+  type AgentFactoryOptions,
+  getEnvironmentConfig,
+} from '@/lib/agent';
 import {
   AgentInputSource,
   DecisionType,
@@ -25,8 +24,8 @@ import {
  * - AGENT_REQUIRE_APPROVAL_THRESHOLD: Confidence threshold below which approval is required
  */
 const DEFAULT_ORG_ID = process.env.DEFAULT_ORG_ID || '';
-const LLM_PROVIDER = (process.env.AGENT_LLM_PROVIDER as 'OPENAI' | 'CLAUDE' | 'GEMINI') || 'GEMINI';
-const LLM_MODEL = process.env.AGENT_LLM_MODEL || 'gemini-2.0-flash';
+// Load defaults from environment via LLMFactory
+const envConfig = getEnvironmentConfig();
 const AUTO_EXECUTE_THRESHOLD = parseFloat(process.env.AGENT_AUTO_EXECUTE_THRESHOLD || '0.85');
 const REQUIRE_APPROVAL_THRESHOLD = parseFloat(process.env.AGENT_REQUIRE_APPROVAL_THRESHOLD || '0.5');
 
@@ -100,71 +99,36 @@ const ProcessInputSchema = z.object({
 type ProcessInputRequest = z.infer<typeof ProcessInputSchema>;
 
 /**
- * Agent instance cache
- * In production, you might want to use a more sophisticated caching mechanism
- */
-const agentCache = new Map<string, OrchestrationAgent>();
-
-/**
  * Get or create an agent instance for the organization
  */
 function getOrCreateAgent(
   orgId: string,
   options?: ProcessInputRequest['options'],
   agentType: 'orchestration' | 'scheduling' | 'document' = 'orchestration'
-): OrchestrationAgent {
-  const cacheKey = `${orgId}-${agentType}-${options?.dryRun ? 'dry' : 'live'}`;
-
-  if (agentCache.has(cacheKey)) {
-    return agentCache.get(cacheKey)!;
-  }
-
+) {
   // Configure agent based on type (for future expansion)
   let temperature = 0.3;
-  let enabledActions = Object.values(DecisionType);
 
   switch (agentType) {
     case 'scheduling':
-      // Scheduling agent might be more focused on calendar/time actions
-      temperature = 0.2; // More deterministic for scheduling
+      temperature = 0.2;
       break;
     case 'document':
-      // Document agent might focus on file processing actions
-      temperature = 0.4; // Slightly more creative for document analysis
+      temperature = 0.4;
       break;
     case 'orchestration':
     default:
-      // Full orchestration capabilities
       temperature = 0.3;
       break;
   }
 
-  const config: OrchestrationAgentConfig = {
-    orgId,
-    llmProvider: LLMProvider[LLM_PROVIDER] || LLMProvider.GEMINI,
-    llmModel: LLM_MODEL,
+  const agent = getAgentInstance(orgId, {
     temperature,
     autoExecuteThreshold: options?.autoExecuteThreshold ?? AUTO_EXECUTE_THRESHOLD,
     requireApprovalThreshold: options?.requireApprovalThreshold ?? REQUIRE_APPROVAL_THRESHOLD,
-    enabledActions: Object.values(DecisionType),
-    maxActionsPerMinute: 300,
-    maxActionsPerHour: 2000,
-    notifyOnHighPriority: true,
-    notifyOnFailure: true,
-    escalationEmail: process.env.ESCALATION_EMAIL || 'admin@example.com',
     dryRun: options?.dryRun ?? false,
     logger,
-  };
-
-  const agent = createOrchestrationAgent(config);
-  agentCache.set(cacheKey, agent);
-
-  logger.info('Created new agent instance', {
-    orgId,
-    agentType,
-    cacheKey,
-    dryRun: options?.dryRun
-  });
+  } as AgentFactoryOptions);
 
   return agent;
 }
@@ -395,8 +359,8 @@ export async function GET() {
     timestamp: new Date().toISOString(),
     description: 'Manually process inputs through the orchestration agent',
     config: {
-      llmProvider: LLM_PROVIDER,
-      llmModel: LLM_MODEL,
+      llmProvider: envConfig.defaultProvider,
+      llmModel: envConfig.defaultModels[envConfig.defaultProvider],
       autoExecuteThreshold: AUTO_EXECUTE_THRESHOLD,
       requireApprovalThreshold: REQUIRE_APPROVAL_THRESHOLD,
       defaultOrgConfigured: !!DEFAULT_ORG_ID,
