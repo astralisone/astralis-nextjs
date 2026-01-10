@@ -115,9 +115,8 @@ function createRedisConnection(): Redis | null {
 // Initialize connection
 if (!redisConnection) {
   redisConnection = createRedisConnection();
-  if (process.env.NODE_ENV !== 'production') {
-    global.redisConnection = redisConnection || undefined;
-  }
+  // Always use global to ensure singleton across module re-evaluations
+  global.redisConnection = redisConnection || undefined;
 }
 
 /**

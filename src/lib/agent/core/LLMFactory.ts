@@ -85,10 +85,10 @@ function getEnvironmentConfig(): LLMEnvironmentConfig {
   return {
     defaultProvider,
     defaultModels: {
-      [LLMProvider.OPENAI]: (process.env.AGENT_DEFAULT_OPENAI_MODEL as OpenAIModel) || 'gpt-4o',
-      [LLMProvider.CLAUDE]: (process.env.AGENT_DEFAULT_CLAUDE_MODEL as ClaudeModel) || 'claude-3-5-sonnet-20241022',
-      [LLMProvider.GEMINI]: (process.env.AGENT_DEFAULT_GEMINI_MODEL as GeminiModel) || 'gemini-2.0-flash',
-      [LLMProvider.OLLAMA]: (process.env.AGENT_DEFAULT_OLLAMA_MODEL as OllamaModel) || 'llama3',
+      [LLMProvider.OPENAI]: (process.env.AGENT_DEFAULT_OPENAI_MODEL?.trim() as OpenAIModel) || 'gpt-4o',
+      [LLMProvider.CLAUDE]: (process.env.AGENT_DEFAULT_CLAUDE_MODEL?.trim() as ClaudeModel) || 'claude-3-5-sonnet-20241022',
+      [LLMProvider.GEMINI]: (process.env.AGENT_DEFAULT_GEMINI_MODEL?.trim() as GeminiModel) || 'gemini-2.0-flash',
+      [LLMProvider.OLLAMA]: (process.env.AGENT_DEFAULT_OLLAMA_MODEL?.trim() as OllamaModel) || 'llama3',
     },
     defaultOptions: {
       temperature: parseFloat(process.env.AGENT_DEFAULT_TEMPERATURE || '0.3'),
