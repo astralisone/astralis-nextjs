@@ -25,6 +25,8 @@ import type {
   LLMModel,
   AgentStats,
   DecisionRecord,
+  DecisionEventPayload,
+  BaseEventPayload,
 } from '../types/agent.types';
 import {
   AgentEventType,
@@ -493,7 +495,7 @@ export class OrchestrationAgent {
     try {
       const primaryClient = getOrCreateClient({
         provider: this.config.llmProvider || LLMProvider.OPENAI,
-        model: (this.config.llmModel as LLMModel) || getEnvironmentConfig().defaultModels[this.config.llmProvider || LLMProvider.OPENAI],
+        model: getEnvironmentConfig().defaultModels[this.config.llmProvider || LLMProvider.OPENAI],
         defaultOptions: {
           temperature: this.config.temperature,
           maxTokens: this.config.maxTokens,
@@ -568,13 +570,61 @@ export class OrchestrationAgent {
   // ===========================================================================
 
   private async sendApprovalNotification(decisionId: string, decision: AgentDecisionResult): Promise<void> {
-    this.logger.info('Sending approval notification', { decisionId, intent: decision.intent });
-    // Implementation would go here
+    this.logger.info(`Sending approval notification for decision ${decisionId}`);
+
+    // Emit an event that the notification system can pick up
+    // The notification service will handle the actual delivery (email, slack, etc.)
+    // based on the agent configuration and user preferences
+    await this.eventBus.emit<DecisionEventPayload>(
+      'agent:decision_made',
+      {
+        id: decisionId,
+        timestamp: new Date(),
+        source: AgentInputSource.API,
+        decisionId,
+        agentId: this.config.id || 'unknown',
+        decisionType: decision.actions[0]?.type || DecisionTypeEnum.NO_ACTION,
+        status: DecisionStatusEnum.REQUIRES_APPROVAL,
+        confidence: decision.confidence,
+        actions: decision.actions
+      },
+      {
+        source: 'agent',
+        orgId: this.config.orgId,
+        correlationId: decisionId, // Using decisionId as correlationId for now
+        metadata: {
+          requiresApproval: true,
+          priority: decision.priority
+        }
+      }
+    );
   }
 
   private async sendErrorNotification(error: Error, input: AgentInput): Promise<void> {
-    this.logger.info('Sending error notification', { error: error.message });
-    // Implementation would go here
+    this.logger.error('Sending error notification', { error: error.message, inputId: input.correlationId });
+
+    // Emit an error event
+    await this.eventBus.emit<BaseEventPayload>(
+      'agent:error',
+      {
+        id: `error-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        timestamp: new Date(),
+        source: input.source,
+        metadata: {
+          error: error.message,
+          stack: error.stack,
+          inputContext: {
+            type: input.type,
+            source: input.source
+          }
+        }
+      },
+      {
+        source: 'agent',
+        orgId: this.config.orgId,
+        correlationId: input.correlationId
+      }
+    );
   }
 
   private eventToInput(event: AgentEvent): AgentInput {
