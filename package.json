@@ -81,6 +81,7 @@
     "dotenv": "^17.2.3",
     "dotenv-cli": "^11.0.0",
     "file-type": "^21.1.1",
+    "fly": "^4.6.16",
     "framer-motion": "^12.23.26",
     "fullcalendar": "^6.1.19",
     "google-auth-library": "^10.5.0",

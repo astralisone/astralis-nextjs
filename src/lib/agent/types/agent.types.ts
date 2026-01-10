@@ -88,7 +88,7 @@ export type OllamaModel =
   | 'mistral'
   | 'gemma'
   | 'phi3'
-  | 'llama4-scout'
+  | 'llama4:scout'
   | (string & {});
 
 /**
