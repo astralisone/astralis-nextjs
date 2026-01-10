@@ -11,6 +11,7 @@ import {
   OrchestrationAgent,
   createOrchestrationAgent,
   type OrchestrationAgentConfig,
+  getEnvironmentConfig,
 } from '../core';
 import {
   AgentEventBus,
@@ -36,7 +37,7 @@ import {
 } from '../types';
 
 // Declare process for environments where it may not exist
-declare const process: { env?: { NODE_ENV?: string; [key: string]: string | undefined } } | undefined;
+declare const process: { env?: { NODE_ENV?: string;[key: string]: string | undefined } } | undefined;
 
 // =============================================================================
 // TYPES
@@ -190,11 +191,11 @@ export function createAgentForOrg(
   orgId: string,
   options: AgentFactoryOptions = {}
 ): OrchestrationAgent {
+  const envConfig = getEnvironmentConfig();
+
   const {
-    llmProvider = LLMProvider.CLAUDE,
-    llmModel = llmProvider === LLMProvider.CLAUDE
-      ? 'claude-sonnet-4-20250514'
-      : 'gpt-4-turbo',
+    llmProvider = envConfig.defaultProvider,
+    llmModel = options.llmModel || envConfig.defaultModels[llmProvider],
     temperature = 0.3,
     maxTokens = 2000,
     autoExecuteThreshold = 0.85,
