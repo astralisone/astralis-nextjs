@@ -79,7 +79,8 @@ function getEnvironmentConfig(): LLMEnvironmentConfig {
   const envProvider = process.env.AGENT_DEFAULT_PROVIDER?.toUpperCase();
   const defaultProvider = envProvider === 'OPENAI' ? LLMProvider.OPENAI :
     envProvider === 'CLAUDE' ? LLMProvider.CLAUDE :
-      LLMProvider.GEMINI;
+      envProvider === 'GEMINI' ? LLMProvider.GEMINI :
+        LLMProvider.OLLAMA;
 
   return {
     defaultProvider,

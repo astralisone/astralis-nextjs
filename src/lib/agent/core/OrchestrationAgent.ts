@@ -505,48 +505,12 @@ export class OrchestrationAgent {
       this.logger.warn('Failed to create primary LLM client', { error: e });
     }
 
-    // 2. Free Tier / Fallbacks (Added automatically for robustness)
-    // Only add if they aren't the primary one
-    const currentProvider = this.config.llmProvider;
-
-    if (currentProvider !== LLMProvider.GEMINI) {
-      try {
-        // Try to add Gemini
-        const gemini = getOrCreateClient({
-          provider: LLMProvider.GEMINI,
-          model: 'gemini-2.0-flash',
-          maxRetries: 0
-        });
-        if (gemini.isReady()) clients.push(gemini);
-      } catch { }
-    }
-
-    if (currentProvider !== LLMProvider.OLLAMA) {
-      try {
-        // Try to add Ollama
-        // Use env var or default to llama3. This allows users to set specific models like 'gemma:2b'
-        const ollamaModel = (process.env.AGENT_DEFAULT_OLLAMA_MODEL as any) || 'llama3';
-
-        const ollama = getOrCreateClient({
-          provider: LLMProvider.OLLAMA,
-          model: ollamaModel,
-          maxRetries: 0
-        });
-        // Ollama client is always "ready" if baseUrl is set (default), 
-        // connectivity check happens at request time.
-        clients.push(ollama);
-      } catch { }
-    }
-
+    // 2. Fallbacks have been removed as per user request to strictly use the primary open-source LLM.
     if (clients.length === 0) {
       throw new Error('No compatible LLM clients could be initialized.');
     }
 
-    if (clients.length === 1) {
-      return clients[0];
-    }
-
-    return createFallbackClient(clients);
+    return clients[0];
   }
 
   private async makeLLMDecision(systemPrompt: string, userPrompt: string): Promise<string> {
