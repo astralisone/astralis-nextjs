@@ -73,8 +73,13 @@ export class FallbackLLMClient implements ILLMClient {
             }
         }
 
+        const errorSummary = errors.map((e, i) => {
+            const client = this.clients[i];
+            return `${client.provider}: ${e.message}`;
+        }).join(' | ');
+
         throw new LLMError(
-            `All fallback clients failed. Errors: ${errors.map(e => e.message).join(' | ')}`,
+            `All fallback clients failed. Chain: ${errorSummary}`,
             'ALL_CLIENTS_FAILED',
             this.provider,
             undefined,

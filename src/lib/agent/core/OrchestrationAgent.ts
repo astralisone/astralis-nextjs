@@ -186,23 +186,10 @@ export class OrchestrationAgent {
     });
 
     // Detect Slash Commands as special intents
-    if (input.rawContent.startsWith('/task add')) {
-      const details = input.rawContent.replace('/task add', '').trim();
-      this.logger.info('Detected /task add command, initiating task creation mission');
-      input.rawContent = `PROTOCOL: TASK_CREATION_FLOW
-MISSION: Guide the user to create a task and route it to a pipeline.
-STEP 1: If details are vague, immediately use LIST_TASK_TEMPLATES.
-STEP 2: Use CREATE_INTAKE_ITEM or CREATE_TASK to create the record.
-STEP 3: Use ASSIGN_PIPELINE to place it on the board.
-User Input: ${details || 'None'}`;
-    } else if (input.rawContent.startsWith('/task report')) {
+    if (input.rawContent.startsWith('/task report')) {
       this.logger.info('Detected /task report command');
-      input.rawContent = `PROTOCOL: TASK_REPORT_FLOW
-MISSION: Show the task board state using GET_KANBAN_STATE. Summarize progress and blocks.`;
     } else if (input.rawContent.startsWith('/automation report')) {
       this.logger.info('Detected /automation report command');
-      input.rawContent = `PROTOCOL: AUTOMATION_REPORT_FLOW
-MISSION: Use LIST_ACTIVE_AUTOMATIONS to report on running workflows.`;
     } else if (input.rawContent.startsWith('/')) {
       this.logger.debug('Detected other slash command', { command: input.rawContent.split(' ')[0] });
     }
@@ -510,7 +497,8 @@ MISSION: Use LIST_ACTIVE_AUTOMATIONS to report on running workflows.`;
         defaultOptions: {
           temperature: this.config.temperature,
           maxTokens: this.config.maxTokens,
-        }
+        },
+        maxRetries: 0
       });
       clients.push(primaryClient);
     } catch (e) {
@@ -526,7 +514,8 @@ MISSION: Use LIST_ACTIVE_AUTOMATIONS to report on running workflows.`;
         // Try to add Gemini
         const gemini = getOrCreateClient({
           provider: LLMProvider.GEMINI,
-          model: 'gemini-2.0-flash'
+          model: 'gemini-2.0-flash',
+          maxRetries: 0
         });
         if (gemini.isReady()) clients.push(gemini);
       } catch { }
@@ -540,7 +529,8 @@ MISSION: Use LIST_ACTIVE_AUTOMATIONS to report on running workflows.`;
 
         const ollama = getOrCreateClient({
           provider: LLMProvider.OLLAMA,
-          model: ollamaModel
+          model: ollamaModel,
+          maxRetries: 0
         });
         // Ollama client is always "ready" if baseUrl is set (default), 
         // connectivity check happens at request time.

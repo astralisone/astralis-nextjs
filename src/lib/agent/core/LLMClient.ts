@@ -318,9 +318,12 @@ export abstract class BaseLLMClient implements ILLMClient {
     }
 
     const latencyMs = Date.now() - startTime;
-    console.log(`[LLMClient] [${requestId}] Failed after ${attempt} attempts in ${latencyMs}ms`);
+    const errorMsg = lastError?.message || 'Unknown LLM error';
+    console.log(`[LLMClient] [${requestId}] Failed after ${attempt} attempts in ${latencyMs}ms. Error: ${errorMsg}`);
 
-    throw this.normalizeError(lastError!);
+    const normalizedError = this.normalizeError(lastError!);
+    normalizedError.message = `[${this.provider}] ${normalizedError.message} (Total attempts: ${attempt}, Latency: ${latencyMs}ms)`;
+    throw normalizedError;
   }
 
   /**
