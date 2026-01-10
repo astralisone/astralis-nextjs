@@ -44,6 +44,14 @@ export class OllamaClient extends BaseLLMClient {
         });
 
         this.baseUrl = config.baseUrl || 'http://127.0.0.1:11434';
+
+        if (!this.model) {
+            throw new LLMError(
+                'Model name is required for Ollama client',
+                'INVALID_CONFIG',
+                this.provider
+            );
+        }
     }
 
     public isReady(): boolean {

@@ -36,7 +36,7 @@ import {
   DEFAULT_AGENT_CONFIG,
 } from '../types/agent.types';
 import type { ILLMClient } from './LLMClient';
-import { createLLMClient, createFallbackClient, getOrCreateClient } from './LLMFactory';
+import { createLLMClient, createFallbackClient, getOrCreateClient, getEnvironmentConfig } from './LLMFactory';
 import { AgentEventBus, type EmitResult } from '../inputs/EventBus';
 import { DecisionEngine } from './DecisionEngine';
 import { ActionExecutor } from './ActionExecutor';
@@ -493,7 +493,7 @@ export class OrchestrationAgent {
     try {
       const primaryClient = getOrCreateClient({
         provider: this.config.llmProvider || LLMProvider.OPENAI,
-        model: (this.config.llmModel as LLMModel) || 'gpt-4o',
+        model: (this.config.llmModel as LLMModel) || getEnvironmentConfig().defaultModels[this.config.llmProvider || LLMProvider.OPENAI],
         defaultOptions: {
           temperature: this.config.temperature,
           maxTokens: this.config.maxTokens,
